@@ -21,7 +21,7 @@
 # The model gets three tools only, Read, Glob and Grep, in the agent's restricted mode, which also keeps them inside
 # this checkout: no shell, no network tool, no file writes, no MCP server. It reads what the pull request holds as
 # data (review.md, rule 1). Its environment holds only PATH, HOME, the locale, REVIEW_GATEWAY_URL (which
-# facts-review-served reads for the provider ossv-gateway) and the ANTHROPIC_* variables and the tool's own ones,
+# facts-review-served reads for the provider model-gateway) and the ANTHROPIC_* variables and the tool's own ones,
 # those of its credential (in CI, the model gateway's URL and a Google identity token). That environment is built
 # in a process and handed to the agent whole, so no variable's value is a command's argument, which other processes on
 # the machine can read.

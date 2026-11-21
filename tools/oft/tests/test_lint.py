@@ -9,6 +9,7 @@ import io
 import json
 import multiprocessing
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -19,24 +20,30 @@ import time
 import unittest
 from unittest import mock
 
-from oft import facts, layout, lint, names, nsrename, paths, port, symbols, urls, yamlio
-from oft.tests.helpers import (FIXTURE_RECIPE, NEXT_RECIPE, OTHER_OWN_RECIPE, OWN_RECIPE, REPO, Tree, add_findings,
+from oft import (check, deviation, facts, generate, layout, lint, names, nsrename, paths, port, shapes, symbols, urls,
+                 yamlio)
+from oft.tests import helpers
+from oft.tests.helpers import (FIXTURE_RECIPE, NEXT_RECIPE, OTHER_OWN_RECIPE, OWN_RECIPE, REPO, Tree, add_build_record,
+                               add_findings,
                                build_record, edit, errors, git_repo, later_release, older_shape, own_recipe, port_built,
-                               recipe_file, recipe_only_rebuild, rename_namespace, rules_of, tree)
+                               recipe_file, recipe_only_rebuild, recount, rename_namespace, rules_of, tree)
+from oft.tests.test_classifier_images import with_images
+from oft.tests.test_deviation import NO_TLS, PIN, write_release
 from oft.tests.test_facts_review_gate import evaluate
 from oft.tests.test_layout import old_layout_tree
-from oft.tests.test_release_tree import add_proof
+from oft.tests.test_release_tree import add_proof, copy_harness
 
 INTERNAL = "theorem-labs/oss-verify-proofs" + "-internal"
 
 
 def pr_yml_jobs(test):
-    """The jobs of .github/workflows/pr.yml; the test is skipped where there is none, as in the runner image, whose
-    build runs these tests with tools/oft alone (toolchain/runner.Dockerfile)."""
+    """The jobs of .github/workflows/pr.yml, each step that runs a script of .github/scripts/pr/ given that script's
+    text (helpers.with_scripts); the test is skipped where there is none, as in the runner image, whose build runs
+    these tests with tools/oft alone (toolchain/runner.Dockerfile)."""
     path = os.path.join(REPO, ".github", "workflows", "pr.yml")
     if not os.path.exists(path):
         test.skipTest("no .github/workflows/pr.yml beside tools/oft")
-    return yamlio.load_file(path)["jobs"]
+    return helpers.with_scripts(yamlio.load_file(path))["jobs"]
 
 
 class Clean(unittest.TestCase):
@@ -174,10 +181,11 @@ class TestsJobCheckout(unittest.TestCase):
 
 class LintJobCheckout(unittest.TestCase):
     """pr.yml's lint job checks the tree out whole except for a pull request's lint that reads only the changed files
-    (the plan's lint_files_left_out): that one leaves out the proof libraries but their generated dune files, on the
-    standard runner, and checks out the left-out files that changed before lint runs."""
-    SPARSE = ["/*", "!/proofs/*/*/lib/*", "/proofs/*/*/lib/dune", "!/projects/*/*/proofs/lib/*",
-              "/projects/*/*/proofs/lib/dune"]
+    (the plan's lint_files_left_out): that one leaves out the proof libraries but their generated dune files and their
+    instance lemmas (Instances/, which the harness README reads), on the standard runner, and checks out the left-out
+    files that changed before lint runs."""
+    SPARSE = ["/*", "!/proofs/*/*/lib/*", "/proofs/*/*/lib/dune", "/proofs/*/*/lib/Instances/",
+              "!/projects/*/*/proofs/lib/*", "/projects/*/*/proofs/lib/dune", "/projects/*/*/proofs/lib/Instances/"]
 
     def setUp(self):
         self.jobs = pr_yml_jobs(self)
@@ -255,16 +263,17 @@ class QueueCheckedPush(unittest.TestCase):
                             raise KeyError("needs.%s: not a need of %s" % (job, name))
                         return dict.__getitem__(self, job)
                 # every job but queue_run (seeded above from the event), main-gate (which reads the event's name and
-                # base) and rekey (on a pull request and a merge queue group alone) reads needs.* alone in its `if:`:
-                # an expression that read the event would fail evaluate()
+                # base), rekey and release_window (on a pull request and a merge queue group alone) reads needs.*
+                # alone in its `if:`: an expression that read the event would fail evaluate()
                 runs = evaluate(self.jobs[name].get("if", "success()"), Needs({n: done[n] for n in ancestors}),
                                 github=self.github(event, base)
-                                if name in ("main-gate", "rekey") else None)
+                                if name in ("main-gate", "rekey", "release_window") else None)
                 done[name] = {"result": ("failure" if name in failed else "success") if runs else "skipped",
                               "outputs": {} if name in failed or not runs else
                               dict({"tests": "true", "units": "1", "controls": "true", "repository_lint": "true",
-                                    "stream_tools": "true", "farm_tests": "true", "draft_legs": '["x"]',
-                                    "hold": "none"}, **(outputs or {}))}
+                                    "lps_pin": "true", "stream_tools": "true", "farm_tests": "true",
+                                    "made_from": "true", "made_from_proofs": '["projects/curl/fuzz_bufq"]',
+                                    "public_rows": "true", "draft_legs": '["x"]', "hold": "none"}, **(outputs or {}))}
         return {n: r["result"] for n, r in done.items()}
 
     def test_a_push_the_queue_checked_runs_only_queue_run_and_the_verdict_jobs(self):
@@ -273,13 +282,14 @@ class QueueCheckedPush(unittest.TestCase):
 
     def test_every_other_run_runs_every_job(self):
         """A pull request or a merge queue group (queue_run skipped) and a push the queue did not check run every
-        job: the default rule would skip the jobs after plan and lint for a skipped ancestor.  rekey runs on a pull
-        request and a merge queue group alone."""
+        job: the default rule would skip the jobs after plan and lint for a skipped ancestor.  rekey and
+        release_window run on a pull request and a merge queue group alone."""
         for event, checked in (("pull_request", ""), ("merge_group", ""), ("push", "false"), ("push", "")):
             with self.subTest(event=event, checked=checked):
                 got = self.results(event, checked)
                 want = {n for n in self.jobs
-                        if (n != "queue_run" or event == "push") and (n != "rekey" or event != "push")}
+                        if (n != "queue_run" or event == "push")
+                        and (n not in ("rekey", "release_window") or event != "push")}
                 self.assertEqual({n for n, r in got.items() if r == "success"}, want, got)
 
     def test_a_failed_plan_or_lint_starts_no_later_job_and_required_judges(self):
@@ -296,16 +306,22 @@ class QueueCheckedPush(unittest.TestCase):
         self.assertEqual(" ".join(self.jobs["required"]["if"].split()), "always()")
 
     def test_a_held_pull_request_runs_every_job_but_check_and_a_draft_no_lint(self):
-        """The plan job's hold answer holds back check and the fetch-drafts legs that feed it: on no label `check`
-        nothing else, and on a draft lint too, and with it every job that waits for lint (tests, controls,
-        stream_tools, rekey); plan, required and main-gate run and report.  check runs only on the answer none: an
-        empty or other answer holds it back, and required fails on it.  A merge queue group and a push are never held
-        (the hold step), so check runs there."""
-        for hold, held in (("label", {"check", "fetch-drafts"}),
-                           ("draft", {"lint", "tests", "check", "fetch-drafts", "controls", "stream_tools", "rekey",
-                                      "farm_tests"})):
-            with self.subTest(hold=hold):
-                got = self.results("pull_request", outputs={"hold": hold})
+        """The plan job's hold answer holds back check and the fetch-drafts legs that feed it.  On no label `check` it
+        holds back nothing else but a made_from job that only units whose proofs changed would start (below).  On a
+        draft it holds back lint too, and with it every job that waits for lint (tests, controls, stream_tools, rekey,
+        farm_tests, made_from, public_rows); plan, lps_pin, release_window, required and main-gate run and report.
+        check runs only on the answer none: an empty or other answer holds it back, and required fails on it.  A merge
+        queue group and a push are never held (the hold step), so check runs there.  The made_from job runs held too
+        when the plan named a unit for it (made_from true), and on made_from false it runs for a list of units whose
+        proofs changed only on the answer none."""
+        draft = {"lint", "tests", "check", "fetch-drafts", "controls", "stream_tools", "rekey", "farm_tests",
+                 "made_from", "public_rows"}
+        for hold, made_from, held in (("label", "true", {"check", "fetch-drafts"}), ("draft", "true", draft),
+                                      ("none", "false", set()),
+                                      ("label", "false", {"check", "fetch-drafts", "made_from"}),
+                                      ("draft", "false", draft)):
+            with self.subTest(hold=hold, made_from=made_from):
+                got = self.results("pull_request", outputs={"hold": hold, "made_from": made_from})
                 self.assertEqual({n for n, r in got.items() if r == "skipped"}, {"queue_run"} | held, got)
                 self.assertEqual((got["required"], got["main-gate"]), ("success", "success"), got)
         for answer in ("", "yes", "false"):
@@ -314,6 +330,18 @@ class QueueCheckedPush(unittest.TestCase):
         for event, checked in (("merge_group", ""), ("push", "false")):
             with self.subTest(event=event):
                 self.assertEqual(self.results(event, checked)["check"], "success")
+                self.assertEqual(self.results(event, checked, outputs={"made_from": "false"})["made_from"], "success")
+
+    def test_a_draft_still_holds_a_change_to_the_pins_or_theories(self):
+        """lps_pin waits for the plan alone, so the hold does not reach it: on #2360, a draft whose one change was
+        theories/Premises.v, lint was skipped and with it the controls, the one other job that compiles theories/,
+        and required passed with every build job skipped (run 42509915684, Dispatch issue OSSV-440).  A change that
+        touches no release.yaml, toolchain/ or theories/ file skips it, whatever the hold."""
+        for hold in ("none", "draft", "label"):
+            with self.subTest(hold=hold):
+                self.assertEqual(self.results("pull_request", outputs={"hold": hold})["lps_pin"], "success")
+                self.assertEqual(self.results("pull_request",
+                                              outputs={"hold": hold, "lps_pin": "false"})["lps_pin"], "skipped")
 
     def test_main_gate_runs_on_every_push_group_and_pull_request_into_main(self):
         """main-gate is what main's ruleset requires, and a skipped job reports success: it runs, whatever required
@@ -488,7 +516,8 @@ class QueueCheckedPush(unittest.TestCase):
         path = os.path.join(REPO, ".github", "workflows", "pr.yml")
 
         def marker(job, step_name):
-            step = next(s for s in yamlio.load_file(path)["jobs"][job]["steps"] if s.get("name") == step_name)
+            jobs = helpers.with_scripts(yamlio.load_file(path))["jobs"]
+            step = next(s for s in jobs[job]["steps"] if s.get("name") == step_name)
             text = step["run"]
             self.assertEqual(text.count("# vm evidence\n"), 1, step_name)
             start = text.rfind("\n", 0, text.index("# vm evidence\n")) + 1
@@ -553,6 +582,7 @@ class QueueCheckedPush(unittest.TestCase):
             "FETCH_DRAFTS_RESULT": "${{ needs.fetch-drafts.result }}",
             "PLAN_RESULT": "${{ needs.plan.result }}", "TESTS": "${{ needs.plan.outputs.tests }}",
             "CONTROLS": "${{ needs.plan.outputs.controls }}",
+            "LPS_PIN": "${{ needs.plan.outputs.lps_pin }}", "LPS_PIN_RESULT": "${{ needs.lps_pin.result }}",
             "REPOSITORY_LINT": "${{ needs.plan.outputs.repository_lint }}", "UNITS": "${{ needs.plan.outputs.units }}",
             "HOLD": "${{ needs.plan.outputs.hold }}",
             "QUEUED": "${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' "
@@ -564,6 +594,11 @@ class QueueCheckedPush(unittest.TestCase):
             "STREAM_TOOLS_RESULT": "${{ needs.stream_tools.result }}",
             "FARM_TESTS": "${{ needs.plan.outputs.farm_tests }}",
             "FARM_TESTS_RESULT": "${{ needs.farm_tests.result }}",
+            "MADE_FROM": "${{ needs.plan.outputs.made_from }}",
+            "MADE_FROM_PROOFS": "${{ needs.plan.outputs.made_from_proofs }}",
+            "MADE_FROM_RESULT": "${{ needs.made_from.result }}",
+            "PUBLIC_ROWS": "${{ needs.plan.outputs.public_rows }}",
+            "PUBLIC_ROWS_RESULT": "${{ needs.public_rows.result }}",
             # merge-pr.sh's evidence comment, for a check held for the label (test_workflow_verdicts.PrHoldTest)
             "GH_TOKEN": "${{ github.token }}", "PR": "${{ github.event.pull_request.number }}",
             "HEAD_SHA": "${{ github.event.pull_request.head.sha }}", "VM_EVIDENCE_BY": "sjawhar-agent[bot]",
@@ -579,15 +614,24 @@ class QueueCheckedPush(unittest.TestCase):
                    "GH_TOKEN": "t", "PR": "7", "HEAD_SHA": "c" * 40, "VM_EVIDENCE_BY": "sjawhar-agent[bot]",
                    "CHECKED_ELSEWHERE": "false", "CHECKED_ELSEWHERE_NOTE": "",
                    "STREAM_TOOLS": "false", "STREAM_TOOLS_RESULT": "skipped",
-                   "FARM_TESTS": "false", "FARM_TESTS_RESULT": "skipped"}
+                   "LPS_PIN": "false", "LPS_PIN_RESULT": "skipped",
+                   "FARM_TESTS": "false", "FARM_TESTS_RESULT": "skipped",
+                   "MADE_FROM": "false", "MADE_FROM_PROOFS": "[]", "MADE_FROM_RESULT": "skipped",
+                   "PUBLIC_ROWS": "false", "PUBLIC_ROWS_RESULT": "skipped"}
         everything = dict(nothing, TESTS="true", CONTROLS="true", REPOSITORY_LINT="true", UNITS="3",
                           TESTS_RESULT="success", CONTROLS_RESULT="success", CHECK_RESULT="success",
                           STREAM_TOOLS="true", STREAM_TOOLS_RESULT="success",
-                          FARM_TESTS="true", FARM_TESTS_RESULT="success")
+                          # release.yaml, toolchain/ or theories/ changed: lps_pin ran and passed.  It waits for the
+                          # plan alone, so a draft runs it too (Dispatch issue OSSV-440: on #2360 nothing compiled its
+                          # theories/ change).
+                          LPS_PIN="true", LPS_PIN_RESULT="success",
+                          FARM_TESTS="true", FARM_TESTS_RESULT="success",
+                          MADE_FROM="true", MADE_FROM_PROOFS='["projects/curl/fuzz_bufq"]',
+                          MADE_FROM_RESULT="success", PUBLIC_ROWS="true", PUBLIC_ROWS_RESULT="success")
         # a draft: lint, and every job after it, skipped (lint's `if:`)
         draft = dict(everything, HOLD="draft", LINT_RESULT="skipped", TESTS_RESULT="skipped",
                      CONTROLS_RESULT="skipped", CHECK_RESULT="skipped", STREAM_TOOLS_RESULT="skipped",
-                     FARM_TESTS_RESULT="skipped")
+                     FARM_TESTS_RESULT="skipped", MADE_FROM_RESULT="skipped", PUBLIC_ROWS_RESULT="skipped")
         unlabelled = dict(everything, HOLD="label", CHECK_RESULT="skipped")
         for name, env in (("nothing needed", nothing), ("everything needed and green", everything),
                           ("the base pins this change's tools", dict(everything, PLANNED_TOOLS="head")),
@@ -595,11 +639,18 @@ class QueueCheckedPush(unittest.TestCase):
                           ("a draft into main: lint skipped", draft),
                           ("no label check, into main: check skipped", unlabelled),
                           ("a draft that plans nothing: lint skipped", dict(draft, TESTS="false", CONTROLS="false",
-                                                                           REPOSITORY_LINT="false", UNITS="0",
-                                                                           STREAM_TOOLS="false", FARM_TESTS="false")),
+                                                                            REPOSITORY_LINT="false", UNITS="0",
+                                                                            LPS_PIN="false",
+                                                                            LPS_PIN_RESULT="skipped",
+                                                                            STREAM_TOOLS="false", FARM_TESTS="false",
+                                                                            MADE_FROM="false", PUBLIC_ROWS="false")),
                           ("no label, plans nothing, no queue", dict(nothing, HOLD="label", QUEUED="false")),
                           ("the farm runner's tests alone needed and green",
-                           dict(nothing, FARM_TESTS="true", FARM_TESTS_RESULT="success"))):
+                           dict(nothing, FARM_TESTS="true", FARM_TESTS_RESULT="success")),
+                          ("a unit's proofs alone, nothing held, checked",
+                           dict(nothing, MADE_FROM_PROOFS='["projects/curl/fuzz_bufq"]', MADE_FROM_RESULT="success")),
+                          ("a unit's proofs alone, held for the label, not checked",
+                           dict(nothing, HOLD="label", MADE_FROM_PROOFS='["projects/curl/fuzz_bufq"]'))):
             with self.subTest(case=name):
                 rc, output = self.required_step(collect, env)
                 self.assertEqual(rc, 0, output)
@@ -644,7 +695,29 @@ class QueueCheckedPush(unittest.TestCase):
                ("the farm runner's tests needed, one leg failed", dict(everything, FARM_TESTS_RESULT="failure")),
                ("the farm runner's tests needed, cancelled", dict(everything, FARM_TESTS_RESULT="cancelled")),
                ("the farm runner's tests not needed, yet ran", dict(nothing, FARM_TESTS_RESULT="success")),
-               ("a draft, yet the farm runner's tests ran", dict(draft, FARM_TESTS_RESULT="success"))]
+               ("a draft, yet the farm runner's tests ran", dict(draft, FARM_TESTS_RESULT="success")),
+               ("no lps_pin answer", dict(nothing, LPS_PIN="")),
+               ("an lps_pin answer of another word", dict(nothing, LPS_PIN="yes")),
+               # the shape of #2360: a theories/ change whose every build job was skipped
+               ("theories/ changed, yet nothing compiled it", dict(everything, LPS_PIN_RESULT="skipped")),
+               ("a draft whose theories/ change nothing compiled", dict(draft, LPS_PIN_RESULT="skipped")),
+               ("the pins changed, the LPS pin check failed", dict(everything, LPS_PIN_RESULT="failure")),
+               ("the pins changed, the LPS pin check cancelled", dict(everything, LPS_PIN_RESULT="cancelled")),
+               ("no release.yaml, toolchain/ or theories/ change, yet the LPS pin check ran",
+                dict(nothing, LPS_PIN_RESULT="success")),
+               ("no made_from_proofs answer", dict(nothing, MADE_FROM_PROOFS="")),
+               ("a made_from_proofs answer that is not a list", dict(nothing, MADE_FROM_PROOFS="true")),
+               ("a unit's proofs alone, nothing held, not checked",
+                dict(nothing, MADE_FROM_PROOFS='["projects/curl/fuzz_bufq"]')),
+               ("a unit's proofs alone, held for the label, yet checked",
+                dict(nothing, HOLD="label", MADE_FROM_PROOFS='["projects/curl/fuzz_bufq"]',
+                     MADE_FROM_RESULT="success")),
+               ("no public_rows answer", dict(nothing, PUBLIC_ROWS="")),
+               ("a public_rows answer of another word", dict(nothing, PUBLIC_ROWS="yes")),
+               ("the record changed, its rows' check not run", dict(everything, PUBLIC_ROWS_RESULT="skipped")),
+               ("the record changed, a row failed", dict(everything, PUBLIC_ROWS_RESULT="failure")),
+               ("the record did not change, yet its rows' check ran", dict(nothing, PUBLIC_ROWS_RESULT="success")),
+               ("a draft, yet the rows' check ran", dict(draft, PUBLIC_ROWS_RESULT="success"))]
         for name, env in bad:
             with self.subTest(case=name):
                 rc, output = self.required_step(collect, env)
@@ -758,8 +831,9 @@ class NoDuneCache(unittest.TestCase):
     """dune restores a cache entry without hashing the bytes it copies, and the kernel does not check a compiled file
     again when a proof loads it: a valid Statements.vo of a weaker statement put in a restored cache made doctored
     proofs pass check-units.sh (27 October 02:22Z).  And a cache that one unit's check writes and another's reads lets
-    the first change the second's result.  So no workflow restores or saves a dune cache, and check-units.sh runs dune
-    with its cache off, in a container of each unit's own."""
+    the first change the second's result.  So no workflow restores or saves a dune cache, no CI job uses a shared dune
+    store, and check-units.sh runs dune with its cache off, in a container of each unit's own; each container of the
+    checker image runs at the stack `oft check` asks for."""
     CACHE = "actions/cache@5a3ec84eff668545956fd18022155c47e93e2684"
     RESTORE = "actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684"
     SAVE = "actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684"
@@ -806,6 +880,27 @@ class NoDuneCache(unittest.TestCase):
         self.assertIn("-e DUNE_CACHE=disabled", script)
         self.assertNotIn("XDG_CACHE_HOME", script)
         self.assertNotIn("CACHE:", script)
+
+    def test_every_checker_container_runs_at_the_stack_oft_check_asks_for(self):
+        """The container's hard limit is what `oft check` can raise its soft limit to (check.py, raise_stack_limit:
+        min(hard, STACK_NEEDED)), so a checker container below STACK_NEEDED caps every compile -- plugin-hostd's
+        fuzz_command overflows at 1 GiB.  So check-units.sh names the stack, soft and hard, on every container of the
+        checker image: each unit check's `docker run`, and the facts run, whose image is the checker's when there are
+        units (the checker arm of `facts_image`).  The two are held to each other here rather than written down
+        twice."""
+        with open(os.path.join(REPO, "tools", "oft", "ci", "check-units.sh")) as f:
+            script = f.read()
+        self.assertEqual(check.STACK_NEEDED, 2 << 30)
+        limit = "--ulimit stack=%d:%d" % (check.STACK_NEEDED, check.STACK_NEEDED)
+        self.assertIn("stack=(%s)" % limit, script)
+        runs = re.findall(r'docker run [^\n]*(?:\\\n[^\n]*)*"\$checker"', script)
+        self.assertTrue(runs, "no unit check's docker run of the checker image")
+        arms = [a for a in re.findall(r'\bfacts_image=\(([^)\n]*)\)', script) if a.endswith('"$checker"')]
+        self.assertEqual(len(arms), 1, "no single checker arm of facts_image")
+        self.assertLess(script.index("stack=("), script.index("facts_image=("), "the stack is defined after its use")
+        for run in runs + arms:
+            with self.subTest(run=run[:80]):
+                self.assertIn('"${stack[@]}"', run)
 
 
 class Paths(unittest.TestCase):
@@ -1026,13 +1121,11 @@ class Paths(unittest.TestCase):
             self.assertEqual(t.lint(changed=changed, pr_kind="maintainer"), [])
 
     def test_the_elf_fixture_of_the_tools_tests(self):
-        """The four small ELF files test_symbols reads, built as tools/oft/tests/fixtures/elf/README.md says; any
-        other ELF file is still a finding, beside them and under tools/oft/tests/ too."""
+        """The small ELF files test_symbols reads, built as tools/oft/tests/fixtures/elf/README.md says; any other ELF
+        file is still a finding, beside them and under tools/oft/tests/ too."""
         with tree() as t:
-            t.write("tools/oft/tests/fixtures/elf/two.stripped", "\x7fELF\x02\x01\x01")
-            t.write("tools/oft/tests/fixtures/elf/two.unstripped", "\x7fELF\x02\x01\x01")
-            t.write("tools/oft/tests/fixtures/elf/computed_goto_global.elf", "\x7fELF\x02\x01\x01")
-            t.write("tools/oft/tests/fixtures/elf/computed_goto_biased.elf", "\x7fELF\x02\x01\x01")
+            for rel in lint.ELF_FIXTURES:
+                t.write(rel, "\x7fELF\x02\x01\x01")
             t.write("tools/oft/tests/fixtures/elf/three.stripped", "\x7fELF\x02\x01\x01")
             t.write("tools/oft/tests/fixtures/tree/a.out", "\x7fELF\x02\x01\x01")
             self.assertEqual([str(f) for f in t.lint() if "an ELF file" in f.msg],
@@ -1086,6 +1179,7 @@ class Paths(unittest.TestCase):
         ("projects/*/unpatched.yaml", 64 << 10),
         ("proofs/*/*/*/classifier/**", 1 << 20),
         ("projects/*/*/proofs/*/classifier/**", 1 << 20),
+        ("projects/*/*/proofs/provenance/evidence/instances/*", 64 << 20),
     ]
 
     def test_each_file_s_size_cap(self):
@@ -1630,6 +1724,427 @@ class Schemas(unittest.TestCase):
             self.assertTrue(any("does not name" in f.msg for f in t.lint()))
 
 
+class PrivateHarnesses(unittest.TestCase):
+    """A project.yaml's private_harnesses (lint.check_private_harnesses; K9 of Dispatch issue OSSV-424): the fuzz
+    targets of the project that no public repository may hold.  The field is a list, given one time.  Each name is of
+    the form that every reader of the held entries takes ([a-z0-9][a-z0-9_-]*), has 8 or more characters, is given one
+    time, is no harness of another project, and is in the name of no other harness and of no project by the bare form
+    of the match rule (decision 1 (a)).  Its Rocq module is not the module of a kept harness of its own project when
+    case is ignored (decision 1 (a)).  Neither the cut nor the scanners find it, in any case, in what the release keeps:
+    the name, the entry, the path or the Rocq module of a fuzz target that no field holds, or the name or the path of
+    a project (rule 5 of lint.check_private_harnesses, decision 1).  Each such refusal tells a person to hold such a
+    harness with its whole project (lint.HOLD_WHOLE).  A field that holds every fuzz target of its project that builds
+    is refused too, unless the project is `release: private` (decision 1 (b)), and its message tells a person to hold
+    the whole project with `release: private` (lint.HOLD_PROJECT)."""
+
+    ZLIB, JSON = "projects/zlib/project.yaml", "projects/json/project.yaml"
+    INSIDE = ("which the scanners also find in the name of %s: they match the bare name of a held harness wherever no "
+              "letter, digit or `_` is next to it, so they would also hold back the files of that name")
+    TWIN = ("whose Rocq module zlib.held_target is also the module of %s when case is ignored: the cut looks for the "
+            "module of each held harness in every kept file and ignores case, so it would stop on the files of that "
+            "kept harness")
+    EVERY = ("private_harnesses holds every fuzz target of zlib that publishes a build (%s), so the cut would keep no "
+             "published binary of zlib and would stop (\"'assets' with every binary withheld\"). " + lint.HOLD_PROJECT)
+
+    def hold(self, t, **fields):
+        """Give each project of FIELDS its private_harnesses."""
+        for project, field in fields.items():
+            edit(t, "projects/%s/project.yaml" % project, lambda y, field=field: y.update(private_harnesses=field))
+
+    def lint_held(self, t, **fields):
+        """hold, then lint t: (where, message) of each finding that names the field, the schema's findings among them,
+        sorted.  Each is of the rule schema."""
+        self.hold(t, **fields)
+        found = [f for f in t.lint() if "private_harnesses" in f.msg]
+        self.assertEqual({f.rule for f in found} - {"schema"}, set(), [str(f) for f in found])
+        return sorted((f.where, f.msg) for f in found)
+
+    def refused(self, name, why):
+        return "private_harnesses names %r, %s. %s" % (name, why, lint.HOLD_WHOLE)
+
+    def outside(self, name):
+        return self.refused(name, "which is not of the form [a-z0-9][a-z0-9_-]* that every reader of the held entries "
+                                  "takes")
+
+    def keep_a_json_target(self, t, name="fuzzer-parse_cbor"):
+        """Give json a second fuzz target that builds, name, which json does not hold: a copy of fuzzer-parse_bjdata
+        under its own name (its folder, its source file and its entry in project.yaml), counted and rendered."""
+        old, folder = "fuzzer-parse_bjdata", "projects/json/" + name
+        shutil.copytree(t.path("projects/json", old), t.path(folder))
+        os.rename(t.path(folder, "source", old + ".cpp"), t.path(folder, "source", name + ".cpp"))
+        rel = folder + "/harness.yaml"
+        t.write(rel, t.read(rel).replace(old, name).replace(names.ident(old), names.ident(name)))
+        edit(t, self.JSON, lambda y: y["harnesses"].append({"name": name, "status": "included", "origin": "upstream"}))
+        recount(t)
+        self.assertEqual(t.generate(), 0, t.last_output)
+
+    def zlib_target(self, t, name):
+        """Give zlib a fuzz target, name, a copy of checksum_fuzzer (test_release_tree.copy_harness) whose Rocq module
+        is the one its name gives."""
+        copy_harness(t, name)
+        edit(t, "projects/zlib/%s/harness.yaml" % name,
+             lambda y: y.update(rocq=names.rocq_harness(names.NAMESPACE_DEFAULT, "zlib", name)))
+
+    def test_no_field_and_a_well_formed_field_pass(self):
+        """The negative control.  zlib holds its own folder with a harness.yaml, its own entry with no folder, a
+        harness with no files yet, and a name of exactly 8 characters; json holds its own fuzz target and keeps
+        another one that builds (keep_a_json_target)."""
+        with tree() as t:
+            self.assertEqual(self.lint_held(t), [])
+            self.keep_a_json_target(t)
+            self.hold(t, zlib=["checksum_fuzzer", "minigzip_fuzzer", "held_target", "held_tgt"],
+                      json=["fuzzer-parse_bjdata"])
+            self.assertEqual([str(f) for f in t.lint()], [])
+
+    def test_a_field_that_is_not_a_list_is_refused(self):
+        """The schema refuses the shape, so facts.load does not load project.yaml: the rule reads the field from the
+        file and gives the way out."""
+        with tree() as t:
+            self.assertEqual(self.lint_held(t, zlib="held_target"), [
+                (self.ZLIB, "private_harnesses is 'held_target', not a list of harness names. " + lint.HOLD_WHOLE),
+                (self.ZLIB, "project.private_harnesses: expected a list")])
+
+    def test_a_name_outside_the_form_that_every_reader_takes_is_refused(self):
+        """The schema's harness-name takes each of these three, and no reader of the held entries takes one."""
+        names = ["Held_Target", "held.target", "held+target"]
+        with tree() as t:
+            self.assertEqual(self.lint_held(t, zlib=names), sorted((self.ZLIB, self.outside(n)) for n in names))
+
+    def test_a_name_that_is_no_harness_name_is_refused_with_the_way_out(self):
+        """No harness-name: the schema refuses it, and the rule reads the field from the file that facts.load left."""
+        with tree() as t:
+            self.assertEqual(self.lint_held(t, zlib=["held target"]), [
+                (self.ZLIB, self.outside("held target")),
+                (self.ZLIB, "project.private_harnesses[0]: 'held target' is not a valid harness-name")])
+
+    def test_a_name_of_fewer_than_8_characters_is_refused(self):
+        with tree() as t:
+            self.assertEqual(self.lint_held(t, zlib=["held_tg", "held_tgt"]), [
+                (self.ZLIB, self.refused("held_tg", "which has fewer than 8 characters: the scanners look for the bare "
+                                                    "name in every published file, and a short name also matches text "
+                                                    "that does not name the harness"))])
+
+    def test_a_name_given_more_than_one_time_is_refused(self):
+        with tree() as t:
+            self.assertEqual(self.lint_held(t, zlib=["held_target", "held_tgt", "held_target"]), [
+                (self.ZLIB, "private_harnesses names 'held_target' more than one time: name each held harness one "
+                            "time. " + lint.HOLD_WHOLE)])
+
+    def test_a_name_that_is_a_harness_of_another_project_is_refused(self):
+        """checksum_fuzzer is a folder of zlib with a harness.yaml, and minigzip_fuzzer an entry of zlib's project.yaml
+        with no folder: zlib may hold both, and json neither, since the scanners match a held harness by its bare
+        name."""
+        other = ("which is also a harness of zlib: the scanners match a held harness by its bare name, so they would "
+                 "also hold back the files of that harness")
+        with tree() as t:
+            self.assertEqual(self.lint_held(t, zlib=["checksum_fuzzer", "minigzip_fuzzer"]), [])
+            self.assertEqual(self.lint_held(t, json=["checksum_fuzzer", "minigzip_fuzzer"]),
+                             [(self.JSON, self.refused(n, other)) for n in ("checksum_fuzzer", "minigzip_fuzzer")])
+
+    def test_a_name_that_the_scanners_find_in_the_name_of_another_harness_is_refused(self):
+        """Decision 1 (a): the bare form of the match rule (disclosure.held_match) finds parse_bjdata after the `-` of
+        json's folder fuzzer-parse_bjdata, so the scanners, and the cut, would take that kept fuzz target for the one
+        that zlib holds.  A harness of the name's own project counts too: held_target is in held_target-v2.  The
+        negative control: `_` continues a name, so held_target is not in held_target_v2, and zlib may hold it."""
+        with tree() as t:
+            self.assertEqual(self.lint_held(t, zlib=["parse_bjdata"]), [
+                (self.ZLIB, self.refused("parse_bjdata", self.INSIDE % "harness json/fuzzer-parse_bjdata"))])
+        for sibling, want in (("held_target_v2", []), ("held_target-v2", [
+                (self.ZLIB, self.refused("held_target", self.INSIDE % "harness zlib/held_target-v2"))])):
+            with self.subTest(sibling=sibling), tree() as t:
+                self.zlib_target(t, sibling)
+                self.assertEqual(self.lint_held(t, zlib=["held_target"]), want)
+
+    def test_a_name_that_the_scanners_find_in_an_entry_with_no_folder_is_refused(self):
+        """Decision 1 (a) reads each harness name of a project, its project.yaml entries with no folder among them:
+        zlib lists held_target-v2 (not-included, no folder) beside the held_target it holds."""
+        with tree() as t:
+            edit(t, self.ZLIB, lambda y: y["harnesses"].append(
+                {"name": "held_target-v2", "status": "not-included", "reason": "not-attempted"}))
+            self.assertEqual(self.lint_held(t, zlib=["held_target"]), [
+                (self.ZLIB, self.refused("held_target", self.INSIDE % "harness zlib/held_target-v2"))])
+
+    def test_a_kept_fuzz_target_whose_rocq_module_is_the_held_ones_is_refused(self):
+        """Decision 1 (a): held_target has no files yet, and zlib keeps HELD_TARGET, held-target, held.target or
+        held+target.  names.ident gives each of them the Rocq module zlib.held_target when case is ignored
+        (OssFuzzTheorems.zlib.<ident>), and the cut's needle of held fuzz target zlib/held_target finds that module
+        case-folded, so the cut would stop on the kept fuzz target's Statements.v.  The match rule finds none of these
+        names.  A kept entry of project.yaml with no folder counts too.  The negative control: held_target_v2, whose
+        module is another one."""
+        for sibling, refused in (("HELD_TARGET", True), ("held-target", True), ("held.target", True),
+                                 ("held+target", True), ("held_target_v2", False)):
+            with self.subTest(sibling=sibling), tree() as t:
+                self.zlib_target(t, sibling)
+                self.assertEqual(self.lint_held(t, zlib=["held_target"]),
+                                 [(self.ZLIB, self.refused("held_target", self.TWIN % ("harness zlib/" + sibling)))]
+                                 if refused else [])
+        with tree() as t:
+            edit(t, self.ZLIB, lambda y: y["harnesses"].append(
+                {"name": "Held-Target", "status": "not-included", "reason": "not-attempted"}))
+            self.assertEqual(self.lint_held(t, zlib=["held_target"]), [
+                (self.ZLIB, self.refused("held_target", self.TWIN % "harness zlib/Held-Target"))])
+
+    def test_a_kept_fuzz_target_whose_module_has_the_leading_digit_prefix_is_refused(self):
+        """Decision 1 (a): names.ident puts `h_` before a name that starts with a digit, so zlib holding 1url_fuzzer
+        (module zlib.h_1url_fuzzer) beside h_1url_fuzzer or H-1URL_FUZZER, and zlib holding h_1url_fuzzer beside
+        1url_fuzzer, give one module, and the cut would stop on the kept fuzz target's files.  The negative control:
+        h_1url_fuzzer2, whose module is another one."""
+        for held, sibling, refused in (("1url_fuzzer", "h_1url_fuzzer", True), ("1url_fuzzer", "H-1URL_FUZZER", True),
+                                       ("h_1url_fuzzer", "1url_fuzzer", True),
+                                       ("1url_fuzzer", "h_1url_fuzzer2", False)):
+            with self.subTest(held=held, sibling=sibling), tree() as t:
+                self.zlib_target(t, sibling)
+                twin = self.TWIN.replace("zlib.held_target", "zlib.h_1url_fuzzer") % ("harness zlib/" + sibling)
+                self.assertEqual(self.lint_held(t, zlib=[held]),
+                                 [(self.ZLIB, self.refused(held, twin))] if refused else [])
+
+    STOPS = ("which the cut or the scanners find in the name, the path or the Rocq module of %s: the cut looks for the "
+             "held entry and its module in every kept file, and the scanners look for the held entry in lower case, so "
+             "each would stop every publication on the files of that name")
+
+    def test_a_name_in_the_rocq_module_of_another_projects_fuzz_target_is_refused(self):
+        """Decision 1 (the architect, 2026-11-16T04:04Z): names.ident gives json's kept url-fuzzer, url.fuzzer,
+        url+fuzzer and URL-FUZZER the module OssFuzzTheorems.json.url_fuzzer (URL_FUZZER), which their rendered files
+        hold.  The cut's bare form of zlib/url_fuzzer finds url_fuzzer there between `.` and the end, and the scanners
+        find it in lower case in the last one too, so each stops every publication.  The negative control:
+        url-fuzzer2, whose module continues the name."""
+        for sibling, refused in (("url-fuzzer", True), ("url.fuzzer", True), ("url+fuzzer", True),
+                                 ("URL-FUZZER", True), ("url-fuzzer2", False)):
+            with self.subTest(sibling=sibling), tree() as t:
+                self.keep_a_json_target(t, sibling)
+                self.assertEqual(self.lint_held(t, zlib=["url_fuzzer"]),
+                                 [(self.ZLIB, self.refused("url_fuzzer", self.STOPS % ("harness json/" + sibling)))]
+                                 if refused else [])
+
+    def test_a_kept_name_that_holds_the_held_module_is_refused(self):
+        """Decision 1: zlib keeps an entry zlib.Url_Fuzzer or zlib.url-fuzzer (no folder).  The cut's needle of the
+        module of zlib/url_fuzzer, case folded with `-` read as `_`, finds it in the files that name the entry, and the
+        cut stops.  The negative control: zlib.url.fuzzer."""
+        for sibling, refused in (("zlib.Url_Fuzzer", True), ("zlib.url-fuzzer", True), ("zlib.url.fuzzer", False)):
+            with self.subTest(sibling=sibling), tree() as t:
+                edit(t, self.ZLIB, lambda y, s=sibling: y["harnesses"].append(
+                    {"name": s, "status": "not-included", "reason": "not-attempted"}))
+                self.assertEqual(self.lint_held(t, zlib=["url_fuzzer"]),
+                                 [(self.ZLIB, self.refused("url_fuzzer", self.STOPS % ("harness zlib/" + sibling)))]
+                                 if refused else [])
+
+    def test_a_name_that_the_scanners_find_in_another_case_is_refused(self):
+        """Decision 1: both ossv-binscan --held match a held entry in lower case, so json keeping PARSE_CBOR_X stops
+        the gate when zlib holds parse_cbor_x, although the cut's case-sensitive held_match passes it.  The negative
+        control: json keeping PARSE_CBOR_X2, which continues the name."""
+        for sibling, refused in (("PARSE_CBOR_X", True), ("PARSE_CBOR_X2", False)):
+            with self.subTest(sibling=sibling), tree() as t:
+                self.keep_a_json_target(t, sibling)
+                self.assertEqual(self.lint_held(t, zlib=["parse_cbor_x"]),
+                                 [(self.ZLIB, self.refused("parse_cbor_x", self.STOPS % ("harness json/" + sibling)))]
+                                 if refused else [])
+
+    def test_a_name_that_is_the_name_of_a_project_is_refused(self):
+        """Decision 1 (a): the path of each file of a project holds the project's name between two `/`, so the
+        scanners would hold back the whole project imagemagick for a held fuzz target named imagemagick, of another
+        project or of imagemagick itself."""
+        refused = self.refused("imagemagick", self.INSIDE % "project imagemagick")
+        with tree() as t:
+            self.assertEqual(self.lint_held(t, zlib=["imagemagick"], imagemagick=["imagemagick"]),
+                             [("projects/imagemagick/project.yaml", refused), (self.ZLIB, refused)])
+
+    def test_a_field_that_holds_every_fuzz_target_that_builds_is_refused(self):
+        """Decision 1 (b): zlib's fuzz targets that build are api-driver and checksum_fuzzer, two folders with
+        published builds.  minigzip_fuzzer is an entry that does not build (not-included).  A field that holds both
+        leaves zlib no published binary, whatever it does with minigzip_fuzzer, and the cut stops on zlib's 'assets'.
+        A build that is withheld is not published: with every build of api-driver withheld, checksum_fuzzer is the one
+        fuzz target of zlib that publishes a build.  The negative control: zlib holds checksum_fuzzer and keeps
+        api-driver."""
+        with tree() as t:
+            for field in (["checksum_fuzzer", "api-driver"], ["api-driver", "checksum_fuzzer", "minigzip_fuzzer"]):
+                with self.subTest(field=field):
+                    self.assertEqual(self.lint_held(t, zlib=field),
+                                     [(self.ZLIB, self.EVERY % "api-driver, checksum_fuzzer")])
+            self.assertEqual(self.lint_held(t, zlib=["checksum_fuzzer"]), [])
+            edit(t, "projects/zlib/api-driver/harness.yaml",
+                 lambda y: [b.update(withheld="not-yet-published") for b in y["builds"].values()])
+            self.assertEqual(self.lint_held(t, zlib=["checksum_fuzzer"]), [(self.ZLIB, self.EVERY % "checksum_fuzzer")])
+
+    def test_a_release_private_project_may_hold_every_fuzz_target_that_builds(self):
+        """Decision 1 (b) refuses only a project that is not `release: private`.  The cut holds a `release: private`
+        project back whole, so the refusal would ask for what the project already has.  zlib says `release:
+        private` and holds both of its fuzz targets that build, with minigzip_fuzzer or without it."""
+        with tree() as t:
+            edit(t, self.ZLIB, lambda y: y.update(release="private"))
+            for field in (["checksum_fuzzer", "api-driver"], ["api-driver", "checksum_fuzzer", "minigzip_fuzzer"]):
+                with self.subTest(field=field):
+                    self.assertEqual(self.lint_held(t, zlib=field), [])
+
+    def test_the_field_given_two_times_is_refused(self):
+        with tree() as t:
+            t.write(self.ZLIB, "private_harnesses: [held_target]\n" * 2, "a")
+            found = self.lint_held(t)
+            self.assertEqual([where for where, _ in found], [self.ZLIB])
+            self.assertRegex(found[0][1], r" duplicate key 'private_harnesses' at line \d+\Z")
+
+    def test_the_generated_list_is_internal(self):
+        """tools/publish/private-harnesses.txt, which `oft generate` renders from the fields, is of the internal
+        class (tools/publish/**): no release carries it."""
+        self.assertEqual([c for c, _, _ in paths.classify("tools/publish/private-harnesses.txt")], ["internal"])
+
+
+class InternalEnrollment(unittest.TestCase):
+    """An enrollment through this repository (R12 and K12 of Dispatch issue OSSV-424).  A project with a held fuzz
+    target (private_harnesses) names the port's internal copy in build.oss_verify.repository of its project.yaml and in
+    port.repository of each build record, and its approvals.yaml entry names its facts pull request on this
+    repository: `oft generate` and `oft lint` take it.  Both refuse the internal copy for a project that holds no fuzz
+    target and that is not held back whole (no finding holds it back whole, and its project.yaml does not say
+    `release: private`).  `oft lint` refuses the port repository `none` in the internal tree (a tree with
+    tools/publish/) and takes it in a tree without tools/publish/ (the cut)."""
+
+    ZLIB = "projects/zlib/project.yaml"
+    HELD = "api-driver"   # held: zlib's other fuzz target, checksum_fuzzer, publishes
+    UNITS = ("zlib/api-driver", "zlib/checksum_fuzzer")
+    # built from INTERNAL: no kept file spells the internal copy's full name as one literal
+    FACTS_PR = "https://github.com/" + INTERNAL + "/pull/41"
+    PORT_PR = "https://github.com/theorem-labs/oss-verify/pull/41"
+    INTERNAL_PORT = ("build.oss_verify.repository is %s: only a project held back whole (a finding holds it, or it is "
+                     "release: private), or a project with a held fuzz target (private_harnesses), builds from %s"
+                     % (INTERNAL, INTERNAL))
+    # rules._approvals' refusal of a facts pull request on this repository, for the fuzz target of an entry
+    FACTS_PR_REFUSED = ("approvals.fuzz_targets[0]: %%s: enrollment.pull_request is a pull request on %s: only a "
+                        "project held back whole (a finding holds it, or it is release: private), or a project with a "
+                        "held fuzz target (private_harnesses), enrolls through that repository" % INTERNAL)
+
+    def records(self, where=layout.OLD):
+        """The build record of each fuzz target of UNITS, in the layout where."""
+        return [layout.record_path(*u.split("/"), where) for u in self.UNITS]
+
+    def enroll(self, t, repository=INTERNAL, held=True, publish=True):
+        """zlib as an enrollment through repository writes it: build.oss_verify and the port of each fuzz target's
+        build record (old layout) name it, and with held, private_harnesses holds HELD.  With publish, t has
+        tools/publish/, as the internal tree has."""
+        port_built(t, "zlib")
+
+        def change(y):
+            y["build"]["oss_verify"]["repository"] = repository
+            if held:
+                y["private_harnesses"] = [self.HELD]
+        edit(t, self.ZLIB, change)
+        for rel in self.records():
+            t.write(rel, "schema: oss-verify-proofs build record v1\nport:\n  repository: %s\n  commit: %s\n"
+                         "  path: projects/zlib\n" % (repository, "d" * 40))
+        if publish:
+            os.makedirs(t.path("tools", "publish"))
+
+    def approve(self, t, unit, pull_request):
+        """approvals.yaml with one enrollment entry, of unit, whose merge is of pull_request."""
+        t.put_yaml("approvals.yaml", {"schema": "oss-fuzz-theorems/approvals/1", "fuzz_targets": [{
+            "fuzz_target": unit, "statements": ["plain_halts"], "approved_by": "approver", "date": "2026-10-29",
+            "origin": "enrollment", "enrollment": {"pull_request": pull_request, "merged_by": "approver",
+                                                   "merged_at": "2026-10-29T17:04:11Z", "merge_commit": "5e" * 20}}]})
+
+    def test_a_project_with_a_held_fuzz_target_passes_generate_and_lint(self):
+        """In either layout of the build records.  `oft generate` writes the held fuzz target into
+        tools/publish/private-harnesses.txt, and the entry of the published fuzz target names the facts pull
+        request."""
+        for where in layout.LAYOUTS:
+            with self.subTest(layout=where), tree() as t:
+                self.enroll(t)
+                self.approve(t, "zlib/checksum_fuzzer", self.FACTS_PR)
+                if where == layout.NEW:
+                    self.assertEqual(port.port_worktree(t.root, out=io.StringIO()), 0)
+                self.assertEqual(sorted(facts.load(t.root).records_at.values()), self.records(where))
+                self.assertEqual(t.generate(), 0, t.last_output)
+                self.assertEqual(t.read(generate.PRIVATE_HARNESSES), "zlib/%s\n" % self.HELD)
+                self.assertEqual(t.generate(check=True), 0, t.last_output)
+                self.assertEqual([str(f) for f in t.lint()], [])
+
+    def test_a_project_that_holds_no_fuzz_target_may_not_name_the_internal_copy(self):
+        """The negative control: zlib holds no fuzz target, and no finding holds it back whole.  `oft generate` stops
+        on the rule (rules._held).  `oft lint` gives the rule, and a private-data finding on each line that names the
+        internal copy.  A finding that holds zlib back whole allows the same lines, and so does `release: private` in
+        zlib's project.yaml (rules.internal_port_projects)."""
+        with tree() as t:
+            self.enroll(t, held=False)
+            self.assertEqual(t.generate(), 1, t.last_output)
+            self.assertIn("%s: %s" % (self.ZLIB, self.INTERNAL_PORT), t.last_output)
+            found = t.lint()
+            self.assertIn(("schema", self.ZLIB, self.INTERNAL_PORT), [(f.rule, f.where, f.msg) for f in found])
+            self.assertEqual(sorted(f.where.split(":")[0] for f in found if f.rule == "private-data"),
+                             sorted([self.ZLIB] + self.records()))
+        with tree() as t:
+            add_findings(t)
+            self.enroll(t, held=False)
+            self.assertEqual([str(f) for f in t.lint() if f.rule == "private-data" or "build.oss_verify" in f.msg], [])
+        with tree() as t:
+            self.enroll(t, held=False)
+            edit(t, self.ZLIB, lambda y: y.update(release="private"))
+            self.assertEqual([str(f) for f in t.lint() if f.rule == "private-data" or "build.oss_verify" in f.msg], [])
+
+    def test_another_field_of_a_build_record_may_not_name_the_internal_copy(self):
+        """Only port.repository: the same name under another key of the record is a private-data finding, on that
+        line alone."""
+        with tree() as t:
+            self.enroll(t)
+            rel = self.records()[0]
+            t.write(rel, "upstream:\n  repository: %s\n" % INTERNAL, "a")
+            self.assertEqual([(f.rule, f.where) for f in t.lint()], [("private-data", rel + ":7")])
+
+    def test_the_facts_pull_request_is_taken_only_for_a_project_that_may_build_from_the_internal_copy(self):
+        """The schema takes a pull request of the OSS Verify port or of this repository (schema.py
+        enrollment-pull-request), and no other URL.  The rules take this repository's only for a project of
+        rules.internal_port_projects (rules._approvals): zlib holds a fuzz target, and json holds none and is not held
+        back whole."""
+        why = self.FACTS_PR_REFUSED % "json/fuzzer-parse_bjdata"
+        with tree() as t:
+            self.enroll(t)
+            for unit, pull_request in (("zlib/checksum_fuzzer", self.FACTS_PR), ("zlib/checksum_fuzzer", self.PORT_PR),
+                                       ("json/fuzzer-parse_bjdata", self.PORT_PR)):
+                with self.subTest(unit=unit, pull_request=pull_request):
+                    self.approve(t, unit, pull_request)
+                    self.assertEqual([str(f) for f in t.lint()], [])
+            self.approve(t, "json/fuzzer-parse_bjdata", self.FACTS_PR)
+            self.assertEqual([(f.rule, f.where, f.msg) for f in t.lint()], [("schema", "approvals.yaml", why)])
+            # the public repository, a page of the pull request, a longer repository name and an issue
+            for url in ("https://github.com/theorem-labs/oss-verify-proofs/pull/41", self.FACTS_PR + "/files",
+                        "https://github.com/" + INTERNAL + "-x/pull/41",
+                        "https://github.com/" + INTERNAL + "/issues/41"):
+                with self.subTest(url=url):
+                    self.approve(t, "zlib/checksum_fuzzer", url)
+                    self.assertEqual([(f.rule, f.where, f.msg) for f in t.lint() if f.where == "approvals.yaml"], [
+                        ("schema", "approvals.yaml", "approvals.fuzz_targets[0].enrollment.pull_request: %r is not a "
+                                                     "valid enrollment-pull-request" % url)])
+
+    def test_the_facts_pull_request_is_taken_for_a_project_held_back_whole(self):
+        """Decision 19: rules._approvals takes this repository's pull request for each project of
+        rules.internal_port_projects, the set that also decides which project builds from the internal copy.  zlib
+        holds no fuzz target.  Its entry passes when its project.yaml says `release: private`, and when a finding holds
+        it back whole.  The negative control: the same entry is refused while zlib is public and has no hold."""
+        def refusals(t):
+            return [(f.rule, f.msg) for f in t.lint() if f.where == "approvals.yaml"]
+        with tree() as t:
+            self.enroll(t, held=False)
+            self.approve(t, "zlib/checksum_fuzzer", self.FACTS_PR)
+            self.assertEqual(refusals(t), [("schema", self.FACTS_PR_REFUSED % "zlib/checksum_fuzzer")])
+            edit(t, self.ZLIB, lambda y: y.update(release="private"))
+            self.assertEqual(refusals(t), [])
+        with tree() as t:
+            add_findings(t)
+            self.enroll(t, held=False)
+            self.approve(t, "zlib/checksum_fuzzer", self.FACTS_PR)
+            self.assertEqual(refusals(t), [])
+
+    def test_the_port_repository_none_is_refused_in_the_internal_tree_and_taken_in_the_cut(self):
+        """`none` is what the cut writes for the internal copy of a project with a held fuzz target (with no
+        private_harnesses and no tools/publish/ left): the schema takes it, and lint refuses it only where
+        tools/publish/ is, in project.yaml and in each build record."""
+        with tree() as t:
+            self.enroll(t, repository="none")
+            self.assertEqual(sorted((f.rule, f.where, f.msg) for f in t.lint()),
+                             sorted([("schema", self.ZLIB, "build.oss_verify.repository " + lint.NO_PORT)]
+                                    + [("schema", rel, "port.repository " + lint.NO_PORT) for rel in self.records()]))
+        with tree() as t:
+            self.enroll(t, repository="none", held=False, publish=False)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual([str(f) for f in t.lint()], [])
+
+
 class Namespace(unittest.TestCase):
     """release.yaml's `namespace` and `opam_stem` (OSSV-162): their forms, and the theory each harness.yaml states."""
 
@@ -1661,6 +2176,80 @@ class Namespace(unittest.TestCase):
                     t.write("release.yaml", saved)
 
 
+class WitnessRefutes(unittest.TestCase):
+    """A witness is accepted only against a statement it can refute: one run refutes a halts or an agreement
+    statement, never a bound or a decidability statement; and a run that refuses a memory request refutes only a
+    statement that lets the environment refuse any request (may-fail)."""
+
+    HARNESS = "projects/zlib/checksum_fuzzer/harness.yaml"
+    REFUSED_ABORT = {"build": "plain", "input_hex": "01000000000000", "refused": {"call": "mmap", "position": 3,
+                                                                                 "bytes": 4096},
+                     "outcome": "abort", "after": "uncaught-bad-alloc", "runner": "qemu-riscv64 10.0.11"}
+
+    def witness_findings(self, t, name, witness, **fields):
+        """Give statement `name` of the fixture's checksum_fuzzer this witness (and these fields), render T (a
+        tree(render=False), so this render is its first) and return the lint findings against that statement."""
+        y = t.yaml(self.HARNESS)
+        st = y["statements"][name]
+        st.update(fields, status="witnessed-false", witness=witness)
+        st.pop("binds_checks", None)
+        t.put_yaml(self.HARNESS, y)
+        t.generate()
+        return [f.msg for f in t.lint() if "statements.%s" % name in str(f)]
+
+    def test_a_refusal_is_refused_against_a_budget_statement(self):
+        with tree(render=False) as t:
+            found = self.witness_findings(t, "plain_halts", self.REFUSED_ABORT)
+        self.assertTrue(any("refuses a memory request, which a statement read budget" in m for m in found), found)
+
+    def test_a_refusal_is_refused_against_an_alloc_forced_only_statement(self):
+        with tree(render=False) as t:
+            found = self.witness_findings(t, "asan_agrees", self.REFUSED_ABORT, reading="alloc-forced-only")
+        self.assertTrue(any("refuses a memory request, which a statement read alloc-forced-only" in m for m in found),
+                        found)
+
+    def test_no_witness_refutes_a_bound_or_a_decidability_statement(self):
+        nothing_refused = {k: v for k, v in self.REFUSED_ABORT.items() if k not in ("refused", "after")}
+        for name, kind in (("asan_disagrees_at_most", "bound"), ("asan_agreement_decidable", "decidability")):
+            for witness in (self.REFUSED_ABORT, nothing_refused):
+                with tree(render=False) as t:
+                    found = self.witness_findings(t, name, witness)
+                self.assertTrue(any("a witness is one run, which refutes no %s statement" % kind in m for m in found),
+                                (name, witness, found))
+
+    def test_the_witnesses_a_statement_can_refute_stay_accepted(self):
+        """A refusal and an abort against a may-fail agreement statement; and, with nothing refused, a trap against an
+        alloc-forced-only agreement statement and an exit against a budget halts statement that leaves its status
+        out."""
+        trap = {"build": "asan", "input_hex": "01000000000000", "outcome": "trap", "runner": "qemu-riscv64 10.0.11"}
+        exit78 = {"build": "plain", "input_hex": "01000000000000", "outcome": "exit", "exit": 78,
+                  "runner": "qemu-riscv64 10.0.11"}
+        for name, witness, fields in (("asan_agrees", self.REFUSED_ABORT, {}),
+                                      ("asan_agrees", trap, {"reading": "alloc-forced-only"}),
+                                      ("plain_halts", exit78, {})):
+            with tree(render=False) as t:
+                self.assertEqual(self.witness_findings(t, name, witness, **fields), [], (name, witness))
+
+    def test_every_published_witness_shape_stays_accepted(self):
+        """The shapes of the witnesses this repository publishes (libarchive_xar_fuzzer: three may-fail agreement
+        statements read with abort as SIGABRT, and the plain and UBSan may-fail halts statements, each a refused mmap
+        then an abort of the build it names) are accepted, all five at once."""
+        run = {"input_hex": "00000000000078617221001c00010000000000000000000000000000000000000000",
+               "refused": {"call": "mmap", "position": 6, "bytes": 16384}, "outcome": "abort",
+               "after": "uncaught-bad-alloc", "runner": "qemu-riscv64 10.0.11"}
+        with tree() as t:
+            y = t.yaml(self.HARNESS)
+            for name, build, fields in (("asan_agrees", "plain", {"abort": "signal"}),
+                                        ("ubsan_agrees", "plain", {"abort": "signal"}),
+                                        ("asan_ubsan_agrees", "plain", {"abort": "signal"}),
+                                        ("plain_halts_may_fail", "plain", {}),
+                                        ("ubsan_halts_may_fail", "ubsan", {})):
+                y["statements"][name].update(fields, status="witnessed-false", witness=dict(run, build=build))
+            t.put_yaml(self.HARNESS, y)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual([str(f) for f in t.lint()], [])
+
+
 class FactsPool(unittest.TestCase):
     def test_a_pool_loads_the_tree_a_serial_load_does_errors_in_the_same_order(self):
         with tree() as t:
@@ -1680,7 +2269,7 @@ class PerFileScope(unittest.TestCase):
     when a file that every file's verdict reads differs from it; the rules over the whole tree run as they always do."""
     MAIL = "mail someone" + "@" + "example.com"
     HOST = "see /" + "data/someone/x"
-    PER_FILE_RULES = ("private-data", "links", "proofs", "licence", "contract-literals")
+    PER_FILE_RULES = ("private-data", "links", "proofs", "licence", "contract-literals", "read-from")
 
     def commit(self, t):
         """Make t a git checkout of one commit, HEAD: the base that --changed-only compares with."""
@@ -2265,6 +2854,39 @@ class PrivateData(unittest.TestCase):
             self.assertEqual(sorted(f.rule for f in t.lint() if f.rule in ("private-data", "links")),
                              ["links", "private-data"])
 
+    def test_the_huffman_licence_text_is_verbatim_only_while_its_bytes_are_the_pinned_ones(self):
+        """LICENSES/coq-community-huffman-LICENSE, the licence file of the third-party proof files (lint.THIRD_PARTY),
+        is classed (paths.py) and pinned (lint.PINNED_VERBATIM) as the anthropic-proofs texts are: with the pinned bytes
+        no rule finds anything in it, and with one byte changed it is a licence finding, and ordinary text, held to
+        every other rule.  The pin is the SHA-256 of that file at coq-community/huffman's commit cc7d4cc4, which the
+        tree holds only with the zlib lane's copies, so the test stands in a text of its own for those bytes."""
+        path = "LICENSES/coq-community-huffman-LICENSE"
+        self.assertEqual(lint.PINNED_VERBATIM[path], "3f5037854d29f6b9621925b165e18ea223d8f81de4ed29ca0da5860d55f14701")
+        self.assertEqual([cls for cls, _, _ in paths.classify(path)], ["hand"])
+        text = "Copyright (C) 2003-2018 someone" + "@" + "example.com; see https://example.org/x\n"
+        with mock.patch.dict(lint.PINNED_VERBATIM, {path: hashlib.sha256(text.encode()).hexdigest()}), tree() as t:
+            t.write(path, text)
+            self.assertEqual([str(f) for f in t.lint()], [])
+            t.write(path, text.replace("x\n", "y\n"))
+            self.assertEqual(sorted(f.rule for f in t.lint()), ["licence", "links", "private-data"])
+
+    def test_a_pinned_text_whose_bytes_are_not_its_pin_is_a_finding_that_names_it(self):
+        """Every text of lint.PINNED_VERBATIM, main's anthropic-proofs texts included, is held to its pinned bytes:
+        present with bytes other than its pin, it is a finding that names the file, also when the changed text holds
+        nothing another rule finds; with its pinned bytes, no finding names it.  Each path in turn is pinned to the
+        bytes of a stand-in text, Licence.HUFFMAN_TEXT."""
+        text = Licence.HUFFMAN_TEXT
+        changed = text.replace("GNU", "GNX", 1)
+        for path in sorted(lint.PINNED_VERBATIM):
+            with self.subTest(path=path), \
+                    mock.patch.dict(lint.PINNED_VERBATIM, {path: hashlib.sha256(text.encode()).hexdigest()}), \
+                    tree() as t:
+                t.write(path, text)
+                self.assertEqual([str(f) for f in t.lint() if path in f.where or path in f.msg], [])
+                t.write(path, changed)
+                self.assertTrue(any(path in f.where or path in f.msg for f in t.lint()),
+                                "%s with bytes other than its pin: no finding names it" % path)
+
     def test_container_home_is_not_a_host(self):
         self.assertEqual(self.check("WORKDIR /home/opam\n"), [])
 
@@ -2327,6 +2949,178 @@ class PrivateData(unittest.TestCase):
             t.put_yaml("projects/zlib/project.yaml", p)
             found = [f for f in t.lint() if f.rule == "private-data"]
             self.assertTrue(found and all(f.where.startswith("projects/zlib/project.yaml:") for f in found), found)
+
+    def test_the_public_rocq_fork_by_its_name_and_the_names_near_it(self):
+        """rocq, the public fork that Theorem's Rocq releases publish to, may be named as owner/name in a published
+        page and in a workflow; a name near it, and this private repository's name, may not."""
+        for path, line in (("docs/checking.md", "source: %s\n"), (".github/workflows/images.yml", "# source: %s\n")):
+            with self.subTest(path=path, name="rocq"):
+                self.assertEqual(self.check(line % ("theorem-labs/" + "rocq"), path), [])
+            for name in ("theorem-labs/" + "rocq-x", "theorem-labs/" + "rocqx", INTERNAL):
+                with self.subTest(path=path, name=name):
+                    self.assertEqual([f.msg for f in self.check(line % name, path)], ["a private repository's name"])
+
+    # a repository of the organisation by its parts: written whole, this file's own lint refuses it
+    ORG = "theorem" + "-labs"
+    INTERNAL_NAME = "oss-verify-proofs" + "-internal"
+
+    def private_library(self, t, private=True, name="lib-x", internal=True):
+        """zlib as a library of ours whose repository is not public (OSSV-618): release: private unless
+        private=False, its library and its homepage that repository, its fuzz target's library too, its pages rendered
+        again, and checksum_fuzzer's build record naming it as the upstream; then, unless internal=False, built from
+        the port's internal copy, as every such library is (project.yaml's build.oss_verify and the record's port,
+        after the render: the rest of a port build's facts is not this test's).  The repository's URL."""
+        repo = "https://github.com/%s/%s" % (self.ORG, name)
+        p = t.yaml("projects/zlib/project.yaml")
+        p["library"]["repository"] = p["homepage"] = repo
+        if private:
+            p["release"] = "private"
+        t.put_yaml("projects/zlib/project.yaml", p)
+        h = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")
+        h["library"]["repository"] = repo
+        t.put_yaml("projects/zlib/checksum_fuzzer/harness.yaml", h)
+        record = add_build_record(t)
+        r = t.yaml(record)
+        r["upstream"]["repository"] = repo
+        t.put_yaml(record, r)
+        self.assertEqual(t.generate(), 0, t.last_output)
+        if internal:
+            p["build"]["oss_verify"] = {"repository": INTERNAL, "commit": "d" * 40, "path": "projects/zlib"}
+            t.put_yaml("projects/zlib/project.yaml", p)
+            r["port"] = dict(r.get("port") or {}, repository=INTERNAL)
+            t.put_yaml(record, r)
+        return repo
+
+    def named(self, t, name="lib-x"):
+        """The private-data and links findings of a lint of t that name the repository `name` (by its key, the
+        finding's text, or the file the name is in), as (rule, file)."""
+        out = set()
+        for f in t.lint():
+            if f.rule in ("private-data", "links"):
+                where = f.where.split(":")[0]
+                if name in str(f) or name in (t.read(where) if os.path.isfile(t.path(where)) else ""):
+                    out.add((f.rule, where))
+        return out
+
+    def record_files(self, t, repo):
+        """The other files of zlib's build record that name its library, as facts.py and the record's copies write
+        them: PROVENANCE.md with facts.py's Upstream row, the copy of the port's project.yaml under port/, whose repo
+        names the library at a commit, and a comment of checksum_fuzzer's source copy.  Their paths."""
+        record = os.path.dirname(layout.record_path(
+            "zlib", "checksum_fuzzer", facts.load(t.root).unit_layout("zlib/checksum_fuzzer")))
+        added = {os.path.join(record, "PROVENANCE.md"): "\n| Upstream | %s at `%s` |\n" % (repo, "e" * 40),
+                 os.path.join(record, "port", "projects", "zlib", "project.yaml"): "repo: %s#%s\n" % (repo, "e" * 40),
+                 "projects/zlib/checksum_fuzzer/source/checksum_fuzzer.c": "/* from %s */\n" % repo}
+        for rel, text in added.items():
+            t.write(rel, (t.read(rel) if os.path.isfile(t.path(rel)) else "") + text)
+        return sorted(added)
+
+    def test_a_private_librarys_own_files_may_name_its_repository(self):
+        with tree() as t:
+            repo = self.private_library(t)
+            written = self.record_files(t, repo)
+            # the facts, the build record, its other files and the rendered pages all name it
+            for rel in ["projects/zlib/project.yaml", "projects/zlib/checksum_fuzzer/harness.yaml",
+                        "projects/zlib/README.md", "projects/zlib/checksum_fuzzer/README.md",
+                        "projects/zlib/checksum_fuzzer/Statements.v"] + written:
+                self.assertIn("lib-x", t.read(rel), rel)
+            self.assertEqual(self.named(t), set())
+
+    def test_its_repository_is_refused_outside_its_own_files(self):
+        with tree() as t:
+            repo = self.private_library(t)
+            t.write("notes/zlib.md", "See %s for it.\n" % repo, "a")
+            t.write("projects/json/notes.md", "zlib is %s.\n" % repo, "a")
+            found = self.named(t)
+            self.assertIn(("private-data", "notes/zlib.md"), found)
+            self.assertIn(("links", "notes/zlib.md"), found)
+            self.assertIn(("private-data", "projects/json/notes.md"), found)
+            self.assertEqual({w for _, w in found}, {"notes/zlib.md", "projects/json/notes.md"})
+
+    def test_its_repository_is_accepted_in_its_own_rows_of_failure_handlers_alone(self):
+        # facts.py writes a row of the shared failure_handlers.tsv for each of the project's fuzz targets: a row of
+        # zlib's may name zlib's library, and a row of json's may not; nor may a row of a fuzz target zlib no longer
+        # has, which release-tree keeps in the cut (it cuts only the rows of the tree's own fuzz targets)
+        handlers = "analyses/failure-handlers/failure_handlers.tsv"
+        with tree() as t:
+            repo = self.private_library(t)
+            t.write(handlers, "project\tharness\tvalue\tevidence\nzlib\tchecksum_fuzzer\tnone\tread %s\n"
+                              "json\tfuzzer-parse_bjdata\tnone\tread %s\n"
+                              "zlib\tremoved_fuzzer\tnone\tread %s\n" % (repo, repo, repo))
+            found = {(f.rule, f.where) for f in t.lint() if f.rule in ("private-data", "links")
+                     and f.where.startswith(handlers + ":")}
+            self.assertEqual(found, {(rule, "%s:%d" % (handlers, no)) for rule in ("private-data", "links")
+                                     for no in (3, 4)})
+
+    def test_another_private_repository_in_its_files_is_refused(self):
+        # check c2's negative control: one generated file names a repository of ours that no list names, a Markdown
+        # file of the project links to it, and so does the record's copy of the port, whose links only the rule
+        # against private repositories judges (it is not link-strict)
+        with tree() as t:
+            repo = self.private_library(t)
+            rel = "projects/zlib/checksum_fuzzer/Statements.v"
+            t.write(rel, t.read(rel).replace("lib-x", "model-gateway"))
+            t.write("projects/zlib/notes.md", "See https://github.com/%s/model-gateway.\n" % self.ORG)
+            port = [p for p in self.record_files(t, repo.replace("lib-x", "model-gateway")) if "/port/" in p]
+            found = self.named(t, "model-gateway")
+            self.assertIn(("private-data", rel), found)
+            for kind in ("private-data", "links"):
+                self.assertIn((kind, "projects/zlib/notes.md"), found)
+                self.assertIn((kind, port[0]), found)
+
+    def test_a_project_that_is_not_private_may_not_name_it(self):
+        with tree() as t:
+            repo = self.private_library(t, private=False)
+            written = self.record_files(t, repo)
+            found = {w for _, w in self.named(t)}
+            self.assertLessEqual({"projects/zlib/project.yaml", "projects/zlib/checksum_fuzzer/harness.yaml",
+                                  "projects/zlib/checksum_fuzzer/Statements.v"}, found)
+            md = [rel for rel in written if rel.endswith(".md")]
+            self.assertEqual(len(md), 1)
+            self.assertIn(("private-data", md[0]), self.named(t))
+            self.assertIn(("links", md[0]), self.named(t))
+
+    def test_a_private_project_not_built_from_the_internal_port_may_not_name_it(self):
+        # every library that is not public builds from the port's internal copy: a private project of another
+        # build (publish: never, or held by a finding) gets no pass for its library
+        with tree() as t:
+            self.private_library(t, internal=False)
+            self.assertLessEqual({"projects/zlib/project.yaml", "projects/zlib/checksum_fuzzer/harness.yaml",
+                                  "projects/zlib/checksum_fuzzer/Statements.v"}, {w for _, w in self.named(t)})
+
+    def test_a_private_library_may_not_be_the_internal_port(self):
+        # release: private, built from the internal port, and a library named the port's internal copy, as it is or
+        # with a name that reads as it once its dots and one .git are off: no line names that copy but its own field
+        for tail in ("", ".git", ".git.git", "..git", "."):
+            with self.subTest(tail=tail), tree() as t:
+                p = t.yaml("projects/zlib/project.yaml")
+                p["library"]["repository"] = "https://github.com/" + INTERNAL + tail
+                p["release"] = "private"
+                p["build"]["oss_verify"] = {"repository": INTERNAL, "commit": "d" * 40, "path": "projects/zlib"}
+                t.put_yaml("projects/zlib/project.yaml", p)
+                found = self.named(t, self.INTERNAL_NAME)
+                self.assertIn(("private-data", "projects/zlib/project.yaml"), found)
+                self.assertIn(("links", "projects/zlib/project.yaml"), found)
+
+    def test_a_private_projects_build_records_may_name_the_internal_port(self):
+        # a library built from the port's internal copy names it in project.yaml's build.oss_verify and in each
+        # build record's port, which facts.py writes equal; no other field of a record may name it
+        with tree() as t:
+            self.private_library(t)
+            record = layout.record_path("zlib", "checksum_fuzzer", facts.load(t.root).unit_layout("zlib/checksum_fuzzer"))
+            self.assertEqual(self.named(t, self.INTERNAL_NAME), set())
+            r = t.yaml(record)
+            r["upstream"]["note"] = "built from " + INTERNAL
+            t.put_yaml(record, r)
+            self.assertIn(("private-data", record), self.named(t, self.INTERNAL_NAME))
+
+    def test_a_public_projects_build_record_may_not_name_the_internal_port(self):
+        with tree() as t:
+            record = add_build_record(t)
+            r = t.yaml(record)
+            r["port"] = dict(r.get("port") or {}, repository=INTERNAL)
+            t.put_yaml(record, r)
+            self.assertIn(("private-data", record), self.named(t, self.INTERNAL_NAME))
 
     def test_an_unused_exception(self):
         with tree() as t:
@@ -2491,6 +3285,32 @@ class Links(unittest.TestCase):
                 url = "https://github.com/" + "theorem-labs/%s/commit/b05061352064" % name
                 t.write("notes/zlib.md", "Built from %s.\n" % url, "a")
                 self.assertEqual(rules_of(t.lint()), [])
+
+    def test_a_link_to_the_public_rocq_fork(self):
+        """rocq, the public fork that Theorem's Rocq releases publish to: a published page may link to it, to its
+        clone URL and to one of its releases."""
+        repo = "https://github.com/theorem-labs/" + "rocq"
+        for url in (repo, repo + ".git", repo + "/releases/tag/v9.2"):
+            with self.subTest(url=url), tree() as t:
+                t.write("notes/zlib.md", "Built from %s.\n" % url, "a")
+                self.assertEqual(rules_of(t.lint()), [])
+
+    def test_a_workflow_may_name_the_public_rocq_fork_as_its_source(self):
+        """A comment of a published workflow may say that what it builds comes from the fork, or from an archive of
+        one of its releases: neither the link rule nor the private-data rule refuses it."""
+        repo = "https://github.com/theorem-labs/" + "rocq"
+        for url in (repo, repo + "/archive/v9.2.tar.gz"):
+            with self.subTest(url=url), tree() as t:
+                t.write(".github/workflows/images.yml", "# source: %s\n" % url, "a")
+                self.assertEqual([str(f) for f in t.lint() if f.rule in ("links", "private-data")], [])
+
+    def test_a_link_to_a_name_near_the_rocq_fork_or_to_a_private_repository(self):
+        """Only the fork's own name is public: a link to a name that starts as it does, or to this private
+        repository, is still refused by both rules."""
+        for repo in ("theorem-labs/" + "rocq-x", INTERNAL):
+            with self.subTest(repo=repo), tree() as t:
+                t.write("notes/zlib.md", "See https://github.com/%s.\n" % repo, "a")
+                self.assertEqual(rules_of(t.lint()), ["links", "private-data"])
 
     def test_a_private_repository_name_split_where_github_shows_it_whole(self):
         """GitHub shows `\\-` as `-` and drops an HTML comment, so a public name with a private one's suffix after
@@ -2706,13 +3526,13 @@ class ProofsException(unittest.TestCase):
 
 
 class Proofs(unittest.TestCase):
-    def proof(self, body, **extra):
+    def proof(self, body, statement="plain_halts", **extra):
+        sid = "zlib/checksum_fuzzer/" + statement
         with tree() as t:
-            t.put_yaml("proofs/zlib/checksum_fuzzer/plain_halts/proof.yaml", dict({
-                "schema": "oss-fuzz-theorems/proof/1", "proves": "zlib/checksum_fuzzer/plain_halts",
-                "fingerprint": next(s for s in facts.load(t.root).statements()
-                                    if s.id == "zlib/checksum_fuzzer/plain_halts").fingerprint}, **extra))
-            t.write("proofs/zlib/checksum_fuzzer/plain_halts/Proof.v", body)
+            t.put_yaml("proofs/%s/proof.yaml" % sid, dict({
+                "schema": "oss-fuzz-theorems/proof/1", "proves": sid,
+                "fingerprint": next(s for s in facts.load(t.root).statements() if s.id == sid).fingerprint}, **extra))
+            t.write("proofs/%s/Proof.v" % sid, body)
             t.generate()
             return [f for f in t.lint() if f.rule == "proofs" or "proof.yaml" in str(f)]
 
@@ -2800,6 +3620,24 @@ class Proofs(unittest.TestCase):
             other = next(s for s in facts.load(t.root).statements() if s.id == "zlib/checksum_fuzzer/plain_halts")
         found = self.proof("Theorem plain_halts_holds : True. Proof. exact I. Qed.\n", fingerprint=other.fingerprint)
         self.assertEqual([f.msg.split(" (")[0] for f in found], ["fingerprint differs from the statement's current one"])
+
+    def test_a_bound_proof_names_a_bound_below_1(self):
+        """OSSV-708.  b = 1 holds of every program, as each Statements.v says, and a proof at a larger b proves less:
+        a bound proof at b = 1 or more is refused, with its statement and its bound named, so the index never reads
+        it proved.  A bound below 1 passes, and a bound proof that names no bound is refused as before.  The bound is
+        compared as written, so one of 5,001 digits is refused, not a ValueError of int()."""
+        sid = "zlib/checksum_fuzzer/asan_disagrees_at_most"
+        body = "Theorem asan_disagrees_at_most_holds : True. Proof. exact I. Qed.\n"
+        found = lambda **bound: [str(f) for f in self.proof(body, statement="asan_disagrees_at_most", **bound)]
+        for b in ("1", "1000000", "2/2", "3/2", "1" + "0" * 5000):
+            with self.subTest(b=b[:12]):
+                self.assertEqual(found(bound=b), ["schema proofs/%s/proof.yaml: a bound proof names a bound below 1: %s "
+                                                  "at b = %s holds of every program, as its Statements.v says"
+                                                  % (sid, sid, b)])
+        for b in ("0", "1/2", "999999/1000000"):
+            with self.subTest(b=b):
+                self.assertEqual(found(bound=b), [])
+        self.assertEqual(found(), ["schema proofs/%s/proof.yaml: a bound proof names its bound" % sid])
 
     def test_load_and_cd_are_commands_only_where_a_sentence_starts(self):
         names = ("Lemma l : forall i, i = Load 2 \\/ i <> Load 2.\n"
@@ -3228,6 +4066,285 @@ class ContractLiterals(unittest.TestCase):
                          [self.found(3, "0x132a0 is inside .text of plain: name it from Symbols", rel)])
 
 
+# a generated proof file of zlib/checksum_fuzzer, in each layout, and the two lines that open one
+READ_FROM_REL = "proofs/zlib/checksum_fuzzer/lib/A/AB12.v"
+READ_FROM_HEAD = "(* Copyright 2026 Anthropic PBC *)\n(* SPDX-License-Identifier: Apache-2.0 OR MIT *)\n"
+# a digest that is no build's pin, and a stand-in for the unstripped twin's, which harness.yaml never pins
+READ_FROM_WRONG = "ab" * 32
+READ_FROM_TWIN = "9b" * 32
+
+
+class ReadFrom(unittest.TestCase):
+    """read-from: the `(* Read from: ... *)` comment of a proof file names a binary its own fuzz target's
+    harness.yaml records, and every SHA-256 it holds but the unstripped twin's is that build's pin there."""
+
+    def setUp(self):
+        with tree() as t:
+            builds = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")["builds"]
+        self.pin = builds["asan"]["sha256"]
+        self.bytes = builds["asan"]["bytes"]
+        self.plain_pin = builds["plain"]["sha256"]
+
+    def lint(self, comment, rel=READ_FROM_REL):
+        """The read-from findings of the fixture with comment written as the third line of rel."""
+        with tree() as t:
+            t.write(rel, READ_FROM_HEAD + comment + "\nDefinition TFIB_MAIN : Z := 1.\n")
+            t.generate()
+            return [str(f) for f in t.lint() if f.rule == "read-from"]
+
+    def found(self, msg, rel=READ_FROM_REL, line=3):
+        return "read-from %s:%d: %s" % (rel, line, msg)
+
+    def comment(self, digest=None, name="checksum_fuzzer.asan", twin=READ_FROM_TWIN):
+        return ("(* Read from: %s (zlib/checksum_fuzzer asan) sha256 %s; unstripped twin sha256 %s *)"
+                % (name, self.pin if digest is None else digest, twin))
+
+    def test_a_comment_that_names_the_pinned_binary_passes(self):
+        self.assertEqual(self.lint(self.comment()), [])
+
+    def test_a_comment_that_names_another_image_is_refused(self):
+        """The one finding names the file, the line, the digest the comment holds and the digest harness.yaml pins."""
+        self.assertEqual(
+            self.lint(self.comment(READ_FROM_WRONG)),
+            [self.found("reads checksum_fuzzer.asan at sha256 %s, but harness.yaml pins the asan build of "
+                        "zlib/checksum_fuzzer at sha256 %s (%d bytes)" % (READ_FROM_WRONG, self.pin, self.bytes))])
+
+    def test_the_pin_written_inside_the_parenthesis_is_read(self):
+        """Some generators write `pin <hex>` beside the build name instead of `sha256 <hex>` after it; the digest is
+        the same claim, and a wrong one there is the same finding."""
+        form = "(* Read from: checksum_fuzzer.asan (zlib/checksum_fuzzer asan, pin %s); unstripped twin sha256 %s *)"
+        self.assertEqual(self.lint(form % (self.pin, READ_FROM_TWIN)), [])
+        self.assertEqual(
+            self.lint(form % (READ_FROM_WRONG, READ_FROM_TWIN)),
+            [self.found("reads checksum_fuzzer.asan at sha256 %s, but harness.yaml pins the asan build of "
+                        "zlib/checksum_fuzzer at sha256 %s (%d bytes)" % (READ_FROM_WRONG, self.pin, self.bytes))])
+
+    def test_the_unstripped_twin_s_digest_is_not_compared(self):
+        """The twin is the same link without --strip-all, read for its symbol names; no harness.yaml pins it, so its
+        digest differs from the published binary's in every one of these comments and is not a finding."""
+        self.assertEqual(self.lint(self.comment(twin="1c" * 32)), [])
+
+    def test_a_binary_that_is_no_build_of_the_fuzz_target_is_refused(self):
+        self.assertEqual(
+            self.lint(self.comment(name="cgif_file_fuzzer.asan")),
+            [self.found("reads cgif_file_fuzzer.asan, which is no build of zlib/checksum_fuzzer: its builds are "
+                        "checksum_fuzzer.asan, checksum_fuzzer.asan-ubsan, checksum_fuzzer.plain, "
+                        "checksum_fuzzer.ubsan")])
+
+    def test_another_build_s_pin_of_the_same_fuzz_target_is_refused(self):
+        """The likeliest real mix-up: the digest is a pin of this fuzz target, of the wrong build.  Each digest is
+        compared with the pin of the build the comment itself names, not with the target's pins as a set."""
+        self.assertEqual(
+            self.lint(self.comment(self.plain_pin)),
+            [self.found("reads checksum_fuzzer.asan at sha256 %s, but harness.yaml pins the asan build of "
+                        "zlib/checksum_fuzzer at sha256 %s (%d bytes)" % (self.plain_pin, self.pin, self.bytes))])
+
+    def test_a_comment_with_no_digest_of_the_binary_is_refused(self):
+        """A comment that names the image and only the twin's digest pins no build at all."""
+        self.assertEqual(
+            self.lint("(* Read from: checksum_fuzzer.asan (zlib/checksum_fuzzer asan); "
+                      "unstripped twin sha256 %s *)" % READ_FROM_TWIN),
+            [self.found("reads checksum_fuzzer.asan and names no SHA-256 of it, so it pins no build: harness.yaml "
+                        "pins the asan build at sha256 %s (%d bytes)" % (self.pin, self.bytes))])
+
+    def test_every_comment_of_a_file_is_judged(self):
+        two = self.comment() + "\n" + self.comment(READ_FROM_WRONG)
+        self.assertEqual(
+            self.lint(two),
+            [self.found("reads checksum_fuzzer.asan at sha256 %s, but harness.yaml pins the asan build of "
+                        "zlib/checksum_fuzzer at sha256 %s (%d bytes)" % (READ_FROM_WRONG, self.pin, self.bytes),
+                        line=4)])
+
+    def test_a_comment_in_the_per_project_layout_is_judged(self):
+        rel = "projects/zlib/checksum_fuzzer/proofs/lib/A/AB12.v"
+        self.assertEqual(
+            self.lint(self.comment(READ_FROM_WRONG), rel=rel),
+            [self.found("reads checksum_fuzzer.asan at sha256 %s, but harness.yaml pins the asan build of "
+                        "zlib/checksum_fuzzer at sha256 %s (%d bytes)" % (READ_FROM_WRONG, self.pin, self.bytes),
+                        rel=rel)])
+
+    def test_a_build_record_s_copy_of_someone_else_s_proof_text_is_not_read(self):
+        """provenance/recipe/ and provenance/port/ ship as they are and describe the donor's image, not this fuzz
+        target's binaries."""
+        for rel in ("proofs/zlib/checksum_fuzzer/provenance/recipe/AB12.v",
+                    "proofs/zlib/checksum_fuzzer/provenance/port/AB12.v"):
+            with self.subTest(rel=rel):
+                self.assertEqual(self.lint(self.comment(READ_FROM_WRONG), rel=rel), [])
+
+    def test_a_file_outside_a_proofs_folder_is_not_read(self):
+        self.assertEqual(self.lint(self.comment(READ_FROM_WRONG), rel="theories/AB12.v"), [])
+
+    def test_a_second_digest_that_is_not_the_twin_s_is_judged_too(self):
+        """Every digest the comment holds outside the twin's clause is the pin, wherever it stands: a comment that
+        names the pin and then another image's digest is a finding, and the digest after the twin's clause is read
+        as the one before it is."""
+        self.assertEqual(
+            self.lint("(* Read from: checksum_fuzzer.asan (zlib/checksum_fuzzer asan) sha256 %s; unstripped twin "
+                      "sha256 %s; control image sha256 %s *)" % (self.pin, READ_FROM_TWIN, READ_FROM_WRONG)),
+            [self.found("reads checksum_fuzzer.asan at sha256 %s, but harness.yaml pins the asan build of "
+                        "zlib/checksum_fuzzer at sha256 %s (%d bytes)" % (READ_FROM_WRONG, self.pin, self.bytes))])
+
+    def test_a_comment_with_no_closing_star_is_read_to_the_end_of_the_file(self):
+        """A comment that is never closed still names a binary and holds a digest, and both are judged."""
+        self.assertEqual(
+            self.lint("(* Read from: checksum_fuzzer.asan (zlib/checksum_fuzzer asan) sha256 %s\n"
+                      % READ_FROM_WRONG + "Definition TAIL : Z := 2.\n"),
+            [self.found("reads checksum_fuzzer.asan at sha256 %s, but harness.yaml pins the asan build of "
+                        "zlib/checksum_fuzzer at sha256 %s (%d bytes)" % (READ_FROM_WRONG, self.pin, self.bytes))])
+
+    def test_an_unclosed_comment_costs_one_pass_over_the_file(self):
+        """The pattern ends `(?:\\*\\)|\\Z)` rather than `\\*\\)`: one that can fail backtracks over every start of
+        the comment, and this file -- an 80 KB name token that no `*)` follows -- took 22.8 s that way, which at the
+        5 MiB cap on a Rocq file is hours.  Rocq compiles a file whose string literal holds `(*`, so a file like this
+        is not only a hand-written one.  The rule reads it in about a millisecond, and still judges it."""
+        text = READ_FROM_HEAD + "(* Read from: " + "a" * 80000 + " sha256 %s\n" % READ_FROM_WRONG
+        with tree() as t:
+            t.write(READ_FROM_REL, text)
+            loaded = facts.load(t.root)
+        started = time.monotonic()
+        found = lint.scan_read_from(text, READ_FROM_REL, loaded)
+        elapsed = time.monotonic() - started
+        self.assertEqual([(f.rule, f.where) for f in found], [("read-from", READ_FROM_REL + ":3")])
+        self.assertIn("is no build of zlib/checksum_fuzzer", found[0].msg)
+        self.assertLess(elapsed, 5, "the pattern backtracks over every start of the comment")
+
+
+class ReadFromRelocated(unittest.TestCase):
+    """read-from, a relocated file: a proof ported from another fuzz target keeps the donor's `Read from:` line and
+    gains one of its own (the shape main carries at projects/curl/fuzz_bufq/proofs/lib/R/{A/AD1kcf.v,B/YD1kcf.v}:
+    the donor's line, then the file's own).  The donor's line passes only beside a line naming a build of the file's
+    OWN fuzz target whose name and SHA-256 are that unit's harness.yaml pin, and it is counted and reported when it
+    does."""
+
+    OWN = "checksum_fuzzer.asan"       # a build of the file's own fuzz target, zlib/checksum_fuzzer
+    DONOR = "fuzzer-parse_bjdata.asan"  # a build of another fuzz target the fixture records, json/fuzzer-parse_bjdata
+    BOGUS = "no_such_fuzzer.asan"      # no build of any fuzz target the fixture records
+
+    def setUp(self):
+        with tree() as t:
+            own = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")["builds"]
+            donor = t.yaml("projects/json/fuzzer-parse_bjdata/harness.yaml")["builds"]
+        self.pin, self.bytes = own["asan"]["sha256"], own["asan"]["bytes"]
+        self.donor_pin = donor["asan"]["sha256"]
+
+    def line(self, name, unit, digest):
+        return ("(* Read from: %s (%s asan) sha256 %s; unstripped twin sha256 %s *)"
+                % (name, unit, digest, READ_FROM_TWIN))
+
+    def donor_line(self, name=None):
+        return self.line(name or self.DONOR, "json/fuzzer-parse_bjdata", self.donor_pin)
+
+    def own_line(self, digest=None):
+        return self.line(self.OWN, "zlib/checksum_fuzzer", self.pin if digest is None else digest)
+
+    def lint(self, lines, harness=None):
+        """(the read-from findings as strings, the exempt donor lines as strings) of the fixture with `lines` written
+        from the third line of READ_FROM_REL on.  harness: a change to apply to the own fuzz target's harness.yaml."""
+        with tree() as t:
+            if harness is not None:
+                y = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")
+                harness(y)
+                t.put_yaml("projects/zlib/checksum_fuzzer/harness.yaml", y)
+            t.write(READ_FROM_REL, READ_FROM_HEAD + "\n".join(lines) + "\nDefinition TFIB_MAIN : Z := 1.\n")
+            t.generate()
+            donors = []
+            found = t.lint(donors=donors)
+            return ([str(f) for f in found if f.rule == "read-from"], [str(f) for f in donors])
+
+    def no_build(self, name, line):
+        return ("read-from %s:%d: reads %s, which is no build of zlib/checksum_fuzzer: its builds are "
+                "checksum_fuzzer.asan, checksum_fuzzer.asan-ubsan, checksum_fuzzer.plain, checksum_fuzzer.ubsan"
+                % (READ_FROM_REL, line, name))
+
+    def exempt(self, line):
+        return ("read-from-donor %s:%d: reads %s, which is another fuzz target's binary; this file also names the "
+                "pinned build of zlib/checksum_fuzzer, so it is a relocated file keeping the donor's line"
+                % (READ_FROM_REL, line, self.DONOR))
+
+    def test_a_donor_line_beside_the_file_s_own_pinned_line_passes_and_is_counted(self):
+        """main's shape: the donor's line, then the file's own.  No finding, and the donor's line is not invisible
+        either -- it comes back counted, one per unit, as a pending licence finding does."""
+        found, donors = self.lint([self.donor_line(), "(* a note about the port *)", self.own_line()])
+        self.assertEqual(found, [])
+        self.assertEqual(donors, [self.exempt(3)])
+        self.assertEqual(lint.donors_by_unit([lint.Finding(lint.READ_FROM_DONOR, READ_FROM_REL + ":3", "x")]),
+                         [("zlib/checksum_fuzzer", 1)])
+
+    def test_a_donor_line_alone_is_refused(self):
+        """The file's own line removed: nothing says which image THIS fuzz target's numerals were read from, so the
+        donor's line is the whole claim and it is a finding.  Without this the rule would be a licence for any
+        foreign binary in any file, weaker than no exemption at all."""
+        found, donors = self.lint([self.donor_line()])
+        self.assertEqual(found, [self.no_build(self.DONOR, 3)])
+        self.assertEqual(donors, [])
+
+    def test_a_name_that_is_no_build_of_any_fuzz_target_is_refused_beside_an_own_line(self):
+        """The exemption is for another fuzz target's binary, not for any name at all: a name the facts do not know
+        is a finding however well the rest of the file pins itself."""
+        found, donors = self.lint([self.donor_line(self.BOGUS), self.own_line()])
+        self.assertEqual(found, [self.no_build(self.BOGUS, 3)])
+        self.assertEqual(donors, [])
+
+    def test_a_line_of_the_file_s_own_unit_at_a_wrong_digest_is_still_refused(self):
+        """The file's own line is read as it always was: a second line of this fuzz target's own at a digest that is
+        not the pin is a finding, beside a correct one."""
+        found, donors = self.lint([self.own_line(READ_FROM_WRONG), self.own_line()])
+        self.assertEqual(found, ["read-from %s:3: reads %s at sha256 %s, but harness.yaml pins the asan build of "
+                                 "zlib/checksum_fuzzer at sha256 %s (%d bytes)"
+                                 % (READ_FROM_REL, self.OWN, READ_FROM_WRONG, self.pin, self.bytes)])
+        self.assertEqual(donors, [])
+
+    def test_an_own_line_at_a_wrong_digest_clears_no_donor_line(self):
+        """The own-unit line must match the pin by name AND by SHA-256: one that names the build and holds another
+        image's digest pins nothing, so the donor's line is a finding too."""
+        found, donors = self.lint([self.donor_line(), self.own_line(READ_FROM_WRONG)])
+        self.assertEqual(found, [self.no_build(self.DONOR, 3),
+                                 "read-from %s:4: reads %s at sha256 %s, but harness.yaml pins the asan build of "
+                                 "zlib/checksum_fuzzer at sha256 %s (%d bytes)"
+                                 % (READ_FROM_REL, self.OWN, READ_FROM_WRONG, self.pin, self.bytes)])
+        self.assertEqual(donors, [])
+
+    def test_an_own_line_that_names_no_build_of_its_own_unit_clears_no_donor_line(self):
+        """Two donor lines do not clear each other: the line that clears must name a build of the file's own fuzz
+        target."""
+        found, donors = self.lint([self.donor_line(), self.donor_line()])
+        self.assertEqual(found, [self.no_build(self.DONOR, 3), self.no_build(self.DONOR, 4)])
+        self.assertEqual(donors, [])
+
+    def test_an_own_line_whose_pin_cannot_be_read_clears_no_donor_line(self):
+        """A withheld build shows no digest, so harness.yaml gives nothing to match: a pin that cannot be read is not
+        a pin that matched.  The own-unit line itself is still left alone (there is nothing to compare it with), and
+        the donor's line is a finding."""
+        def withhold(y):
+            y["builds"]["asan"] = {"file": self.OWN, "withheld": "not-yet-published"}
+        found, donors = self.lint([self.donor_line(), self.own_line()], harness=withhold)
+        self.assertEqual(found, [self.no_build(self.DONOR, 3)])
+        self.assertEqual(donors, [])
+
+    def test_the_pins_come_from_the_tree_being_linted(self):
+        """The pin is the one the unit's harness.yaml holds in this tree, at the ref checked out: an own-unit line
+        that matched some other ref's pin matches nothing here, and clears nothing."""
+        other_ref_pin = "cd" * 32
+
+        def repin(y):
+            y["builds"]["asan"]["sha256"] = other_ref_pin
+        found, donors = self.lint([self.donor_line(), self.own_line()], harness=repin)
+        self.assertEqual(found, [self.no_build(self.DONOR, 3),
+                                 "read-from %s:4: reads %s at sha256 %s, but harness.yaml pins the asan build of "
+                                 "zlib/checksum_fuzzer at sha256 %s (%d bytes)"
+                                 % (READ_FROM_REL, self.OWN, self.pin, other_ref_pin, self.bytes)])
+        self.assertEqual(donors, [])
+
+    def test_an_exempt_donor_line_never_reaches_the_findings_when_no_list_is_given(self):
+        """donors is optional: with no list the exempt lines are dropped, and the run's verdict is the same."""
+        with tree() as t:
+            t.write(READ_FROM_REL, READ_FROM_HEAD + self.donor_line() + "\n" + self.own_line()
+                    + "\nDefinition TFIB_MAIN : Z := 1.\n")
+            t.generate()
+            self.assertEqual([str(f) for f in t.lint()
+                              if f.rule in ("read-from", lint.READ_FROM_DONOR)], [])
+
+
 class Licence(unittest.TestCase):
     """A proof file's licence lines agree with NOTICE: Anthropic's copyright and Apache-2.0 OR MIT together, in a fuzz
     target whose build record lists the three texts of that licence, or MIT for a file written here.  In the old layout
@@ -3264,10 +4381,12 @@ class Licence(unittest.TestCase):
                 self.assertEqual(port.port_worktree(t.root, out=io.StringIO()), 0)
             yield t
 
-    def licence(self, files, texts=lint.ANTHROPIC_TEXTS, **kw):
+    def licence(self, files, texts=lint.ANTHROPIC_TEXTS, prepare=None, **kw):
         """The licence findings, as (where, message), of lint with kw on a tree with files (name under lib/ -> text)
-        and a build record that lists texts."""
+        and a build record that lists texts; prepare, when given, changes the tree first."""
         with self.tree() as t:
+            if prepare is not None:
+                prepare(t)
             t.write(self.RECORD, build_record(proofs={"licence": "Apache-2.0 OR MIT", "texts": list(texts)}))
             for name, text in files.items():
                 t.write(self.at(name), text + "Definition x := 0.\n")
@@ -3369,6 +4488,77 @@ class Licence(unittest.TestCase):
         self.assertEqual([w for w, _ in found], ["DataBlock.v:3", "DataCopy.v", "DataMit.v:2", "WordsAnthropic.v:3"])
         self.assertTrue(all("keeps the program's licences" in m for _, m in found), found)
 
+    # heads of files under another licence that state it in words, each with no licence line of its own
+    WORDED = {
+        "Lgpl.v": "(* Copyright (C) 2019 Jean Dupont\n"
+                  "   This library is free software; you can redistribute it and/or modify it under the terms of the\n"
+                  "   GNU Lesser General Public License as published by the Free Software Foundation; version 2.1. *)\n",
+        "Apache.v": "(* Copyright 2020 Example Corp.\n\n"
+                    "   Licensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file\n"
+                    "   except in compliance with the License. *)\n",
+        "Granted.v": "(* Copyright (c) 2021 Jane Doe\n\n"
+                     "   Permission is hereby granted, free of charge, to any person obtaining a copy of this\n"
+                     "   software, to deal in the Software without restriction. *)\n"}
+    # the tag of the licence each of them names
+    WORDED_TAGS = {"Lgpl.v": "LGPL-2.1-only", "Apache.v": "Apache-2.0", "Granted.v": "MIT"}
+
+    def test_a_head_that_names_a_licence_in_words_with_no_licence_line_is_refused(self):
+        """A head with no tag and no copyright of Anthropic's is read as a file written here under MIT, so one that
+        names another licence in words must say it with that licence's tag."""
+        found = self.licence(self.WORDED)
+        self.assertEqual([w for w, _ in found], ["Apache.v:3", "Granted.v:3", "Lgpl.v:3"])
+        self.assertTrue(all("name a licence in words" in m and "SPDX-License-Identifier" in m for _, m in found),
+                        found)
+        self.assertIn("'Licensed under', 'Apache License'", dict(found)["Apache.v:3"])
+
+    def test_licence_words_match_in_any_case_and_across_line_ends(self):
+        """A phrase may wrap: between its words a line end and the comment marks of one comment per line, or of a
+        block comment whose lines start with a star, are a space."""
+        found = self.licence({"Lines.v": "(* This file is distributed under the terms of the gnu general *)\n"
+                                         "(* public license, version 2. *)\n",
+                              "Stars.v": "(*\n * Redistribution and use in source\n * and binary forms, with or without"
+                                         " modification, are permitted. *)\n",
+                              "Short.v": "(* Taken from a GPLv2 library. *)\n"})
+        self.assertEqual([w for w, _ in found], ["Lines.v:1", "Short.v:1", "Stars.v:2"])
+        self.assertIn("'gnu general public license'", dict(found)["Lines.v:1"])
+
+    def test_a_head_that_names_a_licence_in_words_beside_its_tag_is_not_that_finding(self):
+        """The tag is the licence line the rule reads: with it, a head's words are its notice, and what is left is the
+        rule for the tag (a licence no proof file has is refused as such; MIT is one a proof file has)."""
+        found = self.licence({name: "(* SPDX-License-Identifier: %s *)\n" % self.WORDED_TAGS[name] + text
+                              for name, text in self.WORDED.items()})
+        self.assertEqual([w for w, _ in found], ["Apache.v:1", "Lgpl.v:1"])
+        self.assertTrue(all("is neither licence" in m for _, m in found), found)
+
+    def test_a_head_that_names_no_licence_is_not_refused(self):
+        """The control: a head that names no licence, holds a licence's short name only inside a longer word, or only
+        in a string literal, whose encoded data can spell one by chance, is a file written here."""
+        self.assertEqual(self.licence({"Plain.v": "(* The checksum's lemmas: each block's sum is below 65521. *)\n",
+                                       "Inside.v": "(* mpl_bound and impl_GPL_free hold for the GPLed-looking names"
+                                                   " of Lgpls. *)\n",
+                                       "Blob.v": "Definition blob := \"q+gPL/MPL=\".\n"}), [])
+
+    def test_a_short_name_is_a_licence_only_in_the_licences_own_spelling(self):
+        """In another case a short name is an ordinary identifier of a file written here, a whole one or one joined
+        to others; GPL in its own spelling, and a notice's words in any case, still name a licence."""
+        self.assertEqual(self.licence({"Mpl.v": "Definition mpl := 0.\n",
+                                       "GplOk.v": "Definition gpl_ok := 1.\n",
+                                       "Lgpl.v": "Definition lgpl' := Lgpl.lgpl + lgpl_max.\n",
+                                       "Cecill.v": "Definition cecill := 0.\n"}), [])
+        found = self.licence({"Gpl.v": "(* This file is under the GPL *)\n",
+                              "Mozilla.v": "(* Mozilla Public License *)\n",
+                              "Lower.v": "(* mozilla public license *)\n"})
+        self.assertEqual([w for w, _ in found], ["Gpl.v:1", "Lower.v:1", "Mozilla.v:1"])
+        self.assertIn("('GPL')", dict(found)["Gpl.v:1"])
+
+    def test_a_file_of_a_programs_words_or_data_may_name_the_programs_licence_in_words(self):
+        """A file that opens with the comment of its kind keeps the program's licences (requirement 7.1), so the
+        words that name them under that comment are not this finding."""
+        data = "(* Machine-generated data computed from the task's compiled program image. *)\n"
+        words = "(* This file states or restates instruction words of the task's compiled program. *)\n"
+        named = "(* The program is under the GNU General Public License; Permission is hereby granted. *)\n"
+        self.assertEqual(self.licence({"Data.v": data + named, "Words.v": words + named}), [])
+
     def test_anthropic_copyright_needs_anthropic_licence(self):
         found = self.licence({"Mit.v": self.ANTHROPIC % "MIT", "Bare.v": "(* Copyright 2026 Anthropic PBC *)\n"})
         self.assertEqual([w for w, _ in found], ["Bare.v", "Mit.v:2"])
@@ -3422,6 +4612,407 @@ class Licence(unittest.TestCase):
             with contextlib.redirect_stderr(err):
                 found = [f.where for f in t.lint(changed_only="HEAD") if f.rule == "licence"]
         self.assertEqual(found, [self.LIB + "Kept.v:2"], err.getvalue())
+
+    # A third-party proof file (lint.THIRD_PARTY; docs/adding-a-proof.md, requirement 7, case 3): its upstream author's
+    # notice is its line 4 and names the author's address, and a row of the table pins its bytes
+    AUTHOR = "Jean.Dupont" + "@" + "example.org"
+    THIRD = ("(* SPDX-License-Identifier: LGPL-2.1-or-later *)\n"
+             "(* Modified by Theorem Labs, 2026-11: module names for zlib/checksum_fuzzer. *)\n"
+             "(** * Codes as association lists\n"
+             "- Initial author: " + AUTHOR + " (2003)\n"
+             "*)\n"
+             "Definition code := 0.\n")
+    NO_ROW = ("'LGPL-2.1-or-later' is the licence of a third-party proof file, which a row of %s pins by its path and "
+              "the SHA-256 of its bytes, and no row names this file (docs/adding-a-proof.md, requirement 7)"
+              % lint.THIRD_PARTY)
+
+    # the licence text of the rows' upstream repository, coq-community/huffman, which a row's file needs in the tree
+    # (lint.third_party_text): a text of the test's own, pinned in place of the real one's bytes
+    HUFFMAN = "LICENSES/coq-community-huffman-LICENSE"
+    HUFFMAN_TEXT = "GNU LESSER GENERAL PUBLIC LICENSE\nVersion 2.1, February 1999\n"
+
+    def huffman_pinned(self):
+        """lint.PINNED_VERBATIM with HUFFMAN pinned to the bytes of HUFFMAN_TEXT, for a with statement."""
+        return mock.patch.dict(lint.PINNED_VERBATIM,
+                               {self.HUFFMAN: hashlib.sha256(self.HUFFMAN_TEXT.encode()).hexdigest()})
+
+    def third_party_row(self, name, text, **kw):
+        """A row of lint.THIRD_PARTY for the file name (as at() places it) that pins the bytes of text, with kw over its
+        keys."""
+        return dict({"path": self.at(name), "sha256": hashlib.sha256(text.encode()).hexdigest(),
+                     "spdx": "LGPL-2.1-or-later",
+                     "upstream": {"repository": "coq-community/huffman", "commit": "cc7d4cc4" * 5,
+                                  "path": "theories/" + name},
+                     "notice": {"first": 4, "last": 4}}, **kw)
+
+    def third_party(self, files, rows, **kw):
+        """The licence and private-data findings, as (rule, where, message, key) with where under the proof library
+        relative to it, of lint with kw on a tree with files (name -> text, written as it is), lint.THIRD_PARTY holding
+        rows (None: no table) and the rows' licence text, HUFFMAN, at its pin (huffman_pinned)."""
+        with self.huffman_pinned(), self.tree() as t:
+            t.write(self.HUFFMAN, self.HUFFMAN_TEXT)
+            for name, text in files.items():
+                t.write(self.at(name), text)
+            if rows is not None:
+                t.put_yaml(lint.THIRD_PARTY, {"files": rows})
+            return sorted((f.rule, f.where.replace(self.LIB, ""), f.msg, f.key) for f in t.lint(**kw)
+                          if f.rule in ("licence", "private-data"))
+
+    def test_a_row_file_whose_licence_text_is_not_under_licenses_is_a_finding(self):
+        """A licence that a row of the third-party table names has its text under LICENSES/ (lint.third_party_text).  A
+        tree that holds a row's file and not that text, HUFFMAN, gets one finding that names both the licence
+        (LGPL-2.1-or-later, or HUFFMAN) and the row's file; with HUFFMAN present at its pinned bytes (huffman_pinned),
+        no finding names both."""
+        row = self.third_party_row("Code.v", self.THIRD)
+
+        def naming(t):
+            out = []
+            for f in t.lint():
+                said = f.where + " " + f.msg
+                if ("LGPL-2.1-or-later" in said or self.HUFFMAN in said) and self.at("Code.v") in said:
+                    out.append(str(f))
+            return out
+
+        with self.huffman_pinned():
+            with self.tree() as t:
+                t.write(self.at("Code.v"), self.THIRD)
+                t.put_yaml(lint.THIRD_PARTY, {"files": [row]})
+                self.assertEqual(len(naming(t)), 1, "a row's file with no %s: no finding names both" % self.HUFFMAN)
+                t.write(self.HUFFMAN, self.HUFFMAN_TEXT)
+                self.assertEqual(naming(t), [])
+
+    def test_a_row_whose_upstream_text_is_one_of_anthropics_is_a_finding(self):
+        """A row whose upstream repository is anthropic/proofs names LICENSES/anthropic-proofs-LICENSE as its licence's
+        text (lint.third_party_text): a text lint pins, but as one of Anthropic's own (lint.ANTHROPIC_TEXTS), not as a
+        third-party project's licence.  With that text in the tree at its pin, the row's file, at its row's bytes, is
+        one licence finding, at the file, as with a text lint does not pin."""
+        licence = "LICENSES/anthropic-proofs-LICENSE"
+        text = "Apache License\nVersion 2.0, January 2004\n"
+        row = self.third_party_row("Code.v", self.THIRD,
+                                   upstream={"repository": "anthropic/proofs", "commit": "cc7d4cc4" * 5})
+        with mock.patch.dict(lint.PINNED_VERBATIM, {licence: hashlib.sha256(text.encode()).hexdigest()}):
+            with self.tree() as t:
+                t.write(self.at("Code.v"), self.THIRD)
+                t.write(licence, text)
+                t.put_yaml(lint.THIRD_PARTY, {"files": [row]})
+                found = [(f.where, f.msg) for f in t.lint() if f.rule == "licence"]
+        self.assertEqual([w for w, _ in found], [self.at("Code.v")], found)
+        self.assertIn(licence, found[0][1])
+
+    def test_a_third_party_file_with_its_row_passes(self):
+        """A row's file whose bytes are the ones its row pins is under LGPL-2.1-or-later, and the notice's lines are
+        read by no shape of the private-data rule: its address, and a host path beside it, are no finding.  A
+        contributor's pull request (no build records read) reads the files so too."""
+        host = self.THIRD.replace(" (2003)", " (2003), at /" + "home/jdupont/huffman")
+        files = {"Code.v": self.THIRD, "Host.v": host}
+        rows = [self.third_party_row("Code.v", self.THIRD), self.third_party_row("Host.v", host)]
+        self.assertEqual(self.third_party(files, rows), [])
+        self.assertEqual(self.third_party(files, rows, pr_kind="contributor"), [])
+
+    def test_a_third_party_file_with_one_byte_changed_is_refused_and_named(self):
+        """The row's file with one byte changed is not the bytes its row pins: refused, the file named with both
+        digests, and the notice's address is a finding again, since only the pinned bytes have the exemption."""
+        changed = self.THIRD.replace("code := 0", "code := 1")
+        found = self.third_party({"Code.v": changed}, [self.third_party_row("Code.v", self.THIRD)])
+        self.assertEqual(found, [
+            ("licence", "Code.v", "a third-party proof file is the bytes its row of %s pins: this file's SHA-256 is %s, "
+                                  "the row's %s (docs/adding-a-proof.md, requirement 7)"
+             % (lint.THIRD_PARTY, hashlib.sha256(changed.encode()).hexdigest(),
+                hashlib.sha256(self.THIRD.encode()).hexdigest()), None),
+            ("private-data", "Code.v:4", "an e-mail address", lint._key(self.AUTHOR))])
+
+    def test_an_lgpl_file_that_is_no_row_is_refused_and_named(self):
+        """LGPL-2.1-or-later in a file that no row names is refused, the file named, and its notice is read as any
+        file's: with no table, with an empty one, and with a row for a file the tree does not hold, which publishes
+        nothing and is no finding itself (the rows reach a tree before their files may)."""
+        for rows in (None, [], [self.third_party_row("Absent.v", self.THIRD)]):
+            with self.subTest(rows=rows):
+                found = self.third_party({"Other.v": self.THIRD}, rows)
+                self.assertEqual([(rule, w) for rule, w, _, _ in found],
+                                 [("licence", "Other.v:1"), ("private-data", "Other.v:4")])
+                self.assertEqual(found[0][2], self.NO_ROW)
+
+    def test_a_second_address_outside_the_notice_is_a_finding(self):
+        """In a row's file, its row pinning these very bytes, the notice's lines alone are exempt from the
+        private-data rule: a second address on another line is a finding, and the notice's address is none."""
+        other = "Pierre.Martin" + "@" + "example.org"
+        text = self.THIRD + "(* Maintained by " + other + " *)\n"
+        found = self.third_party({"Code.v": text}, [self.third_party_row("Code.v", text)])
+        self.assertEqual(found, [("private-data", "Code.v:7", "an e-mail address", lint._key(other))])
+
+    def test_the_notice_lines_alone_are_exempt_from_every_shape_of_private_data(self):
+        """On the notice's lines of a row's file, its row pinning these bytes, no shape of the private-data rule is
+        read (an address, a host path, a private key, an access token, a private repository's name, a private host
+        name), and the same shapes on another line of the file are findings.  Each shape is written in parts, since
+        every rule reads this test file."""
+        shapes = ["- Initial author: " + self.AUTHOR + " (2003)", "  at /" + "home/jdupont/huffman",
+                  "  -----BEGIN " + "PRIVATE KEY-----", "  token gh" + "p_" + "a1" * 18,
+                  "  see theorem-" + "labs/huffman-internal", "  built on box." + "corp"]
+        notice = "".join(line + "\n" for line in shapes)
+        text = ("(* SPDX-License-Identifier: LGPL-2.1-or-later *)\n(** * Codes\n" + notice + "*)\n(* Again:\n" + notice
+                + "*)\nDefinition code := 0.\n")
+        row = self.third_party_row("Code.v", text, notice={"first": 3, "last": 8})
+        found = self.third_party({"Code.v": text}, [row])
+        self.assertEqual([(rule, w, m) for rule, w, m, _ in found],
+                         [("private-data", "Code.v:%d" % no, what) for no, what in (
+                             (11, "an e-mail address"), (12, "a host path"), (13, "a private key"),
+                             (14, "an access token"), (15, "a private repository's name"),
+                             (16, "a private host name"))])
+
+    def test_a_row_that_is_not_its_files_is_a_finding(self):
+        """A row that is not exact is a finding of the table and no row, so its file is refused as one no row names
+        and its notice is read; a row whose licence is not the file's line, or whose notice lines the file does not
+        have, refuses the file."""
+        mit = self.THIRD.replace("LGPL-2.1-or-later", "MIT")
+        no_notice = self.third_party_row("Loose.v", self.THIRD)
+        del no_notice["notice"]
+        found = self.third_party({"Loose.v": self.THIRD, "Mit.v": mit, "Short.v": self.THIRD},
+                                 [no_notice, self.third_party_row("Mit.v", mit),
+                                  self.third_party_row("Short.v", self.THIRD, notice={"first": 40, "last": 40})])
+        self.assertEqual([(rule, w) for rule, w, _, _ in found],
+                         [("licence", "Loose.v:1"), ("licence", "Mit.v:1"), ("licence", "Short.v"),
+                          ("licence", lint.THIRD_PARTY), ("private-data", "Loose.v:4"), ("private-data", "Short.v:4")])
+        msgs = {w: m for rule, w, m, _ in found if rule == "licence"}
+        self.assertEqual(msgs["Loose.v:1"], self.NO_ROW)
+        self.assertEqual(msgs[lint.THIRD_PARTY], "files[0]: missing key 'notice'")
+        self.assertIn("gives the licence LGPL-2.1-or-later", msgs["Mit.v:1"])
+        self.assertIn("gives lines 40 to 40 as the upstream author's notice, and the file has 6 lines", msgs["Short.v"])
+
+    def test_a_changed_table_rereads_the_files_it_names(self):
+        """--changed-only: a change to the table alone has every file read, so a row that no longer pins a file's
+        bytes refuses the file, which did not change."""
+        with self.tree() as t:
+            t.write(self.at("Code.v"), self.THIRD)
+            t.put_yaml(lint.THIRD_PARTY, {"files": [self.third_party_row("Code.v", self.THIRD)]})
+            PerFileScope.commit(self, t)   # the base --changed-only compares with
+            t.put_yaml(lint.THIRD_PARTY, {"files": [self.third_party_row("Code.v", self.THIRD, sha256="0" * 64)]})
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                found = [f.where for f in t.lint(changed_only="HEAD") if f.rule == "licence"]
+        self.assertEqual(found, [self.at("Code.v")], err.getvalue())
+
+    def test_a_changed_licence_text_rereads_the_files_of_its_rows(self):
+        """--changed-only: a change to a text lint pins (lint.PINNED_VERBATIM) alone, here its removal, has every file
+        read, so a row's file whose licence text is gone is refused, though the file did not change."""
+        with self.huffman_pinned(), self.tree() as t:
+            t.write(self.at("Code.v"), self.THIRD)
+            t.write(self.HUFFMAN, self.HUFFMAN_TEXT)
+            t.put_yaml(lint.THIRD_PARTY, {"files": [self.third_party_row("Code.v", self.THIRD)]})
+            PerFileScope.commit(self, t)   # the base --changed-only compares with
+            os.remove(t.path(self.HUFFMAN))
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                found = [f.where for f in t.lint(changed_only="HEAD") if f.rule == "licence"]
+        self.assertEqual(found, [self.at("Code.v")], err.getvalue())
+
+    # A project whose project.yaml says `release: private` and whose folder holds a NOTICE (lint.private_projects): a
+    # file of it that is made from neither Anthropic's proofs nor a program is under that NOTICE, with the two lines
+    # lint.PRIVATE_LINES, and no file of it is under MIT (docs/adding-a-proof.md, requirement 7).
+    NOTICE = "projects/zlib/NOTICE"
+    DATA = "(* Machine-generated data computed from the task's compiled program image. *)\n"
+    WORDS = "(* This file states or restates instruction words of the task's compiled program. *)\n"
+
+    @staticmethod
+    def notice_lines(project="zlib"):
+        """lint.PRIVATE_LINES for project, each on a line of its own."""
+        return "".join(line.format(project=project) + "\n" for line in lint.PRIVATE_LINES)
+
+    def private(self, t, private=True, notice=True):
+        """zlib's project.yaml says `release: private` (with private), and projects/zlib/NOTICE is there (with
+        notice)."""
+        if private:
+            edit(t, "projects/zlib/project.yaml", lambda y: y.update(release="private"))
+        if notice:
+            t.write(self.NOTICE, "Copyright Theorem Labs. All rights reserved.\n")
+
+    def test_a_private_project_with_a_notice_takes_the_notice_lines_and_anthropic_s(self):
+        files = {"Ours.v": self.notice_lines(), "Crlf.v": self.notice_lines().replace("\n", "\r\n"),
+                 "Low.v": "(* a *)\n" * 8 + self.notice_lines(),   # lines 9 and 10: still the head
+                 "Kept.v": self.ANTHROPIC % "Apache-2.0 OR MIT",
+                 "Changed.v": self.ANTHROPIC % "Apache-2.0 OR MIT"
+                              + "(* Modified by Theorem Labs, 2026-11: ported *)\n",
+                 "Data.v": self.DATA, "Words.v": self.WORDS}
+        self.assertEqual(self.licence(files, prepare=self.private), [])
+        # in a contributor's pull request too, whose build record the maintainer writes
+        self.assertEqual(self.licence(files, texts=(), prepare=self.private, pr_kind="contributor"), [])
+
+    def test_the_notice_lines_are_refused_in_a_project_that_is_not_private(self):
+        why = "the project.yaml of this file's project does not say `release: private`"
+        for notice in (True, False):
+            with self.subTest(notice=notice):
+                found = self.licence({"Ours.v": self.notice_lines()},
+                                     prepare=lambda t, notice=notice: self.private(t, private=False, notice=notice))
+                self.assertEqual([w for w, _ in found], ["Ours.v:2"])
+                self.assertTrue(found[0][1].endswith(why), found)
+
+    def test_the_notice_lines_are_refused_in_a_private_project_with_no_notice_where_mit_stays(self):
+        found = self.licence({"Ours.v": self.notice_lines(), "NoLines.v": "",
+                              "Mit.v": "(* SPDX-License-Identifier: MIT *)\n"},
+                             prepare=lambda t: self.private(t, notice=False))
+        self.assertEqual(found, [("Ours.v:2", "LicenseRef-Proprietary is the licence of a proof file under its "
+                                              "project's NOTICE, in a project whose project.yaml says `release: "
+                                              "private` and whose folder holds a NOTICE file (docs/adding-a-proof.md, "
+                                              "requirement 7); there is no projects/zlib/NOTICE")])
+
+    def test_no_file_of_a_private_project_with_a_notice_is_under_mit(self):
+        other = self.lib("fuzzer-parse_bjdata", "json")   # another project's files keep the MIT forms
+        mit = "(* SPDX-License-Identifier: MIT *)\n"
+        found = self.licence({"NoLines.v": "", "Mit.v": mit,
+                              "TheoremLabs.v": "(* Copyright 2026 Theorem Labs *)\n" + mit,
+                              other + "NoLines.v": "", other + "Mit.v": mit}, prepare=self.private)
+        self.assertEqual([w for w, _ in found], ["Mit.v:1", "NoLines.v", "TheoremLabs.v:2"])
+        self.assertEqual(found[1][1], "no proof file of zlib, whose project.yaml says `release: private` and whose "
+                                      "folder holds projects/zlib/NOTICE, is under MIT: one made from Anthropic's "
+                                      "proofs has Anthropic's two lines, one of a program's instruction words or data "
+                                      "opens with the comment of its kind, and any other has the lines `%s` and `%s` "
+                                      "(docs/adding-a-proof.md, requirement 7)"
+                                      % tuple(self.notice_lines().splitlines()))
+        self.assertTrue(all(m == found[1][1] for _, m in found), found)
+
+    def test_the_notice_lines_name_the_file_s_own_project_and_go_together(self):
+        line = lint.PRIVATE_LINES[0].format(project="zlib") + "\n"
+        found = self.licence({"OtherProject.v": self.notice_lines("json"),
+                              "TagAlone.v": lint.PRIVATE_LINES[1] + "\n",
+                              "LineAlone.v": line,
+                              "LineMit.v": line + "(* SPDX-License-Identifier: MIT *)\n",
+                              "LineAnthropic.v": self.ANTHROPIC % "Apache-2.0 OR MIT" + line,
+                              "AnthropicTag.v": "(* Copyright 2026 Anthropic PBC *)\n" + lint.PRIVATE_LINES[1] + "\n",
+                              "DataLine.v": self.DATA + line,
+                              "Gpl.v": "(* SPDX-License-Identifier: GPL-2.0-only *)\n"}, prepare=self.private)
+        want = {"AnthropicTag.v:2": "its licence line is SPDX-License-Identifier: Apache-2.0 OR MIT",
+                "DataLine.v": "keeps the program's licences",
+                "Gpl.v:1": "is neither licence a proof file of zlib has: Apache-2.0 OR MIT, with Anthropic's "
+                           "copyright, for one made from Anthropic's proofs, or LicenseRef-Proprietary for one under "
+                           "projects/zlib/NOTICE",
+                "LineAlone.v:1": "this line goes with the tag `%s` under it" % lint.PRIVATE_LINES[1],
+                "LineAnthropic.v:3": "this line goes with the tag `%s` under it" % lint.PRIVATE_LINES[1],
+                "LineMit.v:1": "this line goes with the tag `%s` under it" % lint.PRIVATE_LINES[1],
+                "OtherProject.v:2": "has the line `%s` in its first 10 lines" % line.strip(),
+                "TagAlone.v:1": "has the line `%s` in its first 10 lines" % line.strip()}
+        self.assertEqual([w for w, _ in found], sorted(want))
+        for where, msg in found:
+            self.assertIn(want[where], msg, where)
+        # in a project that is not private the line alone is refused as well
+        self.assertEqual(self.licence({"LineAlone.v": line}),
+                         [("LineAlone.v:1", "this line goes with the tag `%s` under it and with no other licence "
+                                            "lines: a proof file has one licence (docs/adding-a-proof.md, requirement "
+                                            "7)" % lint.PRIVATE_LINES[1])])
+
+    def test_a_tree_with_a_private_project_s_notice_and_its_files_is_clean(self):
+        """The NOTICE is a path lint admits (lint.PROJECT_NOTICE), so the change that brings it and the files under it
+        passes a lint by this base's rules."""
+        with self.tree() as t:
+            self.private(t)
+            t.write(self.RECORD, build_record(proofs={"licence": "Apache-2.0 OR MIT",
+                                                      "texts": list(lint.ANTHROPIC_TEXTS)}))
+            t.write(self.LIB + "Ours.v", self.notice_lines() + "Definition x := 0.\n")
+            t.write(self.LIB + "Kept.v", self.ANTHROPIC % "Apache-2.0 OR MIT" + "Definition y := 0.\n")
+            self.assertEqual([str(f) for f in t.lint()], [])
+
+    def test_a_changed_notice_rereads_its_project_s_files(self):
+        # --changed-only: a NOTICE that a private project gains refuses a file of it that did not change
+        with self.tree() as t:
+            self.private(t, notice=False)
+            t.write(self.LIB + "Mit.v", "(* SPDX-License-Identifier: MIT *)\nDefinition x := 0.\n")
+            PerFileScope.commit(self, t)   # the base --changed-only compares with
+            t.write(self.NOTICE, "Copyright Theorem Labs. All rights reserved.\n")
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                found = [f.where for f in t.lint(changed_only="HEAD") if f.rule == "licence"]
+        self.assertEqual(found, [self.LIB + "Mit.v:1"], err.getvalue())
+        self.assertIn("%s changed" % self.NOTICE, err.getvalue())
+
+    def test_the_notice_copyright_line_below_the_head_is_refused(self):
+        """As a licence tag or a copyright of Anthropic's is: the words of the copyright line of a project's NOTICE
+        below the first 10 lines are out of place, in any project and wherever they are on their line."""
+        line = lint.PRIVATE_LINES[0].format(project="zlib")
+        json = self.lib("fuzzer-parse_bjdata", "json")
+        found = self.licence({"Again.v": self.notice_lines() + "(* a *)\n" * 10 + line + "\n",
+                              "InComment.v": self.notice_lines() + "(* a *)\n" * 10 + "(** " + line[3:-3] + " *)\n",
+                              json + "Late.v": "(* a *)\n" * 10 + line + "\n"}, prepare=self.private)
+        self.assertEqual([w for w, _ in found], ["Again.v:13", "InComment.v:13", json + "Late.v:11"])
+        self.assertTrue(all(m == "a licence line opens the file, in its first 10 lines (docs/adding-a-proof.md, "
+                                 "requirement 7)" for _, m in found), found)
+
+    def test_the_notice_copyright_words_below_the_head_are_refused_in_any_case(self):
+        """Below the first 10 lines the words of the copyright line of a project's NOTICE are read in any case, as
+        Anthropic's name is there."""
+        line = lint.PRIVATE_LINES[0].format(project="zlib")
+        json = self.lib("fuzzer-parse_bjdata", "json")
+        late = "a licence line opens the file, in its first 10 lines (docs/adding-a-proof.md, requirement 7)"
+        found = self.licence({"Lower.v": self.notice_lines() + "(* a *)\n" * 10 + line.lower() + "\n",
+                              "Upper.v": self.notice_lines() + "(* a *)\n" * 10 + "(** " + line[3:-3].upper() + " *)\n",
+                              json + "Mixed.v": "(* a *)\n" * 10 + line.swapcase() + "\n"}, prepare=self.private)
+        self.assertEqual(found, [("Lower.v:13", late), ("Upper.v:13", late), (json + "Mixed.v:11", late)])
+
+    def test_a_changed_notice_copyright_line_in_the_head_is_refused(self):
+        """In the first 10 lines a copy of the words of the copyright line of a project's NOTICE in another case is a
+        changed line, refused as a changed copyright line of Anthropic's is: in a private project with a NOTICE and in
+        a public one, with the tag and without it, alone, beside the line itself and beside Anthropic's lines."""
+        line, tag = lint.PRIVATE_LINES[0].format(project="zlib"), lint.PRIVATE_LINES[1]
+        json = self.lib("fuzzer-parse_bjdata", "json")
+        changed = ("the copyright line of a project's NOTICE is `(* Copyright Theorem Labs. All rights reserved: see "
+                   "projects/<project>/NOTICE. *)`, unchanged (docs/adding-a-proof.md, requirement 7)")
+        found = self.licence({"UpperTag.v": line.upper() + "\n" + tag + "\n",
+                              "LowerAlone.v": line.lower() + "\n",
+                              "LowerNotice.v": line.replace("NOTICE", "notice") + "\n" + tag + "\n",
+                              "Restated.v": self.notice_lines() + "(** " + line[3:-3].upper() + " *)\n",
+                              "Anthropic.v": self.ANTHROPIC % "Apache-2.0 OR MIT" + line.swapcase() + "\n",
+                              json + "Lower.v": line.lower() + "\n",
+                              json + "MixedTag.v": line.swapcase() + "\n" + tag + "\n"}, prepare=self.private)
+        self.assertEqual(found, [("Anthropic.v:3", changed), ("LowerAlone.v:1", changed), ("LowerNotice.v:1", changed),
+                                 ("Restated.v:3", changed), ("UpperTag.v:1", changed), (json + "Lower.v:1", changed),
+                                 (json + "MixedTag.v:1", changed)])
+
+    def test_the_notice_lines_name_no_other_project_s_notice(self):
+        """A file under its project's NOTICE names that NOTICE alone: a copyright line, or its words in a comment, that
+        names another project's is refused beside the file's own lines; its own project's words restated pass."""
+        other = lint.PRIVATE_LINES[0].format(project="json")
+        own = lint.PRIVATE_LINES[0].format(project="zlib")
+        found = self.licence({"Second.v": self.notice_lines() + other + "\n",
+                              "InDoc.v": self.notice_lines() + "(** after " + other[3:-3] + " *)\n",
+                              "Restated.v": self.notice_lines() + "(** " + own[3:-3] + " So says the NOTICE. *)\n"},
+                             prepare=self.private)
+        msg = ("this line names projects/json/NOTICE: a proof file of zlib names no NOTICE but its own project's, "
+               "projects/zlib/NOTICE (docs/adding-a-proof.md, requirement 7)")
+        self.assertEqual(found, [("InDoc.v:3", msg), ("Second.v:3", msg)])
+
+    def test_the_notice_copyright_line_is_above_its_tag(self):
+        tag, line = lint.PRIVATE_LINES[1], lint.PRIVATE_LINES[0].format(project="zlib")
+        found = self.licence({"TagFirst.v": tag + "\n" + line + "\n", "Gap.v": line + "\n(* a *)\n" + tag + "\n"},
+                             prepare=self.private)
+        self.assertEqual(found, [("TagFirst.v:1", "a file under LicenseRef-Proprietary has the line `%s` in its first "
+                                                  "10 lines, above its tag (docs/adding-a-proof.md, requirement 7)"
+                                                  % line)])
+
+    def test_the_docs_quote_the_private_lines(self):
+        """lint.PRIVATE_LINES is the one statement of the lines of a file under its project's NOTICE: requirement 7
+        of docs/adding-a-proof.md quotes both, each on a line of its own, with <project> for the project."""
+        path = os.path.join(REPO, "docs", "adding-a-proof.md")
+        if not os.path.exists(path):
+            self.skipTest("no docs/adding-a-proof.md beside tools/oft")
+        with open(path, encoding="utf-8") as f:
+            lines = {line.strip() for line in f}
+        for line in lint.PRIVATE_LINES:
+            self.assertIn(line.format(project="<project>"), lines)
+
+    def test_a_third_party_file_of_a_private_project_keeps_its_row_s_licence(self):
+        """Where the third-party table meets a project under its NOTICE (lint.private_projects): a row's file at its
+        row's bytes keeps the row's licence there too, and is no finding; LGPL-2.1-or-later in a file that no row names
+        is refused as in any project (NO_ROW); and a head that names a licence in words with no licence line is asked
+        for that licence's tag, as a file that reads as written here, which in that project is under its NOTICE."""
+        files = {"Code.v": self.THIRD, "Other.v": self.THIRD, "Lgpl.v": self.WORDED["Lgpl.v"]}
+        with self.huffman_pinned(), self.tree() as t:
+            self.private(t)
+            t.write(self.HUFFMAN, self.HUFFMAN_TEXT)
+            for name, text in files.items():
+                t.write(self.at(name), text)
+            t.put_yaml(lint.THIRD_PARTY, {"files": [self.third_party_row("Code.v", self.THIRD)]})
+            found = sorted((f.where.replace(self.LIB, ""), f.msg) for f in t.lint() if f.rule == "licence")
+        self.assertEqual([w for w, _ in found], ["Lgpl.v:3", "Other.v:1"], found)
+        self.assertEqual(dict(found)["Other.v:1"], self.NO_ROW)
+        self.assertIn("so it reads as a file written here, which in zlib is under projects/zlib/NOTICE: give it the "
+                      "SPDX-License-Identifier line of the licence they name", dict(found)["Lgpl.v:3"])
 
     # A licence-pending entry in lint-exceptions.yaml: the licence findings of its unit are reported as pending and do
     # not fail, until the series that applies the unit's licence lines removes the entry.
@@ -3862,18 +5453,670 @@ class LicencePerProject(Licence):
     LAYOUT = layout.NEW
 
 
+class ThirdPartyTable(unittest.TestCase):
+    """lint.load_third_party: the table of third-party proof files (lint.THIRD_PARTY) loads, each row is exact, and no
+    path is two rows'; anything else is a licence finding of its own that names the table, and a row that is not exact
+    is no row (Licence.test_a_row_that_is_not_its_files_is_a_finding: its file is then refused)."""
+    PATH = "projects/zlib/checksum_fuzzer/proofs/lib/Huffman/Code.v"
+    UPSTREAM = {"repository": "coq-community/huffman", "commit": "c" * 40, "path": "theories/Code.v"}
+    ROW = {"path": PATH, "sha256": "a" * 64, "spdx": "LGPL-2.1-or-later", "upstream": UPSTREAM,
+           "notice": {"first": 21, "last": 21}}
+
+    def load(self, text):
+        """(the paths of the rows, the findings as (rule, where, message)) of a tree whose table is text."""
+        with tempfile.TemporaryDirectory() as root:
+            os.makedirs(os.path.join(root, "tools", "oft"))
+            with open(os.path.join(root, lint.THIRD_PARTY), "w") as f:
+                f.write(text)
+            rows, found = lint.load_third_party(root)
+        return sorted(rows), [(f.rule, f.where, f.msg) for f in found]
+
+    def rows(self, *rows):
+        return self.load(yamlio.dump({"files": list(rows)}))
+
+    def test_no_table_and_an_empty_one_have_no_row_and_no_finding(self):
+        with tempfile.TemporaryDirectory() as root:
+            self.assertEqual(lint.load_third_party(root), ({}, []))
+        self.assertEqual(self.load("files: []\n"), ([], []))
+
+    def test_an_exact_row_is_one_by_its_path_in_either_layout(self):
+        """A row is keyed by its path in the per-project layout (layout.canonical), so a row in the old layout names
+        the same file; the upstream path is optional."""
+        self.assertEqual(self.rows(self.ROW), ([self.PATH], []))
+        self.assertEqual(self.rows(dict(self.ROW, path="proofs/zlib/checksum_fuzzer/lib/Huffman/Code.v")),
+                         ([self.PATH], []))
+        self.assertEqual(self.rows(dict(self.ROW, upstream={k: self.UPSTREAM[k] for k in ("repository", "commit")})),
+                         ([self.PATH], []))
+
+    def test_a_table_that_does_not_load_is_a_finding(self):
+        for text in ("files: [\n", "files: []\nfiles: []\n", "files: {}\n", "files:\n", "rows: []\n",
+                     "files: []\nrows: []\n", "- files\n"):
+            with self.subTest(text=text):
+                rows, found = self.load(text)
+                self.assertEqual((rows, [(rule, where) for rule, where, _ in found]),
+                                 ([], [("licence", lint.THIRD_PARTY)]))
+
+    def test_a_row_that_is_not_exact_is_a_finding_that_names_its_field_and_no_row(self):
+        """The schema of a row (tools/oft/schemas/third-party-proofs.yaml) names the field of each defect, and lint.py
+        names those the schema cannot say (a path that is no Rocq file of a proofs folder, a notice backwards): one
+        finding a row, its defects joined."""
+        bad = {
+            "a missing field": ({k: v for k, v in self.ROW.items() if k != "sha256"},
+                                "files[0]: missing key 'sha256'"),
+            "another field": (dict(self.ROW, reason="upstream"), "files[0]: unknown key 'reason'"),
+            "not a proof file": (dict(self.ROW, path="docs/Code.v"),
+                                 "files[0].path: 'docs/Code.v' is not a Rocq file of a fuzz target's proofs folder"),
+            "not a Rocq file": (dict(self.ROW, path=self.PATH[:-2] + ".md"),
+                                "files[0].path: %r is not a Rocq file of a fuzz target's proofs folder"
+                                % (self.PATH[:-2] + ".md")),
+            "a short digest": (dict(self.ROW, sha256="a" * 63),
+                               "files[0].sha256: %r is not a valid sha256" % ("a" * 63)),
+            "an upper-case digest": (dict(self.ROW, sha256="A" * 64),
+                                     "files[0].sha256: %r is not a valid sha256" % ("A" * 64)),
+            "another licence": (dict(self.ROW, spdx="GPL-2.0-only"),
+                                "files[0].spdx: 'GPL-2.0-only' is not one of ['LGPL-2.1-or-later']"),
+            "a repository URL": (dict(self.ROW, upstream=dict(self.UPSTREAM,
+                                                              repository="https://github.com/coq-community/huffman")),
+                                 "files[0].upstream.repository: 'https://github.com/coq-community/huffman' does not "
+                                 "match ^[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+$"),
+            "a short commit": (dict(self.ROW, upstream=dict(self.UPSTREAM, commit="c" * 12)),
+                               "files[0].upstream.commit: %r is not a valid commit" % ("c" * 12)),
+            "no upstream": ({k: v for k, v in self.ROW.items() if k != "upstream"},
+                            "files[0]: missing key 'upstream'"),
+            "no upstream repository": (dict(self.ROW, upstream={"commit": "c" * 40, "path": "theories/Code.v"}),
+                                       "files[0].upstream: missing key 'repository'"),
+            "no upstream commit": (dict(self.ROW, upstream={"repository": "coq-community/huffman"}),
+                                   "files[0].upstream: missing key 'commit'"),
+            "an empty upstream path": (dict(self.ROW, upstream=dict(self.UPSTREAM, path="")),
+                                       "files[0].upstream.path: expected a non-empty string"),
+            "another upstream field": (dict(self.ROW, upstream=dict(self.UPSTREAM, tag="v8.16.0")),
+                                       "files[0].upstream: unknown key 'tag'"),
+            "the notice as text": (dict(self.ROW, notice="- Initial author: Laurent.Thery"),
+                                   "files[0].notice: expected a mapping"),
+            "a notice backwards": (dict(self.ROW, notice={"first": 22, "last": 21}),
+                                   "files[0].notice: its first line, 22, is after its last, 21"),
+            "a notice from line 0": (dict(self.ROW, notice={"first": 0, "last": 1}),
+                                     "files[0].notice.first: 0 is below 1"),
+            "a notice line that is not a number": (dict(self.ROW, notice={"first": 21, "last": True}),
+                                                   "files[0].notice.last: expected an integer"),
+            "two defects": (dict(self.ROW, sha256="a" * 63, spdx="GPL-2.0-only"),
+                            "files[0].sha256: %r is not a valid sha256; files[0].spdx: 'GPL-2.0-only' is not one of "
+                            "['LGPL-2.1-or-later']" % ("a" * 63)),
+            "not a mapping": (self.PATH, "files[0]: expected a mapping"),
+        }
+        for what, (row, message) in bad.items():
+            with self.subTest(what):
+                self.assertEqual(self.rows(row), ([], [("licence", lint.THIRD_PARTY, message)]))
+
+    def test_a_path_two_rows_name_is_a_finding(self):
+        """Once per path, in either layout: the first row stands, and the second is a finding."""
+        again = dict(self.ROW, path="proofs/zlib/checksum_fuzzer/lib/Huffman/Code.v", sha256="b" * 64)
+        self.assertEqual(self.rows(self.ROW, again),
+                         ([self.PATH], [("licence", lint.THIRD_PARTY, "files[1].path: %r is a path an earlier row "
+                                                                      "names, in either layout" % again["path"])]))
+
+
+class NoticeImages(unittest.TestCase):
+    """lint.check_notice: while a harness.yaml publishes a classifier or an original (lists it and does not withhold
+    it), NOTICE holds the sentence on them, lint.NOTICE_IMAGES (docs/licensing.md, "Harness copies and binaries");
+    else one licence finding at NOTICE names the first such harness.  NOTICE wraps its lines, so the sentence may wrap
+    there."""
+    HARNESS = "projects/zlib/checksum_fuzzer/harness.yaml"
+    OTHER_HARNESS = "projects/json/fuzzer-parse_bjdata/harness.yaml"
+    # a NOTICE without the sentence
+    WITHOUT = "OSS Verify proofs\n\nThe binaries attached to a release are combined works.\n"
+
+    @staticmethod
+    def withhold(rec):
+        for k in ("bytes", "sha256", "segments"):
+            rec.pop(k)
+        rec["withheld"] = "not-yet-published"
+
+    def found(self, change=None, notice=WITHOUT, other=None):
+        """lint.check_notice, as (rule, where, message), on the fixture with zlib/checksum_fuzzer's classifiers and
+        originals (with_images) as change leaves them, NOTICE as notice (None: no NOTICE, as in the fixture), and the
+        change other to json/fuzzer-parse_bjdata's harness.yaml."""
+        with tree(render=False) as t:
+            with_images(t, change, statements=False)
+            if other:
+                edit(t, self.OTHER_HARNESS, other)
+            if notice is not None:
+                t.write(lint.NOTICE, notice)
+            return [(f.rule, f.where, f.msg) for f in lint.check_notice(facts.load(t.root))]
+
+    def assert_one_finding(self, found, harness):
+        self.assertEqual([(rule, where) for rule, where, _ in found], [("licence", lint.NOTICE)], found)
+        self.assertIn(harness, found[0][2])
+        self.assertIn(lint.NOTICE_IMAGES, found[0][2])
+
+    def test_a_published_classifier_and_no_sentence_is_one_finding_that_names_its_harness(self):
+        for notice in (self.WITHOUT, None):
+            with self.subTest(notice=notice):
+                self.assert_one_finding(self.found(lambda y: y.pop("originals"), notice), self.HARNESS)
+
+    def test_a_published_original_and_no_sentence_is_one_finding(self):
+        self.assert_one_finding(self.found(lambda y: y.pop("classifiers")), self.HARNESS)
+
+    def test_the_finding_names_the_first_harness_that_publishes_one(self):
+        """json comes before zlib: one finding, which names json's harness."""
+        def original(y):
+            y["originals"] = {"plain": {"file": names.original_file("fuzzer-parse_bjdata", "plain"), "bytes": 8192,
+                                        "sha256": "cc" * 32, "segments": [1, 1, 1, 1]}}
+        found = self.found(other=original)
+        self.assert_one_finding(found, self.OTHER_HARNESS)
+        self.assertNotIn(self.HARNESS, found[0][2])
+
+    def test_with_the_sentence_there_is_none_wrapped_or_not(self):
+        for notice in (self.WITHOUT + lint.NOTICE_IMAGES + "\n",
+                       self.WITHOUT + "\n" + textwrap.fill(lint.NOTICE_IMAGES, 40) + "\n"):
+            with self.subTest(notice=notice):
+                self.assertEqual(self.found(notice=notice), [])
+
+    def test_a_withheld_classifier_and_no_sentence_is_none(self):
+        def held(y):
+            y.pop("originals")
+            for rec in y["classifiers"]["asan"].values():
+                self.withhold(rec)
+        self.assertEqual(self.found(held), [])
+        self.assertEqual(self.found(held, notice=None), [])
+
+    def test_this_repository_s_notice_holds_the_sentence(self):
+        path = os.path.join(REPO, lint.NOTICE)
+        if not os.path.exists(path):
+            self.skipTest("no NOTICE beside tools/oft")
+        with open(path, encoding="utf-8") as f:
+            self.assertEqual(self.found(notice=f.read()), [])
+
+    def test_the_root_readme_says_the_same_sentence(self):
+        with tree() as t:
+            self.assertIn(lint.NOTICE_IMAGES, " ".join(t.read("README.md").split()))
+
+    def test_a_whole_tree_lint_and_a_changed_only_lint_of_notice_alone_refuse_it(self):
+        """lint.run runs the rule over the whole tree, so a --changed-only lint whose change is NOTICE alone refuses
+        the sentence's removal too."""
+        def at_notice(t, **kw):
+            with contextlib.redirect_stderr(io.StringIO()):
+                return [f.rule for f in t.lint(**kw) if f.where == lint.NOTICE]
+        with tree() as t:
+            with_images(t)
+            t.write(lint.NOTICE, self.WITHOUT + lint.NOTICE_IMAGES + "\n")
+            self.assertEqual(at_notice(t), [])
+            PerFileScope.commit(self, t)   # the base --changed-only compares with
+            t.write(lint.NOTICE, self.WITHOUT)
+            self.assertEqual(at_notice(t), ["licence"])
+            self.assertEqual(at_notice(t, changed_only="HEAD"), ["licence"])
+
+
+class BareLicenceCount(unittest.TestCase):
+    """A whole-tree lint counts the proof files that carry no licence line and prints the count, in total and per
+    fuzz target (lint.bare_licence, lint.bare_report).  It is a count and no rule: requirement 7 of
+    docs/adding-a-proof.md says a file with no licence lines was written here under MIT, so none of these files is a
+    finding and the run still passes.  The count exists because a file whose Anthropic header was dropped is the same
+    bytes as one written here, and a count of findings cannot see it."""
+    LIB = "proofs/zlib/checksum_fuzzer/lib/"
+    OTHER = "proofs/json/fuzzer-parse_bjdata/lib/"
+    ANTHROPIC = "(* Copyright 2026 Anthropic PBC *)\n(* SPDX-License-Identifier: Apache-2.0 OR MIT *)\n"
+    DATA = "(* Machine-generated data computed from the task's compiled program image. *)\n"
+    WORDS = "(* This file states or restates instruction words of the task's compiled program. *)\n"
+
+    @staticmethod
+    def read(err):
+        """(the total, {fuzz target: count}) of the count lint printed on stderr; (0, {}) when it printed none."""
+        lines = err.splitlines()
+        head = [line for line in lines if "carry no licence line" in line]
+        if not head:
+            return 0, {}
+        per = {}
+        for line in lines:
+            if line.startswith("oft lint:   "):
+                unit, _, n = line[len("oft lint:   "):].rpartition(": ")
+                per[unit] = int(n)
+        return int(head[0].split()[2]), per
+
+    RECORD = "proofs/zlib/checksum_fuzzer/provenance/PROVENANCE.yaml"
+
+    def counts(self, files=(), **kw):
+        """(the total, {fuzz target: count}) of a whole-tree lint over the fixture with files (path -> header) written
+        into it, each given a body so it is a Rocq file; zlib/checksum_fuzzer gets the build record that lets a file
+        of its proofs carry Anthropic's licence.  The run must find nothing, so the count never stands in for a
+        finding."""
+        with tree() as t:
+            t.write(self.RECORD, build_record(proofs={"licence": lint.ANTHROPIC_LICENCE,
+                                                      "texts": list(lint.ANTHROPIC_TEXTS)}))
+            for name, text in dict(files).items():
+                t.write(name, text + "Definition x := 0.\n")
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                found = [str(f) for f in t.lint(**kw)]
+            self.assertEqual(found, [], err.getvalue())
+            return self.read(err.getvalue())
+
+    def test_the_count_is_the_bare_files_and_names_each_fuzz_target(self):
+        """Three bare files in one fuzz target and two in another are counted there and nowhere else, and the total
+        is the sum of the lines."""
+        base_total, base = self.counts()
+        total, per = self.counts(dict({self.LIB + "A%d.v" % i: "" for i in range(3)},
+                                      **{self.OTHER + "B%d.v" % i: "(* a note *)\n" for i in range(2)}))
+        self.assertEqual(total, base_total + 5)
+        self.assertEqual(per.get("zlib/checksum_fuzzer"), base.get("zlib/checksum_fuzzer", 0) + 3)
+        self.assertEqual(per.get("json/fuzzer-parse_bjdata"), base.get("json/fuzzer-parse_bjdata", 0) + 2)
+        self.assertEqual(sum(per.values()), total)
+
+    def test_a_file_with_a_licence_line_is_not_counted(self):
+        """Either licence a proof file may have, and a tag in a block comment or below the first line: each is a
+        licence line, so none of these files is bare."""
+        self.assertEqual(self.counts({self.LIB + "Mit.v": "(* SPDX-License-Identifier: MIT *)\n",
+                                      self.LIB + "Anth.v": self.ANTHROPIC,
+                                      self.LIB + "Block.v": "(*\n * SPDX-License-Identifier: MIT\n *)\n",
+                                      self.LIB + "Low.v": "(* a *)\n" * 8 + self.ANTHROPIC}),
+                         self.counts())
+
+    def test_a_file_with_a_bad_licence_line_keeps_its_finding_and_is_not_counted(self):
+        """What stops the count from masking a rule: a copyright line of Anthropic's with no tag under it, a changed
+        copyright line of Anthropic's, and a tag naming a licence no proof file has, each raise the licence finding
+        they always raised, and none is bare -- each has a licence line, wrong as it is."""
+        base_total, _ = self.counts()
+        cases = {"NoTag.v": "(* Copyright 2026 Anthropic PBC *)\n",
+                 "Changed.v": "(* Copyright (c) 2026 Anthropic PBC *)\n",
+                 "Gpl.v": "(* SPDX-License-Identifier: GPL-2.0-only *)\n"}
+        with tree() as t:
+            for name, text in cases.items():
+                t.write(self.LIB + name, text + "Definition x := 0.\n")
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                found = [str(f) for f in t.lint()]
+            self.assertEqual(sorted(f.split(":")[0] for f in found),
+                             ["licence " + self.LIB + name for name in ("Changed.v", "Gpl.v", "NoTag.v")])
+            self.assertEqual(self.read(err.getvalue())[0], base_total)
+
+    def test_a_file_whose_head_names_a_licence_in_words_keeps_its_finding_and_is_not_counted(self):
+        """A head with no licence line that names another licence in words fails the licence rule, so it is no part
+        of the count either: the count is of the files the rules read as written here."""
+        base_total, _ = self.counts()
+        with tree() as t:
+            t.write(self.LIB + "Lgpl.v", "(* This library is free software, under the GNU Lesser General Public "
+                                         "License, version 2.1. *)\nDefinition x := 0.\n")
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                found = [str(f) for f in t.lint()]
+            self.assertEqual([f.split(":")[0] for f in found], ["licence " + self.LIB + "Lgpl.v"])
+            self.assertEqual(self.read(err.getvalue())[0], base_total)
+
+    def test_a_file_that_opens_with_the_comment_of_its_kind_is_not_counted(self):
+        """A file that restates a program's instruction words or holds data computed from one carries no licence line
+        by requirement 7.1: it keeps the program's licences, so counting it would count what the rules require."""
+        self.assertEqual(self.counts({self.LIB + "Data.v": self.DATA, self.LIB + "Words.v": self.WORDS}),
+                         self.counts())
+
+    def test_a_licence_line_below_the_header_leaves_the_file_bare(self):
+        """scan_licence reads the first lint.HEADER_LINES lines and refuses a licence line below them; the count reads
+        the same lines, so such a file is bare here and a finding there, and the two never disagree."""
+        late = {self.LIB + "Late.v": "(* a *)\n" * lint.HEADER_LINES + "(* SPDX-License-Identifier: MIT *)\n"}
+        base_total, _ = self.counts()
+        with tree() as t:
+            for name, text in late.items():
+                t.write(name, text + "Definition x := 0.\n")
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                found = [str(f) for f in t.lint()]
+            self.assertEqual([f.split(":")[0] for f in found], ["licence proofs/zlib/checksum_fuzzer/lib/Late.v"])
+            self.assertEqual(self.read(err.getvalue())[0], base_total + 1)
+
+    def test_the_run_passes_with_bare_files_present(self):
+        """The whole point of a count: `oft lint` exits 0 and reports no finding with bare files in the tree, and
+        says how many there are on stderr while stdout carries its own summary."""
+        from oft import __main__ as cli
+        with tree() as t:
+            for i in range(4):
+                t.write(self.LIB + "Bare%d.v" % i, "Definition x%d := 0.\n" % i)
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                rc = cli.main(["--root", t.root, "lint"])
+            self.assertEqual((rc, out.getvalue().splitlines()[-1]), (0, "oft lint: 0 finding(s)"), err.getvalue())
+            total, per = self.read(err.getvalue())
+            self.assertGreaterEqual(total, 4)
+            self.assertGreaterEqual(per.get("zlib/checksum_fuzzer", 0), 4)
+
+    def test_a_changed_only_run_prints_no_count(self):
+        """Over the changed files alone the number would be of those files, not of the tree, which reads as a smaller
+        debt than there is: only a whole-tree run says it."""
+        with tree() as t:
+            PerFileScope.commit(self, t)
+            t.write(self.LIB + "Bare.v", "Definition x := 0.\n")
+            found, err = PerFileScope.changed_only(self, t)
+            self.assertEqual(found, [], err)
+            self.assertEqual(self.read(err), (0, {}))
+            self.assertEqual(self.read(self.whole(t))[0] >= 1, True)
+
+    def test_a_bare_file_of_a_private_project_with_a_notice_is_a_finding_and_not_counted(self):
+        """No proof file of a project that is `release: private` with a NOTICE is under MIT, so a bare file there is a
+        licence finding, and the count, which is of debt and not of findings, leaves it out (lint.bare_licence); a bare
+        file of another project is counted as before."""
+        def run(files):
+            with tree() as t:
+                edit(t, "projects/zlib/project.yaml", lambda y: y.update(release="private"))
+                t.write("projects/zlib/NOTICE", "Copyright Theorem Labs. All rights reserved.\n")
+                for name, text in files.items():
+                    t.write(name, text + "Definition x := 0.\n")
+                err = io.StringIO()
+                with contextlib.redirect_stderr(err):
+                    found = sorted(f.where for f in t.lint() if f.rule == "licence")
+                return found, self.read(err.getvalue())
+        base_found, (base_total, base) = run({})
+        found, (total, per) = run({self.LIB + "A.v": "", self.LIB + "B.v": "", self.OTHER + "C.v": ""})
+        self.assertEqual(found, sorted(base_found + [self.LIB + "A.v", self.LIB + "B.v"]))
+        self.assertEqual(total, base_total + 1)
+        self.assertEqual(per.get("zlib/checksum_fuzzer", 0), base.get("zlib/checksum_fuzzer", 0))
+        self.assertEqual(per.get("json/fuzzer-parse_bjdata"), base.get("json/fuzzer-parse_bjdata", 0) + 1)
+
+    def test_a_changed_notice_copyright_line_keeps_its_finding_and_is_not_counted(self):
+        """A copy of the copyright line of a project's NOTICE in another case, in a public project, is a licence line,
+        changed: the licence finding refuses it, and the count leaves it out, as it leaves out a changed copyright line
+        of Anthropic's (lint.bare_licence reads the words in any case)."""
+        base_total, _ = self.counts()
+        line = lint.PRIVATE_LINES[0].format(project="zlib")
+        with tree() as t:
+            t.write(self.LIB + "Lowered.v", line.lower() + "\nDefinition x := 0.\n")
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                found = [str(f) for f in t.lint()]
+            self.assertEqual([f.split(":")[0] for f in found], ["licence " + self.LIB + "Lowered.v"])
+            self.assertEqual(self.read(err.getvalue())[0], base_total)
+
+    @staticmethod
+    def whole(t):
+        """What a whole-tree lint of t wrote on stderr."""
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            t.lint()
+        return err.getvalue()
+
+
 class Memory(unittest.TestCase):
     """lint's bounds on memory: a process of it that holds more than --max-rss-gib stops the run, and the default
-    number of processes is what the available memory holds at WORKER_GIB each."""
+    number of processes is what the available memory holds at WORKER_GIB each -- counting the page cache the kernel
+    can hand back as available, and saying on stderr what it counted."""
     GIB = 2 ** 30
     BIG = 256 << 20
+    # The pod of OSSV-470: 16 CPUs and a 16 GiB memory limit, whose cgroup a checkout has filled with page cache.
+    # The figures are the ones read at the start of the lint of release-gate run u4c8-d2base2 on 2026-11-11, where
+    # memory.max less memory.current came to 0.68 GiB and the run took 4,335 s on one process.
+    LIMIT = 16 * GIB
+    POD_CURRENT = 16452194304        # anon 24117248 + file 15458717696 + kernel 969359360
+    POD_INACTIVE_FILE = 14000000000  # of that file cache, what sits on the inactive list
+    POD_STAT = ("anon 24117248\nfile 15458717696\nkernel 969359360\nslab_reclaimable 712704000\n"
+                "inactive_anon 0\nactive_anon 24117248\ninactive_file %d\nactive_file 1458717696\nshmem 0\n"
+                % POD_INACTIVE_FILE)
+
+    def pod(self, **over):
+        """(proc, cgroup) of the pod above, for memory_reading: 29 GiB of MemAvailable on the host and a 16 GiB
+        cgroup limit.  over replaces a file's text by its path under the directory; a text of None leaves it out."""
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        files = {"proc/meminfo": "MemTotal:       1 kB\nMemAvailable:   %d kB\n" % (29 * self.GIB // 1024),
+                 "proc/self/cgroup": "0::/kubepods/pod7\n",
+                 "cgroup/kubepods/pod7/memory.max": "%d\n" % self.LIMIT,
+                 "cgroup/kubepods/pod7/memory.current": "%d\n" % self.POD_CURRENT,
+                 "cgroup/kubepods/pod7/memory.stat": self.POD_STAT}
+        files.update(over)
+        for rel, text in files.items():
+            if text is not None:
+                os.makedirs(os.path.dirname(os.path.join(d, rel)), exist_ok=True)
+                with open(os.path.join(d, rel), "w") as f:
+                    f.write(text)
+        return os.path.join(d, "proc"), os.path.join(d, "cgroup")
+
+    def pod_jobs(self, cpus=16, **over):
+        """default_jobs for that pod, on cpus CPUs."""
+        proc, cgroup = self.pod(**over)
+        with mock.patch.object(lint.facts, "cpus", return_value=cpus):
+            return lint.default_jobs(proc=proc, cgroup=cgroup)
+
+    def test_a_cgroup_the_page_cache_fills_sizes_the_pool_from_what_the_kernel_can_reclaim(self):
+        """A cgroup's memory.current counts the page cache, which the kernel hands back rather than letting an
+        allocation fail, so memory.max less memory.current is not what the processes in it may take.  With no
+        reading to adjust by, this pod runs one process on its 16 CPUs; with it, thirteen."""
+        self.assertEqual(self.pod_jobs(**{"cgroup/kubepods/pod7/memory.stat": None}), 1)
+        self.assertEqual(self.pod_jobs(), 13)
+        self.assertEqual(lint.memory_reading(*self.pod()).available,
+                         self.LIMIT - self.POD_CURRENT + self.POD_INACTIVE_FILE)
+
+    def test_anonymous_memory_is_not_reclaimable_so_the_pool_stays_inside_the_limit(self):
+        """What this issue asked for in the first place: a cgroup filled with memory the kernel cannot take back
+        still runs one process, so a capped lint is not killed by the out-of-memory killer."""
+        self.assertEqual(self.pod_jobs(**{"cgroup/kubepods/pod7/memory.stat":
+                                          "anon 16000000000\nfile 452194304\nkernel 0\n"
+                                          "inactive_file 400000000\nshmem 0\n"}), 1)
+
+    def test_tmpfs_pages_on_the_inactive_file_list_are_not_free(self):
+        """shmem counts in inactive_file but no swap can reclaim it, so it comes off the reclaimable figure again
+        and a cgroup whose cache is all tmpfs is back to one process."""
+        stat = self.POD_STAT.replace("shmem 0\n", "shmem %d\n" % self.POD_INACTIVE_FILE)
+        self.assertEqual(self.pod_jobs(**{"cgroup/kubepods/pod7/memory.stat": stat}), 1)
+
+    def interleaved(self, current, stat, grown_current, grown_stat, when, nth=1, cpus=16):
+        """default_jobs for a pod whose cgroup changes under the reading: the change happens just before the nth
+        opening of `when` ("memory.current" or "memory.stat"), as a cgroup taking on cache between two of lint's
+        reads changes between two opens.  lint opens memory.stat, memory.max, memory.current, memory.stat, so
+        ("memory.current", 1) is cache arriving before the total is read and ("memory.stat", 2) after it."""
+        proc, cgroup = self.pod(**{"cgroup/kubepods/pod7/memory.current": "%d\n" % current,
+                                   "cgroup/kubepods/pod7/memory.stat": stat})
+        where = os.path.join(cgroup, "kubepods", "pod7")
+        opened, opens, done = open, [], []
+
+        def open_and_let_the_cgroup_move(path, *a, **kw):
+            if path == os.path.join(where, when):
+                opens.append(path)
+                if len(opens) == nth and not done:
+                    done.append(True)
+                    with opened(os.path.join(where, "memory.current"), "w") as f:
+                        f.write("%d\n" % grown_current)
+                    with opened(os.path.join(where, "memory.stat"), "w") as f:
+                        f.write(grown_stat)
+            return opened(path, *a, **kw)
+
+        with mock.patch.object(lint.facts, "cpus", return_value=cpus), \
+                mock.patch("builtins.open", side_effect=open_and_let_the_cgroup_move):
+            return lint.default_jobs(proc=proc, cgroup=cgroup)
+
+    def test_cache_that_moves_between_the_readings_is_never_credited_against_a_total_without_it(self):
+        """memory.current and memory.stat are separate files and so separate moments.  Cache the cgroup took on
+        after its total was read, credited against that total, counts the same bytes twice -- 8 GiB of memory that
+        never moves and 8 GiB of cache arriving mid-read, and a 16 GiB limit reading as wholly free, twice the
+        pool the memory supports (the first review of pull request 2579).  memory.stat is read on both sides of
+        memory.current and the smaller cache taken, so the credit is one the cgroup held throughout the moment its
+        total was read, whichever way the cache moved.  8 GiB is held here in every case, so 8 processes is the
+        most that is ever right.  The last shape is the third review's: `sock` is held memory that is not inside
+        `kernel`, which is why no sum of memory.stat's fields stands in for memory.current here."""
+        gib = self.GIB
+        empty = "anon %d\nfile 0\nkernel 0\ninactive_file 0\nshmem 0\n" % (8 * gib)
+        cached = "anon %d\nfile %d\nkernel 0\ninactive_file %d\nshmem 0\n" % (8 * gib, 8 * gib, 8 * gib)
+        sock_empty = "anon %d\nkernel %d\nsock %d\nfile 0\ninactive_file 0\nshmem 0\n" % (3 * gib, gib, 4 * gib)
+        sock_cached = ("anon %d\nkernel %d\nsock %d\nfile %d\ninactive_file %d\nshmem 0\n"
+                       % (3 * gib, gib, 4 * gib, 8 * gib, 8 * gib))
+        for what, current, stat, grown_current, grown_stat, when, nth in (
+                ("the cache arrives before the total is read", 8 * gib, empty, 16 * gib, cached,
+                 "memory.current", 1),
+                ("the cache arrives after the total is read", 8 * gib, empty, 16 * gib, cached, "memory.stat", 2),
+                ("the cache goes away before the total is read", 16 * gib, cached, 8 * gib, empty,
+                 "memory.current", 1),
+                ("the cache goes away after the total is read", 16 * gib, cached, 8 * gib, empty,
+                 "memory.stat", 2),
+                ("sock is held and is not inside kernel", 8 * gib, sock_empty, 16 * gib, sock_cached,
+                 "memory.stat", 2)):
+            with self.subTest(what):
+                self.assertLessEqual(self.interleaved(current, stat, grown_current, grown_stat, when, nth), 8)
+        # and a cgroup that holds still through the reading gets the whole of its cache, which is the point
+        self.assertEqual(self.pod_jobs(**{"cgroup/kubepods/pod7/memory.current": "%d\n" % (16 * gib),
+                                          "cgroup/kubepods/pod7/memory.stat": cached}), 8)
+
+    def test_a_cache_that_goes_and_comes_back_inside_the_reading_is_not_credited_to_the_moment_it_was_gone(self):
+        """The fourth review of pull request 2579: a cache of 8 GiB that is reclaimed and taken again while the
+        four readings are made, so that both readings of memory.stat see it and a reading of memory.current sees
+        a cgroup without it.  8 GiB of anonymous memory is held throughout, so 8 processes is the most that is
+        ever right.  memory.current is read on both sides of memory.stat for this: the total at its larger
+        reading cannot miss a cache that was there for either of them."""
+        gib = self.GIB
+        anon, cached = 8 * gib, 8 * gib
+        stat = "anon %d\nfile %%d\nkernel 0\ninactive_file %%d\nshmem 0\n" % anon
+        proc, cgroup = self.pod(**{"cgroup/kubepods/pod7/memory.current": "%d\n" % (anon + cached),
+                                   "cgroup/kubepods/pod7/memory.stat": stat % (cached, cached)})
+        where = os.path.join(cgroup, "kubepods", "pod7")
+        opened, opens = open, []
+
+        def open_and_reclaim_then_fill(path, *a, **kw):
+            """The cache goes just before the first reading of the total, and is back before the next of
+            memory.stat, so every memory.stat reading sees it and one memory.current reading does not."""
+            name = os.path.basename(path)
+            if os.path.dirname(path) == where:
+                opens.append(name)
+                here = None if name == "memory.max" else 0 if (name, opens.count(name)) == ("memory.current", 1) \
+                    else cached
+                if here is not None:
+                    with opened(os.path.join(where, "memory.current"), "w") as f:
+                        f.write("%d\n" % (anon + here))
+                    with opened(os.path.join(where, "memory.stat"), "w") as f:
+                        f.write(stat % (here, here))
+            return opened(path, *a, **kw)
+
+        with mock.patch.object(lint.facts, "cpus", return_value=16), \
+                mock.patch("builtins.open", side_effect=open_and_reclaim_then_fill):
+            self.assertLessEqual(lint.default_jobs(proc=proc, cgroup=cgroup), 8)
+
+    def test_no_cgroup_offers_more_than_its_own_limit_and_none_offers_less_than_none(self):
+        """A memory.stat whose inactive_file is larger than its own file total is a reading of a moving figure and
+        not an arithmetic fact; it may not size the pool for more memory than the cgroup allows at all.  What
+        holds that is the credit's own bound -- no more than the file cache of the reading it came from -- and not
+        a clamp on the answer, which would pass an incoherent reading off as a sound one.  A cgroup over its limit
+        has nothing to give, which is zero and never a negative number."""
+        stat = self.POD_STAT.replace("inactive_file %d" % self.POD_INACTIVE_FILE, "inactive_file %d" % self.LIMIT)
+        proc, cgroup = self.pod(**{"cgroup/kubepods/pod7/memory.stat": stat})
+        self.assertLessEqual(lint.memory_reading(proc, cgroup).available, self.LIMIT)
+        self.assertEqual(lint.memory_reading(proc, cgroup).available,
+                         self.LIMIT - self.POD_CURRENT + 15458717696)   # the credit is no more than the file total
+        over = self.pod(**{"cgroup/kubepods/pod7/memory.current": "%d\n" % (self.LIMIT + 3 * self.GIB),
+                           "cgroup/kubepods/pod7/memory.stat":
+                               "anon %d\nfile 0\nkernel 0\ninactive_file 0\nshmem 0\n" % (self.LIMIT + 3 * self.GIB)})
+        self.assertEqual(lint.memory_reading(*over).available, 0)
+        # and a cache larger than the total that is supposed to hold it credits no more than that total
+        adrift = self.pod(**{"cgroup/kubepods/pod7/memory.current": "%d\n" % self.GIB,
+                             "cgroup/kubepods/pod7/memory.stat":
+                                 "anon 0\nfile %d\nkernel 0\ninactive_file %d\nshmem 0\n"
+                                 % (8 * self.GIB, 8 * self.GIB)})
+        self.assertEqual(lint.memory_reading(*adrift).available, self.LIMIT)
+
+    def test_a_reading_that_is_not_there_is_never_a_silent_zero(self):
+        """Every reading the figure is built from, and a box that does not have it: cgroup v1, no memory.stat, a
+        memory.stat without the field.  None of them may read as no memory: the figure falls back to the one the
+        missing reading would have refined, which is the low side, and the line says which reading was missing."""
+        naive, host = self.LIMIT - self.POD_CURRENT, 29 * self.GIB
+        full = "anon 1\nfile 14000000001\nkernel 0\ninactive_file 14000000000\nshmem 0\n"
+        for what, over, want, says in (
+                ("no memory.stat", {"cgroup/kubepods/pod7/memory.stat": None}, naive, "no memory.stat"),
+                ("no inactive_file", {"cgroup/kubepods/pod7/memory.stat":
+                                      full.replace("inactive_file 14000000000\n", "")}, naive, "no inactive_file"),
+                ("no shmem", {"cgroup/kubepods/pod7/memory.stat": full.replace("shmem 0\n", "")}, naive,
+                 "no shmem"),
+                ("no file", {"cgroup/kubepods/pod7/memory.stat": full.replace("file 14000000001\n", "")}, naive,
+                 "no file"),
+                ("no anon", {"cgroup/kubepods/pod7/memory.stat": full.replace("anon 1\n", "")}, naive, "no anon"),
+                ("an anon that is not a number", {"cgroup/kubepods/pod7/memory.stat":
+                                                  full.replace("anon 1", "anon x")}, naive, "no anon"),
+                ("a field that is not a number", {"cgroup/kubepods/pod7/memory.stat":
+                                                  full.replace("inactive_file 14000000000", "inactive_file x")},
+                 naive, "no inactive_file"),
+                ("cgroup v1", {"proc/self/cgroup": "9:memory:/user.slice\n"}, host, "no cgroup v2"),
+                ("no /proc/self/cgroup", {"proc/self/cgroup": None}, host, "no cgroup v2"),
+                ("no memory.max", {"cgroup/kubepods/pod7/memory.max": None}, host, "no cgroup memory limit"),
+                ("no memory.current", {"cgroup/kubepods/pod7/memory.current": None}, host,
+                 "no cgroup memory limit"),
+                ("no limit set", {"cgroup/kubepods/pod7/memory.max": "max\n"}, host, "no cgroup memory limit")):
+            with self.subTest(what):
+                reading = lint.memory_reading(*self.pod(**over))
+                self.assertEqual(reading.available, want)
+                self.assertGreater(reading.available, 0)
+                self.assertIn(says, reading.why)
+                # and the line says the credit is none, never a measured 0.00 GiB, which reads like a reading
+                self.assertNotIn("reclaimable 0.00 GiB", reading.why)
+
+    def test_a_total_that_cannot_be_read_a_second_time_credits_nothing(self):
+        """The second reading of memory.current is what keeps a cache that went and came back from being credited
+        to the moment it was gone, so a cgroup whose total cannot be read again is one this cannot judge: it gets
+        the figure main gives, and the line says why rather than quietly going back to the weaker arithmetic.
+        The third finding of the fifth review of pull request 2579."""
+        proc, cgroup = self.pod()
+        where = os.path.join(cgroup, "kubepods", "pod7")
+        opened, opens = open, []
+
+        def open_but_lose_the_total_the_second_time(path, *a, **kw):
+            if path == os.path.join(where, "memory.current"):
+                opens.append(path)
+                if len(opens) == 2:
+                    raise OSError(5, "I/O error")
+            return opened(path, *a, **kw)
+
+        with mock.patch("builtins.open", side_effect=open_but_lose_the_total_the_second_time):
+            reading = lint.memory_reading(proc, cgroup)
+        self.assertEqual(reading.available, self.LIMIT - self.POD_CURRENT)
+        self.assertIn("could not be read a second time", reading.why)
+        self.assertNotIn("reclaimable 0.00 GiB", reading.why)
+
+    def test_a_memory_stat_with_no_kernel_total_is_read_like_any_other(self):
+        """`kernel` reached memory.stat only in Linux 5.19, and an earlier box must not lose the adjustment for
+        it.  Nothing here sums memory.stat's fields -- memory.current is the only total -- so a reading without
+        `kernel`, or without `sock`, or without whatever a kernel adds next, is read like any other.  The second
+        review of pull request 2579 found the pool oversized by exactly the kernel memory when the fields were
+        summed, and the third found `sock` outside `kernel` in the same way."""
+        for absent in ("kernel 969359360\n", "slab_reclaimable 712704000\n"):
+            with self.subTest(absent.split()[0]):
+                reading = lint.memory_reading(*self.pod(**{"cgroup/kubepods/pod7/memory.stat":
+                                                           self.POD_STAT.replace(absent, "")}))
+                self.assertEqual(reading.available, self.LIMIT - self.POD_CURRENT + self.POD_INACTIVE_FILE)
+
+    def test_no_meminfo_leaves_the_pool_on_the_cpu_count(self):
+        """The one reading with no fallback under it: the pool is then the CPUs, as it was before any of this."""
+        proc, cgroup = self.pod(**{"proc/meminfo": "MemTotal:       1 kB\n"})
+        reading = lint.memory_reading(proc, cgroup)
+        self.assertIsNone(reading.available)
+        self.assertIn("no MemAvailable", reading.why)
+        with mock.patch.object(lint.facts, "cpus", return_value=16):
+            self.assertEqual(lint.default_jobs(proc=proc, cgroup=cgroup), 16)
+
+    def test_the_pool_says_on_stderr_what_it_decided_and_why(self):
+        """A reader who meets `1 process` must be able to tell a small machine from a misread one, so the line
+        names the limit, what was subtracted from it and what came out."""
+        proc, cgroup = self.pod()
+        err, quiet = io.StringIO(), io.StringIO()
+        with mock.patch.object(lint.facts, "cpus", return_value=16):
+            with contextlib.redirect_stderr(err):
+                self.assertEqual(lint.default_jobs(explain=True, proc=proc, cgroup=cgroup), 13)
+            with contextlib.redirect_stderr(quiet):
+                lint.default_jobs(proc=proc, cgroup=cgroup)
+        lines = err.getvalue().splitlines()
+        self.assertEqual(len(lines), 1, err.getvalue())
+        for part in ("oft lint: 13 process(es)", "16 CPU(s)", "13.72 GiB available", "cgroup /kubepods/pod7",
+                     "memory.max 16.00 GiB", "memory.current 15.32 GiB", "reclaimable 13.04 GiB",
+                     "inactive_file 13.04 GiB", "shmem 0.00 GiB", "MemAvailable 29.00 GiB"):
+            self.assertIn(part, lines[0])
+        self.assertEqual(quiet.getvalue(), "")   # silent unless the caller asks
+
+    def test_a_lint_that_sizes_its_own_pool_says_so_and_one_that_is_told_the_number_does_not(self):
+        with tree() as t:
+            err, quiet = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stderr(err), mock.patch.object(lint, "PARALLEL_FILES", 0), \
+                    mock.patch.object(lint.facts, "cpus", return_value=2):
+                self.assertEqual([str(f) for f in t.lint()], [])
+            self.assertIn("process(es) for the per-file rules", err.getvalue())
+            with contextlib.redirect_stderr(quiet):
+                self.assertEqual([str(f) for f in t.lint(jobs=1)], [])
+            self.assertEqual(quiet.getvalue(), "")
 
     def test_default_jobs_is_what_the_available_memory_holds(self):
         gib, each = self.GIB, int(lint.WORKER_GIB * self.GIB)
         for cpus, avail, want in ((32, 64 * gib, 32), (32, 16 * gib, 16 * gib // each), (32, each - 1, 1),
                                   (32, None, 32), (4, 64 * gib, 4)):
             with self.subTest(cpus=cpus, avail=avail), mock.patch.object(lint.facts, "cpus", return_value=cpus), \
-                    mock.patch.object(lint, "memory_available", return_value=avail):
+                    mock.patch.object(lint, "memory_reading", return_value=lint.MemoryReading(avail, "")):
                 self.assertEqual(lint.default_jobs(), want)
 
     def test_the_available_memory_is_meminfos_less_each_cgroup_limit_above(self):
@@ -3885,22 +6128,28 @@ class Memory(unittest.TestCase):
                 os.makedirs(os.path.dirname(os.path.join(d, rel)), exist_ok=True)
                 with open(os.path.join(d, rel), "w") as f:
                     f.write(text)
+
+            def avail():
+                return lint.memory_reading(proc, cgroup).available
             write("proc/meminfo", "MemTotal:       1 kB\nMemAvailable:   %d kB\n" % (40 * gib // 1024))
-            self.assertEqual(lint.memory_available(proc, cgroup), 40 * gib)   # no cgroup to read
+            self.assertEqual(avail(), 40 * gib)   # no cgroup to read
             write("proc/self/cgroup", "0::/user.slice/lane.scope\n")
-            self.assertEqual(lint.memory_available(proc, cgroup), 40 * gib)   # no cgroup files
+            self.assertEqual(avail(), 40 * gib)   # no cgroup files
             write("cgroup/user.slice/memory.max", "%d\n" % (24 * gib))
             write("cgroup/user.slice/memory.current", "%d\n" % (20 * gib))
             write("cgroup/user.slice/lane.scope/memory.max", "max\n")
             write("cgroup/user.slice/lane.scope/memory.current", "%d\n" % (3 * gib))
-            self.assertEqual(lint.memory_available(proc, cgroup), 4 * gib)   # the parent's limit less its use
+            self.assertEqual(avail(), 4 * gib)   # the parent's limit less its use, none of it reclaimable
             write("cgroup/user.slice/lane.scope/memory.max", "%d\n" % (5 * gib))
-            self.assertEqual(lint.memory_available(proc, cgroup), 2 * gib)   # the scope's own
+            self.assertEqual(avail(), 2 * gib)   # the scope's own
+            write("cgroup/user.slice/lane.scope/memory.stat",
+                  "anon %d\nfile %d\nkernel 0\ninactive_file %d\nshmem 0\n" % (2 * gib, 1 * gib, 1 * gib))
+            self.assertEqual(avail(), 3 * gib)   # and the cache in it that the kernel can hand back
             write("cgroup/memory.max", "%d\n" % gib)
             write("cgroup/memory.current", "0\n")
-            self.assertEqual(lint.memory_available(proc, cgroup), gib)   # the top of the cgroup namespace
+            self.assertEqual(avail(), gib)   # the top of the cgroup namespace, which is the narrowest here
             write("proc/meminfo", "MemTotal:       1 kB\n")
-            self.assertIsNone(lint.memory_available(proc, cgroup))
+            self.assertIsNone(avail())
 
     @staticmethod
     def work(item):
@@ -4794,6 +7043,384 @@ class Uninstrumented(unittest.TestCase):
             self.assertTrue(any("no uninstrumented list" in f.msg for f in t.lint()))
 
 
+ZLIB_HARNESS = "projects/zlib/checksum_fuzzer/harness.yaml"
+ZLIB_COMMIT = "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf"     # the fixture's library.commit
+EMPTY_SHA256 = hashlib.sha256(b"").hexdigest()
+
+
+def deviation_record(**over):
+    """A deviation record that agrees with the zlib fixture's harness.yaml, with the fields of `over` replaced."""
+    return dict({"library_commit": ZLIB_COMMIT, "tls_backend": "none", "enable_debug": True, "unittests": False,
+                 "sanitizer": {"plain": "none", "ubsan": "undefined", "asan": "address",
+                               "asan-ubsan": "address+undefined"},
+                 "harness_origin": "patched", "architecture": "riscv64"}, **over)
+
+
+def lint_harness_with(rel=ZLIB_HARNESS, statements=None, **fields):
+    """The lint findings of the fixture tree with `fields` set on harness.yaml rel, and each {statement: {key:
+    value}} of statements set on its statements."""
+    with tree() as t:
+        y = t.yaml(rel)
+        y.update(fields)
+        for name, extra in (statements or {}).items():
+            y["statements"][name].update(extra)
+        t.put_yaml(rel, y)
+        return t.lint()
+
+
+def refused(found, text):
+    return any(f.rule == "schema" and text in f.msg for f in found)
+
+
+# The zlib fixture's build record in the per-project layout, and two pins of a release recipe test_deviation writes:
+# ENABLE_DEBUG on (deviation_record's enable_debug), and UNITTESTS defined through CFLAGS and CXXFLAGS.
+ZLIB_PROVENANCE = layout.provenance_dir("zlib", "checksum_fuzzer", layout.NEW)
+DEBUG_PIN = PIN.replace("  oft_build_cmake\n", "  oft_build_cmake -DENABLE_DEBUG=ON\n")
+UNITTESTS_PIN = PIN.replace("  oft_build_cmake\n", '  CFLAGS="$CFLAGS -DUNITTESTS"; CXXFLAGS="${CXXFLAGS:-} -DUNITTESTS"\n'
+                                                   "  oft_build_cmake\n")
+
+
+@contextlib.contextmanager
+def ported_tree():
+    """The fixture tree in the per-project layout, as `oft port-layout` leaves it: a build record's evidence and a
+    statement's instance file are under projects/<p>/<h>/proofs/provenance/ there."""
+    with tree() as t:
+        assert port.port_worktree(t.root, out=io.StringIO()) == 0
+        yield t
+
+
+def put_build_record(t, pin=DEBUG_PIN, patches=("fuzz.cc",), scanned=None):
+    """Give the zlib fixture fuzz target of the ported tree t what deviation_record() says, by default: a release
+    recipe that deviation.from_recipe reads (test_deviation.write_release; pin, and a patch of each file of patches,
+    the harness by default) in a build record that cites the fixture's recipe, and for each build a TLS scan that holds
+    no TLS name, of the binary with sha256 scanned[build], or else of the one harness.yaml pins."""
+    write_release(t, ZLIB_PROVENANCE, pin, patches)
+    edit(t, ZLIB_PROVENANCE + "/PROVENANCE.yaml", lambda r: r["recipe"].update(asset=dict(FIXTURE_RECIPE)))
+    for b, rec in t.yaml(ZLIB_HARNESS)["builds"].items():
+        deviation.write_scan(t.path("%s/evidence/deviation/%s.tls.tsv" % (ZLIB_PROVENANCE, b)),
+                             deviation.Scan((scanned or {}).get(b, rec["sha256"]), "ab" * 32, NO_TLS))
+
+
+def instance_rel(name):
+    return "%s/evidence/instances/%s" % (ZLIB_PROVENANCE, name)
+
+
+def put_instance(t, statement, data, name="input.bin", **over):
+    """Write data as the instance file `name` of the zlib fixture's statement in the ported tree t, and give the
+    statement an instance record of it, reaches-harness, with the fields of over replaced."""
+    t.write(instance_rel(name), data, "wb")
+    record = dict({"file": name, "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
+                   "path": "reaches-harness"}, **over)
+    edit(t, ZLIB_HARNESS, lambda y: y["statements"][statement].update(instance=record))
+
+
+class DeviationRecord(unittest.TestCase):
+    """deviation, excluded_scenarios, debug_additions and statements.<s>.instance (docs/facts.md): what the builds are,
+    the upstream scenarios they do not run, the functions only the debug configuration exports, and one input on which
+    every premise of a statement holds.  All four are optional."""
+
+    def test_every_field_valid_is_clean(self):
+        with ported_tree() as t:
+            put_build_record(t)
+            put_instance(t, "plain_halts", b"", name="wrong-argc.bin", path="refused-by-driver")
+            y = t.yaml(ZLIB_HARNESS)
+            y["deviation"] = deviation_record()
+            y["excluded_scenarios"] = [{"name": "chunked-adler", "reason": "The recipe builds no Adler-32 path."},
+                                       {"name": "combine_law", "reason": "The law check is compiled out."}]
+            y["debug_additions"] = [{"function": "Curl_dbg_check", "source": "lib/curl_debug.c"}]
+            t.put_yaml(ZLIB_HARNESS, y)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual([str(f) for f in t.lint()], [])
+
+    def assert_refused(self, found, text):
+        self.assertTrue(refused(found, text), [str(f) for f in found])
+
+    def test_sanitizer_keys_are_the_builds(self):
+        sanitizer = dict(deviation_record()["sanitizer"])
+        del sanitizer["asan-ubsan"]
+        self.assert_refused(lint_harness_with(deviation=deviation_record(sanitizer=sanitizer)),
+                            "deviation.sanitizer names the builds asan, plain, ubsan, but builds names "
+                            "asan, asan-ubsan, plain, ubsan")
+
+    def test_library_commit_is_library_commit(self):
+        self.assert_refused(lint_harness_with(deviation=deviation_record(library_commit="0" * 40)),
+                            "deviation.library_commit is %s, but library.commit is %s" % ("0" * 40, ZLIB_COMMIT))
+
+    def test_a_tls_backend_not_in_the_list(self):
+        self.assert_refused(lint_harness_with(deviation=deviation_record(tls_backend="boringssl")),
+                            "deviation.tls_backend: 'boringssl' is not one of")
+
+    def test_a_sanitizer_not_in_the_list(self):
+        sanitizer = dict(deviation_record()["sanitizer"], asan="memory")
+        self.assert_refused(lint_harness_with(deviation=deviation_record(sanitizer=sanitizer)),
+                            "deviation.sanitizer.asan: 'memory' is not one of")
+
+    def test_a_sanitizer_key_that_is_no_build_name(self):
+        sanitizer = dict(deviation_record()["sanitizer"], msan="none")
+        self.assert_refused(lint_harness_with(deviation=deviation_record(sanitizer=sanitizer)),
+                            "deviation.sanitizer: bad key 'msan'")
+
+    def test_an_origin_or_architecture_not_in_the_list(self):
+        self.assert_refused(lint_harness_with(deviation=deviation_record(harness_origin="forked")),
+                            "deviation.harness_origin: 'forked' is not one of")
+        self.assert_refused(lint_harness_with(deviation=deviation_record(architecture="x86_64")),
+                            "deviation.architecture: 'x86_64' is not one of")
+
+    def test_a_missing_field(self):
+        record = deviation_record()
+        del record["unittests"]
+        self.assert_refused(lint_harness_with(deviation=record), "deviation: missing key 'unittests'")
+
+
+class DeviationDebugAdditions(unittest.TestCase):
+    """debug_additions goes only with a debug configuration: deviation.enable_debug or deviation.unittests true."""
+    ADDED = [{"function": "Curl_dbg_check", "source": "lib/curl_debug.c"}]
+
+    def test_with_no_debug_configuration(self):
+        for fields in ({"deviation": deviation_record(enable_debug=False)}, {}):
+            found = lint_harness_with(debug_additions=self.ADDED, **fields)
+            self.assertTrue(refused(found, "debug_additions: only a harness whose deviation.enable_debug or "
+                                           "deviation.unittests is true lists them"), [str(f) for f in found])
+
+    def test_with_unittests_alone(self):
+        with ported_tree() as t:
+            put_build_record(t, UNITTESTS_PIN)
+            edit(t, ZLIB_HARNESS, lambda y: y.update(deviation=deviation_record(enable_debug=False, unittests=True),
+                                                     debug_additions=self.ADDED))
+            self.assertEqual([str(f) for f in t.lint()], [])
+
+    def test_a_bad_function_or_source(self):
+        for bad in ("../lib/x.c", "/lib/x.c", "lib/./x.c", ".hidden/x.c", "lib//x.c"):
+            found = lint_harness_with(deviation=deviation_record(),
+                                      debug_additions=[{"function": "1bad", "source": bad}])
+            self.assertTrue(refused(found, "debug_additions[0].function: '1bad' does not match"))
+            self.assertTrue(refused(found, "debug_additions[0].source: '%s' does not match" % bad), bad)
+
+    def test_an_empty_list(self):
+        found = lint_harness_with(deviation=deviation_record(), debug_additions=[])
+        self.assertTrue(refused(found, "debug_additions: at least 1 item(s) required"))
+
+
+class ExcludedScenarios(unittest.TestCase):
+    """excluded_scenarios: each a name, once, and a one-line reason."""
+
+    def test_a_name_twice(self):
+        found = lint_harness_with(excluded_scenarios=[{"name": "chunked", "reason": "One reason."},
+                                                      {"name": "chunked", "reason": "Another reason."}])
+        self.assertTrue(refused(found, "excluded_scenarios[1]: chunked listed twice"), [str(f) for f in found])
+
+    def test_a_bad_name(self):
+        for name in ("Chunked", "-chunked", "chunked scenario", "a" * 81):
+            found = lint_harness_with(excluded_scenarios=[{"name": name, "reason": "A reason."}])
+            self.assertTrue(refused(found, "excluded_scenarios[0].name: "), name)
+
+    def test_a_reason_too_long_or_on_two_lines(self):
+        for reason in ("x" * 201, "one\ntwo"):
+            found = lint_harness_with(excluded_scenarios=[{"name": "chunked", "reason": reason}])
+            self.assertTrue(refused(found, "excluded_scenarios[0].reason: "), reason)
+
+    def test_an_empty_list(self):
+        self.assertTrue(refused(lint_harness_with(excluded_scenarios=[]),
+                                "excluded_scenarios: at least 1 item(s) required"))
+
+
+class StatementInstance(unittest.TestCase):
+    """statements.<s>.instance: the input file on which every premise of the statement holds, by name, SHA-256, size
+    and path, on a harness with a distribution or without one (shapes.instance_input then names the input itself)."""
+
+    def instance(self, **over):
+        return dict({"file": "wrong-argc.bin", "sha256": EMPTY_SHA256, "bytes": 0, "path": "refused-by-driver"},
+                    **over)
+
+    def assert_refused(self, instance, text):
+        found = lint_harness_with(statements={"plain_halts": {"instance": instance}})
+        self.assertTrue(refused(found, text), [str(f) for f in found])
+
+    def test_on_a_harness_with_no_distribution(self):
+        rel = "projects/json/fuzzer-parse_bjdata/harness.yaml"
+        with ported_tree() as t:
+            self.assertNotIn("distribution", t.yaml(rel))
+            t.write(layout.provenance_dir("json", "fuzzer-parse_bjdata", layout.NEW)
+                    + "/evidence/instances/wrong-argc.bin", b"", "wb")
+            edit(t, rel, lambda y: y["statements"]["plain_halts"].update(instance=self.instance()))
+            self.assertEqual([str(f) for f in t.lint()], [])
+
+    def test_on_each_kind_of_statement(self):
+        for name in ("plain_halts", "asan_agrees", "asan_disagrees_at_most", "asan_agreement_decidable"):
+            with ported_tree() as t:
+                put_instance(t, name, b"\0" * 6)
+                self.assertEqual([str(f) for f in t.lint()], [], name)
+
+    def test_64_mib_or_more(self):
+        self.assert_refused(self.instance(bytes=67108864), "statements.plain_halts.instance.bytes: 67108864 is above "
+                                                           "67108863")
+        with ported_tree() as t:
+            put_instance(t, "plain_halts", bytes(67108863), path="refused-by-driver")
+            self.assertEqual([str(f) for f in t.lint()], [])
+
+    def test_a_negative_size(self):
+        self.assert_refused(self.instance(bytes=-1), "statements.plain_halts.instance.bytes: -1 is below 0")
+
+    def test_a_path_not_in_the_list(self):
+        self.assert_refused(self.instance(path="crashes"), "statements.plain_halts.instance.path: 'crashes' is not "
+                                                           "one of")
+
+    def test_a_bad_file_name_or_sha256(self):
+        self.assert_refused(self.instance(file="../x.bin"), "statements.plain_halts.instance.file: '../x.bin' does "
+                                                            "not match")
+        self.assert_refused(self.instance(sha256="E3B0"), "statements.plain_halts.instance.sha256: 'E3B0' is not a "
+                                                          "valid sha256")
+
+    def test_a_missing_field(self):
+        record = self.instance()
+        del record["path"]
+        self.assert_refused(record, "statements.plain_halts.instance: missing key 'path'")
+
+
+class DeviationCheck(unittest.TestCase):
+    """check_deviation: a fuzz target of a project in shapes.REQUIRED carries deviation, and every deviation says what
+    its build record and the TLS scan of each build say (C1's lint-level cases and negative controls)."""
+
+    def lint_with(self, t, record):
+        edit(t, ZLIB_HARNESS, lambda y: y.update(deviation=record))
+        return t.lint()
+
+    def assert_refused(self, found, text):
+        self.assertTrue(any(f.rule == "schema" and f.where == ZLIB_HARNESS and text in f.msg for f in found),
+                        [str(f) for f in found])
+
+    def test_another_project_with_no_deviation_passes(self):
+        with mock.patch.object(shapes, "REQUIRED", ("curl",)), tree() as t:
+            self.assertEqual([str(f) for f in t.lint()], [])
+
+    def test_a_required_project_with_no_deviation_is_refused(self):
+        with mock.patch.object(shapes, "REQUIRED", ("zlib",)), tree() as t:
+            found = t.lint()
+        self.assert_refused(found, "deviation: required for project zlib")
+        self.assertFalse([f for f in found if "required for project" in f.msg and f.where.startswith("projects/json/")])
+
+    def test_a_record_with_no_build_record_is_refused(self):
+        self.assert_refused(lint_harness_with(deviation=deviation_record()),
+                            "deviation: the build record cannot be read: %s/PROVENANCE.yaml: cannot be read"
+                            % ZLIB_PROVENANCE)
+
+    def test_a_build_record_it_cannot_read_is_refused_naming_the_file_and_line(self):
+        with ported_tree() as t:
+            put_build_record(t, DEBUG_PIN.replace('LIB_CFLAGS=""', 'DEPENDS="openssl"'))
+            self.assert_refused(self.lint_with(t, deviation_record()),
+                                "deviation: the build record cannot be read: %s/recipe/targets/zlib-checksum_fuzzer/"
+                                "pin:11: sets DEPENDS" % ZLIB_PROVENANCE)
+
+    def test_enable_debug_on_with_a_record_of_false_is_refused(self):
+        with ported_tree() as t:
+            put_build_record(t)
+            found = self.lint_with(t, deviation_record(enable_debug=False))
+        self.assert_refused(found, "deviation.enable_debug is false, but %s/recipe/targets/zlib-checksum_fuzzer/pin:7 "
+                                   "gives true" % ZLIB_PROVENANCE)
+
+    def test_enable_debug_on_as_two_words_with_a_record_of_false_is_refused(self):
+        # cmake takes `-D ENABLE_DEBUG=ON` as well as `-DENABLE_DEBUG=ON`, and oft_build_cmake passes its words to
+        # cmake as they are ("$@", recipes.sh): the two words make a debug build, so a record of false is refused,
+        # either as a field that differs or as a build record lint cannot read
+        with ported_tree() as t:
+            put_build_record(t, PIN.replace("  oft_build_cmake\n", "  oft_build_cmake -D ENABLE_DEBUG=ON\n"))
+            found = self.lint_with(t, deviation_record(enable_debug=False))
+        self.assertTrue(any(f.rule == "schema" and f.where == ZLIB_HARNESS and (
+            f.msg.startswith("deviation.enable_debug is false, but ")
+            or f.msg.startswith("deviation: the build record cannot be read: ") and "ENABLE_DEBUG" in f.msg)
+            for f in found), [str(f) for f in found])
+
+    def test_a_scan_of_another_binary_is_refused(self):
+        with ported_tree() as t:
+            put_build_record(t, scanned={"asan": "f" * 64})
+            pin = t.yaml(ZLIB_HARNESS)["builds"]["asan"]["sha256"]
+            found = self.lint_with(t, deviation_record())
+        self.assert_refused(found, "deviation.tls_backend: the scan of builds.asan is of the binary with sha256 %s, but "
+                                   "builds.asan.sha256 is %s" % ("f" * 64, pin))
+
+    def test_a_missing_scan_is_refused(self):
+        with ported_tree() as t:
+            put_build_record(t)
+            os.remove(t.path(ZLIB_PROVENANCE + "/evidence/deviation/ubsan.tls.tsv"))
+            self.assert_refused(self.lint_with(t, deviation_record()),
+                                "deviation.tls_backend: builds.ubsan has no scan (evidence/deviation/ubsan.tls.tsv)")
+
+
+class InstanceFile(unittest.TestCase):
+    """check_instances: every statement of a project in shapes.REQUIRED carries an instance, and each instance
+    names a regular file in evidence/instances/ of fewer than 64 MiB with the record's size and SHA-256, on which the
+    driver calls the harness when the record says reaches-harness (theories/Driver.v)."""
+    SIX = b"\0" * 6
+
+    def lint_with(self, data, **over):
+        with ported_tree() as t:
+            put_instance(t, "plain_halts", data, **over)
+            return t.lint()
+
+    def assert_refused(self, found, text):
+        self.assertTrue(any(f.rule == "schema" and f.where == ZLIB_HARNESS and text in f.msg for f in found),
+                        [str(f) for f in found])
+
+    def test_a_required_project_with_no_instance_is_refused(self):
+        with mock.patch.object(shapes, "REQUIRED", ("zlib",)), ported_tree() as t:
+            put_build_record(t)
+            put_instance(t, "plain_halts", self.SIX)
+            edit(t, ZLIB_HARNESS, lambda y: y.update(deviation=deviation_record()))
+            found = t.lint()
+        self.assert_refused(found, "statements.asan_halts.instance: required for project zlib")
+        self.assertFalse([str(f) for f in found if f.where == ZLIB_HARNESS and ("statements.plain_halts." in f.msg
+                                                                                or f.msg.startswith("deviation"))])
+
+    def test_a_wrong_sha256(self):
+        self.assert_refused(self.lint_with(self.SIX, sha256="0" * 64),
+                            "statements.plain_halts.instance.sha256: is %s, but %s has sha256 %s"
+                            % ("0" * 64, instance_rel("input.bin"), hashlib.sha256(self.SIX).hexdigest()))
+
+    def test_a_wrong_size(self):
+        self.assert_refused(self.lint_with(self.SIX, bytes=7),
+                            "statements.plain_halts.instance.bytes: is 7, but %s has 6 bytes" % instance_rel("input.bin"))
+
+    def test_a_file_of_64_mib(self):
+        # the schema refuses a record of 67108864 bytes (StatementInstance); a file of that size under a record of
+        # fewer is refused here
+        found = self.lint_with(bytes(67108864), bytes=67108863, path="refused-by-driver")
+        self.assert_refused(found, "statements.plain_halts.instance.bytes: %s has 67108864 bytes, but the driver "
+                                   "refuses a file of 67108864 bytes or more" % instance_rel("input.bin"))
+        self.assertFalse([str(f) for f in found if "cap" in f.msg])   # facts.CAPS: 64 MiB, so the instance rule decides
+
+    def test_reaches_harness_on_five_bytes(self):
+        self.assert_refused(self.lint_with(b"\0" * 5),
+                            "statements.plain_halts.instance.path: reaches-harness, but %s has 5 bytes, fewer than the "
+                            "driver's 6-byte header" % instance_rel("input.bin"))
+        self.assertEqual([str(f) for f in self.lint_with(b"\0" * 5, path="refused-by-driver")], [])
+
+    def test_reaches_harness_needs_the_config_bytes_its_header_asks_for(self):
+        self.assert_refused(self.lint_with(b"\x04\x00" + bytes(7)),
+                            "statements.plain_halts.instance.path: reaches-harness, but %s has 9 bytes, and its config "
+                            "word asks for 4 config bytes after it, so 10 bytes" % instance_rel("input.bin"))
+        # bit 15 of the config word is counting mode, not part of the length
+        self.assertEqual([str(f) for f in self.lint_with(b"\x04\x80" + bytes(8))], [])
+
+    def test_a_missing_file_or_a_symbolic_link(self):
+        with ported_tree() as t:
+            put_instance(t, "plain_halts", self.SIX)
+            os.remove(t.path(instance_rel("input.bin")))
+            self.assert_refused(t.lint(), "statements.plain_halts.instance.file: %s is not in the tree"
+                                % instance_rel("input.bin"))
+            t.write(instance_rel("other.bin"), self.SIX, "wb")
+            os.symlink("other.bin", t.path(instance_rel("input.bin")))
+            self.assert_refused(t.lint(), "statements.plain_halts.instance.file: %s is a symbolic link, not a regular "
+                                          "file" % instance_rel("input.bin"))
+
+    def test_nul_bytes_under_instances_pass_the_binary_rule(self):
+        with ported_tree() as t:
+            put_instance(t, "plain_halts", self.SIX)
+            self.assertEqual([str(f) for f in t.lint()], [])
+            t.write(ZLIB_PROVENANCE + "/evidence/other.bin", self.SIX, "wb")   # elsewhere in evidence/, refused
+            self.assertEqual([(f.where, f.msg) for f in t.lint()],
+                             [(ZLIB_PROVENANCE + "/evidence/other.bin", lint.NUL_BYTE)])
+
+
 class CopyleftSources(unittest.TestCase):
     """A binary bound by a GPL-family licence takes the release-wide toolchain source, and the source of every
     library it links from the build image (release.yaml sources and image_libraries)."""
@@ -4849,16 +7476,72 @@ class CopyleftSources(unittest.TestCase):
 
 
 class SharedFiles(unittest.TestCase):
-    """paths: no pull request changes a shared generated file (paths.SHARED); the line's render after the merge
-    writes them, so a project page is asked for only in a release."""
+    """paths: a pull request changes no shared generated file (paths.SHARED), except a release, which carries each
+    one byte for byte as `oft generate` renders it from its own tree: the line's render after the merge writes them
+    (the public line has none, so its release commit is that render), and a project page is asked for only in a
+    release."""
+    SHARED = ("index/statements.tsv", "README.md", "projects/zlib/README.md", "analyses/known-issues.md")
+
+    @staticmethod
+    def at(found, rels):
+        return [str(f) for f in found if f.where in rels]
 
     def test_a_pull_request_that_changes_a_shared_file_is_refused(self):
-        for kind in ("contributor", "maintainer", "release"):
+        for kind, msg in (("contributor", lint.SHARED_FILE), ("maintainer", lint.SHARED_FILE),
+                          ("release", lint.SHARED_DIFFERS)):
             for rel in ("index/statements.tsv", "README.md", "projects/zlib/README.md"):
                 with tree() as t:
                     t.write(rel, t.read(rel) + "x\n")
                     found = [str(f) for f in t.lint(changed=[rel], pr_kind=kind)]
-                    self.assertIn("paths %s: %s" % (rel, lint.SHARED_FILE), found)
+                    self.assertIn("paths %s: %s" % (rel, msg), found)
+
+    def test_a_release_that_carries_its_render_passes(self):
+        """The render is of the release's own tree: after a facts change, the project page of the fixture is no
+        longer the render and is refused, and the page `oft generate` writes then passes, with every other shared
+        file the tree holds."""
+        rel = "projects/zlib/README.md"
+        with tree() as t:
+            t.write("projects/zlib/project.yaml", t.read("projects/zlib/project.yaml").replace(
+                "description: A general-purpose lossless compression library",
+                "description: A lossless compression library"))
+            self.assertEqual(self.at(t.lint(changed=[rel], pr_kind="release"), [rel]),
+                             ["paths %s: %s" % (rel, lint.SHARED_DIFFERS)])
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertIn("A lossless compression library", t.read(rel))
+            shared = [r for r in t.files() if paths.is_shared(r)]
+            self.assertTrue(set(self.SHARED) <= set(shared), shared)
+            self.assertEqual(self.at(t.lint(changed=shared, pr_kind="release"), shared), [])
+
+    def test_a_release_whose_shared_file_is_one_byte_off_its_render_is_refused(self):
+        for rel in self.SHARED:
+            with tree() as t:
+                with open(t.path(rel), "rb") as f:
+                    data = bytearray(f.read())
+                at = next(i for i, c in enumerate(data) if chr(c).isalpha())
+                data[at] ^= 0x20   # the letter's other case: one byte differs, and the file keeps its length
+                with open(t.path(rel), "wb") as f:
+                    f.write(data)
+                found = self.at(t.lint(changed=[rel], pr_kind="release"), [rel])
+                self.assertEqual(found, ["paths %s: %s" % (rel, lint.SHARED_DIFFERS)])
+
+    def test_any_other_pull_request_that_carries_the_render_is_refused(self):
+        # the fixture is rendered: each of these files is its render, byte for byte, which a release may carry
+        with tree() as t:
+            self.assertEqual(self.at(t.lint(changed=list(self.SHARED), pr_kind="release"), self.SHARED), [])
+            for kind in ("contributor", "maintainer"):
+                found = self.at(t.lint(changed=list(self.SHARED), pr_kind=kind), self.SHARED)
+                self.assertEqual(sorted(found), sorted("paths %s: %s" % (rel, lint.SHARED_FILE) for rel in self.SHARED),
+                                 kind)
+
+    def test_a_release_whose_facts_do_not_render_carries_no_shared_file(self):
+        # oft generate renders nothing from a tree whose facts have an error, so no shared file is the render
+        rel = "README.md"
+        with tree() as t:
+            t.write("projects/zlib/checksum_fuzzer/harness.yaml", "statements: {a: 1}\nstatements: {}\n", "a")
+            found = self.at(t.lint(changed=[rel], pr_kind="release"), [rel])
+            self.assertEqual(len(found), 1, found)
+            self.assertRegex(found[0], r"^paths README\.md: a shared generated file, and \./oft generate renders "
+                                       r"nothing from this tree \(the facts have \d+ error\(s\)\)")
 
     def test_one_that_deletes_a_shared_file_passes(self):
         for rel in ("index/statements.tsv", "projects/zlib/README.md"):
@@ -4883,14 +7566,19 @@ class SharedFiles(unittest.TestCase):
 
 
 class LintOnlyHand(unittest.TestCase):
-    """paths: the moved skills' files are hand-written to lint alone (lint.LINT_ONLY_HAND), dev/enroll/ is internal to
-    lint alone (lint.LINT_ONLY_INTERNAL), and paths.TABLE, part of the checker, names none of them."""
+    """paths: the moved skills' files, dev/licence/, the files of the public repository's three checks and a project's
+    NOTICE are hand-written to lint alone (lint.LINT_ONLY_HAND), each entry of lint.LINT_ONLY_INTERNAL is internal to
+    lint alone, and paths.TABLE, part of the checker, names none of them.  The tests of this class check nine of those
+    entries: dev/enroll/, .github/rekey-window, .github/workflows/held-refscan.yml, .github/workflows/verdicts.yml,
+    .github/workflows/rocq-release.yml, .github/theorem-rule-classes.tsv, .github/README.md,
+    .github/workflows/ci-review.yaml and .github/ci-review.md."""
 
     MOVED = {".claude/skills/porting-released-proofs/": (
                  "SKILL.md", "references/asan-kit.md", "references/porting-pitfalls.md",
-                 "references/search-tools.md", "references/second-corpus.md", "references/two-image-targets.md"),
+                 "references/search-tools.md", "references/two-image-targets.md"),
              ".claude/skills/clean-room-restatement/": (
-                 "SKILL.md", "references/sizing-a-programme.md", "references/writer-reviewer-checklists.md")}
+                 "SKILL.md", "references/leak-routes.md", "references/sizing-a-programme.md",
+                 "references/writer-reviewer-checklists.md")}
 
     def test_each_moved_file_is_hand_to_lint_and_unknown_to_the_checker(self):
         for base, files in self.MOVED.items():
@@ -4913,6 +7601,29 @@ class LintOnlyHand(unittest.TestCase):
         self.assertEqual([c for c, _, _ in lint.classify_path("toolchain/requirements.txt")], ["hand"])
         self.assertEqual(paths.classify("toolchain/requirements.txt"), [])
         self.assertEqual(lint.classify_path("toolchain/other.txt"), paths.classify("toolchain/other.txt"))
+
+    def test_the_checker_image_s_rocq_patches_are_hand_to_lint_and_unknown_to_the_checker(self):
+        """toolchain/rocq-patches/*.patch, the kernel patches toolchain/checker.Dockerfile builds Rocq 9.2.0 with
+        (OSSV-644): hand-written to lint alone, so that adding them moves no unit's key; a release carries them, since
+        the released Dockerfile builds from them, so they are not internal.  Only a .patch file directly in that
+        directory is admitted."""
+        rel = "toolchain/rocq-patches/0001-vm-mutual-fixpoint-closure-rocq-22651.patch"
+        self.assertEqual([c for c, _, _ in lint.classify_path(rel)], ["hand"])
+        self.assertEqual(paths.classify(rel), [])
+        self.assertFalse(lint.is_internal(rel))
+        for other in ("toolchain/rocq-patches/README.md", "toolchain/rocq-patches/sub/x.patch", "toolchain/x.patch"):
+            self.assertEqual(lint.classify_path(other), [], other)
+
+    def test_the_witness_generator_s_directory_is_hand_written_tooling(self):
+        """tools/budgetwit/, the budget-premise witness generator: its paths.TABLE row classifies every file of it,
+        at any depth and of any extension, as hand-written tooling, beside tools/oft/'s row.  Without the row each
+        of its files is `matches no path pattern`, and the pull request that adds the directory cannot pass a lint
+        by a base that lacks the row, which is why the row lands before the files."""
+        for rel in ("tools/budgetwit/gen_v.py", "tools/budgetwit/budgetwit", "tools/budgetwit/carriers/YK15.v.in",
+                    "tools/budgetwit/lean/control/libreac/manifest.json"):
+            self.assertEqual([c for c, _, _ in lint.classify_path(rel)], ["hand"], rel)
+            self.assertFalse(lint.is_internal(rel), rel)
+        self.assertEqual(lint.classify_path("tools/other/x.py"), [])
 
     def test_every_enrollment_script_is_internal_to_lint_and_unknown_to_the_checker(self):
         """dev/enroll/, the enrollment scripts' place outside tools/ (lint.LINT_ONLY_INTERNAL): every file of it in
@@ -4940,6 +7651,340 @@ class LintOnlyHand(unittest.TestCase):
             found = [str(f) for f in t.lint() if f.rule == "links" and f.where.startswith("dev/enroll/")]
             self.assertEqual(found, [])
 
+    def test_the_rekey_window_file_is_internal_to_lint_and_unknown_to_the_checker(self):
+        """.github/rekey-window, the file on main that opens a re-key window (OSSV-413), is internal to lint
+        alone (lint.LINT_ONLY_INTERNAL), since a paths.TABLE row would move keys.checker; the cut removes it
+        (release_tree.INTERNAL), and lint finds nothing in a tree that holds it."""
+        from oft import release_tree
+        rel = ".github/rekey-window"
+        self.assertEqual([c for c, _, _ in lint.classify_path(rel)], ["internal"])
+        self.assertTrue(lint.is_internal(rel))
+        self.assertEqual(paths.classify(rel), [])
+        self.assertIn(rel, release_tree.INTERNAL)
+        with tree() as t:
+            t.write(rel, "open\n")
+            self.assertEqual([str(f) for f in t.lint() if f.where == rel], [])
+
+    def test_a_maintainer_s_change_may_add_the_build_service_files(self):
+        """paths: .github/workflows/rocq-release.yml and .github/theorem-rule-classes.tsv, the build service's files
+        (OSSV-299), are internal (lint.LINT_ONLY_INTERNAL), so a maintainer's change that adds them has no paths
+        finding on them.  A contributor's has one for each, as for every path outside the proofs and counterexamples
+        folders, docs/ and generated files (check_changes)."""
+        with tree() as t:
+            t.write(".github/workflows/rocq-release.yml", "name: rocq-release\n")
+            t.write(".github/theorem-rule-classes.tsv", "*\tstd\n")
+            changed = [".github/workflows/rocq-release.yml", ".github/theorem-rule-classes.tsv"]
+            found = [str(f) for f in t.lint(changed=changed, pr_kind="maintainer")
+                     if f.rule == "paths" and f.where in changed]
+            self.assertEqual(found, [])
+            found = sorted(f.where for f in t.lint(changed=changed, pr_kind="contributor")
+                           if f.rule == "paths" and f.where in changed)
+            self.assertEqual(found, sorted(changed))
+
+    def test_the_repository_page_readme_is_internal_to_lint_and_unknown_to_the_checker(self):
+        """.github/README.md, the page GitHub shows on this repository's front page in place of the root README.md,
+        which OSSV-668 stops committing, is internal to lint alone (lint.LINT_ONLY_INTERNAL), since a paths.TABLE row
+        would move keys.checker; the cut removes it (release_tree.INTERNAL), so a release's front page is its own
+        rendered README.md, and lint finds nothing in a tree that holds it.  It is named by its exact path: no neighbour
+        gets a class, and the root README.md keeps its gen row."""
+        from oft import release_tree
+        rel = ".github/README.md"
+        self.assertEqual([c for c, _, _ in lint.classify_path(rel)], ["internal"])
+        self.assertTrue(lint.is_internal(rel))
+        self.assertEqual(paths.classify(rel), [])
+        self.assertIn(rel, release_tree.INTERNAL)
+        with tree() as t:
+            t.write(rel, "# OSS Verify proofs\n")
+            self.assertEqual([str(f) for f in t.lint() if f.where.split(":")[0] == rel], [])
+        for other in (".github/README", ".github/x/README.md", ".github/README.md.bak"):
+            self.assertEqual(lint.classify_path(other), [], other)
+            self.assertFalse(lint.is_internal(other), other)
+        self.assertEqual([(c, p) for c, p, _ in lint.classify_path("README.md")], [("gen", "README.md")])
+
+    def test_the_licence_generator_s_directory_is_hand_to_lint_and_unknown_to_the_checker(self):
+        """dev/licence/, the place of the shared licence-record generator (OSSV-400): every file of it, at any depth, is
+        hand-written to lint alone (lint.LINT_ONLY_HAND), since a paths.TABLE row would move keys.checker; a release
+        carries it, so it is not internal; and nothing beside it is admitted."""
+        for rel in ("dev/licence/made_from.py", "dev/licence/test_made_from.py", "dev/licence/sub/x.py"):
+            self.assertEqual([(c, p) for c, p, _ in lint.classify_path(rel)], [("hand", "dev/licence/**")], rel)
+            self.assertEqual(paths.classify(rel), [], rel)
+            self.assertFalse(lint.is_internal(rel), rel)
+        self.assertEqual(lint.classify_path("dev/licences/x.py"), [])
+        self.assertEqual(lint.classify_path("dev/other/x.py"), [])
+
+    def test_a_tree_with_a_licence_generator_file_has_no_paths_finding_there(self):
+        """paths: a file under dev/licence/ matches a pattern, so a tree that holds one has no paths finding there."""
+        with tree() as t:
+            t.write("dev/licence/x.py", "X = 1\n")
+            found = [str(f) for f in t.lint() if f.rule == "paths" and f.where.startswith("dev/licence/")]
+            self.assertEqual(found, [])
+
+    def test_the_held_refscan_workflow_is_internal_to_lint_and_no_other_new_workflow_is(self):
+        """.github/workflows/held-refscan.yml, the daily scan of the public refs for held fuzz targets (Dispatch issue
+        OSSV-377), is internal to lint alone (lint.LINT_ONLY_INTERNAL), as .github/rekey-window is.  lint accepts it
+        and reads it for secrets alone, and the cut removes it (release_tree.INTERNAL).  The entry names that one file:
+        a workflow that no row names, beside it or with a near name, is still refused, and lint reads all its text."""
+        from oft import release_tree
+        rel = ".github/workflows/held-refscan.yml"
+        self.assertEqual([c for c, _, _ in lint.classify_path(rel)], ["internal"])
+        self.assertTrue(lint.is_internal(rel))
+        self.assertEqual(paths.classify(rel), [])
+        self.assertIn(rel, release_tree.INTERNAL)
+        for near in (".github/workflows/held-refscan.yaml", ".github/workflows/held-refscan-2.yml",
+                     ".github/workflows/old/held-refscan.yml", ".github/held-refscan.yml"):
+            self.assertEqual(lint.classify_path(near), [], near)
+            self.assertFalse(lint.is_internal(near), near)
+        other = ".github/workflows/held-refscan-2.yml"
+        # a machine path: lint reads it in a file that no row names, and does not read it in an internal file
+        text = "on:\n  schedule:\n    - cron: '0 6 * * *'\n# logs in " + "/" + "home/runner/held\n"
+        with tree() as t:
+            t.write(rel, text)
+            t.write(other, text)
+            found = sorted((f.rule, f.where, f.msg) for f in t.lint() if f.where.split(":")[0] in (rel, other))
+            self.assertEqual(found, [("paths", other, "matches no path pattern"),
+                                     ("private-data", other + ":4", "a host path")])
+
+    def test_the_verdict_writer_workflow_is_internal_to_lint_and_no_near_name_is(self):
+        """.github/workflows/verdicts.yml, the one writer of the store of build-cluster results (Dispatch issue
+        OSSV-832), is internal to lint alone (lint.LINT_ONLY_INTERNAL), as .github/workflows/held-refscan.yml is,
+        since a paths.TABLE row would move keys.checker; the cut removes it (release_tree.INTERNAL).  The entry names
+        that one file: a workflow with a near name, or with that name in another folder, has no class, and the cut
+        keeps it."""
+        from oft import release_tree
+        rel = ".github/workflows/verdicts.yml"
+        self.assertEqual([c for c, _, _ in lint.classify_path(rel)], ["internal"])
+        self.assertTrue(lint.is_internal(rel))
+        self.assertEqual(paths.classify(rel), [])
+        self.assertIn(rel, release_tree.INTERNAL)
+        self.assertTrue(release_tree._under(rel, release_tree.INTERNAL))
+        for near in (".github/workflows/verdict.yml", ".github/workflows/verdicts.yaml",
+                     ".github/workflows/verdicts.yml.bak", ".github/workflows/verdicts-2.yml",
+                     ".github/workflows/old/verdicts.yml", ".github/verdicts.yml"):
+            self.assertEqual(lint.classify_path(near), [], near)
+            self.assertFalse(lint.is_internal(near), near)
+            self.assertFalse(release_tree._under(near, release_tree.INTERNAL), near)
+
+    # The CI reviewer's two files, which the pull request of Dispatch issue OSSV-774 adds, and five names near them.
+    CI_REVIEW = (".github/workflows/ci-review.yaml", ".github/ci-review.md")
+    CI_REVIEW_NEAR = (".github/workflows/ci-review.yml", ".github/workflows/ci-review-model.yaml",
+                      ".github/workflows/ci-review-app.yaml", ".github/ci-review.md.bak", ".github/x/ci-review.md")
+    # CALLER and RULES are short texts of the two files.  Line 8 of CALLER calls a workflow of agent-infra.  Line 3 of
+    # RULES holds a link to the CI rules on a private host.  Lint refuses each of those lines in a file that is not
+    # internal.  A release publishes this file, so this file builds each private name from parts.
+    HOST = "dispatch.tail12ec1c." + "ts.net"
+    LINK = "https://%s/issues/OSSV-276/artifacts/ci-rules-md" % HOST
+    CALLER = ("name: ci-review\n"
+              "on:\n"
+              "  pull_request_target:\n"
+              "    branches: [main]\n"
+              "permissions: {}\n"
+              "jobs:\n"
+              "  review:\n"
+              "    uses: " + "theorem-labs/" + "agent-infra/.github/workflows/ci-review.yaml@main\n"
+              "    with:\n"
+              "      rules_file: .github/ci-review.md\n")
+    RULES = ("# What the CI review checks\n"
+             "\n"
+             "This file holds OS Verify's own check. The CI rules are on %s.\n" % LINK)
+
+    def test_the_ci_review_files_are_internal_to_lint_by_their_exact_paths(self):
+        """.github/workflows/ci-review.yaml is the caller of agent-infra's CI reviewer.  .github/ci-review.md holds
+        this repository's own check for that reviewer.  The pull request of Dispatch issue OSSV-774 adds them.  One
+        entry of lint.LINT_ONLY_INTERNAL names the exact path of each, so each is internal to lint alone.  paths.TABLE
+        names neither, and the cut removes both (release_tree.INTERNAL).  A name near either path matches no pattern."""
+        from oft import release_tree
+        for rel in self.CI_REVIEW:
+            self.assertEqual([(c, p) for c, p, _ in lint.classify_path(rel)], [("internal", rel)], rel)
+            self.assertTrue(lint.is_internal(rel), rel)
+            self.assertEqual(paths.classify(rel), [], rel)
+            self.assertFalse(paths.is_internal(rel), rel)
+            self.assertIn(rel, release_tree.INTERNAL)
+        for near in self.CI_REVIEW_NEAR:
+            self.assertEqual(lint.classify_path(near), [], near)
+            self.assertFalse(lint.is_internal(near), near)
+
+    def test_lint_reads_the_ci_review_files_for_secrets_alone(self):
+        """Lint reads the two files for a private key or an access token alone.  Each planted file holds a line that
+        lint refuses elsewhere: the caller names a private repository, and the rules file links to a private host.
+        Lint gives no finding of any rule on the two files.  The same text under a near name gets each finding, and so
+        shows that the planted text holds what lint refuses.  The planted text is short and is not the final text of
+        the two files, since more lines would prove nothing more."""
+        caller, rules = self.CI_REVIEW
+        near_caller, near_rules = ".github/workflows/ci-review.yml", ".github/x/ci-review.md"
+        planted = {caller: self.CALLER, rules: self.RULES, near_caller: self.CALLER, near_rules: self.RULES}
+        with tree() as t:
+            for rel, text in planted.items():
+                t.write(rel, text)
+            found = sorted((f.rule, f.where, f.msg) for f in t.lint() if f.where.split(":")[0] in planted)
+        self.assertEqual(found, [
+            ("links", near_rules + ":3", "a link that is not on the allowlist: %s." % self.LINK),
+            ("paths", near_caller, "matches no path pattern"),
+            ("paths", near_rules, "matches no path pattern"),
+            ("private-data", near_caller + ":8", "a private repository's name"),
+            ("private-data", near_rules + ":3", "a private host name")])
+
+    def test_a_maintainer_s_change_may_add_the_ci_review_files(self):
+        """paths: a maintainer's change that adds the two files has no paths finding on them.  The pull request of
+        Dispatch issue OSSV-774 is such a change.  A contributor's change has one paths finding for each, as for every
+        path outside the proofs and counterexamples folders, docs/ and generated files (check_changes)."""
+        with tree() as t:
+            t.write(self.CI_REVIEW[0], self.CALLER)
+            t.write(self.CI_REVIEW[1], self.RULES)
+            changed = list(self.CI_REVIEW)
+            found = [str(f) for f in t.lint(changed=changed, pr_kind="maintainer")
+                     if f.rule == "paths" and f.where in changed]
+            self.assertEqual(found, [])
+            found = sorted(f.where for f in t.lint(changed=changed, pr_kind="contributor")
+                           if f.rule == "paths" and f.where in changed)
+            self.assertEqual(found, sorted(changed))
+
+    CHECKS = (".github/workflows/held-content.yml", ".github/workflows/held-content-private.yml",
+              ".github/held/held_content_scan.py", ".github/held/detectors.tsv", ".github/held/must-pass-lines.txt",
+              ".github/held/private-detectors.sha256", ".github/workflows/statement-freeze.yml",
+              ".github/guards/statement_freeze.py", ".github/workflows/pin-coherence.yml",
+              ".github/guards/pin_coherence.py")
+
+    def test_each_file_of_the_public_checks_is_hand_to_lint_by_its_exact_path(self):
+        """The files of the three checks each pull request of the public repository gets that OSSV-553 adds and that
+        no paths.TABLE row matches: held-content's two workflows and its files under .github/held/, and the
+        statement-freeze and pin-coherence workflows with their scripts under .github/guards/.  A paths.TABLE row would
+        move keys.checker, so lint.LINT_ONLY_HAND admits them, each by its exact path, so that a neighbour gets no
+        class.  A release carries them: the cut (release_tree.INTERNAL) removes none of them."""
+        from oft import release_tree
+        for rel in self.CHECKS:
+            self.assertEqual([(c, p) for c, p, _ in lint.classify_path(rel)], [("hand", rel)], rel)
+            self.assertEqual(paths.classify(rel), [], rel)
+            self.assertFalse(lint.is_internal(rel), rel)
+            self.assertFalse(release_tree._under(rel, release_tree.INTERNAL), rel)
+        for other in (".github/held/other.txt", ".github/held/other.tsv", ".github/held/sub/detectors.tsv",
+                      ".github/guards/other.py", ".github/workflows/held-content-x.yml"):
+            self.assertEqual(lint.classify_path(other), [], other)
+
+    def test_a_tree_with_the_files_of_the_public_checks_has_no_finding_there(self):
+        """In a tree that holds a placeholder text at each of the ten paths, no rule gives a finding on those paths.
+        The test does not read the files' real text."""
+        with tree() as t:
+            for rel in self.CHECKS:
+                t.write(rel, "name: x\n" if rel.endswith(".yml") else "X = 1\n" if rel.endswith(".py") else "x\n")
+            found = [str(f) for f in t.lint() if f.where.split(":")[0] in self.CHECKS]
+            self.assertEqual(found, [])
+
+    REVIEW = (".github/review/rules.py", ".github/review/trim.py", ".github/review/skills/asd-ste100/LICENSE",
+              ".github/review/skills/asd-ste100/SKILL.md", ".github/review/skills/asd-ste100/examples/before-after.md",
+              ".github/review/skills/asd-ste100/references/writing-rules.md", ".github/review/skills/ce-noslop/LICENSE",
+              ".github/review/skills/ce-noslop/SKILL.md", ".github/review/skills/ce-noslop/references/patterns.md",
+              ".github/review/skills/ce-noslop/references/terminology.md",
+              ".github/review/skills/write-to-maintainer/SKILL.md",
+              ".github/review/skills/write-to-maintainer/judge.md", ".github/workflows/rescreen.yml",
+              ".github/workflows/screen-start.yml")
+
+    def test_each_file_of_the_public_review_is_hand_to_lint_by_its_exact_path(self):
+        """The files of the public repository's review that OSSV-612 adds and that no paths.TABLE row matches: its two
+        scripts and the skills it loads, under .github/review/, and the rescreen and screen-start workflows.  A row of
+        paths.TABLE matches its other new files, such as docs/review-answer.md.  A paths.TABLE row would move
+        keys.checker, so lint.LINT_ONLY_HAND admits them.  It admits each file by its exact path, so a neighbour gets
+        no class.  A release carries them: the cut (release_tree.INTERNAL) removes none of them."""
+        from oft import release_tree
+        for rel in self.REVIEW:
+            self.assertEqual([(c, p) for c, p, _ in lint.classify_path(rel)], [("hand", rel)], rel)
+            self.assertEqual(paths.classify(rel), [], rel)
+            self.assertFalse(lint.is_internal(rel), rel)
+            self.assertFalse(release_tree._under(rel, release_tree.INTERNAL), rel)
+        for other in (".github/review/other.py", ".github/review/sub/rules.py", ".github/review/skills/other/SKILL.md",
+                      ".github/review/skills/SKILL.md", ".github/review/skills/asd-ste100/README.md",
+                      ".github/review/skills/ce-noslop/license", ".github/review/skills/ce-noslop/references/other.md",
+                      ".github/review.py", ".github/workflows/rescreen-x.yml", ".github/workflows/rescreen.yaml",
+                      ".github/workflows/screen-start.yaml"):
+            self.assertEqual(lint.classify_path(other), [], other)
+
+    def test_a_tree_with_the_files_of_the_public_review_has_no_finding_there(self):
+        """In a tree that holds a placeholder text at each of the 14 paths, no rule gives a finding on those paths.
+        The test does not read the files' real text."""
+        with tree() as t:
+            for rel in self.REVIEW:
+                t.write(rel, "name: x\n" if rel.endswith(".yml") else "X = 1\n" if rel.endswith(".py") else "x\n")
+            found = [str(f) for f in t.lint() if f.where.split(":")[0] in self.REVIEW]
+            self.assertEqual(found, [])
+
+    SIZE = ".github/workflows/workflow-size.yml"
+
+    def test_the_workflow_size_guard_is_hand_to_lint_by_its_exact_path(self):
+        """.github/workflows/workflow-size.yml, which OSSV-841 adds: the guard on the size of the workflow files that
+        still starts once pr.yml is past GitHub's limit.  No paths.TABLE row matches it, and a row there would move
+        keys.checker, so lint.LINT_ONLY_HAND admits it by its exact path, here first, since pr.yml lints a change by its
+        base's rules.  A release carries it, as it carries pr.yml."""
+        from oft import release_tree
+        self.assertEqual([(c, p) for c, p, _ in lint.classify_path(self.SIZE)], [("hand", self.SIZE)])
+        self.assertEqual(paths.classify(self.SIZE), [])
+        self.assertFalse(lint.is_internal(self.SIZE))
+        self.assertFalse(release_tree._under(self.SIZE, release_tree.INTERNAL))
+        for other in (".github/workflows/workflow-size.yaml", ".github/workflows/workflow-size-x.yml",
+                      ".github/workflows/sizes.yml", ".github/workflow-size.yml"):
+            self.assertEqual(lint.classify_path(other), [], other)
+        with tree() as t:
+            t.write(self.SIZE, "name: x\n")
+            self.assertEqual([str(f) for f in t.lint() if f.where.split(":")[0] == self.SIZE], [])
+
+    SCRIPTS = tuple(".github/scripts/pr/%s.sh" % n for n in (
+        "check-build-files", "lint-left-out", "lint-since", "lint-strip", "made-from-records", "made-from-tests",
+        "plan-elsewhere", "plan-lint-gate", "stream-tools-base-tree", "stream-tools-entry-points",
+        "stream-tools-history", "stream-tools-pins"))
+
+    def test_the_scripts_of_pr_yml_s_steps_are_hand_to_lint_by_their_exact_paths(self):
+        """The scripts under .github/scripts/pr/ that OSSV-841 moves pr.yml's long run texts into, so that pr.yml
+        stays under GitHub's 500 KB limit.  No paths.TABLE row matches them, and a row there would move
+        keys.checker, so lint.LINT_ONLY_HAND admits each by its exact path, here first, since pr.yml lints a change by
+        its base's rules.  A neighbour gets no class, and a release carries them, as it carries pr.yml."""
+        from oft import release_tree
+        for rel in self.SCRIPTS:
+            self.assertEqual([(c, p) for c, p, _ in lint.classify_path(rel)], [("hand", rel)], rel)
+            self.assertEqual(paths.classify(rel), [], rel)
+            self.assertFalse(lint.is_internal(rel), rel)
+            self.assertFalse(release_tree._under(rel, release_tree.INTERNAL), rel)
+        for other in (".github/scripts/pr/other.sh", ".github/scripts/pr/lint-since.bash", ".github/scripts/other.sh",
+                      ".github/scripts/pr/sub/lint-since.sh", ".github/scripts/lint-since.sh"):
+            self.assertEqual(lint.classify_path(other), [], other)
+        with tree() as t:
+            for rel in self.SCRIPTS:
+                t.write(rel, "set -euo pipefail\necho x\n")
+            self.assertEqual([str(f) for f in t.lint() if f.where.split(":")[0] in self.SCRIPTS], [])
+
+    def test_a_project_s_notice_is_hand_to_lint_and_unknown_to_the_checker(self):
+        """projects/<project>/NOTICE (lint.PROJECT_NOTICE), the NOTICE that the proof files of a `release: private`
+        project may be under (lint.private_projects): hand-written to lint alone, since a paths.TABLE row would move
+        keys.checker.  A tree that holds one of a `release: private` project it has has no finding on it; one of a
+        project it lacks is a paths finding, and nothing beside it is admitted."""
+        rel = "projects/zlib/NOTICE"
+        self.assertEqual([(c, p) for c, p, _ in lint.classify_path(rel)], [("hand", lint.PROJECT_NOTICE)])
+        self.assertEqual(paths.classify(rel), [])
+        self.assertFalse(lint.is_internal(rel))
+        for other in ("projects/zlib/NOTICE.md", "projects/zlib/checksum_fuzzer/NOTICE", "projects/NOTICE"):
+            self.assertEqual(lint.classify_path(other), [], other)
+        with tree() as t:
+            edit(t, "projects/zlib/project.yaml", lambda y: y.update(release="private"))
+            t.write(rel, "Copyright Theorem Labs. All rights reserved.\n")
+            t.write("projects/nosuch/NOTICE", "Copyright Theorem Labs. All rights reserved.\n")
+            found = [str(f) for f in t.lint() if f.where.split(":")[0] in (rel, "projects/nosuch/NOTICE")]
+            self.assertEqual(found, ["paths projects/nosuch/NOTICE: no project 'nosuch'"])
+
+    def test_a_notice_of_a_project_that_is_not_private_is_refused(self):
+        """A project that is not `release: private` ships in a release with every file of its folder, so a NOTICE there
+        would publish the licence of files the release never carries: paths refuses it, in a whole-tree lint and in
+        one whose per-file rules read only the changed files, since the rule reads the name and the facts alone."""
+        refused = ("paths projects/%s/NOTICE: a project's NOTICE is the licence of the proof files of a project whose "
+                   "project.yaml says `release: private` (docs/adding-a-proof.md, requirement 7): %s's does not, so a "
+                   "release would publish this file")
+        with tree() as t:
+            edit(t, "projects/json/project.yaml", lambda y: y.update(release="private"))
+            for project in ("zlib", "json"):
+                t.write("projects/%s/NOTICE" % project, "Copyright Theorem Labs. All rights reserved.\n")
+            notices = lambda found: [f for f in map(str, found) if f.split(":")[0].endswith("/NOTICE")]
+            self.assertEqual(notices(t.lint()), [refused % ("zlib", "zlib")])
+            PerFileScope.commit(self, t)
+            t.write("docs/x.md", "a page\n")
+            found, err = PerFileScope.changed_only(self, t)
+            self.assertEqual(notices(found), [refused % ("zlib", "zlib")], err)
+
 
 class OldNamespace(unittest.TestCase):
     """paths: in a tree whose release.yaml renames the Rocq namespace, a file that still names the old one is a finding
@@ -4953,18 +7998,31 @@ class OldNamespace(unittest.TestCase):
     def old_names(self, t):
         return [str(f) for f in t.lint() if f.msg.startswith("names the Rocq namespace OssFuzzTheorems")]
 
+    def rename(self, t):
+        t.write("tools/oft/names.py", 'NAMESPACE_DEFAULT = "OssFuzzTheorems"\n')
+        git_repo(t.root)
+        out = io.StringIO()
+        self.assertEqual(nsrename.rename_tree(t.root, "OSSVerify", "oss-verify", out=out, jobs=1), 0, out.getvalue())
+
     def test_a_file_naming_the_old_namespace_in_a_renamed_tree_is_a_finding(self):
         with tree() as t:
-            t.write("tools/oft/names.py", 'NAMESPACE_DEFAULT = "OssFuzzTheorems"\n')
-            git_repo(t.root)
-            out = io.StringIO()
-            self.assertEqual(nsrename.rename_tree(t.root, "OSSVerify", "oss-verify", out=out, jobs=1), 0,
-                             out.getvalue())
+            self.rename(t)
             # the shared generated files still name it until the line's render, and the tools always do: no finding
             self.assertEqual(self.old_names(t), [])
             self.note(t)
             self.assertEqual(self.old_names(t), ["paths %s: %s" % (self.NOTE, lint.OLD_NAMESPACE % "OSSVerify")])
             self.assertIn("run ./oft rename-namespace, or ./oft port-branch for a branch", lint.OLD_NAMESPACE)
+
+    def test_the_licence_generator_may_name_the_old_namespace(self):
+        # dev/licence/, the shared licence-record generator of OSSV-400, names both namespaces on purpose
+        # (nsrename.EXEMPT); the same text anywhere else is still the finding
+        mask = 'import re\nMODULE = re.compile(r"(?:OssFuzzTheorems|OSSVerify)\\.")\n'
+        with tree() as t:
+            self.rename(t)
+            t.write("dev/licence/made_from.py", mask)
+            self.assertEqual(self.old_names(t), [])
+            t.write("dev/other/x.py", mask)
+            self.assertEqual(self.old_names(t), ["paths dev/other/x.py: %s" % (lint.OLD_NAMESPACE % "OSSVerify")])
 
     def test_the_old_namespace_in_a_tree_that_was_not_renamed_is_no_finding(self):
         with tree() as t:

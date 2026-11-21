@@ -2,9 +2,11 @@
 
 `check PROJECT/HARNESS` does what CI does for one harness:
 
-  statements       verify every published ELF's SHA-256; `dune build` the
-                   images (elf-snapshot, at build time), Images.v,
-                   Statements.v, Characterise.v; then compile a file that
+  statements       verify every published ELF's SHA-256; `dune build`, with
+                   a dune cache of its own, the statement side (theories/ and the
+                   harness directory's own aliases: the images, built by
+                   elf-snapshot, Images.v, Statements.v, Characterise.v),
+                   counting the rules it ran; then compile a file that
                    names each statement harness.yaml lists (but a withheld or
                    withdrawn one, which Statements.v does not carry) and
                    prints its assumptions: a unit with no such statement, a
@@ -14,13 +16,22 @@
   proofs           build the harness's proof library, lib/ in its proofs
                    folder (proofs/<p>/<h>/, or projects/<p>/<h>/proofs/ in
                    the per-project layout; layout.py), if it has one, with dune
-                   (once; dune's cache may supply it), then compile each proof
-                   directory <s>/ there afresh with `rocq compile` against the
-                   statements and the library, then a
-                   wrapper this tool writes, which ascribes the proof's theorem
-                   to the statement and prints its assumptions; every
-                   assumption must be in toolchain/allowed-axioms.txt.  The
-                   kernel checks every term as it compiles.
+                   (once; dune's cache may supply it), then each proof
+                   directory <s>/ there with dune, once, with a cache of its own
+                   (build_proof_dirs: every rocq compile dune ran must carry
+                   only the flags of oft generate's dune file), then a
+                   wrapper this tool writes and compiles with its own flags,
+                   which ascribes the built proof's theorem to the statement
+                   and prints its assumptions; every assumption must be in
+                   toolchain/allowed-axioms.txt.  The kernel checks every term
+                   as it compiles.  Each statement's instance (harness.yaml
+                   statements.<s>.instance), proved or not, is checked
+                   too: a wrapper this tool writes defines the input from
+                   the instance file's bytes and ascribes the lemma
+                   lib/Instances/<s>.v proves to the type the shape gives
+                   it (check_instance); a missing lemma fails the unit
+                   only in a project of shapes.REQUIRED.  A unit with no
+                   proof has its instances checked in the statements part.
   counterexamples  run the binary on input.bin and on control.bin under
                    qemu-user and compare with expect.yaml
   findings         run each finding's input.bin and control.bin on every
@@ -40,7 +51,8 @@ vm_compute certificate by reduction, which takes hours for one proof.
 Each part refuses a unit when it examined nothing it was asked to examine: a unit
 with no statement Statements.v defines refuses statements, and a unit with no
 proof is refused when --parts names proofs. A run requesting statements or proofs
-that covers no compiling work is VOID (7), not a proof verdict. Without --parts,
+that covers no compiling work, and whose guard refuses no proof directory, is
+VOID (7), not a proof verdict. Without --parts,
 a unit is checked on each of statements, proofs and counterexamples that it has.
 
 Every check first loads the facts of the whole tree and checks its rules.
@@ -81,6 +93,7 @@ commands' modules (keys.py says which files the checker is).
 """
 import argparse
 import collections
+import contextlib
 import hashlib
 import os
 import re
@@ -95,7 +108,7 @@ import time
 
 import yaml
 
-from . import facts, fetch, layout, names, render, rules, schema, yamlio
+from . import facts, fetch, layout, names, render, rules, schema, shapes, yamlio
 
 # VOID is not a verdict. Elsewhere 0, 1, 2, 124, 134, 137, 139, 141, 143 and 255 are in use;
 # 3 and 4 are the n6 pod's own "nothing was checked" codes, which it writes today.  The n6 pod and
@@ -127,6 +140,33 @@ From Stdlib Require Import QArith.
 Require {stmt_mod}.
 Require {proof_mod}.
 Definition certified : {neg}{stmt_mod}.{stmt}{args} := {proof_mod}.{theorem}.
+Set Printing Fully Qualified.
+Redirect "assumptions" Print Assumptions certified.
+"""
+
+# The wrapper of a statement's instance (check_instance): the input rendered from the instance file's bytes
+# (shapes.instance_input), and the instance lemma ascribed the type the statement's shape gives it
+# (shapes.instance_type).  A lemma about other bytes, another input or another type does not type-check.  The imports
+# are those of theories/Premises.v, and Shapes and the harness's Images as Statements.v imports them, with the
+# library that defines core_input and file_core.  The input and the type are Definitions made BEFORE the wrapper
+# requires the lemma's library, so every name in them (Images.<build>, Budgets.*, Env.*, and the list notation) is
+# resolved against the checker's own libraries.  The library is the proof's pull request's own: once it is loaded, a
+# library file of it with the same suffix (an Images.v that defines plain) would take the partly qualified name, and
+# the type would be of another image (tests/instances/shadowed_images, a control).  After the Require the wrapper
+# names only its own oft_instance_type, a short name that a Require does not make visible from another library, and
+# the lemma by its full name.
+INSTANCE_WRAPPER = """(* written by oft check; never supplied by a pull request *)
+From Stdlib Require Import ZArith List.
+From stdpp.bitvector Require Import bitvector.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs MemImageType StackLayout State Run.
+From LinuxProcessSemantics.EquivalenceDefinition Require Import FinInput MeasureLib.
+From {core} Require Import Shapes.
+From {rocq} Require Images.
+Import ListNotations.
+Definition {input} : {input_type} := {input_term}.
+Definition oft_instance_type : Prop := {type}.
+Require {lemma_mod}.
+Definition certified : oft_instance_type := {lemma_mod}.{lemma}.
 Set Printing Fully Qualified.
 Redirect "assumptions" Print Assumptions certified.
 """
@@ -198,7 +238,8 @@ class CheckError(RuntimeError):
 
 
 class Compilation:
-    """Compiling work covered by one check: dune targets (cache hits included) and rocq compile invocations.
+    """Compiling work covered by one check: dune targets (cache hits included) and rocq compile invocations, in
+    `files`; and in `refused`, the proof directories build_proof_dirs' guard refused before any compile of them.
 
     `run` keeps one of these and reads it for the void rules.  Every function below that compiles takes it as
     a KEYWORD argument defaulting to None, so each keeps the signature it had before this
@@ -211,17 +252,18 @@ class Compilation:
 
     def __init__(self):
         self.files = 0
+        self.refused = 0
         self.jobs = None
 
-    def run(self, cmd, cwd, log, count=1):
+    def run(self, cmd, cwd, log, count=1, env=None, watch=None):
         self.files += count
         try:
-            return _run(cmd, cwd, log)
+            return _run(cmd, cwd, log, env=env, watch=watch)
         except OSError:
             self.files -= count  # the compiler did not start
             raise
 
-    def dune(self, root, targets, log):
+    def dune(self, root, targets, log, env=None, watch=None):
         # The job count is _jobs(), which main gave both build paths in #2121: OFT_JOBS, else the cgroup's
         # CPU quota, at most the CPUs this process may run on.  Not the affinity alone, which this branch
         # used before the rebase: in a pod with a CPU limit and no cpuset the affinity is the node's 32-64
@@ -235,11 +277,13 @@ class Compilation:
         # and has no "no job count" case to void; that case is real one layer out, in the n6 pod, which can
         # run a job for which no width was ever determined and then sets dune no job count at all (#2108).
         # What this class adds is that the count is RECORDED, so a reader can tell a round that compiled
-        # under this job's own width from one that did not.
+        # under this job's own width from one that did not.  env and watch go to _run as they are: the
+        # statement side's and the proof directories' own dune cache (own_dune_cache), and build_proof_dirs'
+        # watch of the job's deadline (DirTimeLimit).
         if self.jobs is None:
             self.jobs = max(1, _jobs())
         return self.run(["dune", "build", "--root", root, "--display", "short", "-j", str(self.jobs)] + targets,
-                        root, log, len(targets))
+                        root, log, len(targets), env=env, watch=watch)
 
 
 def counter(compilation):
@@ -247,13 +291,92 @@ def counter(compilation):
     return compilation if compilation is not None else Compilation()
 
 
-def _run(cmd, cwd, log, timeout=None, env=None):
-    """Run cmd, appending its output to log; its return code."""
+def _run(cmd, cwd, log, timeout=None, env=None, watch=None):
+    """Run cmd, appending its output to log; its return code.  Without watch, timeout bounds the run as
+    subprocess.run's does; with watch, call watch(process) about once a second while it runs.  timeout and watch
+    together raise ValueError: a watched run has no timeout, so a caller would lose its bound."""
+    if timeout is not None and watch is not None:
+        raise ValueError("_run takes a timeout or a watch, not both")
     with open(log, "a", encoding="utf-8") as f:
         f.write("$ %s\n" % " ".join(cmd))
         f.flush()
-        r = subprocess.run(cmd, cwd=cwd, stdout=f, stderr=subprocess.STDOUT, timeout=timeout, env=env)
-    return r.returncode
+        if watch is None:
+            return subprocess.run(cmd, cwd=cwd, stdout=f, stderr=subprocess.STDOUT, timeout=timeout,
+                                  env=env).returncode
+        with subprocess.Popen(cmd, cwd=cwd, stdout=f, stderr=subprocess.STDOUT, env=env) as p:
+            while True:
+                try:
+                    return p.wait(timeout=1)
+                except subprocess.TimeoutExpired:
+                    watch(p)
+
+
+def _processes():
+    """{pid: (parent pid, argv)} of every process /proc shows; one that ends while it is read is left out."""
+    out = {}
+    for e in os.listdir("/proc"):
+        if not e.isdigit():
+            continue
+        try:
+            with open("/proc/%s/stat" % e, "rb") as f:
+                ppid = int(f.read().rsplit(b")", 1)[1].split()[1])
+            with open("/proc/%s/cmdline" % e, "rb") as f:
+                argv = f.read().decode("utf-8", "replace").split("\0")
+        except (OSError, ValueError, IndexError):
+            continue
+        out[int(e)] = (ppid, argv)
+    return out
+
+
+class DirTimeLimit:
+    """The watch of build_proof_dirs' dune: no proof directory compiles past `deadline`, an absolute time.monotonic()
+    bound (the job's own end).  From then on, each compile of a proof directory's .v file seen among dune's
+    descendants (dune 3.23.0 runs each as `rocqworker --kind=compile ... <dir>/<file>.v`, the path relative to
+    _build/default) is killed, and its directory is stopped; dune then fails only those rules and builds the other
+    targets.  `stopped` holds each directory it stopped."""
+
+    def __init__(self, dirs, deadline):
+        self.dirs, self.deadline = sorted(dirs), deadline
+        self.stopped = set()
+
+    def _dir(self, argv):
+        if not any(a == "compile" or a.startswith("--kind=compile") for a in argv):
+            return None
+        for a in argv:
+            if a.endswith(".v"):
+                d = next((d for d in self.dirs if a.startswith(d + "/")), None)
+                if d:
+                    return d
+        return None
+
+    def __call__(self, proc):
+        if time.monotonic() < self.deadline:
+            return
+        procs = _processes()
+        mine, grew = {proc.pid}, True
+        while grew:
+            grew = False
+            for pid, (ppid, _) in procs.items():
+                if ppid in mine and pid not in mine:
+                    mine.add(pid)
+                    grew = True
+        for pid in sorted(mine - {proc.pid}):
+            d = self._dir(procs[pid][1])
+            if d is None:
+                continue
+            self.stopped.add(d)
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+
+def _log_end(log):
+    """Where the next _run's output into log starts: _run appends, and a work directory may hold earlier runs."""
+    try:
+        return os.path.getsize(log)
+    except FileNotFoundError:
+        return 0
 
 
 # A build that fails says why in its log, which can run to hundreds of thousands of lines, and the log is in the check's
@@ -531,24 +654,127 @@ def check_statements(root, h, allowed, work, out, rocqchk=False, compilation=Non
                          "nothing to check")
     if not os.path.isfile(os.path.join(root, h.dir, "Statements.v")):
         raise CheckError("%s/Statements.v is missing (run ./oft generate)" % h.dir)
+    # Also here, and not only in run(), which checks every build of the unit before any part of it runs: the two
+    # gate-job scripts, under tools/publish/ and dev/stream/bin/, call check_statements themselves,
+    # from outside this module, and a check of theirs must refuse the wrong binary too.
     if fetch.verify_builds(root, h, out)[1]:
         raise CheckError("the binaries are missing or do not match (run ./oft fetch %s)" % h.project.name)
-    targets = [os.path.join(h.dir, f[:-2] + ".vo") for f in ("Images.v", "Statements.v", "Characterise.v")
-               if os.path.isfile(os.path.join(root, h.dir, f))]
-    log = os.path.join(work, "dune.log")
-    # --display short: the log names each rule dune ran; one it took from its cache is not named.
-    if compilation.dune(root, targets, log) != 0:
+    mods = [h.data["rocq"] + "." + f[:-2] for f in ("Images.v", "Statements.v", "Characterise.v")
+            if os.path.isfile(os.path.join(root, h.dir, f))]
+    log = _unit_log(work, h, "statements")
+    start = _log_end(log)
+    # The statement side never reads or writes the caller's dune cache (OSSV-299 R7; own_dune_cache): every rule of it
+    # runs here, and the line below counts them.  --display short: the log names each rule dune ran.
+    rc = _build_statement_side(root, h, work, log, compilation)
+    if rc != 0:
         raise CheckError("dune build failed (see %s)%s" % (log, log_errors(log)))
+    rules_run = _log_rules(log, start)
+    counted = "; %d rules run, %d under theories/" % (
+        len(rules_run), sum(1 for r in rules_run if any(t.startswith("theories/") for t in r)))
     build = os.path.join(root, "_build", "default")
     check_defined(root, h, listed, build, work, allowed, compilation=compilation)
     if not rocqchk:
-        print("%s: statements compiled, each of the %d listed defined" % (h.dir, len(listed)), file=out)
+        print("%s: statements compiled, each of the %d listed defined%s" % (h.dir, len(listed), counted), file=out)
         return
-    mods = [h.data["rocq"] + "." + os.path.basename(t)[:-3] for t in targets]
     n = _rocqchk(root, _loadpath(build, h), mods, allowed,
                  os.path.join(work, names.ident(h.project.name) + "." + names.ident(h.name) + ".rocqchk.log"))
-    print("%s: statements compiled, each of the %d listed defined; rocqchk: %d axioms, all allowed"
-          % (h.dir, len(listed), n), file=out)
+    print("%s: statements compiled, each of the %d listed defined; rocqchk: %d axioms, all allowed%s"
+          % (h.dir, len(listed), n, counted), file=out)
+
+
+# The folders of a harness directory that hold no part of its statements: each is a theory of its own or no theory.
+NOT_STATEMENTS = ("proofs", "counterexamples", "findings")
+
+
+def statement_targets(root, h):
+    """What dune builds of the statement side: theories/'s default alias, the .vo of each .v at the top of h.dir, and
+    the default alias of each directory below h.dir (but NOT_STATEMENTS) that holds a .v or a dune file (images/, whose
+    rule writes the .v files Images.v loads).  Never h.dir's own default alias: in the per-project layout dune 3.23.0
+    builds the proofs folder under it with it (coturn/FuzzStunClient, 2026-11-02: 1,091 library rules and each proof
+    directory's), which would compile the proofs here, outside build_proof_dirs and its check of their flags."""
+    out = ["@@theories/default"]
+    top = os.path.join(root, h.dir)
+    for dp, dn, fn in os.walk(top):
+        if dp == top:
+            dn[:] = [d for d in dn if d not in NOT_STATEMENTS]
+            out += sorted(os.path.join(h.dir, f[:-2] + ".vo") for f in fn if f.endswith(".v"))
+        dn.sort()
+        if dp != top and any(f.endswith(".v") or f == "dune" for f in fn):
+            out.append("@@%s/default" % os.path.relpath(dp, root))
+    return out
+
+
+_RULE = re.compile(r" +([A-Za-z][\w.+-]*) (\S+)( \(.*\))?$")
+
+
+def _expand(spec):
+    """The paths of one target list of dune's short display: `a/B.{glob,vo},a/NB.{cmi,cmxs}`."""
+    out, parts, depth, cur = [], [], 0, ""
+    for c in spec:
+        if c == "," and depth == 0:
+            parts.append(cur)
+            cur = ""
+            continue
+        depth += (c == "{") - (c == "}")
+        cur += c
+    parts.append(cur)
+    for p in parts:
+        m = re.fullmatch(r"(.*)\{([^{}]*)\}(.*)", p)
+        out.extend([m.group(1) + x + m.group(3) for x in m.group(2).split(",")] if m else [p])
+    return out
+
+
+def _rule_targets(line):
+    """The targets of the rule one line of a `dune build --display short` log names as run, or None: a line of an
+    indented program name and its targets (dune 3.23.0)."""
+    m = _RULE.fullmatch(line)
+    return _expand(m.group(2)) if m else None
+
+
+def _log_rules(log, start=0):
+    """[the targets of each rule] that the `dune build --display short` log at log names as run from byte start on.
+    The log is read a line at a time, each line within ERROR_BYTES (_log_lines), so a log of any size takes memory
+    for the rules it names, not for its text."""
+    out = []
+    with open(log, "rb") as f:
+        f.seek(start)
+        for line, _cut in _log_lines(f):
+            targets = _rule_targets(line)
+            if targets is not None:
+                out.append(targets)
+    return out
+
+
+def _unit_log(work, h, kind):
+    """The log in work of one kind of h's dune builds: statements (check_statements' and compile_lib's statement
+    side), lib (the library's build alone) or proofs (build_proof_dirs')."""
+    return os.path.join(work, "%s.%s.%s.dune.log" % (names.ident(h.project.name), names.ident(h.name), kind))
+
+
+def _build_statement_side(root, h, work, log, compilation):
+    """The exit status of dune's build of h's statement side (statement_targets) into log, with a dune cache of its
+    own (own_dune_cache): check_statements' and compile_lib's."""
+    with own_dune_cache(work) as env:
+        return compilation.dune(root, statement_targets(root, h), log, env=env)
+
+
+@contextlib.contextmanager
+def own_dune_cache(work):
+    """The environment of a dune build that neither reads nor writes the caller's dune cache: the statement side's
+    (OSSV-299 R7) and the proof directories' (each proof is compiled here, never taken from a cache).  It keeps the
+    caller's DUNE_CACHE and sets DUNE_CACHE_ROOT to a new empty directory under work, removed after the build.
+    DUNE_CACHE must stay the caller's: dune 3.23.0 digests each rule together with whether the rule may go in the
+    cache, which DUNE_CACHE decides (bin/common.ml, can_go_in_shared_cache_default; src/dune_engine/build_system.ml,
+    compute_rule_digest), so a build under another DUNE_CACHE than compile_lib's, in the same _build, runs again every
+    rule the build before it ran.  Under a caller's dune cache (DUNE_CACHE=enabled), as the farm's lanes run, the proof
+    build so compiled the whole library a second time, after the store had supplied it, and left .vo files that the
+    store's entries do not name: the push skipped those entries, and the next build missed them (zlib/checksum_fuzzer,
+    2026-11-02)."""
+    root = tempfile.mkdtemp(prefix="dune-cache-", dir=work)
+    try:
+        yield {**os.environ, "DUNE_CACHE_ROOT": root}
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def check_defined(root, h, listed, build, work, allowed, compilation=None):
@@ -622,7 +848,12 @@ def compile_lib(root, h, work, libs, out, compilation=None):
     <namespace>.Proofs.<p>.<h>.lib (every .v at any depth), or [] when h has none.  Built once per check run by
     dune, from the rocq.theory stanza of oft generate's lib/dune, against the statements in root's _build; `libs` holds
     the mapping, or the error, per harness.  dune takes a file from its cache (DUNE_CACHE) only when the file's sources,
-    its dependencies and the Rocq binary all hash the same as when the cached copy was compiled."""
+    its dependencies and the Rocq binary all hash the same as when the cached copy was compiled.  The statement side the
+    library reads is built first, with a cache of its own (own_dune_cache) and into the statements' log
+    (_build_statement_side), so the library build never takes a file of it from the caller's cache (OSSV-299 R7): after
+    check_statements nothing runs, and in a `--parts proofs` run that first build compiles it.  The library's log holds
+    the library's build alone.  A library that failed once fails again with _again's one line, so that its log is
+    quoted once."""
     compilation = counter(compilation)
     if h.dir in libs:
         if isinstance(libs[h.dir], CheckError):
@@ -634,7 +865,13 @@ def compile_lib(root, h, work, libs, out, compilation=None):
         return []
     try:
         targets = _lib_targets(root, h, rel, out)
-        log = os.path.join(work, "%s.%s.lib.dune.log" % (names.ident(h.project.name), names.ident(h.name)))
+        slog = _unit_log(work, h, "statements")
+        rc = _build_statement_side(root, h, work, slog, compilation)
+        if rc != 0:
+            raise CheckError("%s: the statement side it reads does not compile (see %s)%s"
+                             % (rel, slog, log_errors(slog)))
+        log = _unit_log(work, h, "lib")
+        start = _log_end(log)
         rc = compilation.dune(root, targets, log)
         if rc != 0:
             raise _failed_run(rel, log, rc, work)
@@ -643,7 +880,9 @@ def compile_lib(root, h, work, libs, out, compilation=None):
         raise
     libs[h.dir] = ["-Q", os.path.join(root, "_build", "default", rel),
                    names.rocq_proof(h.tree.namespace, h.project.name, h.name, "lib")]
-    print("%s: %d files compiled or taken from dune's cache (log %s)" % (rel, len(targets), log), file=out)
+    named = {t for r in _log_rules(log, start) for t in r}
+    print("%s: %d of %d library targets compiled (log %s)" % (rel, len(set(targets) & named), len(targets), log),
+          file=out)
     return libs[h.dir]
 
 
@@ -661,26 +900,8 @@ def _lib_targets(root, h, rel, out):
     Writes lib/dune as this oft generate renders it, so the rule dune runs is this tool's, whichever tools rendered the
     tree."""
     from . import generate
-    p, hn = h.project.name, h.name
-    # neither directory is above an old-layout library, proofs/<p>/<h>/lib/
-    rendered = {os.path.join(layout.proofs_dir(p, hn, layout.NEW), "dune"): generate.barrier_dune(),
-                os.path.join(layout.statement_dir(p, hn), "dune"): generate.harness_dune(h)}
+    _guard_above(root, h, rel, "a proof library")
     src = os.path.join(root, rel)
-    d = rel
-    while True:
-        for f in layout.DUNE_FILES if d != rel else ():
-            path = os.path.join(d, f)
-            if path == "dune-project" or not os.path.lexists(os.path.join(root, path)):
-                continue
-            if path not in rendered:
-                raise CheckError("%s: no directory above a proof library holds a build file" % path)
-            if not _holds_exactly(os.path.join(root, path), rendered[path]):
-                raise CheckError("%s: differs from its rendering (run ./oft generate)" % path)
-        if d and os.path.islink(os.path.join(root, d)):
-            raise CheckError("%s: a proof library holds no symbolic link" % d)
-        if not d:
-            break
-        d = os.path.dirname(d)
     targets = []
     for dp, dn, fn in os.walk(src):
         for f in dn + fn:
@@ -703,6 +924,274 @@ def _lib_targets(root, h, rel, out):
     return sorted(targets)
 
 
+def _guard_above(root, h, rel, what):
+    """Refuse a symbolic link on the way to rel (relative to root), and any dune build file in a directory above it
+    (the root's dune-workspace too: oft generate writes none), but the two the per-project layout puts above a proofs
+    folder's contents, which must be exactly what oft generate renders: the barrier dune of the proofs folder, which
+    shuts that folder out of the statement theory, and the statement folder's dune, which is that theory.  `what`
+    names rel in the refusal."""
+    from . import generate
+    p, hn = h.project.name, h.name
+    # neither directory is above an old-layout proofs folder, proofs/<p>/<h>/
+    rendered = {os.path.join(layout.proofs_dir(p, hn, layout.NEW), "dune"): generate.barrier_dune(),
+                os.path.join(layout.statement_dir(p, hn), "dune"): generate.harness_dune(h)}
+    d = rel
+    while True:
+        for f in layout.DUNE_FILES if d != rel else ():
+            path = os.path.join(d, f)
+            if path == "dune-project" or not os.path.lexists(os.path.join(root, path)):
+                continue
+            if path not in rendered:
+                raise CheckError("%s: no directory above %s holds a build file" % (path, what))
+            if not _holds_exactly(os.path.join(root, path), rendered[path]):
+                raise CheckError("%s: differs from its rendering (run ./oft generate)" % path)
+        if d and os.path.islink(os.path.join(root, d)):
+            raise CheckError("%s: %s holds no symbolic link" % (d, what))
+        if not d:
+            break
+        d = os.path.dirname(d)
+
+
+# The flags dune 3.23.0 gives `rocq compile` for a rocq.theory whose dune file sets none, as oft generate's proof
+# dune files are (templates/proof-dune.tmpl), with the number of arguments each takes: dune's default warnings,
+# native output, load paths and -boot, which dune passes with its own -R of Corelib (_build/trace.csexp of a dune
+# 3.23.0 build, read 2026-11-02).  A flag outside this set, or one that changes the logic, refuses the unit.
+PROOF_FLAGS = {"-q": 0, "-boot": 0, "-w": 1, "-native-output-dir": 1, "-native-compiler": 1, "-nI": 1, "-R": 2,
+               "-Q": 2, "-o": 1}
+UNSOUND_FLAGS = ("-type-in-type", "-impredicative-set", "-allow-rewrite-rules", "-indices-matter", "-noinit")
+
+
+def _csexp(b, i=0):
+    """(value, next index) of the canonical S-expression at b[i:]: a list or a str atom."""
+    if b[i:i + 1] == b"(":
+        i, out = i + 1, []
+        while b[i:i + 1] != b")":
+            if i >= len(b):
+                raise ValueError("unterminated list")
+            x, i = _csexp(b, i)
+            out.append(x)
+        return out, i + 1
+    j = b.index(b":", i)
+    n = int(b[i:j])
+    if j + 1 + n > len(b):
+        raise ValueError("atom past the end")
+    return b[j + 1:j + 1 + n].decode("utf-8", "replace"), j + 1 + n
+
+
+def traced_compiles(path):
+    """[argv after `compile`] of every `rocq compile` dune started, from its _build/trace.csexp (dune 3.23.0 writes
+    each run's process starts there, and no _build/log).  Only process_args is read: the trace also holds dune's
+    environment, which is never printed."""
+    with open(path, "rb") as f:
+        b = f.read()
+    i, out = 0, []
+    while i < len(b):
+        e, i = _csexp(b, i)
+        if isinstance(e, list) and e[:2] == ["process", "start"]:
+            f = {k[0]: k[1:] for k in e[3:] if isinstance(k, list) and k and isinstance(k[0], str)}
+            args = f.get("process_args", [[]])[0]
+            prog = f.get("prog", [""])[0]
+            if isinstance(args, list) and args[:1] == ["compile"] and os.path.basename(str(prog)) in ("rocq", "coqc"):
+                out.append(args[1:])
+    return out
+
+
+def bad_proof_flags(argv):
+    """The flags of one `rocq compile` argv (after `compile`) that are not dune's defaults for a proof directory."""
+    bad, i = [], 0
+    while i < len(argv):
+        a = argv[i]
+        if a in UNSOUND_FLAGS or (a.startswith("-") and a not in PROOF_FLAGS):
+            bad.append(a)
+            i += 1
+        elif a in PROOF_FLAGS:
+            i += 1 + PROOF_FLAGS[a]
+        else:
+            i += 1      # the .v file
+    return bad
+
+
+def _proof_dir_targets(root, h, rel, sid):
+    """The _build/default .vo of each .v of the proof directory rel of statement sid.  Refuses what _lib_targets
+    refuses of a library: a symbolic link in it or on the way to it, a build file above it (_guard_above), any build
+    file in it but its own dune, which must be exactly oft generate's; and a .v below its top, for which the generated
+    dune file (no include_subdirs) gives dune no rule."""
+    from . import generate
+    _guard_above(root, h, rel, "a proof directory")
+    src = os.path.join(root, rel)
+    if os.path.islink(src) or not os.path.isdir(src):
+        raise CheckError("%s: not a directory" % rel)
+    if not _holds_exactly(os.path.join(src, "dune"), generate.proof_dune(h.tree, sid)):
+        raise CheckError("%s: differs from its rendering (run ./oft generate)" % os.path.join(rel, "dune"))
+    targets = []
+    for dp, dn, fn in os.walk(src):
+        dn.sort()
+        for f in sorted(dn + fn):
+            if os.path.islink(os.path.join(dp, f)):
+                raise CheckError("%s: a proof directory holds no symbolic link"
+                                 % os.path.relpath(os.path.join(dp, f), root))
+        for f in sorted(fn):
+            path = os.path.relpath(os.path.join(dp, f), root)
+            if f in layout.DUNE_FILES and path != os.path.join(rel, "dune"):
+                raise CheckError("%s: a proof directory holds no build file but its own dune" % path)
+            if f.endswith(".v"):
+                if dp != src:
+                    raise CheckError("%s: a proof directory's .v files are at its top: its dune file gives dune no "
+                                     "rule for one below" % path)
+                targets.append(os.path.join("_build", "default", path[:-2] + ".vo"))
+    if not targets:
+        raise CheckError("%s: holds no .v file" % rel)
+    return targets
+
+
+def _failure_texts(log, start, dirs):
+    """{d: (text, whether it ran out of stack)} for each proof directory d of dirs, from the `--display short` log at
+    log, from byte start on: the blocks of the log that name d (a rule line or a `File` line and what follows it up to
+    the next such line; never a `$ ` line's), each line quoted as log_errors quotes one (QUOTE), and whether one of
+    those blocks holds one of STACK_WORDS.  The log is read a line at a time within ERROR_BYTES (_log_lines), each
+    block kept as far as it fits whole in ERROR_BYTES and ERROR_LINES (_Block), and each directory's text held to them
+    (_Quote), with one note for what it leaves out: so a log of any size takes little memory."""
+    quotes = {d: _Quote() for d in dirs}
+    left = dict.fromkeys(dirs, 0)
+    stack = dict.fromkeys(dirs, False)
+    block, mine, words, ours = None, set(), False, False
+
+    def close():
+        if block is None or not ours:
+            return
+        lines = list(block.lines)
+        while lines and not lines[-1][0].strip():
+            lines.pop()
+        for d in mine:
+            stack[d] = stack[d] or words
+            q, shown = quotes[d], 0
+            for line, cut in lines:
+                n = q.count
+                whole = all(q.add(p) for p in _quoted(line, cut))
+                shown += q.count > n
+                if not whole:
+                    break
+            left[d] += block.all - len(block.lines) + len(lines) - shown
+
+    with open(log, "rb") as f:
+        f.seek(start)
+        for line, cut in _log_lines(f):
+            if line.startswith("File ") or _RULE.fullmatch(line) or line.startswith("$ "):
+                close()
+                block, mine, words, ours = _Block(), set(), False, not line.startswith("$ ")
+            if block is None:
+                continue
+            block.add(line, cut)
+            mine.update(d for d in dirs if d + "/" in line)
+            words = words or any(w in line for w in STACK_WORDS)
+        close()
+    return {d: ("\n".join(quotes[d].lines) + (
+        "\n%s[%d more line(s) of the log about %s left out]" % (QUOTE, left[d], d) if left[d] else ""), stack[d])
+        for d in dirs}
+
+
+def _proofs_key(h):
+    return ("proof-dirs", h.dir)
+
+
+def build_proof_dirs(root, h, work, out, dirs, libs=None, *, deadline_s=None, compilation=None):
+    """Build the proof directories `dirs` of h (relative to root) once, with dune, after h's library (compile_lib),
+    with a dune cache of its own (own_dune_cache), so each proof is compiled here and never taken from a cache; record
+    and return, per directory, None when every .vo it should have exists afterwards, else why not (its guard refusal,
+    or dune's text for it, quoted (_failure_texts)).  A library that does not compile fails every directory: the first
+    with its quoted log, each after it with _again's one line.  Each .v is an explicit target (@@<dir>/default is
+    non-recursive and builds no proof directory).  dune runs every `rocq compile` with the flags of oft generate's
+    dune file; one with another flag, in the trace dune writes, refuses every directory.  deadline_s: an absolute
+    time.monotonic() bound for every directory, the job's own end (DirTimeLimit).  A directory past it fails alone,
+    and dune builds the others.  The results go into libs, where check_proof reads them.  compilation counts the
+    library's and the directories' dune targets, and the directories the guard (_proof_dir_targets) refused
+    (Compilation)."""
+    compilation = counter(compilation)
+    libs = {} if libs is None else libs
+    got = libs.setdefault(_proofs_key(h), {})
+    sid = {st.proof.path: st.id for st in h.statements.values() if st.proof}
+    targets = {}
+    try:
+        compile_lib(root, h, work, libs, out, compilation=compilation)
+    except (CheckError, subprocess.TimeoutExpired, OSError) as e:
+        for i, d in enumerate(dirs):
+            got[d] = str(e) if i == 0 else _again(e)
+        return {d: got[d] for d in dirs}
+    for d in dirs:
+        if d not in sid:
+            got[d] = "%s: no statement of %s has this proof directory" % (d, h.dir)
+            continue
+        try:
+            targets[d] = _proof_dir_targets(root, h, d, sid[d])
+        except CheckError as e:
+            got[d] = str(e)
+            compilation.refused += 1
+    log = _unit_log(work, h, "proofs")
+    start = _log_end(log)
+    if targets:
+        limit = DirTimeLimit(targets, deadline_s) if deadline_s is not None else None
+        try:
+            with own_dune_cache(work) as env:
+                rc = compilation.dune(root, [t for d in sorted(targets) for t in targets[d]], log, env=env,
+                                      watch=limit)
+            rules = _log_rules(log, start)
+            refusal = _trace_refusal(root, targets, rules)
+        except (CheckError, subprocess.TimeoutExpired, OSError) as e:
+            rc, rules, refusal = None, [], str(e)
+        stopped = limit.stopped if limit else set()
+        missing = {d: [t for t in ts if not os.path.isfile(os.path.join(root, t))] for d, ts in targets.items()}
+        failed = {} if refusal else _failure_texts(log, start, sorted(d for d in targets if missing[d]))
+        for d in targets:
+            text, exhausted = failed.get(d, ("", False))
+            if refusal:
+                got[d] = refusal
+            elif d in stopped and missing[d]:
+                got[d] = "%s: stopped by the job's deadline (see %s)" % (d, log)
+            elif missing[d] and exhausted:
+                # a rocq of this directory ran out of stack (dune: `(got signal SEGV)`, or Rocq's own Stack_overflow):
+                # a class apart from a proof that does not compile (_failed_run)
+                got[d] = "%s: %s (see %s)\n%s" % (d, stack_exhausted_words(work), log, text)
+            elif missing[d]:
+                got[d] = "%s: dune built no %s (dune exited %s; see %s)%s" % (
+                    d, ", ".join(t[len("_build/default/"):] for t in missing[d]), rc, log,
+                    ("\n" + text) if text else "")
+            else:
+                got[d] = None
+        print("%s: %d proof director%s built by dune, %d rules run%s (log %s)" % (
+            h.dir, len(targets), "y" if len(targets) == 1 else "ies", len(rules),
+            ", %d stopped by the job's deadline" % len(stopped) if stopped else "", log), file=out)
+    return {d: got[d] for d in dirs}
+
+
+def _trace_refusal(root, targets, rules):
+    """Why the proof directories' build is refused, from dune's _build/trace.csexp, or None: a `rocq compile` of a
+    proof directory with a flag outside PROOF_FLAGS, or a proof directory the build's rules (_log_rules) name as
+    compiled that the trace holds no `rocq compile` of (nothing to judge its flags by)."""
+    dirs = sorted(targets)
+    trace = os.path.join(root, "_build", "trace.csexp")
+    seen = set()
+    if os.path.isfile(trace):
+        try:
+            compiles = traced_compiles(trace)
+        except (ValueError, IndexError) as e:
+            return "dune's _build/trace.csexp does not parse (%s): the proof directories' flags cannot be read" % e
+        for argv in compiles:
+            files = [a for a in argv if a.endswith(".v")]
+            d = next((d for d in dirs if any(f.startswith(d + "/") for f in files)), None)
+            if d is None:
+                continue
+            seen.add(d)
+            bad = bad_proof_flags(argv)
+            if bad:
+                return "%s: dune compiled it with %s, which oft generate's dune file never gives" % (d, " ".join(bad))
+    for r in rules:
+        for d in dirs:
+            if any(t.startswith(d + "/") and t.endswith(".vo") for t in r) and d not in seen:
+                return "%s: dune compiled it, and _build/trace.csexp records no rocq compile of it" % d
+    return None
+
+
+
 def _holds_exactly(path, text):
     """Whether path is a regular file, not a symbolic link, whose bytes are text's."""
     if os.path.islink(path) or not os.path.isfile(path):
@@ -712,50 +1201,35 @@ def _holds_exactly(path, text):
 
 
 def check_proof(root, st, pd, allowed, work, out, libs, rocqchk=False, compilation=None):
-    """Compile one proof directory afresh, against the statements in root's _build and its harness's proof library, then
-    the wrapper, and audit the wrapper's assumptions.  With rocqchk, return what rocqchk_proofs needs."""
+    """Audit one proof directory as build_proof_dirs left it, built by dune in root's _build: compile only a wrapper of
+    this tool's own, with its own flags and load path, against the statements, the harness's proof library and the
+    built .vo, and audit the wrapper's assumptions.  Compiles no file of the proof.  A directory build_proof_dirs could
+    not build fails with what it recorded, before the library is asked for, so that a library that does not compile is
+    quoted at the first proof and named in one line (_again) at each after it.  With rocqchk, return what
+    rocqchk_proofs needs."""
     compilation = counter(compilation)
     h = st.harness
     p, hn, s = st.id.split("/")
     proof_mod = names.rocq_proof(h.tree.namespace, p, hn, s)
     main = "Refutation" if pd.refutes else "Proof"
+    built = libs.get(_proofs_key(h), {})
+    if pd.path not in built:
+        raise CheckError("%s: not built (build_proof_dirs builds a unit's proof directories before their audits)"
+                         % pd.path)
+    if built[pd.path] is not None:
+        raise CheckError(built[pd.path])
     libq = compile_lib(root, h, work, libs, out, compilation=compilation)
-    d = tempfile.mkdtemp(prefix="proof-", dir=work)
-    src = os.path.join(root, pd.path)
-    for f in os.listdir(src):
-        if f.endswith(".v"):
-            shutil.copy(os.path.join(src, f), os.path.join(d, f))
     base = os.path.join(root, "_build", "default")
-    q = _loadpath(base, h) + libq + ["-Q", d, proof_mod]
-    log = os.path.join(d, "compile.log")
-    # `rocq dep` reads the proof's own .v files, so it is work ATTEMPTED on them: a proof it cannot parse --
-    # a missing final `.` -- is a FAILED proof, not a round that did nothing. Counted, because for a
-    # `--parts proofs --statements S` job of a unit with no proof library, which is how the farm checks a
-    # unit too long for one job, it is the FIRST thing that touches a .v file: uncounted, such a round
-    # reported COMPILED 0 and voided a broken proof, and the farm reruns a void unit for ever (the sixth
-    # non-author review of #2109).  Taken back when `rocq` never started, as Compilation.run does: a tool
-    # that is not there attempted nothing.
-    compilation.files += 1
-    try:
-        deps = subprocess.run(["rocq", "dep", "-sort"] + libq + ["-Q", d, proof_mod] + sorted(
-            os.path.join(d, f) for f in os.listdir(d) if f.endswith(".v")), capture_output=True, text=True)
-    except OSError:
-        compilation.files -= 1
-        raise
-    if deps.returncode != 0:
-        raise CheckError("%s: rocq dep failed: %s" % (pd.path, deps.stderr.strip()))
-    # rocq dep -sort lists the whole closure in order, the library's files included: those are compiled already.
-    own = [f for f in deps.stdout.split() if os.path.dirname(os.path.abspath(f)) == d]
-    if not own:
-        raise CheckError("%s: rocq dep listed none of its .v files" % pd.path)
-    for f in own:
-        rc = compilation.run(["rocq", "compile"] + q + [f], d, log)
-        if rc != 0:
-            raise _failed_run(pd.path, log, rc, work)
-    args = ""
-    if st.kind == "bound" and not pd.refutes:
-        n_, _, d_ = pd.data["bound"].partition("/")
-        args = " (%s # %s)" % (n_, d_ or "1")
+    pbuild = os.path.join(base, pd.path)
+    for dp, _dn, fn in os.walk(os.path.join(root, pd.path)):
+        for f in fn:
+            if f.endswith(".v"):
+                vo = os.path.relpath(os.path.join(dp, f), root)[:-2] + ".vo"
+                if not os.path.isfile(os.path.join(base, vo)):
+                    raise CheckError("%s: dune built no %s" % (pd.path, vo))
+    d = tempfile.mkdtemp(prefix="proof-", dir=work)
+    q = _loadpath(base, h) + libq + ["-Q", pbuild, proof_mod]
+    args = wrapper_args(st, pd)
     theorem = "%s_%s" % (s, "refuted" if pd.refutes else "holds")
     wdir = os.path.join(d, "wrap")
     os.makedirs(wdir)
@@ -778,8 +1252,18 @@ def check_proof(root, st, pd, allowed, work, out, libs, rocqchk=False, compilati
         return None
     # rocqchk runs once per harness, over the wrappers of all its proofs (rocqchk_proofs): their closures share the
     # harness's library, which one run checks once.
-    return {"base": _loadpath(base, h) + libq, "own": ["-Q", d, proof_mod, "-Q", wdir, wrap],
+    return {"base": _loadpath(base, h) + libq, "own": ["-Q", pbuild, proof_mod, "-Q", wdir, wrap],
             "module": wrap + ".Wrapper"}
+
+
+def wrapper_args(st, pd):
+    """The arguments the wrapper applies statement st to for proof pd: the b a proof of a statement that takes a bound
+    names (proof.yaml bound, n/d or n; shapes.takes_bound), as `(n # d)`; none for any other proof, or for a
+    refutation."""
+    if st.takes_bound() and not pd.refutes:
+        n_, _, d_ = pd.data["bound"].partition("/")
+        return " (%s # %s)" % (n_, d_ or "1")
+    return ""
 
 
 def rocqchk_proofs(root, h, checked, allowed, work, out):
@@ -792,6 +1276,157 @@ def rocqchk_proofs(root, h, checked, allowed, work, out):
     n = _rocqchk(root, q, [c["module"] for c in checked], allowed, log)
     folder = layout.proofs_dir(h.project.name, h.name, h.tree.unit_layout("%s/%s" % (h.project.name, h.name)))
     print("%s: rocqchk over the wrappers of %d proof(s): %d axioms, all allowed" % (folder, len(checked), n), file=out)
+
+
+class InstanceError(CheckError):
+    """A statement's instance refused, at `step`: missing (no lemma, in a project of shapes.REQUIRED), input (the
+    instance file is not the one its record names), shape (the statement's fields choose no shape), compile (the lemma
+    or a library file of an instance control does not compile), wrapper (the lemma is not of this input and this
+    type) or axioms (it assumes what the allowlist does not hold)."""
+
+    def __init__(self, step, msg):
+        super().__init__(msg)
+        self.step = step
+
+
+def check_instance(root, st, allowed, work, out, libs, compilation=None):
+    """Check the instance of statement st (harness.yaml statements.<s>.instance) with its lemma <s>_instance, in
+    Instances/<s>.v of the fuzz target's proof library, which compile_lib builds, against the statements in root's
+    _build (audit_instance, with shapes.REQUIRED)."""
+    h = st.harness
+    p, hn, s = st.id.split("/")
+    lemma = st.instance_lemma()
+    base = os.path.join(root, "_build", "default")
+    audit_instance(st, h.dir, os.path.join(root, layout.instance_path(p, hn, h.tree.unit_layout("%s/%s" % (p, hn)),
+                                                                      st.data["instance"]["file"])),
+                   os.path.join(root, lemma), lemma,
+                   lambda: _loadpath(base, h) + compile_lib(root, h, work, libs, out, compilation=compilation),
+                   names.rocq_proof(h.tree.namespace, p, hn, "lib") + ".Instances." + s,
+                   names.rocq_core(h.tree.namespace), shapes.REQUIRED, allowed, work, out, compilation=compilation)
+
+
+def instance_wrapper(st, data, lemma_mod, core):
+    """The text of the wrapper (INSTANCE_WRAPPER) of statement st's instance, whose file holds data, for its lemma
+    <s>_instance of module lemma_mod; core is the core's theory.  Raises shapes.ShapeError for fields that choose no
+    shape."""
+    h = st.harness
+    return INSTANCE_WRAPPER.format(
+        core=core, rocq=h.data["rocq"], lemma_mod=lemma_mod, lemma=st.name + "_instance", input=shapes.INSTANCE_INPUT,
+        input_type="FinProcInput" if shapes.instance_finite(st.data) else "ProcInput",
+        input_term=shapes.instance_input(h.data, st.data, data), type=shapes.instance_type(st.data, h.project.data))
+
+
+def audit_instance(st, label, data_path, lemma_path, lemma_rel, loadpath, lemma_mod, core, required, allowed, work,
+                   out, compilation=None):
+    """Check the instance of statement st, whose file is data_path, with its lemma <s>_instance of module lemma_mod,
+    in the file lemma_path (named lemma_rel in messages); loadpath() gives the -Q mappings of the core, of the
+    harness's statements and images, and of the built library that holds the lemma; core is the core's theory.
+
+    With no lemma file, the instance fails when st's project is in `required`, and otherwise passes with a line that
+    says it has no lemma and is not required.  Else the file must have the record's size and SHA-256, the wrapper
+    (INSTANCE_WRAPPER) must type-check, and every axiom it assumes must be in `allowed`; then it prints
+    `<label>: instance of <id> at <file> (<path>): holds; assumptions: N axioms, all allowed`.  Raises InstanceError."""
+    compilation = counter(compilation)
+    h, inst, s = st.harness, st.data["instance"], st.name
+    head = "%s: instance of %s at %s (%s)" % (label, st.id, inst["file"], inst["path"])
+    if not os.path.isfile(lemma_path):
+        if h.project.name in required:
+            raise InstanceError("missing", "no lemma %s_instance: %s is missing, and project %s requires one for every "
+                                           "statement" % (s, lemma_rel, h.project.name))
+        print("%s: has no lemma (%s), and project %s does not require one" % (head, lemma_rel, h.project.name),
+              file=out)
+        return
+    try:
+        f = facts.read_instance(data_path)
+    except (OSError, facts.BoundedFileError) as e:
+        raise InstanceError("input", "the instance file %s cannot be read: %s" % (inst["file"], e))
+    if (f.bytes, f.sha256) != (inst["bytes"], inst["sha256"]):
+        raise InstanceError("input", "the instance file %s has %d bytes and sha256 %s, not the record's %d bytes and "
+                                     "sha256 %s" % (inst["file"], f.bytes, f.sha256, inst["bytes"], inst["sha256"]))
+    try:
+        text = instance_wrapper(st, f.data, lemma_mod, core)
+    except shapes.ShapeError as e:
+        raise InstanceError("shape", str(e))
+    q = loadpath()
+    d = tempfile.mkdtemp(prefix="instance-", dir=work)
+    wdir = os.path.join(d, "wrap")
+    os.makedirs(wdir)
+    with open(os.path.join(wdir, "Wrapper.v"), "w", encoding="utf-8") as f:
+        f.write(text)
+    log = os.path.join(d, "wrapper.log")
+    if compilation.run(["rocq", "compile", "-w", "-all"] + q + ["-Q", wdir, "Wrap." + names.ident(s),
+                                                               os.path.join(wdir, "Wrapper.v")], d, log) != 0:
+        raise InstanceError("wrapper", "the wrapper does not type-check: %s_instance is not of this input and this "
+                                       "type (see %s)%s" % (s, log, log_errors(log)))
+    try:
+        axioms = read_assumptions(d, log)
+    except CheckError as e:
+        raise InstanceError("axioms", str(e))
+    outside = sorted(axioms - allowed)
+    if outside:
+        raise InstanceError("axioms", "axioms outside the allowlist: %s" % ", ".join(outside))
+    print("%s: holds; assumptions: %d axioms, all allowed" % (head, len(axioms)), file=out)
+
+
+def instance_control(root, d, allowed, out):
+    """`python3 -m oft.check --instance-control DIR`: one of tests/check.sh's instance controls (tests/README.md),
+    checked by audit_instance as check_instance checks a statement's instance.  DIR holds instance.yaml (`statement`,
+    an id of tests/toy/<harness>/Statements.v; `fields`, its fields as harness.yaml writes them; `distribution`, argv0
+    and input_file; `instance`, the record; `project`, and `required`, the projects that stand in for
+    shapes.REQUIRED), the instance file and the lemma, Instances/<statement>.v, or none, and any other .v file of the
+    proof library the lemma loads (an Images.v, at the top of DIR, is the module Control.<dir>.Images).  Every .v file
+    of DIR is compiled, in the order `rocq dep -sort` gives, against the core and the tests' library as root's _build
+    holds them (`dune build` of theories and tests).  0 for a pass, the missing lemma that is not required among them;
+    1, after `FAIL <dir>: refused at <step>: <why>`, for a refusal (InstanceError's steps)."""
+    d = os.path.abspath(d)
+    label = os.path.relpath(d, root)
+    try:
+        allow = allowed_axioms(root, allowed)
+        y = yamlio.load_file(os.path.join(d, "instance.yaml"))
+        p, hn, s = y["statement"].split("/")
+        proj = facts.Project(facts.Tree(root), y["project"], {})
+        h = facts.Harness(proj, hn, {"rocq": "OSSVerify.Tests.%s.%s" % (p, hn), "distribution": y["distribution"]})
+        st = facts.Statement(h, s, dict(y["fields"], instance=y["instance"]))
+    except (CheckError, OSError, yamlio.YamlError, KeyError, TypeError, ValueError) as e:
+        print("FAIL %s: the control does not read: %s" % (label, e), file=out)
+        return 1
+    base = os.path.join(root, "_build", "default")
+    base_q = ["-Q", os.path.join(base, "theories"), "OSSVerify.Core",
+              "-Q", os.path.join(base, "tests"), "OSSVerify.Tests"]
+    work = tempfile.mkdtemp(prefix="oft-check-instance-")
+    lib_mod = "Control." + names.ident(os.path.basename(d))
+    lemma = os.path.join("Instances", s + ".v")
+
+    def loadpath():
+        lib = os.path.join(work, "lib")
+        files = _sources(d)
+        for rel, text in files.items():
+            os.makedirs(os.path.dirname(os.path.join(lib, rel)), exist_ok=True)
+            with open(os.path.join(lib, rel), "wb") as f:
+                f.write(text)
+        q = base_q + ["-Q", lib, lib_mod]
+        deps = subprocess.run(["rocq", "dep", "-sort"] + q + sorted(os.path.join(lib, rel) for rel in files),
+                              capture_output=True, text=True)
+        if deps.returncode != 0:
+            raise InstanceError("compile", "rocq dep failed: %s" % deps.stderr.strip())
+        log = os.path.join(work, "lemma.log")
+        for f in deps.stdout.split():
+            if os.path.abspath(f).startswith(lib + os.sep) and _run(["rocq", "compile"] + q + [f], work, log) != 0:
+                raise InstanceError("compile", "%s does not compile (see %s)%s"
+                                    % (os.path.relpath(f, lib), log, log_errors(log)))
+        return q
+
+    try:
+        audit_instance(st, label, os.path.join(d, y["instance"]["file"]), os.path.join(d, lemma),
+                       os.path.join(label, lemma), loadpath, lib_mod + ".Instances." + s, "OSSVerify.Core",
+                       y.get("required") or [], allow, work, out)
+    except InstanceError as e:
+        print("FAIL %s: refused at %s: %s" % (label, e.step, e), file=out)
+        return 1
+    except (CheckError, subprocess.TimeoutExpired, OSError) as e:
+        print("FAIL %s: %s" % (label, e), file=out)
+        return 1
+    return 0
 
 
 def _sources(d):
@@ -837,18 +1472,23 @@ def proof_claim(st, text):
 
 def proofs_apart(root, unit, h, sts, allowed, jobs, work, out, libs, compilation=None, facts_from=None):
     """Check the proofs of the statements sts of harness h, each in a process of its own (`python3 -m oft.check --root
-    ROOT UNIT --parts proofs --statements S --lib DIR`), at most jobs at once, against the statements in root's _build
-    and h's library, built here once (compile_lib) and handed to each process with --lib, so no process runs dune.
-    With facts_from, each process reads the unit's facts from there too (--facts-from), as this one did: root may be
-    a view of the unit, which no process loads whole.  Each process takes this one's measured stack
-    (--stack-from-parent, prepare_stack).  A statement passes only when its process exits 0 and its output holds
-    check_proof's own line for it (proof_claim); a process that a signal ends, that exits non-zero, that ends without
-    that line, or that does not start fails it, and one that ran out of stack (stack_exhausted, on its output and its
-    exit) fails it as `stack exhausted ...`.  Returns (passed, failed)."""
+    ROOT UNIT --parts proofs --statements S --lib DIR --proofs-built`), at most jobs at once, against the statements in
+    root's _build, h's library and the proof directories, built here once (compile_lib, then build_proof_dirs) and
+    handed to each process with --lib and --proofs-built, so no process runs dune; a statement whose directory did not
+    build fails here and gets no process, and a library that does not compile fails every statement here, quoted at the
+    first and named in one line (_again) at each after it.  With facts_from, each process reads the unit's facts from
+    there too (--facts-from), as this one did: root may be a view of the unit, which no process loads whole.  Each
+    process takes this one's measured stack (--stack-from-parent, prepare_stack), and checks no instance
+    (--no-instances): this one checks the unit's instances (instances_to_check).  A statement passes only when its
+    process exits 0 and its output holds check_proof's own line for it (proof_claim); a process that a signal ends,
+    that exits non-zero, that ends without that line, or that does not start fails it, and one that ran out of stack
+    (stack_exhausted, on its output and its exit) fails it as `stack exhausted ...`.  compilation counts the targets of
+    the builds here and each process's own compiles (its COMPILED line).  Returns (passed, failed)."""
     compilation = counter(compilation)
     root = os.path.abspath(root)
     try:
         libq = compile_lib(root, h, work, libs, out, compilation=compilation)
+        built = build_proof_dirs(root, h, work, out, [st.proof.path for st in sts], libs, compilation=compilation)
     except (CheckError, subprocess.TimeoutExpired, OSError) as e:
         for i, st in enumerate(sts):
             print("FAIL %s: %s" % (st.proof.path, e if i == 0 else _again(e)), file=out)
@@ -857,15 +1497,23 @@ def proofs_apart(root, unit, h, sts, allowed, jobs, work, out, libs, compilation
     env = dict(os.environ, PYTHONPATH=os.pathsep.join(
         [here] + [p for p in os.environ.get("PYTHONPATH", "").split(os.pathsep) if p]))
     logs = tempfile.mkdtemp(prefix="statements-", dir=work)
-    print("%s: %d statement(s) with a proof, each in a process of its own, %d at a time"
-          % (unit, len(sts), min(jobs, len(sts))), file=out, flush=True)
-    pending, running, passed, failed = list(sts), {}, 0, 0
+    pending, running, passed, failed = [], {}, 0, 0
+    for st in sts:
+        if built[st.proof.path] is None:
+            pending.append(st)
+        else:
+            print("FAIL %s: %s" % (st.proof.path, built[st.proof.path]), file=out, flush=True)
+            failed += 1
+    if pending:
+        print("%s: %d statement(s) with a proof, each in a process of its own, %d at a time"
+              % (unit, len(pending), min(jobs, len(pending))), file=out, flush=True)
     while pending or running:
         while pending and len(running) < jobs:
             st = pending.pop(0)
             log = os.path.join(logs, st.name + ".log")
             cmd = [sys.executable, "-m", "oft.check", "--root", root, unit, "--parts", "proofs", "--statements",
-                   st.name, "--allowed", allowed, "--stack-from-parent"] + (["--lib", libq[1]] if libq else []) + (
+                   st.name, "--allowed", allowed, "--stack-from-parent", "--proofs-built", "--no-instances"] + (
+                       ["--lib", libq[1]] if libq else []) + (
                        ["--facts-from", os.path.abspath(facts_from)] if facts_from is not None else [])
             try:
                 with open(log, "w") as f, open(log + ".stderr", "w") as e:
@@ -887,7 +1535,9 @@ def proofs_apart(root, unit, h, sts, allowed, jobs, work, out, libs, compilation
             # Children run the same checker; their summary counts the compiles they actually started, including a
             # failed compile. Merely starting a proof process is not compiling anything.
             # The child prints its counts on a line of its own, just BEFORE its `oft check: ` line (run's
-            # end).  A child builds no library -- it is given --lib -- so its dune job count is always `-`.
+            # end).  A child runs no dune -- it is given --lib and --proofs-built, and compiles only its wrapper, since
+            # --no-instances leaves the unit's instances to this process -- so its dune job count is always `-`; the
+            # proof directories' targets are counted here, once.
             summaries = re.findall(r"(?m)^COMPILED (\d+) file\(s\) with dune -j -$", text)
             if summaries:
                 compilation.files += int(summaries[-1])
@@ -938,9 +1588,19 @@ def _run_input(qemu_path, elf, input_path, work, timeout):
 def check_counterexample(root, st, cx, qemu, timeout, work, out):
     h = st.harness
     exp = cx.data
-    elf = os.path.join(root, h.elf_path(exp["observed"]["build"]))
+    build = exp["observed"]["build"]
+    rel = h.elf_path(build)
+    elf = os.path.join(root, rel)
     if not os.path.isfile(elf):
-        raise CheckError("%s: %s is not fetched" % (cx.path, h.elf_path(exp["observed"]["build"])))
+        raise CheckError("%s: %s is not fetched" % (cx.path, rel))
+    # The run is evidence only about the program this tree pins, so the bytes are compared before qemu sees them,
+    # as check_finding compares the unpatched binary it runs (OSSV-462).  Only the build this
+    # counterexample names, not every published build of the unit: a counterexamples run needs the builds its
+    # counterexamples name, and a tree may hold those alone.
+    rec = h.data["builds"][build]
+    if os.path.getsize(elf) != rec["bytes"] or facts.sha256_file(elf) != rec["sha256"]:
+        print("%s: does not match its SHA-256 in harness.yaml" % rel, file=out)
+        raise CheckError("the binaries are missing or do not match (run ./oft fetch %s)" % h.project.name)
     qemu_path = shutil.which(qemu)
     if qemu_path is None:
         raise CheckError("%s: %s is not installed (the runner image has it)" % (cx.path, qemu))
@@ -1141,9 +1801,9 @@ def stack_exhausted_words(work):
 
 
 # What a step that ran out of stack leaves in its output, for stack_exhausted and stack_exhausted_in: Rocq reports
-# OCaml's Stack_overflow, a child oft's own line says so (for --proof-jobs, whose rocq writes into the child's
-# compile.log), and dune reports that a process it ran died of SIGSEGV (dune itself then exits 1, as compile_lib's
-# library build does).
+# OCaml's Stack_overflow, a child oft's own line says so (for --proof-jobs, in the child's output, which its process
+# log in statements-*/ holds), and dune reports that a process it ran died of SIGSEGV (dune itself then exits 1, as
+# compile_lib's library build does).
 STACK_WORDS = ("Error: Stack overflow.", ": stack exhausted ", "(got signal SEGV)")
 # how much of a log stack_exhausted_in holds at once; a log of a failed build has no bound of its own (a library
 # build that fails after hours of output), and reading it whole took about 2 bytes of memory per byte of log
@@ -1193,6 +1853,19 @@ def _failed_run(path, log, rc, work):
 DEFAULT_PARTS = "statements,proofs,counterexamples"
 
 
+# The parts whose check COMPILES the unit's published binaries, projects/<p>/bin/<h>/, the ones harness.yaml pins:
+# statements and proofs both build the images dune makes of them (images/dune's `elf-snapshot %{elf}`), which
+# Statements.v and every proof over it are about.  Each run of these parts needs every published build of the unit,
+# so the whole unit's pins are checked for them (verify_builds, in run()).
+#
+# The other two parts are not here, because each needs only the one binary it runs and checks that one itself:
+# findings runs the UNPATCHED binaries and compares each with its pin in the project's unpatched.yaml
+# (check_finding), holding no projects/<p>/bin at all in its view (unitpaths.binaries), and counterexamples
+# compares the build its counterexample names with that build's pin before qemu runs it (check_counterexample).
+# Asking either for the whole unit's pins would refuse a run that holds the builds it needs and no others.
+PARTS_THAT_COMPILE_THE_BINARIES = {"statements", "proofs"}
+
+
 # The default --timeout: the seconds one counterexample or finding run of a binary under qemu gets.  It must hold the
 # slowest run measured, on the slowest runner it ran on, or a correct counterexample fails on a slow runner and
 # passes on a fast one.  ffmpeg/ffmpeg_AV_CODEC_ID_SIPR_fuzzer's .asan and .asan-ubsan runs measure about 535 s each
@@ -1202,9 +1875,45 @@ DEFAULT_PARTS = "statements,proofs,counterexamples"
 RUN_TIMEOUT_SECONDS = 1620
 
 
+def run_steps(steps, out):
+    """Run each (label, step, whether its success alone passes it) of steps, with a FAIL line for each that raises:
+    (how many passed, how many failed)."""
+    passed = failed = 0
+    for label, step, passes in steps:
+        try:
+            step()
+            passed += 1 if passes else 0
+        except (CheckError, subprocess.TimeoutExpired, OSError) as e:
+            print("FAIL %s: %s" % (label, e), file=out)
+            failed += 1
+    return passed, failed
+
+
+def instances_to_check(h, want, statements, checks_instances):
+    """The statements of harness h whose instances a run checks (check_instance), after the proofs it checks (in their
+    processes of proofs_apart, and under rocqchk too): a run of the parts `want`, with --statements `statements` (None
+    for every proved statement), and checks_instances false for a statement's process of proofs_apart.
+
+    Each statement Statements.v carries that has an instance, proof or not, has its instance checked once per unit,
+    and never in a statement's process of proofs_apart, whose parent checks them.  The proofs part checks them; so does
+    the statements part of a unit with no proof, which is checked on its statements alone
+    (tools/oft/ci/check-units.sh).  A run of --statements that is not such a process (a unit the farm checks one proof
+    per job) checks the instances of the statements it names, and the run whose statements hold the unit's first
+    proved statement by name checks those of the statements with no proof too, so the jobs of a split unit check each
+    instance once."""
+    unproved = not any(st.proof for st in h.statements.values())
+    if not checks_instances or not ("proofs" in want or "statements" in want and unproved):
+        return []
+    first = min((st.name for st in h.statements.values() if st.proof), default=None)
+    return [st for st in h.statements.values() if "instance" in st.data and st.rendered() and (
+        statements is None or st.name in statements or not st.proof and first in statements)]
+
+
+
 def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
         qemu="qemu-riscv64", timeout=RUN_TIMEOUT_SECONDS, rocqchk=False, record=False, facts_to=None, facts_from=None,
-        statements=None, lib=None, proof_jobs=1, stack_from_parent=False, out=sys.stdout):
+        statements=None, lib=None, proof_jobs=1, stack_from_parent=False, proofs_built=False, checks_instances=True,
+        out=sys.stdout):
     """parts: the comma-separated parts to check, where naming proofs refuses a unit with no proof; None (no --parts)
     checks each part of DEFAULT_PARTS that the unit has, so an unproved unit is checked on its statements.
 
@@ -1215,11 +1924,18 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
                 (proof_jobs) reads them too
     statements  the statements whose proofs are checked (default: every one with a proof); each must have one
     lib         the unit's proof library as compile_lib built it, to use instead of building it here
+    proofs_built  the unit's proof directories are in root's _build as an earlier oft check built them
+                (build_proof_dirs, which proofs_apart runs before it starts each statement's process): audit them
+                without building them again
     proof_jobs  with more than 1, each statement's proof is checked in a process of its own (proofs_apart), as many
-                at once, after one build of the library; rocqchk keeps one process
+                at once, after one build of the library and the proof directories; rocqchk keeps one process
     stack_from_parent  this is such a process: it prints its parent's measured stack, not its own (prepare_stack)
+    checks_instances  false for such a process too: its parent checks the unit's instances (instances_to_check)
 
-    Before it checks statements or proofs it sets the stack limit, measures the stack and prints it (prepare_stack)."""
+    Before it checks statements or proofs it sets the stack limit, measures the stack and prints it (prepare_stack).
+    Before a unit compiles anything that reads its binaries (PARTS_THAT_COMPILE_THE_BINARIES), every published build
+    of that unit must be the binary harness.yaml pins, in bytes and SHA-256 (fetch.verify_builds); a unit whose
+    binaries differ fails there, with nothing of it compiled."""
     named = parts is not None
     parts = parts if named else DEFAULT_PARTS
     want = set(parts.split(","))
@@ -1230,8 +1946,9 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
     if record and "findings" not in want:
         print("FAIL --record records findings: add findings to --parts", file=out)
         return 1
-    if (statements is not None or lib is not None) and (len(units) != 1 or want != {"proofs"}):
-        print("FAIL --statements and --lib check the proofs of one unit: give one unit and --parts proofs", file=out)
+    if (statements is not None or lib is not None or proofs_built) and (len(units) != 1 or want != {"proofs"}):
+        print("FAIL --statements, --lib and --proofs-built check the proofs of one unit: give one unit and --parts "
+              "proofs", file=out)
         return 1
     if statements is not None and not statements:
         print("FAIL --statements names no statement", file=out)
@@ -1259,7 +1976,9 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
             return write_facts(tree, units, facts_to, out)
     work = tempfile.mkdtemp(prefix="oft-check-")
     bad = examined = 0
-    libs = {}  # harness dir -> its proof library's -Q mapping, or the error compiling it
+    # harness dir -> its proof library's -Q mapping, or the error compiling it; _proofs_key(h) -> {proof directory:
+    # None when dune built it, else why not} (build_proof_dirs records it, check_proof reads it)
+    libs = {}
     compilation = Compilation()
     try:
         allow = allowed_axioms(root, allowed) if want & {"statements", "proofs"} else set()
@@ -1307,6 +2026,13 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
             steps.append(("statements",
                           lambda h=h: check_statements(root, h, allow, work, out, rocqchk,
                                                        compilation=compilation), True))
+        if proved and not apart:
+            if proofs_built:
+                libs[_proofs_key(h)] = {st.proof.path: None for st in proved}
+            else:
+                # every proof directory once, by dune, after the statements and the library; then each audit
+                steps.append(("proof directories", lambda h=h: build_proof_dirs(
+                    root, h, work, out, [st.proof.path for st in proved], libs, compilation=compilation), False))
         for st in h.statements.values():
             if st in proved and not apart:
                 steps.append((st.proof.path, lambda st=st: checked.append((st.proof.path, check_proof(
@@ -1315,27 +2041,40 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
             if st.counterexample and "counterexamples" in want:
                 steps.append((st.counterexample.path, lambda st=st: check_counterexample(
                     root, st, st.counterexample, qemu, timeout, work, out), True))
+        unproved = not any(st.proof for st in h.statements.values())
+        instances = [("%s instance" % st.id, lambda st=st: check_instance(
+            root, st, allow, work, out, libs, compilation=compilation), True)
+            for st in instances_to_check(h, want, statements, checks_instances)]
         for f in sorted(h.tree.findings.values(), key=lambda f: f.path) if "findings" in want else []:
             if f.unit == unit:
                 steps.append((f.path, lambda f=f: check_finding(root, h, f, qemu, timeout, work, out, record), True))
-        if not steps and not apart:
+        if not steps and not instances and not apart:
             print("%s: nothing to check for parts %s" % (unit, parts), file=out)
             bad += 1
             continue
-        if named and "proofs" in want and not any(st.proof for st in h.statements.values()):
+        if named and "proofs" in want and unproved:
             # asked for proofs by name, a unit with none would pass on its statements alone: check-units.sh asks for
             # them only of a unit the plan lists in proof_units
             print("FAIL %s: nothing to check for part proofs: the unit has no proof (check it with --parts statements)"
                   % unit, file=out)
             bad += 1
             continue
-        for label, step, passes in steps:
-            try:
-                step()
-                examined += 1 if passes else 0
-            except (CheckError, subprocess.TimeoutExpired, OSError) as e:
-                print("FAIL %s: %s" % (label, e), file=out)
-                bad += 1
+        # This unit has something to compile, so every published build of it must be the binary harness.yaml pins
+        # BEFORE the first step runs.  A job's binaries come as a staged archive the farm's job submitter made at one
+        # commit, so a job handed another run's archive gets an ELF this tree does not pin; images/dune runs
+        # `elf-snapshot %{elf}` and reads no hash, so the images, and every vm_compute fact about them, would be of
+        # another program and the run could go green.  Until 2026-11-09 only check_statements compared them, so a
+        # run whose --parts did not name statements -- the farm's split per-proof jobs, `--parts proofs
+        # --statements S` -- compiled against whatever ELF was in projects/<p>/bin, and a `statements,proofs` run
+        # still compiled its proofs after the statements step had failed on them (OSSV-462).
+        if want & PARTS_THAT_COMPILE_THE_BINARIES and fetch.verify_builds(root, h, out)[1]:
+            print("FAIL %s: the binaries are missing or do not match (run ./oft fetch %s)"
+                  % (unit, h.project.name), file=out)
+            bad += 1
+            continue
+        passed, failed = run_steps(steps, out)
+        examined += passed
+        bad += failed
         if apart:
             passed, failed = proofs_apart(root, unit, h, apart, allowed, proof_jobs, work, out, libs, compilation,
                                           facts_from)
@@ -1350,6 +2089,9 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
                 for label, _ in checked:
                     print("FAIL %s: %s" % (label, e), file=out)
                 bad += len(checked)
+        passed, failed = run_steps(instances, out)
+        examined += passed
+        bad += failed
     if memory:
         memory.finish()
     # Two lines, not one, and COMPILED comes FIRST.
@@ -1374,7 +2116,13 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
         print("COMPILED %d file(s) with dune -j %s"
               % (compilation.files, compilation.jobs if compilation.jobs is not None else "-"), file=out)
     print("oft check: %d step(s) passed, %d failed; work files in %s" % (examined, bad, work), file=out)
-    if counted and compilation.files == 0:
+    # A proof directory the guard refused (build_proof_dirs, Compilation.refused) is a FAILED proof, judged on its own
+    # files, though nothing compiled: in a `--parts proofs --statements S` job of a unit with no proof library, the
+    # farm's split, the guard is the first thing that reads a .v file, and the farm reruns a void unit for ever (the
+    # sixth non-author review of #2109; main counted the `rocq dep` of each proof for the same case).  COMPILED stays
+    # the compiles started, 0 here, and the refusal alone keeps the run from void.  A library the guard refuses still
+    # voids it: that refusal is of the harness the run was given, before any proof directory is read.
+    if counted and compilation.files == 0 and not compilation.refused:
         return void(out, "COMPILED 0 file(s): no statements or proofs were compiled")
     return 1 if bad or not examined else 0
 
@@ -1524,21 +2272,37 @@ def add_arguments(c):
                                  "earlier oft check (root's _build copy of it), instead of building it again")
     c.add_argument("--proof-jobs", type=int, default=1,
                    help="check each statement's proof in a process of its own, this many at once, after one build of "
-                        "the unit's proof library (default 1: one after another in this process)")
-    # proofs_apart's per-statement process: it prints its parent's measured stack (prepare_stack); not for people
+                        "the unit's proof library and its proof directories (default 1: one after another in this "
+                        "process)")
+    c.add_argument("--proofs-built", action="store_true",
+                   help="with one unit and --parts proofs: its proof directories are in --root's _build as an earlier "
+                        "oft check built them; audit them without building them again")
+    # proofs_apart's per-statement process: it prints its parent's measured stack (prepare_stack), and leaves the
+    # unit's instances to its parent (instances_to_check); not for people
     c.add_argument("--stack-from-parent", action="store_true", help=argparse.SUPPRESS)
+    c.add_argument("--no-instances", dest="checks_instances", action="store_false", help=argparse.SUPPRESS)
 
 
 def cli(root, a):
     return run(root, a.units, parts=a.parts, allowed=a.allowed, qemu=a.qemu, timeout=a.timeout,
                rocqchk=a.rocqchk, record=a.record, facts_to=a.facts_to, facts_from=a.facts_from,
                statements=a.statements, lib=a.lib and os.path.abspath(a.lib), proof_jobs=a.proof_jobs,
-               stack_from_parent=a.stack_from_parent)
+               stack_from_parent=a.stack_from_parent, proofs_built=a.proofs_built,
+               checks_instances=a.checks_instances)
 
 
 if __name__ == "__main__":
     # `python3 -m oft.check`, as tools/oft/ci/check-units.sh runs it: the check without the modules of the other
     # commands, which are not part of the checker (keys.NOT_THE_CHECKER)
+    if "--instance-control" in sys.argv[1:]:
+        # tests/check.sh's instance controls (instance_control), which have no harness.yaml to load
+        p = argparse.ArgumentParser(prog="python3 -m oft.check --instance-control",
+                                    description="check one instance control of tests/instances/")
+        p.add_argument("--root", default=".", help="the repository root (default: .)")
+        p.add_argument("--instance-control", metavar="DIR", required=True)
+        p.add_argument("--allowed", default="toolchain/allowed-axioms.txt")
+        a = p.parse_args()
+        sys.exit(instance_control(os.path.abspath(a.root), a.instance_control, a.allowed, sys.stdout))
     p = argparse.ArgumentParser(prog="python3 -m oft.check", description="oft check")
     p.add_argument("--root", default=".", help="the repository root (default: .)")
     add_arguments(p)

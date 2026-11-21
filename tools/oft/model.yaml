@@ -8,7 +8,27 @@
 # ancestors: the public repository holds the model as a fresh commit with that tree, and a later model commit
 # descends from it.  A commit on no line takes `other`.
 lines:
-- # the opam package rocq-linux-process-semantics-core, the files toolchain/lps-core.paths lists
+- # the opam package rocq-linux-process-semantics-core with theories/Common, the files toolchain/lps-core.paths lists
+  cut: toolchain/lps-core.paths
+  commit: c0dd863a0f8f307beca7f2ee5cb4d7686a875779
+  tree: b6d5dbde1487b4614bc80646392504293bd6e695
+  sha256: 3c00fedfece3a07062c75c74f116ead141858da6779015d2b5633c3fc10a247f
+- # the opam package rocq-linux-process-semantics-core with theories/Common, the files toolchain/lps-core.paths lists
+  cut: toolchain/lps-core.paths
+  commit: b84e73efda97dbc5d80b3be0ead41706026548d1
+  tree: 473e0f0a9fda852019a6f7813a5e30ffec3eb47f
+  sha256: 63e1ce46710d44b6e048d9db97a7f90a42654ed69aaf0d45d8be13de598c5eea
+- # the opam package rocq-linux-process-semantics-core with theories/Common, the files toolchain/lps-core.paths lists
+  cut: toolchain/lps-core.paths
+  commit: 20f40762d6574cfd7020190e0d027c570b9be9ef
+  tree: e5ebd7ce445dc7f1ab71b65056565a44a278c9cb
+  sha256: 49e4d6b18f719c1ac797c486d56ec9fc545273e3a475f6ac09920e50864259f7
+- # the opam package rocq-linux-process-semantics-core with theories/Common, the files toolchain/lps-core.paths lists
+  cut: toolchain/lps-core.paths
+  commit: 727298f32ef9f0a2571e9ae66e8a70bd4064766d
+  tree: dc21c34b4a44106e67747c9958de88cdb1936d0b
+  sha256: e9065750d7e98411c41e22c6baf1d21452c8bb506073b23be59da8523336d1b2
+- # the core package without theories/Common: the files toolchain/lps-core.paths listed before it took theories/Common
   cut: toolchain/lps-core.paths
   commit: 2afba80c0da41869607bbdbf2be6a5af3c7fd9e9
   tree: 4ce9f996ed298321707fed3d5959d7304e3c4749

@@ -20,10 +20,23 @@ KINDS = ("project", "harness", "release", "proof", "counterexample", "finding", 
 BUILDS = ("plain", "ubsan", "asan", "asan-ubsan")
 SANITIZER_BUILDS = BUILDS[1:]
 
-# The OSS Verify port, and this repository's internal copy, which keeps the port's branches under oss-verify-port/
-# and which only a project a finding holds back builds from.
+# The OSS Verify port, and this repository's internal copy, which keeps the port's branches under oss-verify-port/.
+# Only a project held back whole (by a finding, or by `release: private`), or a project with a held fuzz target
+# (private_harnesses), builds from the internal copy (rules.internal_port_projects).  The cut writes the port
+# repository `none` for such a project with a held fuzz target, so that no public file names the internal copy.
+# `oft lint` refuses `none` in a tree that has tools/publish/, the internal tree (lint.check_port_none).
 OSS_VERIFY_REPOSITORY = "theorem-labs/oss-verify"
 INTERNAL_PORT_REPOSITORY = "theorem-labs/oss-verify-proofs" + "-internal"
+NO_PORT_REPOSITORY = "none"
+
+# A pull request of a repository on GitHub, as approvals.yaml's enrollment.pull_request names it (the group keeps
+# lint's links rule from reading a link here).  An enrollment entry names the project's enrollment pull request on the
+# OSS Verify port, or the facts pull request on this repository.  rules._approvals accepts this repository's pull
+# request only for a project that may build from the internal copy (rules.internal_port_projects): a project held back
+# whole (by a finding, or by `release: private`), or a project with a held fuzz target.  Such a project enrolls through
+# this repository.
+_PULL_REQUEST = r"https://(github\.com)/%s/pull/[0-9]+"
+INTERNAL_PULL_REQUEST = _PULL_REQUEST % re.escape(INTERNAL_PORT_REPOSITORY)
 
 SCALARS = {
     "project-name": r"[a-z0-9][a-z0-9_-]{0,99}",
@@ -39,6 +52,7 @@ SCALARS = {
     "date": r"[0-9]{4}-[0-9]{2}-[0-9]{2}",
     "spdx": r"[A-Za-z0-9.+-]+( (AND|OR|WITH) [A-Za-z0-9.+-]+)*|\(.+\)( (AND|OR) .+)*",
     "fraction": r"(0|[1-9][0-9]*)(/[1-9][0-9]*)?",
+    "positive-fraction": r"[1-9][0-9]*(/[1-9][0-9]*)?",
     "image": r"ghcr\.io/theorem-labs/[a-z0-9._/-]+@sha256:[0-9a-f]{64}",
     "release-version": r"[0-9]{4}\.[0-9]{1,2}\.[0-9]+(-rc\.[0-9]+)?",
     # v<release>, or v<release>-src: a second release holding source assets and, for projects a recipe built, a build
@@ -50,7 +64,9 @@ SCALARS = {
     # the same with -src (tools/enroll/drafts.py; rules.py: its own).
     "asset-release-tag": r"v[0-9]{4}\.[0-9]{1,2}\.[0-9]+(-rc\.[0-9]+)?(-src)?|findings-[a-z0-9][a-z0-9_-]*"
                          r"|enroll-[a-z0-9][a-z0-9_-]*-[0-9a-f]{12}(-src)?",
-    "oss-verify-repository": "|".join(re.escape(r) for r in (OSS_VERIFY_REPOSITORY, INTERNAL_PORT_REPOSITORY)),
+    "oss-verify-repository": "|".join(re.escape(r) for r in (OSS_VERIFY_REPOSITORY, INTERNAL_PORT_REPOSITORY,
+                                                             NO_PORT_REPOSITORY)),
+    "enrollment-pull-request": "|".join((_PULL_REQUEST % re.escape(OSS_VERIFY_REPOSITORY), INTERNAL_PULL_REQUEST)),
     "build-name": "|".join(re.escape(b) for b in BUILDS),
     "archive-name": r"[A-Za-z0-9._+-]+\.a",
     # an SPDX expression whose parenthesised groups may sit anywhere, as a library's own files state it

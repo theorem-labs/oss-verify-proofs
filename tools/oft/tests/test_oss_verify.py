@@ -383,7 +383,7 @@ class Rendering(unittest.TestCase):
         self.assertIn("theorem-labs/oss-verify", page)
         self.assertNotIn("github.com/" + "theorem-labs/oss-verify/", page)
         self.assertIn("standin-port.tar.zst", page)
-        self.assertTrue(all(piece in page for piece in ("infra/", "tools/", "projects/standin/", "tools/check")))
+        self.assertTrue(all(piece in page for piece in ("infra/", "projects/standin/", "the port's checker")))
         self.assertIn("; a testcase needs", page)
         self.assertNotIn("cannot be rebuilt from this release alone", page)
         self.assertIn("OSS Verify builds and OSS-Fuzz does not run", harness)
@@ -695,6 +695,59 @@ class ProjectsOwnTargets(unittest.TestCase):
                       "panic, which exits with status 79, does not falsify it.", rust)
         self.assertNotIn("stronger than", rust)
 
+    def test_a_rust_budget_statement_that_allows_any_status_does_not_rule_out_a_panic(self):
+        """A panic, a failed assertion included, exits with status 79, which `exits: any` allows: neither the
+        statement's text nor the project page says that such a statement rules out a failed assertion, the project
+        page does not say it rules out every sanitizer check (a failed rustc UB check exits with status 79 too), and
+        the ASan+UBSan note does not call status 79 "not allowed"."""
+        with tree(render=False) as t:
+            add_sqlpage(t)
+            release = t.yaml("release.yaml")
+            release["counts"]["binaries"] += 1
+            t.put_yaml("release.yaml", release)
+            harness = t.yaml("projects/sqlpage/sql_file/harness.yaml")
+            harness["builds"]["asan-ubsan"] = {"file": "sql_file.asan-ubsan", "bytes": 1000, "sha256": "a" * 64,
+                                               "segments": [1]}
+            harness["statements"]["plain_halts"]["exits"] = "any"
+            harness["statements"]["asan_ubsan_halts"] = {"kind": "halts", "builds": ["asan-ubsan"],
+                                                         "reading": "budget", "exits": "any", "status": "open"}
+            t.put_yaml("projects/sqlpage/sql_file/harness.yaml", harness)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual([str(f) for f in t.lint()], [])
+            rust = " ".join(t.read("projects/sqlpage/sql_file/Statements.v").split())
+            page = t.read("projects/sqlpage/README.md")
+        plain = rust[rust.index("(** On every input on which the plain build"):rust.index("Definition plain_halts")]
+        self.assertIn("It never crashes, hangs, or leaves the model. A panic, a failed assertion included, exits with "
+                      "status 79, which this statement allows: it says nothing about one.", plain)
+        self.assertNotIn("fails an assertion", plain)
+        self.assertIn("A failed rustc UB check exits with status 79, which this statement allows: it says nothing "
+                      "about those checks.", rust)
+        self.assertNotIn("which is not allowed", rust)
+        family = next(x for x in page.splitlines() if x.startswith("- **`<build>_halts`**"))
+        self.assertIn("A statement that allows any status allows status 79 too, which a panic (a failed assertion "
+                      "included) and a failed rustc UB check exit with, so it does not rule them out.", family)
+        self.assertNotIn("failing an assertion", family)
+        self.assertNotIn("tripping its sanitizer", family)
+
+    def test_a_rust_harness_with_no_check_does_not_say_its_any_status_halts_statement_rules_out_a_panic(self):
+        """The no-check paragraph of a harness with a halts statement that allows any status does not say that its
+        halts statements rule out what status 79 stands for: a panic or a failed rustc UB check."""
+        with tree(render=False) as t:
+            add_sqlpage(t)      # sql_file has no check of its own
+            harness = t.yaml("projects/sqlpage/sql_file/harness.yaml")
+            self.assertEqual(harness["checks"], [])
+            harness["statements"]["plain_halts"]["exits"] = "any"
+            t.put_yaml("projects/sqlpage/sql_file/harness.yaml", harness)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual([str(f) for f in t.lint()], [])
+            pages = [" ".join(t.read("projects/sqlpage/sql_file/" + f).split()) for f in ("README.md", "Statements.v")]
+        for page in pages:
+            self.assertIn("makes no check of its own beyond not crashing. Its halts statements say only that the code "
+                          "it calls never crashes or hangs, and that no ASan report or failed UBSan check in C code "
+                          "fires. One that allows any status says nothing about a panic, a failed assertion included, "
+                          "or a failed rustc UB check, which exit with status 79.", page)
+            self.assertNotIn("never crashes, hangs or trips a sanitizer", page)
+
     def test_the_rust_header_gives_the_exit_statuses_of_a_panic_and_a_failed_allocation(self):
         pages = self.render()
         rust = " ".join(pages["projects/sqlpage/sql_file/Statements.v"].split())
@@ -801,6 +854,53 @@ class PythonTargets(unittest.TestCase):
         self.assertIn("frozen into the binary as CPython bytecode", everywhere)
         self.assertIn("clang 20.1.8 with `-Os -g`", pages["projects/json/README.md"])
         self.assertNotIn("CPython", pages["projects/json/README.md"])
+
+    def test_a_budget_statement_that_allows_any_status_does_not_rule_out_a_failed_check(self):
+        """In a call of the harness, an uncaught Python exception, a failed check included, exits with status 79,
+        which `exits: any` allows: neither the statement's text nor the project page says that such a statement rules
+        out a failed check, and each says that it says nothing about one."""
+        with tree(render=False) as t:
+            add_python_target(t)
+            harness = t.yaml("projects/pyhtml/fuzz_html/harness.yaml")
+            harness["statements"]["plain_halts"]["exits"] = "any"
+            del harness["statements"]["plain_halts"]["binds_checks"]
+            t.put_yaml("projects/pyhtml/fuzz_html/harness.yaml", harness)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual([str(f) for f in t.lint()], [])
+            python = " ".join(t.read("projects/pyhtml/fuzz_html/Statements.v").split())
+            page = t.read("projects/pyhtml/README.md")
+        doc = self.doc(python, "plain_halts")
+        self.assertIn("It never crashes, hangs, or leaves the model. In a call of the harness, an uncaught Python "
+                      "exception other than MemoryError (status 2) and SystemExit (status 77), a failed check "
+                      "included, exits with status 79, which this statement allows: it says nothing about one.", doc)
+        family = next(x for x in page.splitlines() if x.startswith("- **`<build>_halts`**"))
+        self.assertIn("In a call of the harness, an uncaught Python exception other than MemoryError (status 2) and "
+                      "SystemExit (status 77), a failed check included, exits with status 79, which a statement that "
+                      "allows any status allows: such a statement says nothing about one.", family)
+        for text in (doc, family):
+            self.assertNotIn("fails an assertion", text)
+            self.assertNotIn("failing an assertion", text)
+
+    def test_a_harness_with_no_check_does_not_say_its_any_status_halts_statement_rules_out_an_exception(self):
+        """The no-check paragraph of a harness with a halts statement that allows any status says that such a
+        statement says nothing about an uncaught exception in a call of the harness, which exits with status 79."""
+        with tree(render=False) as t:
+            add_python_target(t)
+            harness = t.yaml("projects/pyhtml/fuzz_html/harness.yaml")
+            harness["checks"] = []
+            harness["statements"]["plain_halts"]["exits"] = "any"
+            del harness["statements"]["plain_halts"]["binds_checks"]
+            t.put_yaml("projects/pyhtml/fuzz_html/harness.yaml", harness)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual([str(f) for f in t.lint()], [])
+            pages = [" ".join(t.read("projects/pyhtml/fuzz_html/" + f).split()) for f in ("README.md", "Statements.v")]
+        for page in pages:
+            self.assertIn("makes no check of its own beyond not crashing. Its halts statements say only that the code "
+                          "it calls never crashes, hangs or trips a sanitizer. One that allows any status says nothing "
+                          "about an uncaught Python exception in a call of the harness other than MemoryError (status "
+                          "2) and SystemExit (status 77), a failed check included, which exits with status 79. Its "
+                          "agreement statements", page)
+            self.assertNotIn("trips a sanitizer. Its agreement statements", page)
 
 
 class GoTargets(unittest.TestCase):
@@ -990,6 +1090,14 @@ class GoTargets(unittest.TestCase):
             found = self.lint(harness=change)
             self.assertTrue(any("statements.plain_halts: a Go fuzz target's halts statement allows exactly the "
                                 "statuses 0 and 2" in f for f in found), (exits, found))
+
+    def test_a_go_halts_statement_with_no_reading_is_a_finding(self):
+        """`reading` is optional in the schema: a Go halts statement without one is the finding shapes.term gives
+        it, and the Go rule reads the missing reading as none and raises nothing."""
+        found = self.lint(harness=lambda h: h["statements"]["plain_halts"].pop("reading"))
+        self.assertTrue(any("statements.plain_halts: a halts statement has a reading" in f for f in found), found)
+        self.assertTrue(any("statements.plain_halts: a Go fuzz target's one statement is plain_halts" in f
+                            for f in found), found)
 
     def test_a_failing_go_test_check_is_for_go_harnesses_only(self):
         with tree(render=False) as t:
@@ -1438,8 +1546,11 @@ class Linting(unittest.TestCase):
     def test_a_non_web_link_to_a_private_machine_is_refused(self):
         def f(lines):
             return [line.format(s="//", d=".") for line in lines]
+        # The internal tokens are written in parts, as the host names above are: these lines publish, and a tailnet
+        # address or a private repository name is a needle of the publication scan (ossv-binscan tailnet-ip,
+        # private-repo). The strings the lint is given are the same.
         attacks = f(("# git:{s}gitmirror/gnulib.git", "# ssh:{s}git@100{d}88.1.2/gnulib.git",
-                     "# ssh:{s}git@100{d}88.1/gnulib.git", "# git:{s}[fd7a:115c:a1e0::1]/make.git",
+                     "# ssh:{s}git@100{d}88.1/gnulib.git", "# git:{s}[fd7a:115c" ":a1e0::1]/make.git",
                      "# git+ssh:{s}buildbox-7/make.git"))
         controls = f(("# git:{s}git.savannah.gnu.org/make.git", "# ssh:{s}git@8{d}8.8/gnulib.git",
                       "# https:{s}github.com/coreutils/gnulib"))
@@ -1533,7 +1644,7 @@ class Linting(unittest.TestCase):
 
     def test_a_bare_url_after_a_digit_an_underscore_or_a_non_ascii_letter_is_read(self):
         url = "https:{s}github.com/{o}/%s/../%s".format(s="//", o="theorem-labs")
-        forms = [url % ("oss-verify-proofs-internal", "agent-infra"), url % ("oss-verify-proofs", "agent-infra")]
+        forms = [url % ("oss-verify-proofs" "-internal", "agent-infra"), url % ("oss-verify-proofs", "agent-infra")]
         attacks = [w % u for w in ("1%s", "_%s_", "x_%s", "\u017f%s") for u in forms]
         controls = [w % (url % ("oss-verify-proofs", "rocq-read-file")) for w in ("1%s", "_%s", "x_%s", "\u017f%s")]
         # GitHub's extent of a bare URL, past a quote, is only Markdown's
@@ -1560,7 +1671,7 @@ class Linting(unittest.TestCase):
         hosts = f(("the dashboard at dispatch{d}tail12ec1c.ts{d}net", "on WIKI{d}Example{d}CORP",
                    "buildbox-7{d}internal:8080", "printer{d}home{d}arpa", "dev{d}LOCALHOST"))
         repositories = f(("C:\\src\\{o}\\agent-infra", "path %2F{o}%2fagent-infra", "github{d}com:{o}/agent-infra.git",
-                          "&#47;{o}&#47;agent-infra", "/{O}/Agent-Infra", "/{o}//oss-verify-proofs-internal"))
+                          "&#47;{o}&#47;agent-infra", "/{O}/Agent-Infra", "/{o}//oss-verify-proofs" "-internal"))
         # public repositories, an image (the GHCR rule's), the port named but not as a path, a proof's qualified names
         controls = f(("/{o}/oss-verify-proofs", "/{o}/rocq-read-file.git", "ghcr{d}io/{o}/oss-fuzz-theorems-checker",
                       "the repository {o}/oss-verify", "Lemma AW_Init{d}internal", "Mod_X{d}Sub{d}internal",
@@ -1579,7 +1690,7 @@ class Linting(unittest.TestCase):
                      "The images are built by {o}/agent-infra.",
                      "    uses: {o}/agent-infra/.github/actions/setup@v1",
                      "![stars](https:{s}api.star-history.com/svg?repos={o}/agent-infra)",
-                     "Tracked in {o}/oss-verify-proofs-internal#4.",
+                     "Tracked in {o}/oss-verify-proofs" "-internal#4.",
                      "https:{s}github.com/orgs/{o}/agent-infra"))
         controls = f(("the `{o}/oss-verify` port", "see {o}/rocq-read-file",
                       "ghcr{d}io/{o}/oss-fuzz-theorems-checker"))

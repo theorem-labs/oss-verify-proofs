@@ -11,7 +11,7 @@ import textwrap
 import unittest
 
 from oft import yamlio
-from oft.tests.helpers import REPO
+from oft.tests.helpers import REPO, with_scripts
 
 WORKFLOWS = os.path.join(REPO, ".github", "workflows")
 HAVE_WORKFLOWS = os.path.isdir(WORKFLOWS)
@@ -29,7 +29,9 @@ LOG = "oft-check-abc123/zlib.checksum_fuzzer.lib.dune.log"
 # temporary folder, prints the message check.py prints, and exits 1.  With $FAKE_DOCKER_LINK set it also plants, as a
 # hostile build can, the symbolic links a later step must take out: one at the top, one deeper, one not named `*.log`,
 # one to a *directory* and named `*.log`, and one inside a directory it chmods 500 against the runner, which the
-# wrapper's own `find` cannot unlink.  Any other `run` prints a line and exits 0.
+# wrapper's own `find` cannot unlink.  With $FAKE_DOCKER_OUTSIDE set, an absolute path of the runner's, it moves its
+# dune log, as a hostile build can, under a folder whose name is `x`, a line break and that path's folder, so that the
+# log the failure names is not there.  Any other `run` prints a line and exits 0.
 FAKE_DOCKER = textwrap.dedent(r"""    #!/bin/bash
     echo "docker $*" >> "$FAKE_DOCKER_LOG"
     [ "$1" = run ] || exit 0
@@ -53,6 +55,11 @@ FAKE_DOCKER = textwrap.dedent(r"""    #!/bin/bash
       mkdir -p "$tmp/oft-check-abc123/locked"
       ln -s "$FAKE_DOCKER_LINK" "$tmp/oft-check-abc123/locked/trap.log"
       chmod 500 "$tmp/oft-check-abc123/locked"
+    fi
+    if [ -n "${FAKE_DOCKER_OUTSIDE:-}" ]; then
+      folder="$tmp/x"$'\n'"$(dirname "$FAKE_DOCKER_OUTSIDE")"
+      mkdir -p "$folder"
+      mv "$tmp/@LOG@" "$folder/$(basename "$FAKE_DOCKER_OUTSIDE")"
     fi
     echo "FAIL proofs/zlib/checksum_fuzzer/lib: does not compile (see /oft-check-logs/@LOG@)"
     exit "${FAKE_DOCKER_RC:-1}"
@@ -83,7 +90,7 @@ SWEEP_DOCKER = textwrap.dedent(r"""    #!/bin/bash
 
 
 def check_job(workflow):
-    return yamlio.load_file(os.path.join(WORKFLOWS, workflow))["jobs"]["check"]
+    return with_scripts(yamlio.load_file(os.path.join(WORKFLOWS, workflow)))["jobs"]["check"]
 
 
 def step(job, name):
@@ -120,9 +127,10 @@ def links_under(folder):
 
 @unittest.skipUnless(HAVE_WORKFLOWS, NO_WORKFLOWS)
 class CheckLogs(unittest.TestCase):
-    def run_check(self, workflow="pr.yml", error=WARNINGS + ERROR, rc=1, link=""):
+    def run_check(self, workflow="pr.yml", error=WARNINGS + ERROR, rc=1, link="", outside=""):
         """The check step of the workflow's check job, run as GitHub runs it: (exit status, its output, CHECK_LOGS,
-        the docker calls).  LINK, where given, is the file the build leaves symbolic links to in its log folder."""
+        the docker calls).  LINK, where given, is the file the build leaves symbolic links to in its log folder;
+        OUTSIDE, where given, is the runner's file the build names in a folder name that holds a line break."""
         d = tempfile.mkdtemp()
         self.addCleanup(self.remove, d)
         os.makedirs(os.path.join(d, "tools", "oft", "ci"))
@@ -140,7 +148,7 @@ class CheckLogs(unittest.TestCase):
         env = dict(os.environ, PATH=os.path.join(d, "bin") + os.pathsep + os.environ["PATH"], WORK=d,
                    TOOLS=os.path.join(d, "tools"), RUNNER_TEMP=os.path.join(d, "runner"), CHECK_LOGS=logs,
                    FAKE_DOCKER_LOG=calls, FAKE_ERROR=os.path.join(d, "error.txt"), FAKE_DOCKER_RC=str(rc),
-                   FAKE_DOCKER_LINK=link)
+                   FAKE_DOCKER_LINK=link, FAKE_DOCKER_OUTSIDE=outside)
         script = step(check_job(workflow), "check")["run"]
         r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script], env=env,
                            capture_output=True, text=True)
@@ -212,6 +220,26 @@ class CheckLogs(unittest.TestCase):
         self.assertEqual(rc, 1, out)
         self.assertIn('1001:File "proofs/zlib/checksum_fuzzer/lib/Lib.v", line 7', out)
         self.assertIn("1002-Syntax error: '.' expected.", out)
+
+    def test_a_folder_name_holding_a_line_break_names_no_file_outside_the_log_folder(self):
+        """When no log a failure names is here, the step reads each log of the folder that holds an `Error` line, and
+        the build names its own folders.  A line-split list of them read `<folder>/x\\n<an absolute path>.log` as two
+        paths, the second a file of this runner outside the folder, and printed that file's `Error` lines."""
+        secret = tempfile.mkdtemp()
+        self.addCleanup(self.remove, secret)
+        outside = os.path.join(secret, "runner.log")
+        with open(outside, "w") as f:
+            f.write("Error: ghs_THE_JOB_TOKEN\n")
+        for workflow in ("pr.yml", "release-check.yml"):
+            with self.subTest(workflow=workflow):
+                rc, out, logs, _ = self.run_check(workflow, outside=outside)
+                self.assertEqual(rc, 1, out)
+                self.assertTrue(os.path.isfile(os.path.join(logs, "tmp", "x\n" + outside)))
+                # the build's own log, under the folder whose name holds the line break, is the one log read
+                self.assertIn("== the first errors of x\n%s (51602 lines):" % outside, out)
+                self.assertIn("1602:Error: The reference foo was not found.", out)
+                self.assertEqual(out.count("== the first errors of "), 2, out)  # that log's, and the closing line
+                self.assertNotIn("ghs_THE_JOB_TOKEN", out)
 
     def planted_secret(self):
         """A stand-in ~/.docker/config.json, which the ghcr.io login step writes with this job's token before the

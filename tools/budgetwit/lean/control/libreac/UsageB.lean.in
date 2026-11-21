@@ -1,0 +1,104 @@
+-- Lean-only: no Rocq source. A Lean-only helper of `BudgetWitness.lean`.
+import {{package}}.Reusable.YL0y
+import {{unit_prefix}}.BudgetWit.RunB
+import {{unit_prefix}}.BudgetWit.WritevG
+
+/-! The usage path of the driver's `main` (argc ≠ 2) over `Rzb.rzb`: mirrors
+`proofs/lib/Reusable/YL0y.lean`'s `src0_usage` and the walk lemmas under it.
+
+How it differs from `YL0y`: every `realizes` is `rzb` (`YK15.realizes` without the cut and with a
+grant check at every node). The declarations that produce or consume `realizes` are restated under
+the mirror names: `src0_usage` is `src0_usage_b`, and the private `yl0y_run`, `yl0y_run_ec`,
+`yl0y_runto`, `yl0y_brA`, `yl0y_brB`, `yl0y_brC`, `yl0y_brD`, `yl0y_walk` are `yl0y_run_b`,
+`yl0y_run_ec_b`, `yl0y_runto_b`, `yl0y_brA_b`, `yl0y_brB_b`, `yl0y_brC_b`, `yl0y_brD_b`,
+`yl0y_walk_b`. Their proofs are `YL0y`'s with `YP03.rz_run_gen`, `rz_run_to_gen`, `rz_branch`
+written `RunB.rzb_run_gen`, `rzb_run_to_gen`, `rzb_branch`, `YK15.rz_conseq`, `rz_msteps` written
+`Rzb.rzb_conseq`, `rzb_msteps`, `YL0v.wl2_sound`, `wl0_sound` written `WritevG.wl2_sound_b`,
+`wl0_sound_b`, and `YN35.src0_exit` written `RunB.src0_exit_b`. No proof here builds a node
+itself, so no `grant_ok` argument appears: the nodes are built inside the lemmas above.
+`src0_usage_hyp` is not mirrored. `msg_usage_eq` and the `USAGE_*` numerals are `YL0y`'s.
+
+Copied from `YL0y` (private there, so not visible here; still `private`, with `YL0y`'s names and
+proofs): the checks `yl0y_nec`, `yl0y_isec`, `yl0y_wscF`, `yl0y_ws2F`, `yl0y_w2ok`, `yl0y_cnt`,
+`yl0y_lits`, `yl0y_rod`, `yl0y_hdok`, `yl0y_midok`, `yl0y_w0ok`, `yl0y_s2`, `yl0y_s4`,
+`yl0y_split`, `yl0y_spl`, `yl0y_cpy`, `yl0y_geu`, `yl0y_win`, `yl0y_kEx`, `yl0y_chkA2`, `yl0y_kA`,
+`yl0y_chkA`, `yl0y_chkD2`, `yl0y_kD`, `yl0y_chkD3`, `yl0y_chkD`, `yl0y_chkC5`, `yl0y_chkC3`,
+`yl0y_chkC`, `yl0y_chkB4`, `yl0y_chkB`, `yl0y_chkP5`, `yl0y_chkP3`, `yl0y_chkP`, `yl0y_S0`, the
+kernel evaluation `yl0y_chk_ok`, and the lemmas `yl0y_wsc_eq`, `yl0y_ws2_eq`, `yl0y_ochk`,
+`yl0y_w2ok_sound`, `yl0y_uoff`, `yl0y_ulit`, `yl0y_lits_sound`, `yl0y_cnt2`, `yl0y_rod_sound`,
+`yl0y_w0ok_sound`. -/
+
+namespace {{unit_prefix}}.BudgetWit.UsageB
+open {{package}}.Reusable
+open {{package}}.Reusable.YM05
+open {{package}}.Reusable.R.Cfg
+open {{package}}.Reusable.YL0y
+  (msg_usage_eq USAGE_MEMCHR_AT USAGE_MEMCPY_AT USAGE_INPUT_STR)
+open {{unit_prefix}}.BudgetWit.Rzb
+
+section Addr
+-- The section is empty. The numerals that differ between the nine libreac targets are `YL0y`'s
+-- `USAGE_*`, opened above. The copied private helpers keep R1's literals verbatim, as
+-- `YL0y.lean` writes them outside its own `section Addr`: argc 2, the atom 3, fd 2, the register
+-- numbers, the atom bounds 73, 74, 131071, the byte counts, the frame offsets -553, -560 and
+-- -480, and 65536 and 8192, the offset and length of the image chunk that holds " INPUT"
+-- (`YL0v.rodata_input_src1`; `YL0y.lean:251-254`). The last two are facts about this image: a
+-- cross-target delta edits them here where it edits `YL0y.lean`.
+end Addr
+
+/-! ## Lean-only: the computed facts of `src0_usage`'s walk, checked by the kernel
+/-- `YL0v.wl_site2` with the image reader as a parameter. -/
+buffer at `-560`, and the two `iovec`s. -/
+/-- The window `[-553, -480)` of the frame. -/
+/-- Branch `len > 73`, after the first `writev`: the second `writev` (" INPUT\n") and the exit. -/
+/-- Branch `67 ≤ len ≤ 73`, after its `writev`: the empty `writev` and the exit. -/
+string. -/
+and the exit. -/
+on `len ≤ 66`, and both branches. -/
+/-- After the `lbu`: the run to the branch on `len > 73`, and both branches. -/
+/-- After `memchr`: the run to the `lbu` of the NUL. -/
+/-- The whole walk from `src0_usage`'s state: the run to `memchr` and everything after it. -/
+/-- The walk's start state. -/
+the run's frame. The run's status is generalized before the split (trap 15). -/
+private theorem yl0y_run_ec_b [fx : FPState] [AM : AllocMode]
+    (P : (word → Option byte) → Prop)
+  refine RunB.rzb_run_to_gen src0segs src0tbl src0tbl_ok FUEL stop E ss ss' st ms model T Hh
+    Hlz HS hp ?_
+/-- The bytes a `yl0y_lits` check names are in memory at the frame offset. -/
+/-- Branch `len > 73` (Rocq lines 63-90): two `writev`s and the exit. -/
+  refine rzb_conseq src0segs _ _ _ ?_ (YL0v.shape_3 (strB "usage: ") a (strB " INPUT" ++ nl) _)
+  refine WritevG.wl2_sound_b _ r'.1 ms3 model (Z_to_bv 64 2) 27 i' 0 K' F' 2 (SOff 0 (-560))
+    (SLit 7)
+/-- The image string `" INPUT\n"` that a `yl0y_rod` check names is in memory. -/
+/-- An empty `writev` site that a `yl0y_w0ok` check names. -/
+/-- Branch `len ≤ 66` (Rocq lines 97-120): the `memcpy` of " INPUT\n", one `writev`, the exit. -/
+  refine rzb_conseq src0segs _ _ _ ?_ (YL0v.shape_1 (strB "usage: ") a (strB " INPUT" ++ nl) _)
+  refine rzb_msteps src0segs _ _ model _ Hh Hlz Hms ?_
+  -- Rocq line 105: the run to the check of the copy's end.
+  refine WritevG.wl2_sound_b E4 r5.1 ms5 model (Z_to_bv 64 2) 38 i 0 K F 2 (SOff 0 (-560))
+    (SOff 10 14)
+the empty `writev`, the exit. -/
+  -- Rocq line 127: the run to the check of `memcpy`'s end.
+  refine yl0y_run_b (fun m => YP0f.runs_ok E m [(((SOff 0 (-553), SOff 0 (-480)), z - 553), a)])
+    E
+  refine yl0y_run_ec_b
+    (fun m => YP0f.runs_ok E m [(((SOff 0 (-553), SOff 0 (-480)), z - 553), a)])
+  refine WritevG.wl2_sound_b E r3.1 ms3 model (Z_to_bv 64 2) 27 i 0 K F 2 (SOff 0 (-560))
+    (SOff 10 7)
+  -- Rocq lines 142-144: the empty `writev` (`wl_writev0`) and the exit.
+  refine WritevG.wl0_sound_b _ r5.1 ms5 model (Z_to_bv 64 2) (Z_to_bv 64 2) (some 0) off (SLit 0)
+    (SLit 0)
+branch on `len ≤ 66`, and the branch. -/
+  refine rzb_msteps src0segs _ _ model _ Hh Hlz Hms ?_
+  -- Rocq lines 95-96: the run to the branch on `len ≤ 66`, and the branch.
+/-- `src0_usage` after the run to `memchr` (Rocq lines 58-144), from that run's state `s1`. -/
+private theorem yl0y_walk_b [fx : FPState] [AM : AllocMode] (sp : word)
+    (argv envp : List (List byte))
+  refine rzb_msteps src0segs _ _ model _ Hh Hlz Hms ?_
+  -- Rocq line 59: the run to the `lbu` of the NUL.
+  refine rzb_msteps src0segs _ _ model _ Hh Hlz (YK0i.msteps_one src0segs _ _ rfl Hstep) ?_
+  -- Rocq line 62: `len > 73` or not.
+/-- `YL0y.src0_usage` over `rzb`. -/
+  -- does not use it either.
+
+end {{unit_prefix}}.BudgetWit.UsageB

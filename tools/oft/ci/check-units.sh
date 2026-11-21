@@ -46,6 +46,14 @@
 #             dune and the proof compiles run as many jobs as the container
 #             has CPUs.  Unset, 0, or not below this runner's CPUs: every CPU
 #
+# Every checker container runs with a 2 GiB stack, soft and hard: the unit
+# checks of step 3, and the facts run when it runs in the checker image.  That
+# is the stack `oft check` asks for (check.py, STACK_NEEDED), and a container
+# whose hard limit is lower caps it -- plugin-hostd/fuzz_command's RtSStrcspnMW.v
+# overflows Rocq's stack at 1 GiB and compiles at 2 GiB.  Naming it here, soft
+# and hard, is what makes the stack a fact rather than the docker daemon's
+# default.
+#
 # Each part of each unit (its build, its counterexamples, its findings) is
 # checked in a container of its own, whose /work is a view of that part: the
 # paths its content key holds and the unit's binaries, and no other file of
@@ -185,9 +193,11 @@ mkdir -- "$facts"
 read -r -a all_units <<< "$(printf '%s\n' "${units[@]}" "${cx_units[@]}" "${finding_units[@]}" | sort -u | tr '\n' ' ')"
 checker_env=(-e PYTHONPATH=/tools:/pydeps -v "$PYDEPS:/pydeps:ro")
 runner_env=(-e PYTHONPATH=/tools:/opt/oss-fuzz-theorems/pydeps)
+# the 2 GiB stack `oft check` asks for, soft and hard, on every container of the checker image (the header says why)
+stack=(--ulimit stack=2147483648:2147483648)
 if [ "${#units[@]}" -gt 0 ]; then
   docker pull --quiet "$checker"
-  facts_image=("${checker_env[@]}" "$checker")
+  facts_image=("${stack[@]}" "${checker_env[@]}" "$checker")
 else
   docker pull --quiet "$runner"
   facts_image=("${runner_env[@]}" "$runner")
@@ -234,7 +244,8 @@ make_view() {
 status=0
 failed() { [ "$status" -ne 0 ] || status="$1"; }
 
-# 3. Statements and proofs, each unit in the checker image, with no network.
+# 3. Statements and proofs, each unit in the checker image, with no network,
+#    at the 2 GiB stack.
 if [ "${#units[@]}" -gt 0 ]; then
   cpuset=()
   if [ -n "${CPUS:-}" ]; then
@@ -249,7 +260,7 @@ if [ "${#units[@]}" -gt 0 ]; then
     parts=statements
     [[ " ${proof_units[*]} " != *" $u "* ]] || parts=statements,proofs
     make_view build "$u" || { failed "$?"; continue; }
-    docker run --rm --network none -u "$(id -u):$(id -g)" "${cpuset[@]}" \
+    docker run --rm --network none -u "$(id -u):$(id -g)" "${cpuset[@]}" "${stack[@]}" \
       -e HOME=/tmp -e DUNE_CACHE=disabled -e PYTHONDONTWRITEBYTECODE=1 -e PYTHONSAFEPATH=1 \
       "${view[@]}" -v "$TOOLS:/tools:ro" -w /work \
       "${checker_env[@]}" "$checker" python3 -m oft.check --root /work --facts-from /facts "$u" --parts "$parts" \

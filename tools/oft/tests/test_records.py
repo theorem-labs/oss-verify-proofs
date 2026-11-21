@@ -88,9 +88,94 @@ class Records(unittest.TestCase):
         self.t.put_yaml(h, y)
         self.assertFound("projects/zlib/checksum_fuzzer/harness.yaml publishes 3 builds, not 4")
 
-    def test_a_builder_image_that_is_not_the_releases(self):
-        self.edit(**{"toolchain.builder_image": "ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:" + "4" * 64})
-        self.assertFound("toolchain.builder_image is not release.yaml's images.builder[0]")
+    # the tails of builder images, as a finding names them: release.yaml's images.builder[0], which the fixture's
+    # project and record name; the second builder list_second_builder lists; and a builder release.yaml does not list
+    FIRST_TAIL, SECOND_TAIL, UNLISTED_TAIL = "3" * 20, "6" * 20, "4" * 20
+    UNLISTED = "ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:" + "4" * 64
+
+    def list_second_builder(self):
+        """Append a second builder to release.yaml's images.builder and return it (the Rust toolchain's form)."""
+        second = "ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain-rust@sha256:" + "6" * 64
+        r = self.t.yaml("release.yaml")
+        r["images"]["builder"].append(second)
+        self.t.put_yaml("release.yaml", r)
+        return second
+
+    def project_builder(self, image):
+        """Make IMAGE zlib's build.builder; None: zlib's project.yaml has no build block, so no build.builder."""
+        y = self.t.yaml("projects/zlib/project.yaml")
+        if image is None:
+            del y["build"]
+        else:
+            y["build"]["builder"] = image
+        self.t.put_yaml("projects/zlib/project.yaml", y)
+
+    def port_build(self):
+        """Make zlib port-built (helpers.port_built) and the fixture's record a port record of it, which passes every
+        records check as the recipe record did."""
+        port_built(self.t, "zlib")
+        r = self.t.yaml(RECORD)
+        del r["recipe"]
+        r["port"] = {"repository": "theorem-labs/oss-verify", "commit": "d" * 40, "path": "projects/zlib",
+                     "asset": {"file": "zlib-port.tar.zst", "bytes": 1000, "sha256": "9" * 64}}
+        self.t.put_yaml(RECORD, r)
+
+    def assertOnly(self, text):
+        """The record's one records finding is TEXT."""
+        self.assertEqual(self.records(), ["records %s: %s" % (RECORD, text)])
+
+    def test_a_builder_image_that_release_yaml_does_not_list(self):
+        self.edit(**{"toolchain.builder_image": self.UNLISTED})
+        self.assertOnly("toolchain.builder_image %s is not one of release.yaml's images.builder" % self.UNLISTED_TAIL)
+
+    def test_a_project_builder_that_release_yaml_does_not_list(self):
+        """A record built in the image its project's build.builder names is refused when release.yaml does not list
+        that image, a recipe record and a port record alike."""
+        self.project_builder(self.UNLISTED)
+        self.edit(**{"toolchain.builder_image": self.UNLISTED})
+        self.assertOnly("toolchain.builder_image %s is not one of release.yaml's images.builder" % self.UNLISTED_TAIL)
+        self.port_build()
+        self.assertOnly("toolchain.builder_image %s is not one of release.yaml's images.builder" % self.UNLISTED_TAIL)
+
+    def test_a_project_with_no_build_builder(self):
+        """The recipe record names images.builder[0], and its project names no builder: a finding."""
+        self.project_builder(None)
+        self.assertOnly("toolchain.builder_image %s is not projects/zlib/project.yaml's build.builder"
+                        % self.FIRST_TAIL)
+
+    def test_a_port_record_on_a_listed_builder_other_than_the_first_that_is_the_projects_own_passes(self):
+        """rustls's case: a port built the binaries in the second listed builder, the one its project names."""
+        self.port_build()
+        self.assertEqual(self.records(), [])
+        second = self.list_second_builder()
+        self.project_builder(second)
+        self.edit(**{"toolchain.builder_image": second})
+        self.assertEqual(self.records(), [])
+
+    def test_a_recipe_record_on_a_listed_builder_other_than_the_first(self):
+        """Both publish paths rebuild a recipe-built target in images.builder[0], so a recipe record on the second
+        listed builder is refused even when its project names that builder."""
+        second = self.list_second_builder()
+        self.project_builder(second)
+        self.edit(**{"toolchain.builder_image": second})
+        self.assertOnly("toolchain.builder_image %s is not release.yaml's images.builder[0]: both publish paths "
+                        "rebuild a recipe-built target in images.builder[0]" % self.SECOND_TAIL)
+
+    def test_a_listed_builder_that_is_not_the_projects_own(self):
+        """A recipe record on images.builder[0] while its project names the second listed builder, and a port record
+        on either listed builder while its project names the other: each a finding."""
+        second = self.list_second_builder()
+        first = self.t.yaml("release.yaml")["images"]["builder"][0]
+        self.project_builder(second)
+        self.assertOnly("toolchain.builder_image %s is not projects/zlib/project.yaml's build.builder"
+                        % self.FIRST_TAIL)
+        self.port_build()
+        self.assertOnly("toolchain.builder_image %s is not projects/zlib/project.yaml's build.builder"
+                        % self.FIRST_TAIL)
+        self.project_builder(first)
+        self.edit(**{"toolchain.builder_image": second})
+        self.assertOnly("toolchain.builder_image %s is not projects/zlib/project.yaml's build.builder"
+                        % self.SECOND_TAIL)
 
     def test_records_name_one_static_asan_commit(self):
         """A build record without a proof (json's) is held to the rule too."""

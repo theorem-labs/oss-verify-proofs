@@ -1,9 +1,12 @@
-"""`oft release-tree`, `oft approvals` and approvals.yaml: a release carries the approved proofs and no other, no
-findings, and only the held form of a project a finding holds back; a tree ported to the per-project layout cuts to the
-same release."""
+"""`oft release-tree`, `oft approvals` and approvals.yaml: a release carries the proofs of each fuzz target that is not
+held, whatever approvals.yaml lists, and no proof that a hold or a refutation keeps out (KeepRule), no findings, and
+only the held form of a project a finding holds back; a tree ported to the per-project layout cuts to the same
+release.  approvals.yaml is still a fact file: the rules check it while it exists (rules._approvals), so the cut
+refuses a tree whose approvals.yaml they refuse."""
 import ast
 import contextlib
 import csv
+import hashlib
 import io
 import os
 import re
@@ -14,10 +17,10 @@ import unittest
 
 import yaml
 
-from oft import approvals, disclosure, facts, generate, layout, lint, paths, port, release_tree, rules, yamlio
-from oft.tests.helpers import (OTHER_OWN_RECIPE, REPO, Tree, add_findings, build_record, own_recipe, public_patch,
-                               recipe_file, rules_of)
-from oft.tests.test_oss_verify import add_standin
+from oft import approvals, disclosure, facts, generate, layout, lint, paths, port, release_tree, rules, schema, yamlio
+from oft.tests.helpers import (HELD_PATCH, OTHER_OWN_RECIPE, REPO, Tree, add_findings, align_unpatched_pins,
+                               build_record, own_recipe, port_built, public_patch, recipe_file, recount, rules_of)
+from oft.tests.test_oss_verify import add_json_oss_verify_target, add_standin
 
 # a recipe file name as the disclosure search reads a name (escapes decoded, case folded, every dash read as `_`)
 RECIPE_NAME = re.compile(r"recipe(_[0-9]+)?\.tar\.zst")
@@ -41,15 +44,27 @@ CONTRIBUTED = ("contributed by A. Contributor in https://github.com/theorem-labs
                "made from "
                "the library files of fixture-proofs-package-2026-10-21 (sha256 %s)" % ("1e" * 20, "4c" * 32))
 RELEASED = "json/fuzzer-parse_bjdata"
+# release.yaml is at the root of a checkout; tools/oft alone, as the runner image carries it, has no such file, and
+# the test that reads this repository's own release.yaml says so instead of ending in FileNotFoundError (images.yml
+# run 42574457306, 2026-11-09).
+RELEASE_YAML = os.path.join(REPO, "release.yaml")
+HAVE_RELEASE_YAML = os.path.exists(RELEASE_YAML)
+NO_RELEASE_YAML = "no release.yaml: tools/oft without the checkout around it"
+# tools/publish/ is the internal repository's alone (INTERNAL list): a release's cut removes it, the publication gate's
+# reader tools/publish/verify with it, so a tree without it is a release's.  A test that reads a file of it skips there,
+# and fails in the internal tree where the file is missing.
+INTERNAL_TREE = os.path.isdir(os.path.join(REPO, "tools", "publish"))
+NOT_INTERNAL = "no tools/publish/ beside tools/oft: a release's tree, whose cut removes it"
 
 
 def cut_list():
-    """What release_tree.INTERNAL writes out: each directory of lint.LINT_ONLY_INTERNAL with its trailing / (as
-    paths.py writes a /** row there), then the INTERNAL of paths.py, then release_tree.SKILLS, in the order they are
-    defined (SKILLS last, where the publishing scan's reviewed exceptions read them)."""
-    assert all(p.endswith("/**") for p in lint.LINT_ONLY_INTERNAL), lint.LINT_ONLY_INTERNAL
-    return (tuple(p[:-len("**")] for p in lint.LINT_ONLY_INTERNAL) + vars(paths)["INTERNAL"]
-            + release_tree.SKILLS)
+    """What release_tree.INTERNAL writes out: each entry of lint.LINT_ONLY_INTERNAL, a directory (a /** entry) with its
+    trailing / (as paths.py writes a /** row there) and any other entry, a file, as it is, then the INTERNAL of
+    paths.py, then release_tree.SKILLS, in the order they are defined (SKILLS last, where the publishing scan's
+    reviewed exceptions read them).  Past a directory's /**, no entry holds a pattern: the cut removes literal paths."""
+    entries = tuple(p[:-len("**")] if p.endswith("/**") else p for p in lint.LINT_ONLY_INTERNAL)
+    assert not any(c in e for e in entries for c in "*?[{"), lint.LINT_ONLY_INTERNAL
+    return entries + vars(paths)["INTERNAL"] + release_tree.SKILLS
 
 
 def add_proof(t, sid):
@@ -99,10 +114,53 @@ def make_private(t, project):
     t.put_yaml(rel, dict(t.yaml(rel), release="private"))
 
 
+def hold_fuzz_target(t, unit):
+    """Name the fuzz target unit, <project>/<harness>, in its project's private_harnesses: the fuzz target is held while
+    the rest of the project publishes (facts.hold, Hold.entries)."""
+    p, h = unit.split("/")
+    rel = "projects/%s/project.yaml" % p
+    t.put_yaml(rel, dict(t.yaml(rel), private_harnesses=[h]))
+
+
+def finding_hold(t, state="open", enrolled=True):
+    """Lay down zlib's one finding (add_findings) as test_hold.EnrolledHold shapes it: in state, naming asan_agrees
+    alone (its asan run differs from the plain one, and no run dies), with a patch zlib's own patches do not hold
+    (test_hold.HeldFixture's), and with zlib's unpatched pins the binaries it publishes; zlib enrolled when enrolled.
+    Open, of enrolled zlib with no proof library (the caller removes any), it holds back asan_agrees of checksum_fuzzer
+    with its pair's bound and decidability statements (facts.hold, Hold.ids).  Open and not enrolled, or patched or
+    reported (then reported upstream, and its patch in the series), it holds zlib whole (Hold.held)."""
+    add_findings(t)
+    if enrolled:
+        rel = "projects/zlib/project.yaml"
+        t.put_yaml(rel, dict(t.yaml(rel), enrolled=True))
+    finding = "findings/zlib/checksum_fuzzer/stand-in-abort"
+    t.write(finding + "/0001-stand-in.patch", HELD_PATCH)
+    normal = t.yaml(finding + "/finding.yaml")["control"]["plain"]
+    fields = dict(state=state, statements=["asan_agrees"],
+                  input={"plain": normal, "asan": dict(normal, stdout_sha256="c0" * 32)},
+                  control={"plain": normal, "asan": normal})
+    if state != "open":
+        fields["upstream"] = "https://bugs.example.org/1"
+    t.put_yaml(finding + "/finding.yaml", dict(t.yaml(finding + "/finding.yaml"), **fields))
+    t.write("findings/zlib/checksum_fuzzer/series", "" if state == "open" else "0001-stand-in.patch\n")
+    align_unpatched_pins(t)
+
+
 def index_status(t):
     """{statement id: status} as index/statements.tsv, the rendered index, says."""
     with open(t.path("index", "statements.tsv"), newline="") as f:
         return {r["id"]: r["status"] for r in csv.DictReader(f, delimiter="\t")}
+
+
+def proof_folders(t):
+    """The id of each proof folder of the checkout, a statement folder that holds proof.yaml, in either layout:
+    proofs/<p>/<h>/<s>/ or projects/<p>/<h>/proofs/<s>/."""
+    out = set()
+    for rel in t.files():
+        parts = layout.canonical(rel).split("/")
+        if len(parts) == 6 and parts[0] == "projects" and parts[3] == "proofs" and parts[5] == "proof.yaml":
+            out.add("/".join(parts[1:3] + parts[4:5]))
+    return out
 
 
 def snapshot(t):
@@ -135,6 +193,27 @@ def needed_exception(t, rel):
 def put_exceptions(t, entries, head=EXCEPTIONS_HEAD):
     """Write lint-exceptions.yaml: head (a leading comment with a blank line in it, and the schema), then entries."""
     t.write(EXCEPTIONS, head + yamlio.dump({"exceptions": entries}))
+
+
+# OSSV-668's block of the shared generated files, as it appends it to .gitignore right after the last line, .venv/, with
+# no blank line: the marker line, then "/" and each pattern of paths.SHARED, a project's folder as *.  It is written out
+# here, not taken from release_tree, so these tests hold the cut's constants to that text.
+GITIGNORE_BLOCK = ("# The shared generated files (tools/oft/paths.py SHARED): main holds none; ./oft generate "
+                   "--shared-only renders them, and oft release-tree drops these lines from a release's copy.\n"
+                   "/README.md\n"
+                   "/index/STATUS.md\n"
+                   "/index/PROOFS.md\n"
+                   "/index/*.tsv\n"
+                   "/analyses/harness-checks/checks.tsv\n"
+                   "/analyses/known-issues.md\n"
+                   "/projects/*/README.md\n")
+# a .gitignore before the block (four lines, so a marker right after them is line 5), and a line after the block
+GITIGNORE_HEAD = "_build/\nprojects/*/bin/\n__pycache__/\n.venv/\n"
+GITIGNORE_TAIL = "dist/\n"
+REWROTE_GITIGNORE = ("rewrote .gitignore without the block of the shared generated files (8 lines), which the release "
+                     "commits")
+NOT_THE_BLOCK = ("oft release-tree: .gitignore's block of the shared generated files is not the one the cut removes; "
+                 "nothing changed")
 
 
 def release(t):
@@ -226,24 +305,6 @@ class ReleaseTree(unittest.TestCase):
         self.assertIn(why, out)
         self.assertEqual(snapshot(self.t), before)
 
-    def test_keeps_only_the_approved_proofs_and_renders_their_statuses(self):
-        approve(self.t, APPROVED)
-        self.assertEqual([str(f) for f in self.t.lint()], [])
-        self.assertEqual(index_status(self.t)[UNAPPROVED + "/ubsan_agrees"], "proved")
-        rc, out = release(self.t)
-        self.assertEqual(rc, 0, out)
-        self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, "plain_halts", "Proof.v")))
-        self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, "lib", "Shared.v")))
-        self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, "provenance", "PROVENANCE.md")))
-        self.assertFalse(os.path.exists(self.t.path("proofs", UNAPPROVED)))
-        self.assertFalse(os.path.exists(self.t.path("approvals.yaml")))
-        self.assertFalse(os.path.exists(self.t.path(".github", "CODEOWNERS")))
-        st = index_status(self.t)
-        self.assertEqual(st[APPROVED + "/plain_halts"], "proved")
-        self.assertEqual(st[UNAPPROVED + "/ubsan_agrees"], "open")
-        self.assertEqual(self.t.generate(check=True), 0, self.t.last_output)
-        self.assertEqual([str(f) for f in self.t.lint()], [])
-
     def test_the_counterexamples_stay(self):
         approve(self.t, APPROVED)
         cx = "counterexamples/json/fuzzer-parse_bjdata/plain_halts"
@@ -266,20 +327,6 @@ class ReleaseTree(unittest.TestCase):
         approve(self.t, APPROVED)
         self.assertEqual(facts.hold(facts.load(self.t.root)), facts.Hold(set(), set(), {}))
         assert_ported_cut(self, self.t)
-
-    def test_only_the_approved_statements_of_a_fuzz_target_are_kept(self):
-        add_proof(self.t, APPROVED + "/ubsan_agrees")
-        self.assertEqual(self.t.generate(), 0, self.t.last_output)
-        approve(self.t, APPROVED)
-        rc, out = release(self.t)
-        self.assertEqual(rc, 0, out)
-        self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, "plain_halts", "Proof.v")))
-        self.assertFalse(os.path.exists(self.t.path("proofs", APPROVED, "ubsan_agrees")))
-        self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, "lib", "Shared.v")))
-        st = index_status(self.t)
-        self.assertEqual(st[APPROVED + "/plain_halts"], "proved")
-        self.assertEqual(st[APPROVED + "/ubsan_agrees"], "open")
-        self.assertIn(release_tree.PARTIAL % APPROVED, out)
 
     def test_a_fuzz_target_with_all_its_proofs_kept_is_not_reported_for_its_lib(self):
         approve(self.t, APPROVED)
@@ -394,6 +441,19 @@ class ReleaseTree(unittest.TestCase):
         self.assertEqual(self.t.generate(check=True), 0, self.t.last_output)
         self.assertEqual([str(f) for f in self.t.lint()], [])
 
+    def test_a_private_projects_notice_goes_with_it(self):
+        """projects/<project>/NOTICE, the licence of a `release: private` project's proof files (lint.PROJECT_NOTICE),
+        goes with the rest of the project: the held page and project.yaml are all of it that the cut keeps."""
+        self.t.write("projects/json/NOTICE", "Copyright Theorem Labs. All rights reserved.\n")
+        make_private(self.t, "json")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        approve(self.t, APPROVED)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(sorted(os.listdir(self.t.path("projects", "json"))), ["README.md", "project.yaml"])
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+
     def test_a_private_projects_build_record_goes_with_its_proofs(self):
         """The recipe a private project's build record cites is no fact of the release: its held page pins none."""
         record = "proofs/json/fuzzer-parse_bjdata/provenance/PROVENANCE.yaml"
@@ -406,6 +466,81 @@ class ReleaseTree(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         self.assertFalse(os.path.lexists(self.t.path("proofs", "json")))
         self.assertEqual([str(f) for f in self.t.lint()], [])
+
+    def test_a_private_projects_failure_handler_rows_are_cut(self):
+        """facts.py writes a row of failure_handlers.tsv for a private project's fuzz target too: the cut takes it out,
+        and every other row of that project, a fuzz target the tree no longer has included, since facts.py never
+        removes a row and the publication gate refuses any row of a project held back whole.  It keeps a public
+        project's rows, that project's absent fuzz target among them.  A row names no fuzz target as a path, so the
+        disclosure search alone would let it through."""
+        header = "project\tharness\tvalue\tevidence\n"
+        private_row = "json\tfuzzer-parse_bjdata\tnone\tthe scan of handlers/fuzzer-parse_bjdata.txt\n"
+        private_gone_row = "json\tremoved_bjdata_fuzzer\tnone\tthe scan of handlers/removed_bjdata_fuzzer.txt\n"
+        public_row = "zlib\tchecksum_fuzzer\tnone\tthe scan of handlers/checksum_fuzzer.txt\n"
+        gone_row = "zlib\tremoved_fuzzer\tnone\tthe scan of handlers/removed_fuzzer.txt\n"
+        self.t.write(release_tree.HANDLERS, header + private_row + private_gone_row + public_row + gone_row)
+        make_private(self.t, "json")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        approve(self.t, APPROVED)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.t.read(release_tree.HANDLERS), header + public_row + gone_row)
+        self.assertIn("wrote %s as the release has it" % release_tree.HANDLERS, out)
+
+    def test_internal_block_of_agents_md_is_cut(self):
+        """AGENTS.md ships without its marked block, which is text for this repository only, and every other byte of
+        it stays as it is, its CRLF line ends among them."""
+        approve(self.t, APPROVED)
+        kept = b"# Agents\r\n\r\nA kept line.\r\n"
+        self.t.write(release_tree.AGENTS, kept + b"<!-- BEGIN-INTERNAL: for this repository only -->\r\n\r\n"
+                     b"## Only here\r\n\r\nNot for a release.\r\n<!-- END-INTERNAL -->\r\n", mode="wb")
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        with open(self.t.path(release_tree.AGENTS), "rb") as f:
+            self.assertEqual(f.read(), kept)
+        self.assertIn("wrote AGENTS.md as the release has it\n", out)
+
+    def test_internal_block_with_no_end_is_refused(self):
+        """A start that no line ends is a marker line with no partner: the cut refuses, and changes nothing."""
+        approve(self.t, APPROVED)
+        self.t.write(release_tree.AGENTS, b"A kept line.\n<!-- BEGIN-INTERNAL -->\nNot for a release.\n", mode="wb")
+        self.assertRefused("error: AGENTS.md: line 2 starts a block that no line ends\noft release-tree: the cut cannot "
+                           "take the marked blocks out of AGENTS.md; nothing changed\n")
+
+    def test_internal_block_in_agents_md_that_is_not_utf8_is_refused(self):
+        """A file that holds a marked block and a byte that is not UTF-8 is one the cut cannot write as UTF-8 text: it
+        refuses before the first change, and names that byte by its offset, counted from 0."""
+        approve(self.t, APPROVED)
+        self.t.write(release_tree.AGENTS, b"A kept line \xff.\n<!-- BEGIN-INTERNAL -->\nNot for a release.\n"
+                     b"<!-- END-INTERNAL -->\n", mode="wb")
+        self.assertRefused("error: AGENTS.md: it holds a marked block and is not UTF-8 text (byte 12), so the cut "
+                           "cannot write it\noft release-tree: the cut cannot take the marked blocks out of AGENTS.md; "
+                           "nothing changed\n")
+
+    def test_internal_block_is_cut_before_the_disclosure_search(self):
+        """The disclosure search reads AGENTS.md as the release has it: a marked block that names this internal
+        repository does not stop the cut, which writes the file without the block."""
+        approve(self.t, APPROVED)
+        kept = b"# Agents\n\nA kept line.\n"
+        internal = schema.INTERNAL_PORT_REPOSITORY.encode()
+        self.t.write(release_tree.AGENTS, kept + b"<!-- BEGIN-INTERNAL -->\nBuilt in " + internal + b".\n"
+                     b"<!-- END-INTERNAL -->\n", mode="wb")
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        with open(self.t.path(release_tree.AGENTS), "rb") as f:
+            self.assertEqual(f.read(), kept)
+
+    def test_agents_md_with_no_internal_block_is_left_as_it_is(self):
+        """With no marked block the cut does not write AGENTS.md: every byte of it stays, a lone CR, a byte that is not
+        UTF-8 and a last line with no line end among them."""
+        approve(self.t, APPROVED)
+        data = b"# Agents\r\rA kept line about begin-internal \xff.\rThe last line"
+        self.t.write(release_tree.AGENTS, data, mode="wb")
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        with open(self.t.path(release_tree.AGENTS), "rb") as f:
+            self.assertEqual(f.read(), data)
+        self.assertNotIn("wrote AGENTS.md", out)
 
     def test_a_private_projects_own_recipe_leaves_no_trace_in_the_cut(self):
         """A private project's own recipe (a draft asset of this repository, which release.yaml does not list) is no
@@ -451,6 +586,7 @@ class ReleaseTree(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         self.assertIn(own_tag, self.t.read("docs/notes.md"))
 
+    @unittest.skipUnless(HAVE_RELEASE_YAML, NO_RELEASE_YAML)
     def test_no_shipped_file_names_a_recipe_file_a_private_project_could_pin(self):
         """The cut ships tools/ (but tools/enroll/) and docs/ of this repository, the tests and their fixtures among
         them, and refuses a kept file that names a held project's own recipe file.  So none of them may name a recipe
@@ -464,7 +600,7 @@ class ReleaseTree(unittest.TestCase):
         self.assertEqual(recipe_names(control), {recipe_file(7).replace("-", "_")})
         tree = facts.load(self.t.root)
         self.assertTrue(disclosure.found("docs/control.md", control, disclosure.needles(tree, facts.hold(tree))))
-        with open(os.path.join(REPO, "release.yaml"), encoding="utf-8") as f:
+        with open(RELEASE_YAML, encoding="utf-8") as f:
             r = yaml.safe_load(f)
         listed = {x["file"].replace("-", "_") for x in (r.get("recipes") or [r.get("recipe") or {"file": ""}])}
         named = {}
@@ -608,6 +744,10 @@ class ReleaseTree(unittest.TestCase):
         self.assertRefused("no_such_statement is not a statement of zlib/checksum_fuzzer")
 
     def test_a_project_left_with_no_proofs_leaves_no_directory(self):
+        """zlib is private, so the cut removes the proofs folder of each of its fuzz targets, and proofs/zlib/, which
+        they leave empty, goes with them."""
+        make_private(self.t, "zlib")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
         approve(self.t, entry("json/fuzzer-parse_bjdata", statements=["plain_halts"]))
         rc, out = release(self.t)
         self.assertEqual(rc, 0, out)
@@ -704,6 +844,8 @@ class ReleaseTree(unittest.TestCase):
         os.symlink("cb-90203d09.sh", self.t.path("dev/stream/lane/tools/cb"))
         self.t.write("tools/publish/x/cb-1.sh", "#!/bin/sh\necho cb\n")
         os.symlink("cb-1.sh", self.t.path("tools/publish/x/cb"))
+        # a tree with tools/publish/ has the list `oft generate` renders there: empty, since nothing is held
+        self.t.write("tools/publish/private-harnesses.txt", "")
         approve(self.t, APPROVED)
         self.assertEqual(release_tree.checkout_links(self.t.root), [])
         rc, out = release(self.t)
@@ -728,7 +870,9 @@ class ReleaseTree(unittest.TestCase):
         make_private(self.t, "json")
         self.assertEqual(self.t.generate(), 0, self.t.last_output)
         approve(self.t, APPROVED)
-        planted = {"tools/publish/needles.txt": "json/fuzzer-parse_bjdata\ninternal-codename\n",
+        # with the list `oft generate` renders in a tree with tools/publish/: empty, since no fuzz target is held
+        planted = {"tools/publish/private-harnesses.txt": "",
+                   "tools/publish/needles.txt": "json/fuzzer-parse_bjdata\ninternal-codename\n",
                    "tools/publish/tests/test_scan.py": "NEEDLE = 'json/fuzzer-parse_bjdata'\n",
                    ".github/workflows/publish.yml": "name: publish  # json/fuzzer-parse_bjdata\n",
                    ".github/workflows/publish-gate.yml": "name: publish-gate\n",
@@ -747,6 +891,30 @@ class ReleaseTree(unittest.TestCase):
             self.assertNotIn(b"fuzzer-parse_bjdata", data, rel)
         self.assertEqual([str(f) for f in self.t.lint()], [])
 
+    def test_the_public_checks_ship_byte_for_byte(self):
+        """The three public checks and the files they read run on the public repository alone, so a release must
+        carry each of them as this repository holds it: the cut keeps each of them, with the same bytes.  They are the
+        `.github/` entries of lint.LINT_ONLY_HAND.  The test, and not the class, skips where one of them is absent
+        (tools/oft alone, as the runner image carries it)."""
+        files = [p for p in lint.LINT_ONLY_HAND if p.startswith(".github/")]
+        # each is an exact path, so a pattern cannot read as a file that is absent and skip the test
+        self.assertTrue(files)
+        self.assertEqual([p for p in files if set(p) & set("*?[")], [])
+        sources = {rel: os.path.join(REPO, *rel.split("/")) for rel in files}
+        missing = [rel for rel in files if not os.path.exists(sources[rel])]
+        if missing:
+            self.skipTest("no %s beside tools/oft" % ", ".join(missing))
+        for rel in files:
+            os.makedirs(os.path.dirname(self.t.path(rel)), exist_ok=True)
+            shutil.copyfile(sources[rel], self.t.path(rel))
+        approve(self.t, APPROVED)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        kept = snapshot(self.t)
+        for rel in files:
+            with open(sources[rel], "rb") as f:
+                self.assertEqual(kept.get(rel), f.read(), rel)
+
     def test_a_symbolically_linked_internal_directory_is_refused(self):
         approve(self.t, APPROVED)
         os.makedirs(self.t.path("..", "elsewhere"))
@@ -756,7 +924,7 @@ class ReleaseTree(unittest.TestCase):
         self.assertTrue(os.path.isdir(self.t.path("..", "elsewhere")))
 
     def test_every_internal_path_is_one_the_cut_removes(self):
-        # the cut's list is the directories lint alone holds internal (lint.LINT_ONLY_INTERNAL, since a row of paths.TABLE
+        # the cut's list is the entries lint alone holds internal (lint.LINT_ONLY_INTERNAL, since a row of paths.TABLE
         # re-keys every unit), then paths.py's, then the skill directories paths.py does not name, written out
         # (test_the_release_gate_reads_every_internal_path_from_release_tree_py)
         self.assertEqual(vars(release_tree)["INTERNAL"], cut_list())
@@ -772,7 +940,46 @@ class ReleaseTree(unittest.TestCase):
             self.assertTrue(lint.is_internal(rel), rel)
             self.assertFalse(paths.is_internal(rel), rel)
             self.assertEqual([cls for cls, _, _ in lint.classify_path(rel)], ["internal"], rel)
-        for rel in ("dev/enrollment/x", "dev/other/x.py", ".github/workflows/pr.yml"):
+        for rel in ("dev/enrollment/x", "dev/other/x.py", ".github/workflows/pr.yml", "dev/licence/made_from.py"):
+            self.assertFalse(lint.is_internal(rel), rel)
+        # dev/gateway-model/, the model gateway's formal model (OSSV-498), and the workflow that builds it: internal to
+        # lint alone, like dev/enroll/, and no sibling of the directory with it
+        for rel in ("dev/gateway-model/theories/Json.v", "dev/gateway-model/tests/run.sh", "dev/gateway-model/NOTICE",
+                    ".github/workflows/gateway-model.yml"):
+            self.assertTrue(lint.is_internal(rel), rel)
+            self.assertFalse(paths.is_internal(rel), rel)
+            self.assertEqual([cls for cls, _, _ in lint.classify_path(rel)], ["internal"], rel)
+        for rel in ("dev/gateway-models/x", "dev/gateway-model.md", ".github/workflows/gateway-model.yml.bak"):
+            self.assertFalse(lint.is_internal(rel), rel)
+        # dev/evals/, the tools that run the evals (OSSV-643), and the paired run's workflow: internal to lint alone,
+        # like dev/gateway-model/, and no sibling of the directory with it
+        for rel in ("dev/evals/paired-run/runner.py", "dev/evals/paired-run/tests/test_runner.py",
+                    "dev/evals/README.md", ".github/workflows/paired-run.yml"):
+            self.assertTrue(lint.is_internal(rel), rel)
+            self.assertFalse(paths.is_internal(rel), rel)
+            self.assertEqual([cls for cls, _, _ in lint.classify_path(rel)], ["internal"], rel)
+        for rel in ("dev/evalsx/x", "dev/evals.md", ".github/workflows/paired-run.yml.bak"):
+            self.assertFalse(lint.is_internal(rel), rel)
+        # the build service's release test and its table of memory classes (OSSV-299): internal to lint alone, like the
+        # paired run's workflow, and no sibling of either file with them
+        for rel in (".github/workflows/rocq-release.yml", ".github/theorem-rule-classes.tsv"):
+            self.assertTrue(lint.is_internal(rel), rel)
+            self.assertFalse(paths.is_internal(rel), rel)
+            self.assertEqual([cls for cls, _, _ in lint.classify_path(rel)], ["internal"], rel)
+        for rel in (".github/workflows/rocq-release.yaml", ".github/workflows/rocq-release.yml.bak",
+                    ".github/rocq-release.yml", ".github/workflows/rocq-release/x.yml",
+                    ".github/theorem-rule-classes.tsv.bak", ".github/theorem-rule-classes.csv",
+                    ".github/workflows/theorem-rule-classes.tsv", "theorem-rule-classes.tsv",
+                    ".github/x/theorem-rule-classes.tsv"):
+            self.assertFalse(lint.is_internal(rel), rel)
+            self.assertEqual(lint.classify_path(rel), [], rel)
+        # .github/README.md, the page GitHub shows on this repository's front page (OSSV-668): internal to lint alone,
+        # like .github/rekey-window, and named by its exact path, so that no neighbour of it is internal
+        rel = ".github/README.md"
+        self.assertTrue(lint.is_internal(rel), rel)
+        self.assertFalse(paths.is_internal(rel), rel)
+        self.assertEqual([cls for cls, _, _ in lint.classify_path(rel)], ["internal"], rel)
+        for rel in (".github/README", ".github/x/README.md", ".github/README.md.bak"):
             self.assertFalse(lint.is_internal(rel), rel)
         self.assertEqual(set(vars(paths)["INTERNAL"]), {
             "approvals.yaml", ".github/CODEOWNERS", ".github/workflows/facts-review.yml",
@@ -783,9 +990,9 @@ class ReleaseTree(unittest.TestCase):
             ".github/proof-index.py", ".github/workflows/proof-index-trigger.yml", ".github/workflows/index.yml",
             ".github/workflows/prove.yml", ".github/workflows/publish-request.yml", ".github/workflows/publish.yml",
             ".github/workflows/publish-gate.yml", "tools/publish/", ".github/workflows/store-retention.yml",
-            "tools/oft/ci/regenerate-shared.sh", "tools/oft/tests/test_regenerate_shared.py", "tools/oft/ci/prove-pr",
-            "tools/oft/tests/test_prove_pr.py", "tools/oft/tests/test_prove_workflow.py", "changes/", "docs/reference/",
-            "dev/stream/"})
+            "tools/oft/ci/regenerate-shared.sh", "tools/oft/tests/test_regenerate_shared.py",
+            "tools/oft/tests/test_held_match.py", "tools/oft/ci/prove-pr", "tools/oft/tests/test_prove_pr.py",
+            "tools/oft/tests/test_prove_workflow.py", "changes/", "docs/reference/", "dev/stream/"})
         for rel in ("approvals.yaml", ".github/CODEOWNERS", "review.md", ".github/workflows/index.yml",
                     ".github/workflows/publish-request.yml", ".github/workflows/store-retention.yml", "tools/publish/x",
                     "tools/publish/a/b", "tools/enroll/ci/gate.py", "tools/publish"):
@@ -836,11 +1043,8 @@ class ReleaseTree(unittest.TestCase):
         approve(self.t, APPROVED)
         rc, out = release(self.t)
         self.assertEqual(rc, 0, out)
-        self.assertIn("removed approvals.yaml;", out)
+        self.assertIn("; removed approvals.yaml", out)
         self.assertNotIn("CODEOWNERS", out)
-
-    def test_no_approvals_file_changes_nothing(self):
-        self.assertRefused("no approvals.yaml")
 
     def test_an_entry_that_names_no_fuzz_target_is_refused_and_changes_nothing(self):
         approve(self.t, APPROVED, "zlib/no_such_fuzzer")
@@ -916,28 +1120,26 @@ class ReleaseTree(unittest.TestCase):
     def test_the_witness_record_of_a_cut_statement_goes_with_it(self):
         """A record is kept where its proof is kept and goes where its proof goes.  Both statements here are of the
         fuzz target the release keeps, so the cut reaches each statement directory separately and the test tells the
-        two apart: the record of the approved statement is carried, the record of the one the release does not
-        publish is removed with its directory and is named in the cut's own `removed` output."""
-        add_proof(self.t, APPROVED + "/asan_halts")
+        two apart: an open finding of enrolled zlib holds back asan_agrees (finding_hold), so the record of plain_halts
+        is carried, and the record of asan_agrees is removed with its directory and is named in the cut's own `removed`
+        output."""
+        for unit in (APPROVED, UNAPPROVED):
+            shutil.rmtree(self.t.path("proofs", unit, "lib"))
+        finding_hold(self.t)
+        add_proof(self.t, APPROVED + "/asan_agrees")
         self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        self.assertIn(APPROVED + "/asan_agrees", facts.hold(facts.load(self.t.root)).ids)
         approve(self.t, entry(APPROVED, statements=["plain_halts"]))
         kept = "proofs/%s/plain_halts/plain_halts.witness.json" % APPROVED
-        cut = "proofs/%s/asan_halts/asan_halts.witness.json" % APPROVED
+        cut = "proofs/%s/asan_agrees/asan_agrees.witness.json" % APPROVED
         self.t.write(kept, '{"node": "plain_halts"}\n')
-        self.t.write(cut, '{"node": "asan_halts"}\n')
+        self.t.write(cut, '{"node": "asan_agrees"}\n')
         rc, out = release(self.t)
         self.assertEqual(rc, 0, out)
         self.assertEqual(self.t.read(kept), '{"node": "plain_halts"}\n')
         self.assertFalse(os.path.exists(self.t.path(cut)))
-        self.assertFalse(os.path.exists(self.t.path("proofs", APPROVED, "asan_halts")))
-        self.assertIn("removed proofs/%s/asan_halts" % APPROVED, out)
-
-    def test_a_listed_statement_with_no_proof_is_reported(self):
-        approve(self.t, entry(APPROVED, statements=["plain_halts", "asan_halts"]))
-        rc, out = release(self.t)
-        self.assertEqual(rc, 0, out)
-        self.assertIn("listed, but no proof in this checkout: %s/asan_halts" % APPROVED, out)
-        self.assertIn("1 listed statement(s) with no proof", out)
+        self.assertFalse(os.path.exists(self.t.path("proofs", APPROVED, "asan_agrees")))
+        self.assertIn("removed proofs/%s/asan_agrees" % APPROVED, out)
 
     def test_a_stale_rendering_is_refused_before_anything_is_removed(self):
         approve(self.t, APPROVED)
@@ -968,8 +1170,11 @@ class ReleaseTree(unittest.TestCase):
 
     def test_the_change_ledgers_are_not_published(self):
         """release_tree.INTERNAL names changes/: a change's sessions, costs and journal (oft change-ledger) are this
-        repository's own records, and no release carries them."""
-        for rel in ("changes/libreac-35/sessions.tsv", "changes/libreac-35/ledger.tsv", "changes/tools/journal.md"):
+        repository's own records, and no release carries them.  A fuzz target's ledger is under changes/ too
+        (changes/targets/<project>/<harness>/), and goes with them."""
+        for rel in ("changes/libreac-35/sessions.tsv", "changes/libreac-35/ledger.tsv", "changes/tools/journal.md",
+                    "changes/targets/libreac/fuzz_hts/sessions.tsv",
+                    "changes/targets/libreac/fuzz_hts/ledger.tsv"):
             self.t.write(rel, "step\n")
         approve(self.t, APPROVED)
         rc, out = release(self.t)
@@ -977,10 +1182,123 @@ class ReleaseTree(unittest.TestCase):
         self.assertFalse(os.path.lexists(self.t.path("changes")))
         self.assertIn("changes", out)
 
+    def test_the_rekey_window_file_is_not_published(self):
+        """release_tree.INTERNAL names .github/rekey-window (lint.LINT_ONLY_INTERNAL, OSSV-413): the file
+        that opens a re-key window on this repository's main, which a release has no use for.  The rest of .github/
+        stays."""
+        self.t.write(".github/rekey-window", "open\n")
+        approve(self.t, APPROVED)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(os.path.lexists(self.t.path(".github/rekey-window")))
+        self.assertTrue(os.path.isdir(self.t.path(".github")))
+        self.assertIn(".github/rekey-window", out)
+
+    def test_the_repository_page_readme_is_not_published(self):
+        """release_tree.INTERNAL names .github/README.md (lint.LINT_ONLY_INTERNAL, OSSV-668): the page GitHub shows on
+        this repository's front page in place of the root README.md.  A release has no use for that page, since it keeps
+        its own rendered README.md.  The rest of .github/ stays."""
+        self.t.write(".github/README.md", "# OSS Verify proofs\n")
+        self.t.write(".github/workflows/pr.yml", "name: pr\n")
+        approve(self.t, APPROVED)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(os.path.lexists(self.t.path(".github/README.md")))
+        self.assertIn(".github/README.md", out)
+        self.assertTrue(os.path.isfile(self.t.path(".github/workflows/pr.yml")))
+
+    def test_the_gateway_model_and_its_workflow_are_not_published(self):
+        """release_tree.INTERNAL names dev/gateway-model/ (lint.LINT_ONLY_INTERNAL, OSSV-498), the model gateway's
+        formal model, which no release carries, and .github/workflows/gateway-model.yml, which builds and checks it.
+        The directory goes whole, NOTICE with it; the rest of .github/workflows/ stays."""
+        model = ("dev/gateway-model/NOTICE", "dev/gateway-model/build.sh", "dev/gateway-model/theories/Json.v",
+                 "dev/gateway-model/tests/run.sh")
+        for rel in model + (".github/workflows/gateway-model.yml",):
+            self.t.write(rel, "# the gateway model\n")
+        self.t.write(".github/workflows/pr.yml", "name: pr\n")
+        approve(self.t, APPROVED)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(os.path.lexists(self.t.path("dev/gateway-model")))
+        self.assertFalse(os.path.lexists(self.t.path(".github/workflows/gateway-model.yml")))
+        self.assertIn("dev/gateway-model/", out)
+        self.assertIn(".github/workflows/gateway-model.yml", out)
+        self.assertTrue(os.path.isfile(self.t.path(".github/workflows/pr.yml")))
+
+    def test_the_evals_tools_and_their_workflow_are_not_published(self):
+        """release_tree.INTERNAL names dev/evals/ (lint.LINT_ONLY_INTERNAL, OSSV-643), the tools that run the evals,
+        which no release carries, and .github/workflows/paired-run.yml, which runs the paired run's tests.  The
+        directory goes whole; the rest of .github/workflows/ stays."""
+        evals = ("dev/evals/paired-run/README.md", "dev/evals/paired-run/runner.py",
+                 "dev/evals/paired-run/tests/test_runner.py")
+        for rel in evals + (".github/workflows/paired-run.yml",):
+            self.t.write(rel, "# the paired run\n")
+        self.t.write(".github/workflows/pr.yml", "name: pr\n")
+        approve(self.t, APPROVED)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(os.path.lexists(self.t.path("dev/evals")))
+        self.assertFalse(os.path.lexists(self.t.path(".github/workflows/paired-run.yml")))
+        self.assertIn("dev/evals/", out)
+        self.assertIn(".github/workflows/paired-run.yml", out)
+        self.assertTrue(os.path.isfile(self.t.path(".github/workflows/pr.yml")))
+
+    def test_the_build_service_release_test_and_its_class_table_are_not_published(self):
+        """release_tree.INTERNAL names .github/workflows/rocq-release.yml, the shared Rocq build service's release test,
+        and .github/theorem-rule-classes.tsv, the table of memory classes that the service's client `theorem check`
+        reads (lint.LINT_ONLY_INTERNAL, OSSV-299): no release carries them.  The rest of .github/ and of
+        .github/workflows/ stays."""
+        self.t.write(".github/workflows/rocq-release.yml", "name: rocq-release\n")
+        self.t.write(".github/theorem-rule-classes.tsv", "*\tstd\n")
+        self.t.write(".github/workflows/pr.yml", "name: pr\n")
+        approve(self.t, APPROVED)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        for rel in (".github/workflows/rocq-release.yml", ".github/theorem-rule-classes.tsv"):
+            self.assertFalse(os.path.lexists(self.t.path(rel)), rel)
+            self.assertIn(rel, out)
+        self.assertTrue(os.path.isfile(self.t.path(".github/workflows/pr.yml")))
+
+    def test_the_ci_review_caller_and_its_rules_file_are_not_published(self):
+        """release_tree.INTERNAL names .github/workflows/ci-review.yaml, the caller of agent-infra's CI reviewer, and
+        .github/ci-review.md, the rules file that holds this repository's own check for that reviewer
+        (lint.LINT_ONLY_INTERNAL).  The pull request of Dispatch issue OSSV-774 adds them, and no release carries them.
+        The cut removes those two files.  A workflow beside them and files with names near theirs stay."""
+        gone = (".github/workflows/ci-review.yaml", ".github/ci-review.md")
+        kept = (".github/workflows/pr.yml", ".github/workflows/ci-review.yml", ".github/ci-review.md.bak")
+        self.t.write(gone[0], "name: ci-review\n")
+        self.t.write(gone[1], "# What the CI review checks\n")
+        for k in kept:
+            self.t.write(k, "x\n")
+        approve(self.t, APPROVED)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        for rel in gone:
+            self.assertFalse(os.path.lexists(self.t.path(rel)), rel)
+            self.assertIn(rel, out)
+        for k in kept:
+            self.assertTrue(os.path.isfile(self.t.path(k)), k)
+
+    def test_the_held_refscan_workflow_is_not_published(self):
+        """release_tree.INTERNAL names .github/workflows/held-refscan.yml (lint.LINT_ONLY_INTERNAL): the daily scan
+        of the public refs for held fuzz targets (Dispatch issue OSSV-377), which no release carries.  The cut removes
+        that one file: a workflow beside it, and a file whose name starts with its name, stay."""
+        rel = ".github/workflows/held-refscan.yml"
+        kept = (".github/workflows/pr.yml", ".github/workflows/held-refscan.yml.txt")
+        self.t.write(rel, "on:\n  schedule:\n    - cron: '0 6 * * *'\n")
+        for k in kept:
+            self.t.write(k, "on: push\n")
+        approve(self.t, APPROVED)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(os.path.lexists(self.t.path(rel)))
+        self.assertIn(rel, out)
+        for k in kept:
+            self.assertTrue(os.path.isfile(self.t.path(k)), k)
+
     def test_the_prove_workflow_its_script_and_their_tests_are_not_published(self):
-        """release_tree.INTERNAL names prove.yml, tools/oft/ci/prove-pr and their tests: the workflow posts this
-        repository's pull request checks with the App whose key agent-infra lets this repository's environment `prove`
-        read; the public repository has neither."""
+        """release_tree.INTERNAL names prove.yml, tools/oft/ci/prove-pr and their tests: the workflow posts a check on
+        this repository's own pull requests with the workflow's own token, and a reader of a proof never needs it."""
         internal = (".github/workflows/prove.yml", "tools/oft/ci/prove-pr", "tools/oft/tests/test_prove_pr.py",
                     "tools/oft/tests/test_prove_workflow.py")
         for rel in internal:
@@ -1138,11 +1456,14 @@ class ReleaseTree(unittest.TestCase):
         self.assertEqual(self.t.read(EXCEPTIONS), EXCEPTIONS_HEAD + yamlio.dump({"exceptions": [kept]}))
         self.assertEqual([str(f) for f in self.t.lint()], [])
 
-    def test_a_lint_exception_under_an_unapproved_fuzz_target_of_a_public_project_is_cut_with_it(self):
-        """zlib is public, so only the removal of api-driver's unlisted proofs takes the entry out."""
-        approve(self.t, APPROVED)
+    def test_a_lint_exception_under_the_proofs_folder_of_a_held_fuzz_target_is_cut_with_it(self):
+        """zlib is private, and of its paths under proofs/ the cut removes only its fuzz targets' proofs folders (the
+        rest of a project held whole goes from projects/, counterexamples/, patches/ and notes/): so only the removal of
+        api-driver's proofs folder takes the entry out."""
+        make_private(self.t, "zlib")
+        approve(self.t, entry(RELEASED, statements=["plain_halts"]))
         cut = needed_exception(self.t, "proofs/%s/provenance/LICENSES/zlib-LICENSE" % UNAPPROVED)
-        kept = needed_exception(self.t, "projects/zlib/checksum_fuzzer/source/checksum_fuzzer.c")
+        kept = needed_exception(self.t, "projects/%s/source/fuzzer-parse_bjdata.cpp" % RELEASED)
         put_exceptions(self.t, [cut, kept])
         self.assertEqual(self.t.generate(), 0, self.t.last_output)
         self.assertEqual([str(f) for f in self.t.lint()], [])
@@ -1152,12 +1473,13 @@ class ReleaseTree(unittest.TestCase):
         self.assertEqual(self.t.read(EXCEPTIONS), EXCEPTIONS_HEAD + yamlio.dump({"exceptions": [kept]}))
         self.assertEqual([str(f) for f in self.t.lint()], [])
 
-    def test_an_old_form_lint_exception_under_an_unapproved_fuzz_target_of_a_ported_tree_is_cut_with_it(self):
+    def test_an_old_form_lint_exception_under_a_held_fuzz_target_of_a_ported_tree_is_cut_with_it(self):
         """lint-exceptions.yaml keeps its entries in the old layout's form, and lint matches each through
         layout.canonical, so the cut takes out the old-form entry of a file it removes from the ported tree."""
-        approve(self.t, APPROVED)
+        make_private(self.t, "zlib")
+        approve(self.t, entry(RELEASED, statements=["plain_halts"]))
         cut = needed_exception(self.t, "proofs/%s/provenance/LICENSES/zlib-LICENSE" % UNAPPROVED)
-        kept = needed_exception(self.t, "projects/zlib/checksum_fuzzer/source/checksum_fuzzer.c")
+        kept = needed_exception(self.t, "projects/%s/source/fuzzer-parse_bjdata.cpp" % RELEASED)
         put_exceptions(self.t, [cut, kept])
         port_tree(self.t)
         rc, out = release(self.t)
@@ -1166,13 +1488,15 @@ class ReleaseTree(unittest.TestCase):
         self.assertIn("rewrote %s without the exception(s) for %s" % (EXCEPTIONS, cut["path"]), out)
         self.assertEqual(self.t.read(EXCEPTIONS), EXCEPTIONS_HEAD + yamlio.dump({"exceptions": [kept]}))
 
-    def test_a_per_project_form_lint_exception_under_an_unapproved_fuzz_target_is_cut_with_it(self):
+    def test_a_per_project_form_lint_exception_under_a_held_fuzz_target_is_cut_with_it(self):
         """The converse: an entry in the per-project form, of a file under the whole proofs folder the cut removes
         from an old-layout tree."""
-        approve(self.t, APPROVED)
+        make_private(self.t, "zlib")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        approve(self.t, entry(RELEASED, statements=["plain_halts"]))
         cut = needed_exception(self.t, "proofs/%s/provenance/LICENSES/zlib-LICENSE" % UNAPPROVED)
         cut["path"] = layout.canonical(cut["path"])
-        kept = needed_exception(self.t, "projects/zlib/checksum_fuzzer/source/checksum_fuzzer.c")
+        kept = needed_exception(self.t, "projects/%s/source/fuzzer-parse_bjdata.cpp" % RELEASED)
         put_exceptions(self.t, [cut, kept])
         rc, out = release(self.t)
         self.assertEqual(rc, 0, out)
@@ -1180,8 +1504,8 @@ class ReleaseTree(unittest.TestCase):
         self.assertEqual(self.t.read(EXCEPTIONS), EXCEPTIONS_HEAD + yamlio.dump({"exceptions": [kept]}))
 
     def licence_pending_cut(self, ported):
-        """A release never carries a licence-pending entry: the cut drops every one, for a fuzz target it keeps and
-        for one it removes."""
+        """A release never carries a licence-pending entry: the cut drops every one, of each fuzz target, whether or not
+        it keeps that fuzz target's proofs."""
         approve(self.t, APPROVED)
         if ported:
             port_tree(self.t)
@@ -1216,6 +1540,907 @@ class ReleaseTree(unittest.TestCase):
             with self.subTest(where=where):
                 put_exceptions(self.t, entries, head)
                 self.assertRefused("error: %s names %s" % (EXCEPTIONS, "json/fuzzer-parse_bjdata, a fuzz target of held project json"))
+
+    def test_a_kept_file_that_names_this_internal_repository_is_refused_in_every_cut(self):
+        """Decision 15 of Dispatch issue OSSV-424: no project holds a fuzz target and nothing is held back, and the cut
+        still refuses a kept CHANGELOG.md that names this repository in full, in any case, with "nothing changed".  Its
+        bare name is no needle (test_oss_verify.py names it), and a longer name that begins with the full name is the
+        name of another repository."""
+        approve(self.t, APPROVED)
+        self.assertFalse(os.path.lexists(self.t.path("tools", "publish")))
+        internal = schema.INTERNAL_PORT_REPOSITORY
+        for text in ("Built in %s.\n" % internal, "See https://github.com/%s/pull/1.\n" % internal.title()):
+            with self.subTest(text=text):
+                self.t.write("CHANGELOG.md", text)
+                before = snapshot(self.t)
+                rc, out = release(self.t)
+                self.assertEqual(rc, 1, out)
+                self.assertIn("error: CHANGELOG.md names %s, the name of this internal repository" % internal, out)
+                self.assertIn("nothing changed", out)
+                self.assertEqual(snapshot(self.t), before)
+        text = "Built in %s-mirror and in %s.\n" % (internal, internal.split("/")[1])
+        self.t.write("CHANGELOG.md", text)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.t.read("CHANGELOG.md"), text)
+
+    def gitignore_block_cut(self, data):
+        """The cut of this checkout with .gitignore holding the bytes data, or with no .gitignore when data is None:
+        (the bytes of .gitignore after the cut, None when there is none, and the cut's output)."""
+        approve(self.t, APPROVED)
+        if data is None:
+            self.assertFalse(os.path.lexists(self.t.path(".gitignore")))
+        else:
+            self.t.write(".gitignore", data, mode="wb")
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        if not os.path.lexists(self.t.path(".gitignore")):
+            return None, out
+        with open(self.t.path(".gitignore"), "rb") as f:
+            return f.read(), out
+
+    def test_the_gitignore_block_goes_and_every_other_byte_stays(self):
+        """OSSV-668 appends the block of the shared generated files to .gitignore, so main commits none of them; a
+        release commits the files its last render writes, so the cut writes .gitignore as it was before the block."""
+        after, out = self.gitignore_block_cut((GITIGNORE_HEAD + GITIGNORE_BLOCK).encode())
+        self.assertEqual(after, GITIGNORE_HEAD.encode())
+        self.assertIn(REWROTE_GITIGNORE, out)
+
+    def test_a_gitignore_block_in_the_middle_leaves_no_blank_line(self):
+        after, out = self.gitignore_block_cut((GITIGNORE_HEAD + GITIGNORE_BLOCK + GITIGNORE_TAIL).encode())
+        self.assertEqual(after, (GITIGNORE_HEAD + GITIGNORE_TAIL).encode())
+        self.assertIn(REWROTE_GITIGNORE, out)
+
+    def test_a_blank_line_next_to_the_gitignore_block_stays(self):
+        """The cut removes the eight lines of the block alone."""
+        after, _ = self.gitignore_block_cut((GITIGNORE_HEAD + "\n" + GITIGNORE_BLOCK + "\n" + GITIGNORE_TAIL).encode())
+        self.assertEqual(after, (GITIGNORE_HEAD + "\n\n" + GITIGNORE_TAIL).encode())
+
+    def test_a_gitignore_with_no_gitignore_block_stays_as_it_is(self):
+        """No marker in the bytes of .gitignore: the cut leaves the file as it is, whatever its bytes (these are not
+        UTF-8), and its output does not name it."""
+        data = GITIGNORE_HEAD.encode() + b"caf\xe9/\n"
+        after, out = self.gitignore_block_cut(data)
+        self.assertEqual(after, data)
+        self.assertNotIn(".gitignore", out)
+
+    def test_with_no_gitignore_the_gitignore_block_cut_writes_none(self):
+        after, out = self.gitignore_block_cut(None)
+        self.assertIsNone(after)
+        self.assertNotIn(".gitignore", out)
+
+    def test_a_gitignore_block_that_is_the_whole_file_leaves_it_empty(self):
+        after, out = self.gitignore_block_cut(GITIGNORE_BLOCK.encode())
+        self.assertEqual(after, b"")
+        self.assertIn(REWROTE_GITIGNORE, out)
+
+    def test_a_gitignore_block_last_with_no_final_line_feed_goes_the_same_way(self):
+        after, out = self.gitignore_block_cut((GITIGNORE_HEAD + GITIGNORE_BLOCK[:-1]).encode())
+        self.assertEqual(after, GITIGNORE_HEAD.encode())
+        self.assertIn(REWROTE_GITIGNORE, out)
+
+    def test_a_gitignore_block_the_cut_does_not_remove_is_refused(self):
+        """Each refusal names its line of .gitignore and changes nothing: fewer lines under the marker line than the
+        block has (at the marker line), a line that is not the block's next one (at that line, with the line read and
+        the line wanted), a second marker line (at it), and the marker in a file that is not UTF-8 (at the first byte
+        that is not)."""
+        approve(self.t, APPROVED)
+        marker, *ignores = GITIGNORE_BLOCK.splitlines(True)
+        wrong = ignores[:2] + ["/index/*.md\n"] + ignores[3:]
+        cases = {
+            "a short block": ((GITIGNORE_HEAD + marker + "".join(ignores[:3])).encode(),
+                              ".gitignore:5: the marker line of the shared generated files has 3 line(s) under it, "
+                              "not the 7 of the block"),
+            "a wrong line": ((GITIGNORE_HEAD + marker + "".join(wrong)).encode(),
+                             ".gitignore:8: '/index/*.md' is under the marker line of the shared generated files, "
+                             "where the block has '/index/PROOFS.md'"),
+            "a second marker line": ((GITIGNORE_HEAD + GITIGNORE_BLOCK + GITIGNORE_TAIL + GITIGNORE_BLOCK).encode(),
+                                     ".gitignore:14: a second marker line of the shared generated files (the first is "
+                                     "line 5)"),
+            "not UTF-8": (GITIGNORE_HEAD.encode() + b"caf\xe9/\n" + GITIGNORE_BLOCK.encode(),
+                          ".gitignore:5: byte 0xe9 is not UTF-8, in a file that holds the marker of the shared "
+                          "generated files")}
+        for case, (data, why) in cases.items():
+            with self.subTest(case=case):
+                self.t.write(".gitignore", data, mode="wb")
+                self.assertRefused("error: %s\n%s" % (why, NOT_THE_BLOCK))
+
+    def test_the_cut_keeps_the_mode_of_each_file_it_rewrites(self):
+        """The cut writes each file it rewrites over the file that is there, so the file keeps its mode, an executable
+        one too: tools/publish/verify refuses a release in which a file the cut changes, a generated one apart, changed
+        its mode (check_changes).  One tree holds a file of each kind the cut rewrites but the edits for a fuzz target
+        of private_harnesses: json is private (its held page, release.yaml's counts, its lint exception, and its rows of
+        pack.py and failure_handlers.tsv), an open finding of enrolled zlib holds back asan_agrees (the harness.yaml of
+        that fuzz target, as test_hold.EnrolledHold makes the hold), AGENTS.md holds a marked block, and .gitignore
+        holds the block."""
+        # the hold per statement (finding_hold): zlib enrolled and with no proof library
+        for unit in (APPROVED, UNAPPROVED):
+            shutil.rmtree(self.t.path("proofs", unit, "lib"))
+        finding_hold(self.t)
+        make_private(self.t, "json")
+        approve(self.t, APPROVED)
+        private = needed_exception(self.t, "projects/json/fuzzer-parse_bjdata/source/fuzzer-parse_bjdata.cpp")
+        put_exceptions(self.t, [private])
+        self.t.write(release_tree.PACK,
+                     '"""a stand-in packer."""\nSWEEP_TIMES = (\n'
+                     '    ("%s", "r1", 10, "finished"),\n'
+                     '    ("%s", "r1", 20, "finished"),\n)\n' % (APPROVED, RELEASED))
+        self.t.write(release_tree.HANDLERS,
+                     "project\tharness\tvalue\tevidence\n"
+                     "json\tfuzzer-parse_bjdata\tnone\tthe scan of handlers/fuzzer-parse_bjdata.txt\n"
+                     "zlib\tchecksum_fuzzer\tnone\tthe scan of handlers/checksum_fuzzer.txt\n")
+        self.t.write(".gitignore", GITIGNORE_HEAD + GITIGNORE_BLOCK)
+        self.t.write(release_tree.AGENTS, "# Agents\n\nA kept line.\n<!-- BEGIN-INTERNAL -->\nNot for a release.\n"
+                     "<!-- END-INTERNAL -->\n")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        rewrites = sorted([".gitignore", "release.yaml", EXCEPTIONS, release_tree.PACK, release_tree.HANDLERS,
+                           "projects/json/project.yaml", "projects/%s/harness.yaml" % APPROVED, release_tree.AGENTS])
+        for rel in rewrites:
+            os.chmod(self.t.path(rel), 0o755)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        named = sorted(line.split(" ", 2)[1] for line in out.splitlines() if line.startswith(("wrote ", "rewrote ")))
+        self.assertEqual(named, rewrites)
+        for rel in named:
+            self.assertEqual(os.stat(self.t.path(rel)).st_mode & 0o777, 0o755, rel)
+
+
+# A fuzz target that private_harnesses holds while the rest of its project publishes (Dispatch issue OSSV-424, K11 and
+# K15): zlib/held_target, a copy of checksum_fuzzer, which the release keeps.  zlib enrolled through this repository, so
+# build.oss_verify and the port of each build record name the port's internal copy, and the approvals entries name the
+# facts pull request on this repository.  Each name of this repository is built at run time from
+# schema.INTERNAL_PORT_REPOSITORY: no file of a release may spell it.
+HELD = "zlib/held_target"
+HELD_NAME = HELD.split("/")[1]
+KEPT_NAME = APPROVED.split("/")[1]
+PORT_COMMIT = "d" * 40   # helpers.port_built's
+BUILT = "b" * 40         # the commit the port's tools/check built (oss_verifier.commit)
+LIBRARY_COMMIT = "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf"
+FACTS_PR = "https://github.com/" + schema.INTERNAL_PORT_REPOSITORY + "/pull/52"
+
+
+def copy_harness(t, name):
+    """A second fuzz target of zlib, name, a copy of checksum_fuzzer with its own name and binaries' file names."""
+    shutil.copytree(t.path("projects", APPROVED), t.path("projects", "zlib", name))
+    rel = "projects/zlib/%s/harness.yaml" % name
+    h = t.yaml(rel)
+    h.update(harness=name, rocq="OssFuzzTheorems.zlib." + name)
+    for b, rec in h["builds"].items():
+        rec["file"] = "%s.%s" % (name, b)
+    t.put_yaml(rel, h)
+
+
+def commented(text, held=None):
+    """zlib's project.yaml text, as yamlio.dump wrote it, with comments as a person writes them: one at the top, one
+    above build, one above the entry of held_target, and the field private_harnesses (when held, its names) in flow
+    style, with a comment on its line and one above it.  The cut keeps the first two."""
+    out = "# zlib as an enrollment through this repository writes it, with the comments of a person\n" + text
+    if held is not None:
+        out = out.replace("private_harnesses:\n" + "".join("- %s\n" % n for n in held),
+                          "# The fuzz targets that no public repository may hold.\n"
+                          "private_harnesses: [%s]  # until the stand-in issue is closed\n" % ", ".join(held))
+    out = out.replace("- name: %s\n" % HELD_NAME, "# %s: its files stay in this repository\n- name: %s\n"
+                      % (HELD_NAME, HELD_NAME))
+    return out.replace("\nbuild:\n", "\n# The OSS Verify port built every binary.\nbuild:\n")
+
+
+def manifest_text(names):
+    """port/manifest.yaml, the manifest tools/check wrote for a build of the fuzz targets names, less its host keys:
+    each fuzz target in fuzz_targets, and under its own key in targets, layout and binary_checks."""
+    man = {"schema": "oss-verifier/build-manifest/1", "project": "zlib", "repo": "https://github.com/madler/zlib",
+           "commit": LIBRARY_COMMIT, "oss_verifier": {"commit": BUILT, "modified": False},
+           "builds": list(schema.BUILDS), "fuzz_targets": list(names),
+           "targets": {n: {"builds": {b: {"file": "%s.%s" % (n, b), "bytes": 1000,
+                                          "sha256": hashlib.sha256(("%s.%s" % (n, b)).encode()).hexdigest()}
+                                      for b in schema.BUILDS}} for n in names},
+           "layout": {n: {b: {"text_bytes": 900, "static": True} for b in schema.BUILDS} for n in names},
+           "binary_checks": {"inputs": {n: ["(the empty input)"] for n in names},
+                             "targets": {n: {"plain": {"elf": {"result": "pass"}}} for n in names}}}
+    return "# Generated by tools/check; do not edit.\n" + yamlio.dump(man)
+
+
+def port_files(names):
+    """{path under port/projects/zlib/: text} of the port's files for zlib, for a build of the fuzz targets names: the
+    maintainers' project.yaml, build.sh, the Dockerfile, the sources table, and each fuzz target's own files."""
+    files = {
+        "project.yaml": ("# zlib's port, a stand-in of these tests\nrepo: https://github.com/madler/zlib#%s\n"
+                         "primary_contact: n/a\nhomepage: https://www.zlib.net/\nlanguage: c\n"
+                         "sanitizers: [address, undefined]\nfuzz_targets:\n%s"
+                         % (LIBRARY_COMMIT, "".join("  - %s\n" % n for n in names))),
+        "build.sh": "#!/bin/bash -eu\n# Builds the fuzz targets of zlib.\n./configure --static && make libz.a\n"
+                    + "".join('$CC $CFLAGS -c "$SRC/%s.c" -o "$WORK/%s.o"\n' % (n, n)
+                              + '$CC $CFLAGS "$WORK/%s.o" -o "$OUT/%s" $LIB_FUZZING_ENGINE libz.a\n' % (n, n)
+                              for n in names),
+        "Dockerfile": "RUN fetch-commit $SRC/zlib\n",
+        "sources": "git\tzlib\thttps://github.com/madler/zlib\t%s\n" % LIBRARY_COMMIT + "".join(
+            "link\ttargets/zlib-%s/%s.c\t%s.c\n" % (n, n, n) for n in names if n != KEPT_NAME),
+    }
+    for n in names:
+        files["%s.c" % n] = "int LLVMFuzzerTestOneInput(const unsigned char *d, unsigned long n) { return 0; }\n"
+        if n != KEPT_NAME:
+            files["%s.options" % n] = "[libfuzzer]\nmax_len = 4096\n"
+    return files
+
+
+def port_record(t, h, names):
+    """{path under provenance/: text} of the build record of zlib's fuzz target h that tools/enroll/facts.py writes for
+    an enrollment through this repository whose port built the fuzz targets names: PROVENANCE.yaml and PROVENANCE.md,
+    port/manifest.yaml, the port's files under port/projects/zlib/, and LICENSES/."""
+    harness = t.yaml("projects/zlib/%s/harness.yaml" % h)
+    assets = t.yaml("projects/zlib/project.yaml")["assets"]
+    pin = {k: {"file": assets[k]["file"], "sha256": assets[k]["sha256"]}
+           for k in ("bin", "src", "src_manifest", "port")}
+    record = {
+        "schema": "oss-verify-proofs build record v1",
+        "entry_point": {"project": "zlib", "harness": h, "function": "LLVMFuzzerTestOneInput",
+                        "records": ["projects/zlib/project.yaml", "projects/zlib/%s/harness.yaml" % h]},
+        "upstream": {"name": "zlib", "repository": "https://github.com/madler/zlib", "commit": LIBRARY_COMMIT,
+                     "licence": "Zlib", "patch_count": 0, "licence_evidence": "a stand-in of these tests"},
+        "harness": {"origin": harness["origin"], "source": harness["source"]},
+        "port": {"repository": schema.INTERNAL_PORT_REPOSITORY, "commit": PORT_COMMIT, "path": "projects/zlib",
+                 "tools": {"commit": "c" * 40, "paths": ["infra/", "tools/"], "built": BUILT,
+                           "how": "a stand-in of these tests"},
+                 "asset": pin["port"], "files": "port/projects/zlib/ and port/manifest.yaml", "patches": [],
+                 "build_system": "cmake", "how_to_rebuild": "a stand-in of these tests"},
+        "toolchain": {"clang": "20.1.8", "builder_image": t.yaml("release.yaml")["images"]["builder"][0]},
+        "binaries": [{"build": b, "file": r["file"], "bytes": r["bytes"], "sha256": r["sha256"]}
+                     for b, r in harness["builds"].items()],
+        "binary_asset": pin["bin"], "source_asset": {"src": pin["src"], "src_manifest": pin["src_manifest"]},
+        "rebuild": ["all %d binaries of the %d harnesses identical in the second build" % (4 * len(names), len(names))],
+        "licence": {"components": [{"component": "zlib", "files": "-", "licence": "Zlib",
+                                    "evidence": "a stand-in of these tests", "texts": ["LICENSES/zlib-LICENSE"]}],
+                    "not_in_binaries": [], "source_bundle": [pin["src"], pin["src_manifest"], pin["port"]]},
+    }
+    md = ("# How the binaries of `zlib/%s` were built\n\n| | |\n|---|---|\n"
+          "| Port | the internal copy of the OSS Verify port `projects/zlib` at `%s` |\n" % (h, PORT_COMMIT))
+    out = {"PROVENANCE.yaml": yamlio.dump(record), "PROVENANCE.md": md, "port/manifest.yaml": manifest_text(names),
+           "LICENSES/zlib-LICENSE": "A stand-in for zlib's licence text, for the tests of tools/oft.\n"}
+    out.update({"port/projects/zlib/" + rel: text for rel, text in port_files(names).items()})
+    return out
+
+
+class HeldFuzzTarget(unittest.TestCase):
+    """oft release-tree and a fuzz target that private_harnesses holds while the rest of its project publishes (Dispatch
+    issue OSSV-424, K11 and K15).  zlib enrolled through this repository, with two fuzz targets: checksum_fuzzer, whose
+    proof the release keeps, and held_target, held, with a proof that approvals.yaml lists, a counterexample, a lint
+    exception, and a build record of each.  The build record of each fuzz target holds the port's files of zlib and
+    tools/check's manifest, and both name held_target."""
+
+    PROJECT_YAML = "projects/zlib/project.yaml"
+
+    def setUp(self):
+        self.t = Tree()
+        self.addCleanup(self.t.close)
+
+    def build(self, held=(HELD_NAME,), record_names=(KEPT_NAME, HELD_NAME)):
+        """zlib as above, with private_harnesses held (names), each build record's port naming the fuzz targets
+        record_names; rendered, with tools/publish/ as the internal tree has it.  Returns the data of project.yaml
+        that the cut keeps."""
+        t = self.t
+        copy_harness(t, HELD_NAME)
+        port_built(t, "zlib")
+        data = {}
+        for k, v in t.yaml(self.PROJECT_YAML).items():
+            data[k] = v
+            if k == "harnesses":
+                v.append({"name": HELD_NAME, "status": "included"})
+                data["private_harnesses"] = list(held)
+        data["build"]["oss_verify"]["repository"] = schema.INTERNAL_PORT_REPOSITORY
+        t.write(self.PROJECT_YAML, commented(yamlio.dump(data), held))
+        for h in (KEPT_NAME, HELD_NAME):
+            for rel, text in port_record(t, h, record_names).items():
+                t.write("%s/%s" % (layout.provenance_dir("zlib", h, layout.OLD), rel), text)
+        for sid in (APPROVED + "/plain_halts", HELD + "/plain_halts"):
+            add_proof(t, sid)
+        cx = layout.counterexample_dir("zlib", HELD_NAME, "asan_halts", layout.OLD)
+        t.put_yaml(cx + "/expect.yaml", {
+            "schema": "oss-fuzz-theorems/counterexample/1", "statement": HELD + "/asan_halts", "input": "input.bin",
+            "observed": {"build": "asan", "exit": 134, "signal": "SIGABRT"},
+            "control": {"input": "control.bin", "exit": 0}, "disclosure": "public",
+            "note": "A stand-in counterexample of these tests."})
+        t.write(cx + "/input.bin", "x")
+        t.write(cx + "/control.bin", "y")
+        approve(t, enrolled(APPROVED, pull_request=FACTS_PR), enrolled(HELD, pull_request=FACTS_PR))
+        os.makedirs(t.path("tools", "publish"))
+        t.write("CHANGELOG.md", "# Changelog\n\n## Unreleased\n\n- Proofs of zlib.\n")
+        recount(t)
+        self.assertEqual(t.generate(), 0, t.last_output)
+        put_exceptions(t, [needed_exception(t, "projects/%s/source/checksum_fuzzer.c" % HELD)])
+        self.assertEqual([str(f) for f in t.lint()], [])
+        cut = {k: v for k, v in data.items() if k != "private_harnesses"}
+        cut["harnesses"] = [e for e in data["harnesses"] if e["name"] not in held]
+        if held:
+            cut["build"] = dict(cut["build"], oss_verify=dict(cut["build"]["oss_verify"],
+                                                              repository=schema.NO_PORT_REPOSITORY))
+        return cut
+
+    def assertRefused(self, why):
+        """release-tree refuses, says why, and leaves every file of the checkout byte for byte as it was."""
+        t = self.t
+        before = snapshot(t)
+        rc, out = release(t)
+        self.assertEqual(rc, 1, out)
+        self.assertIn(why, out)
+        self.assertIn("nothing changed", out)
+        self.assertEqual(snapshot(t), before)
+
+    def test_the_cut_keeps_nothing_of_the_held_fuzz_target_in_either_layout(self):
+        """K11 and K15: no folder of zlib/held_target in either layout, no proof of it that approvals.yaml listed, no
+        counterexample, no lint exception, no entry or field or comment of either in project.yaml, which keeps every
+        other byte, and no tools/publish/private-harnesses.txt.  In the kept build record the port's files of
+        held_target are gone, and the manifest, the maintainers' project.yaml, build.sh and the sources table lose
+        exactly the lines that name it.  The port reads `none` with the port commit's id in project.yaml and in the
+        kept build record.  No file of the cut names held_target (by the rule of disclosure.held_match, which its Rocq
+        module and generated files also match) or this repository, and `oft lint` and `oft generate --check` pass."""
+        cut = self.build()
+        before = snapshot(self.t)
+        for where, t in ((layout.OLD, self.t), (layout.NEW, ported_copy(self, self.t))):
+            with self.subTest(layout=where):
+                record = layout.provenance_dir("zlib", KEPT_NAME, where)
+                rc, out = release(t)
+                self.assertEqual(rc, 0, out)
+                self.assertIn("held back by private_harnesses: %s\n" % HELD, out)
+                for rel in [layout.statement_dir("zlib", HELD_NAME), "tools/publish"] + [
+                        kind("zlib", HELD_NAME, lay) for lay in layout.LAYOUTS
+                        for kind in (layout.proofs_dir, layout.counterexamples_dir, layout.findings_dir)]:
+                    self.assertFalse(os.path.lexists(t.path(rel)), rel)
+                files = snapshot(t)
+                internal = schema.INTERNAL_PORT_REPOSITORY.casefold()
+                for rel, data in files.items():
+                    text = data.decode("utf-8", "replace")
+                    self.assertEqual(disclosure.held_match(rel, [HELD]) + disclosure.held_match(text, [HELD]), [], rel)
+                    self.assertNotIn(internal, text.casefold(), rel)
+                self.assertEqual(t.read(self.PROJECT_YAML), commented(yamlio.dump(cut)))
+                self.assertEqual(t.yaml(self.PROJECT_YAML)["build"]["oss_verify"],
+                                 {"repository": "none", "commit": PORT_COMMIT, "path": "projects/zlib"})
+                old = yamlio.load(before[layout.record_path("zlib", KEPT_NAME, layout.OLD)].decode(), "record")
+                old["port"]["repository"] = "none"
+                self.assertEqual(t.yaml(record + "/PROVENANCE.yaml"), old)
+                kept_port = {"port/manifest.yaml": manifest_text([KEPT_NAME])}
+                kept_port.update({"port/projects/zlib/" + rel: text for rel, text in port_files([KEPT_NAME]).items()})
+                self.assertEqual({rel[len(record) + 1:]: data.decode() for rel, data in files.items()
+                                  if rel.startswith(record + "/port/")}, kept_port)
+                self.assertEqual(t.yaml(EXCEPTIONS)["exceptions"], [])
+                self.assertEqual([str(f) for f in t.lint()], [])
+                self.assertEqual(t.generate(check=True), 0, t.last_output)
+
+    def test_a_kept_file_that_names_the_held_fuzz_target_its_module_or_this_repository_is_refused(self):
+        """K11's refusals, each of a kept CHANGELOG.md, with "nothing changed": the held entry in each form of the rule
+        of disclosure.held_match, the Rocq module of held_target in any case, and this repository's full name in any
+        case."""
+        self.build()
+        internal = schema.INTERNAL_PORT_REPOSITORY
+        held = "%s, a held fuzz target (private_harnesses of zlib)" % HELD
+        module = "OssFuzzTheorems.zlib.held_target, the Rocq module of held fuzz target %s" % HELD
+        repository = "%s, the name of this internal repository, which no release names" % internal
+        for text, why in (("Fixed %s.\n" % HELD, held), ("See projects/%s/harness.yaml.\n" % HELD, held),
+                          ("The held_target build.\n", held),
+                          ("Require OssFuzzTheorems.zlib.held_target.Statements.\n", module),
+                          ("Require ossfuzztheorems.ZLIB.HELD_TARGET.\n", module),
+                          ("Built from %s.\n" % internal, repository),
+                          ("Built from https://github.com/%s/pull/52.\n" % internal.upper(), repository)):
+            with self.subTest(text=text):
+                self.t.write("CHANGELOG.md", text)
+                self.assertRefused("error: CHANGELOG.md names %s" % why)
+
+    def test_an_s_whose_private_harnesses_txt_is_missing_or_differs_from_its_fields_is_refused(self):
+        """The readers of the held entries outside oft read the file, and the cut reads the fields: an S in which the
+        two disagree is refused, with "nothing changed"."""
+        self.build()
+        rel = generate.PRIVATE_HARNESSES
+        os.remove(self.t.path(rel))
+        self.assertRefused("error: %s is missing, and the private_harnesses fields hold %s" % (rel, HELD))
+        other = "zlib/held_target_other"
+        for text, lists in (("", "no fuzz target"), ("%s\n%s\n" % (HELD, other), "%s, %s" % (HELD, other)),
+                            (other + "\n", other)):
+            with self.subTest(text=text):
+                self.t.write(rel, text)
+                self.assertRefused("error: %s lists %s, and the private_harnesses fields hold %s" % (rel, lists, HELD))
+
+    def test_a_name_with_no_harness_keeps_the_fuzz_target_and_its_port(self):
+        """The negative control of K11: private_harnesses names held_target_unheld, which no harness has.  held_target
+        ships with its folder, its proof, its entry and its files in each build record's copy of the port, byte for
+        byte.  zlib still holds a fuzz target, so its port reads `none` and the field goes."""
+        cut = self.build(held=("%s_unheld" % HELD_NAME,))
+        before = snapshot(self.t)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("held back by private_harnesses: %s_unheld\n" % HELD, out)
+        self.assertTrue(os.path.isfile(self.t.path(layout.proof_dir("zlib", HELD_NAME, "plain_halts", layout.OLD),
+                                                   "Proof.v")))
+        self.assertTrue(os.path.isfile(self.t.path(layout.statement_dir("zlib", HELD_NAME), "harness.yaml")))
+        self.assertEqual(self.t.read(self.PROJECT_YAML), commented(yamlio.dump(cut)))
+        self.assertIn({"name": HELD_NAME, "status": "included"}, self.t.yaml(self.PROJECT_YAML)["harnesses"])
+        after = snapshot(self.t)
+        for h in (KEPT_NAME, HELD_NAME):
+            port = layout.provenance_dir("zlib", h, layout.OLD) + "/port/"
+            self.assertEqual({rel: data for rel, data in after.items() if rel.startswith(port)},
+                             {rel: data for rel, data in before.items() if rel.startswith(port)}, h)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+
+    def test_a_kept_file_that_names_another_fuzz_target_ships(self):
+        """The negative control of K11's search: names that the rule of disclosure.held_match tells from
+        zlib/held_target (another project's held_target_other, a longer harness name) are no disclosure."""
+        self.build()
+        text = "Proofs of json/held_target_other and of zlib/held_target_v2 come later.\n"
+        self.t.write("CHANGELOG.md", text)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.t.read("CHANGELOG.md"), text)
+
+    def test_a_kept_record_whose_port_copy_names_no_held_fuzz_target_is_left_as_it_is(self):
+        """The negative control of K15: the build records hold a port built before held_target existed, so the copy
+        of the port names checksum_fuzzer alone.  The cut leaves every file of it byte for byte, and writes only the
+        port repository `none` into the record itself."""
+        self.build(record_names=(KEPT_NAME,))
+        port = layout.provenance_dir("zlib", KEPT_NAME, layout.OLD) + "/port/"
+        before = {rel: data for rel, data in snapshot(self.t).items() if rel.startswith(port)}
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual({rel: data for rel, data in snapshot(self.t).items() if rel.startswith(port)}, before)
+        self.assertEqual(self.t.yaml(layout.record_path("zlib", KEPT_NAME, layout.OLD))["port"]["repository"], "none")
+
+    def test_a_kept_fuzz_target_whose_name_continues_the_held_name_ships(self):
+        """zlib/held_target_v2 is no held fuzz target, though its name starts with held_target's: its folder, its proof,
+        its build record and its entry in project.yaml ship.  A cut that matched a held name as a prefix of a path would
+        take them out."""
+        t, sibling = self.t, HELD_NAME + "_v2"
+        self.build()
+        copy_harness(t, sibling)
+        t.write(self.PROJECT_YAML, t.read(self.PROJECT_YAML).replace(
+            "# The fuzz targets", "- name: %s\n  status: included\n# The fuzz targets" % sibling, 1))
+        for rel, text in port_record(t, sibling, (KEPT_NAME, HELD_NAME, sibling)).items():
+            t.write("%s/%s" % (layout.provenance_dir("zlib", sibling, layout.OLD), rel), text)
+        add_proof(t, "zlib/%s/plain_halts" % sibling)
+        approve(t, enrolled(APPROVED, pull_request=FACTS_PR), enrolled(HELD, pull_request=FACTS_PR),
+                enrolled("zlib/" + sibling, pull_request=FACTS_PR))
+        recount(t)
+        self.assertEqual(t.generate(), 0, t.last_output)
+        rc, out = release(t)
+        self.assertEqual(rc, 0, out)
+        for rel in (layout.statement_dir("zlib", sibling) + "/harness.yaml",
+                    layout.proof_dir("zlib", sibling, "plain_halts", layout.OLD) + "/Proof.v",
+                    layout.record_path("zlib", sibling, layout.OLD)):
+            self.assertTrue(os.path.isfile(t.path(rel)), rel)
+        self.assertIn(sibling, [e["name"] for e in t.yaml(self.PROJECT_YAML)["harnesses"]])
+
+    def test_an_empty_field_of_another_project_goes_from_the_cut_with_its_comments(self):
+        """json holds nothing: its `private_harnesses: []` and the comment line above it are no part of the release
+        either, and every other byte of json's project.yaml stays."""
+        self.build()
+        rel = "projects/json/project.yaml"
+        before = self.t.read(rel)
+        self.t.write(rel, before + "# nothing of json is held yet\nprivate_harnesses: []  # empty\n")
+        self.assertEqual(self.t.generate(check=True), 0, self.t.last_output)
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.t.read(rel), before)
+
+
+class KeepRule(unittest.TestCase):
+    """R1's keep rule, the inventory of its class (OSSV-844, D1 of its plan): `oft release-tree` keeps each
+    proof folder of each fuzz target that is not held, whatever approvals.yaml lists and whether or not there is one,
+    and leaves out each proof that a hold or a refutation keeps out.  ROWS is the table: each member of the class, the
+    fixture that makes it, and how the cut leaves it.  A hold reason added later gets a row."""
+
+    def tree(self):
+        t = Tree()
+        self.addCleanup(t.close)
+        return t
+
+    def render(self, t):
+        """Give t the CODEOWNERS of this repository, which the cut removes, and render it."""
+        t.write(".github/CODEOWNERS", CODEOWNERS)
+        self.assertEqual(t.generate(), 0, t.last_output)
+
+    # The fixtures.  Each returns the checkouts to cut, as [(layout, Tree)].
+
+    def no_approvals_held_by_rules(self):
+        """No approvals.yaml.  zlib publishes: checksum_fuzzer holds a proof of plain_halts that no entry lists and a
+        refuting proof of asan_halts, beside its proof library and its build record; api-driver's proofs folder holds
+        only lib/ and provenance/ (and, in the per-project layout, its barrier dune); held_target, a copy of
+        checksum_fuzzer with a proof, is held by private_harnesses.  standin is `release: private`, with a proof.  json
+        has curl's shape: it is `release: private`, and its private_harnesses holds fuzz-extra, a second fuzz target
+        of it, with a proof.  The tree is cut as it is, in the old layout, and as a copy ported to the per-project
+        layout."""
+        t = self.tree()
+        add_proof(t, APPROVED + "/plain_halts")
+        add_proof(t, APPROVED + "/asan_halts")
+        refute(t, APPROVED + "/asan_halts")
+        for p, h in (unit.split("/") for unit in (APPROVED, UNAPPROVED)):
+            t.write(layout.proof_lib_dir(p, h, layout.OLD) + "/Shared.v", "Definition one := 1.\n")
+            t.write(layout.provenance_dir(p, h, layout.OLD) + "/PROVENANCE.md", "The build record.\n")
+        copy_harness(t, HELD_NAME)
+        rel = "projects/zlib/project.yaml"
+        y = t.yaml(rel)
+        y["harnesses"].append({"name": HELD_NAME, "status": "included"})
+        t.put_yaml(rel, y)
+        hold_fuzz_target(t, HELD)
+        add_proof(t, HELD + "/plain_halts")
+        add_standin(t)
+        make_private(t, "standin")
+        add_proof(t, "standin/standin_eval_fuzzer/plain_halts")
+        add_json_oss_verify_target(t)
+        make_private(t, "json")
+        hold_fuzz_target(t, "json/fuzz-extra")
+        add_proof(t, "json/fuzz-extra/plain_halts")
+        recount(t)
+        self.render(t)
+        self.assertFalse(os.path.lexists(t.path("approvals.yaml")))
+        held = facts.hold(facts.load(t.root))
+        self.assertEqual((held.whole, held.entries, held.ids), ({"json", "standin"}, {HELD, "json/fuzz-extra"}, set()))
+        u = ported_copy(self, t)
+        self.assertEqual(sorted(os.listdir(u.path(layout.proofs_dir("zlib", "api-driver", layout.NEW)))),
+                         ["dune", "lib", "provenance"])
+        return [(layout.OLD, t), (layout.NEW, u)]
+
+    def a_sibling_listed(self):
+        """approvals.yaml lists plain_halts of checksum_fuzzer, with asan_halts, which has no proof, and json's
+        enrollment entry (a ceiling) lists plain_halts, which has none either.  checksum_fuzzer's proof of ubsan_agrees
+        and api-driver's of ubsan_agrees are in no entry."""
+        t = self.tree()
+        for sid in (APPROVED + "/plain_halts", APPROVED + "/ubsan_agrees", UNAPPROVED + "/ubsan_agrees"):
+            add_proof(t, sid)
+        self.render(t)
+        approve(t, entry(APPROVED, statements=["plain_halts", "asan_halts"]), enrolled(RELEASED))
+        self.assertEqual(rules.check(facts.load(t.root)), [])
+        return [(layout.OLD, t)]
+
+    def finding(self, state, enrolled=True):
+        """No approvals.yaml.  checksum_fuzzer holds proofs of plain_halts, ubsan_agrees and asan_agrees, and api-driver
+        one of ubsan_agrees, with no proof library; zlib's finding is in state (finding_hold)."""
+        t = self.tree()
+        for sid in (APPROVED + "/plain_halts", APPROVED + "/ubsan_agrees", APPROVED + "/asan_agrees",
+                    UNAPPROVED + "/ubsan_agrees"):
+            add_proof(t, sid)
+        finding_hold(t, state, enrolled)
+        self.render(t)
+        return t
+
+    def held_whole(self, state, enrolled=True):
+        """finding, whose finding holds zlib whole."""
+        t = self.finding(state, enrolled)
+        self.assertEqual(facts.hold(facts.load(t.root)), facts.Hold({"zlib"}, set(), {}))
+        return [(layout.OLD, t)]
+
+    def open_finding_not_enrolled(self):
+        return self.held_whole("open", enrolled=False)
+
+    def patched_finding(self):
+        return self.held_whole("patched")
+
+    def reported_finding(self):
+        return self.held_whole("reported")
+
+    def open_finding_enrolled(self):
+        """finding, whose open finding of enrolled zlib holds back asan_agrees and its pair's statements alone."""
+        t = self.finding("open")
+        self.assertEqual(facts.hold(facts.load(t.root)), facts.Hold(set(), set(), {"zlib": {
+            "checksum_fuzzer/asan_agrees", "checksum_fuzzer/asan_disagrees_at_most",
+            "checksum_fuzzer/asan_agreement_decidable"}}))
+        return [(layout.OLD, t)]
+
+    # The fates.  Each asserts how the cut, in layout where and with output out, left t's subject.
+
+    def assertKept(self, t, where, out, sid):
+        """The proof folder of sid is in the cut, and the index the cut renders says that sid is proved."""
+        self.assertIn(sid, proof_folders(t))
+        self.assertEqual(index_status(t).get(sid), "proved")
+
+    def assertLibKept(self, t, where, out, unit):
+        """The fuzz target's proof library and build record stay with its kept proofs, and the cut names the library
+        it keeps while it removes a statement folder beside it (release_tree.PARTIAL)."""
+        p, h = unit.split("/")
+        for rel in (layout.proof_lib_dir(p, h, where) + "/Shared.v",
+                    layout.provenance_dir(p, h, where) + "/PROVENANCE.md"):
+            self.assertTrue(os.path.isfile(t.path(rel)), rel)
+        self.assertIn(release_tree.PARTIAL % unit + "\n", out)
+
+    def assertGone(self, t, where, out, subject):
+        """No proof folder of subject, a statement id, a fuzz target or a project, is in the cut."""
+        self.assertEqual(sorted(sid for sid in proof_folders(t) if (sid + "/").startswith(subject + "/")), [])
+
+    def assertNothingOf(self, t, where, out, unit):
+        """No proof folder of the fuzz target unit is in the cut, nor any folder of it in either layout."""
+        self.assertGone(t, where, out, unit)
+        p, h = unit.split("/")
+        for rel in [layout.statement_dir(p, h)] + [kind(p, h, lay) for lay in layout.LAYOUTS for kind in (
+                layout.proofs_dir, layout.counterexamples_dir, layout.findings_dir)]:
+            self.assertFalse(os.path.lexists(t.path(rel)), rel)
+
+    def assertRefuted(self, t, where, out, sid):
+        """The refuting proof of sid is not in the cut, and the output names it."""
+        self.assertGone(t, where, out, sid)
+        self.assertIn("held back as a refutation: %s\n" % sid, out)
+
+    def assertRemovedWhole(self, t, where, out, unit):
+        """The fuzz target's proofs folder is not in the cut, in either layout, and its statement folder is."""
+        p, h = unit.split("/")
+        for lay in layout.LAYOUTS:
+            self.assertFalse(os.path.lexists(t.path(layout.proofs_dir(p, h, lay))), lay)
+        self.assertTrue(os.path.isfile(t.path(layout.statement_dir(p, h), "harness.yaml")))
+
+    # (member, fixture, fate, subjects)
+    ROWS = (
+        ("unheld, listed by no approvals.yaml entry, with no approvals.yaml", no_approvals_held_by_rules, assertKept,
+         (APPROVED + "/plain_halts",)),
+        ("the proof library and build record of a kept fuzz target whose refuting proof goes",
+         no_approvals_held_by_rules, assertLibKept, (APPROVED,)),
+        ("unheld, its fuzz target listed with another statement: both", a_sibling_listed, assertKept,
+         (APPROVED + "/plain_halts", APPROVED + "/ubsan_agrees")),
+        ("unheld, its fuzz target in no entry of an approvals.yaml", a_sibling_listed, assertKept,
+         (UNAPPROVED + "/ubsan_agrees",)),
+        ("project release: private", no_approvals_held_by_rules, assertGone, ("standin",)),
+        ("project held whole by an open finding of a project that is not enrolled", open_finding_not_enrolled,
+         assertGone, ("zlib",)),
+        ("project held whole by a patched finding", patched_finding, assertGone, ("zlib",)),
+        ("project held whole by a reported finding", reported_finding, assertGone, ("zlib",)),
+        ("statement held by an open finding of an enrolled project", open_finding_enrolled, assertGone,
+         (APPROVED + "/asan_agrees",)),
+        ("the siblings of that statement", open_finding_enrolled, assertKept,
+         (APPROVED + "/plain_halts", APPROVED + "/ubsan_agrees")),
+        ("fuzz target of private_harnesses, curl's shape (its project release: private)", no_approvals_held_by_rules,
+         assertNothingOf, ("json/fuzz-extra",)),
+        ("fuzz target of private_harnesses, of a project that publishes", no_approvals_held_by_rules, assertNothingOf,
+         (HELD,)),
+        ("refuting proof", no_approvals_held_by_rules, assertRefuted, (APPROVED + "/asan_halts",)),
+        ("fuzz target whose proofs folder holds only lib/, provenance/, dune", no_approvals_held_by_rules,
+         assertRemovedWhole, (UNAPPROVED,)),
+    )
+
+    def test_each_proof_folder_is_kept_or_left_out_by_its_hold(self):
+        """N1: each row of ROWS, after the cut of its fixture, which completes (run returns 0), counts in its summary
+        line the proof folders it keeps and no other, and leaves a release that `oft generate --check` and `oft lint`
+        pass."""
+        for fixture in dict.fromkeys(row[1] for row in self.ROWS):
+            with self.subTest(fixture=fixture.__name__):
+                for where, t in fixture(self):
+                    rc, out = release(t)
+                    self.assertEqual(rc, 0, out)
+                    for member, of, fate, subjects in self.ROWS:
+                        for subject in subjects if of is fixture else ():
+                            with self.subTest(member=member, subject=subject, layout=where):
+                                fate(self, t, where, out, subject)
+                    self.assertIn("oft release-tree: kept %d proof(s) of " % len(proof_folders(t)), out)
+                    self.assertEqual(t.generate(check=True), 0, t.last_output)
+                    self.assertEqual([str(x) for x in t.lint()], [])
+
+    def test_the_output_names_no_listed_statement_and_no_ceiling(self):
+        """N2: the cut no longer reads approvals.yaml for the proofs it keeps, so it names no listed statement that has
+        no proof and counts none of an enrollment entry (a ceiling).  After the cut of the fixture of ROWS that has an
+        approvals.yaml (a_sibling_listed, whose entries list such statements), no line of the output says `listed` or
+        `ceiling`, and the summary line ends with the paths the cut removed."""
+        [(_, t)] = self.a_sibling_listed()
+        rc, out = release(t)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual([line for line in out.splitlines() if "listed" in line or "ceiling" in line], [])
+        self.assertEqual([line for line in out.splitlines() if line.startswith("oft release-tree: ")],
+                         ["oft release-tree: kept 3 proof(s) of 2 fuzz target(s); removed 0 path(s) of proofs folders; "
+                          "removed approvals.yaml and .github/CODEOWNERS"])
+
+
+class CutLineEdits(unittest.TestCase):
+    """The line edits of the cut for a held fuzz target (release_tree.cut_project_yaml, cut_port_text): each removes
+    whole lines and keeps every other byte, in the shapes a person or a tool writes."""
+
+    def test_the_field_goes_with_the_comments_above_on_and_under_it(self):
+        text = ("project: p1\n# kept: the comment of harnesses\nharnesses:\n- name: kept_target\n"
+                "# about held_target, above its entry\n- {name: held_target, status: included}\n"
+                "# kept: directly above an empty line\n\n"
+                "# the hold, above the field\nprivate_harnesses:   # on the field's line\n"
+                "- held_target  # on an item\n  # under the field\nbuild:\n  oss_verify:\n"
+                "    repository: \"%s\"  # the port\n    commit: %s\n" % (schema.INTERNAL_PORT_REPOSITORY, "d" * 40))
+        self.assertEqual(release_tree.cut_project_yaml(text, ("held_target",), True),
+                         "project: p1\n# kept: the comment of harnesses\nharnesses:\n- name: kept_target\n"
+                         "# kept: directly above an empty line\n\nbuild:\n  oss_verify:\n"
+                         "    repository: none  # the port\n    commit: %s\n" % ("d" * 40))
+
+    def test_a_yaml_key_or_item_that_names_a_held_fuzz_target_goes_whole(self):
+        """Each block that names it goes whole, as a key with its value or as a list item; the first key of a list
+        item takes the item; a line that is no part of the YAML structure (a comment) goes alone."""
+        text = ("fuzz_targets:\n- kept_target\n- held_target\ntargets:\n  held_target:\n    builds:\n"
+                "      plain: {file: held_target.plain}\n  kept_target:\n    builds: {}\n"
+                "uninstrumented:\n- name: held_target.o\n  kind: libc\n- name: kept.o\n  kind: libc\n"
+                "# built with held_target\nnote: |\n  the build of\n  held_target too\nend: true\n")
+        self.assertEqual(release_tree.cut_port_text("manifest.yaml", text, ["p1/held_target"]),
+                         "fuzz_targets:\n- kept_target\ntargets:\n  kept_target:\n    builds: {}\n"
+                         "uninstrumented:\n- name: kept.o\n  kind: libc\nend: true\n")
+
+    def test_a_line_of_any_other_file_that_names_a_held_fuzz_target_goes_alone(self):
+        text = "make held_target\nmake kept_target held_target_v2\nrow\tp1/held_target\tx\n"
+        self.assertEqual(release_tree.cut_port_text("build.sh", text, ["p1/held_target"]),
+                         "make kept_target held_target_v2\n")
+
+
+class CutPackReadings(unittest.TestCase):
+    """release_tree.cut_pack_readings: the packer's measured tables name one unit a row, so the cut takes out the
+    rows of the units it does not carry.  A row for a held project's fuzz target would say in the release that the
+    target exists, which is the one thing a hold withholds."""
+
+    def tree_with(self, text):
+        t = Tree(render=False)
+        self.addCleanup(t.close)
+        t.write(release_tree.PACK, text)
+        return t
+
+    TABLE = ('"""a stand-in packer."""\n'
+             "SWEEP_TIMES = (\n"
+             '    ("a/one", "r1", 10, "finished"),\n'
+             '    ("held/two", "r1", 20, "finished"),\n'
+             ")\n"
+             "\n"
+             "FARM_CHECKS = (\n"
+             '    ("a/one", "farm/20261107t181007z-ad5fe9", "2026-11-07"),\n'
+             '    ("held/two", "farm/20261107t222300z-b2f735", "2026-11-07"),\n'
+             ")\n"
+             "\n"
+             'OTHER = (("not a row", 1),)\n')
+
+    def test_the_rows_of_a_unit_the_cut_does_not_carry_go_and_the_rest_stay(self):
+        t = self.tree_with(self.TABLE)
+        text, gone = release_tree.cut_pack_readings(t, {"a/one"})
+        self.assertEqual(gone, ["held/two"])
+        self.assertNotIn("held/two", text)
+        self.assertIn('    ("a/one", "r1", 10, "finished"),\n', text)
+        self.assertIn('    ("a/one", "farm/20261107t181007z-ad5fe9", "2026-11-07"),\n', text)
+        # everything outside the two tables is kept as written, the tuple that is no row among it
+        self.assertIn('OTHER = (("not a row", 1),)\n', text)
+        self.assertTrue(text.startswith('"""a stand-in packer."""\n'))
+
+    def test_nothing_is_rewritten_when_the_cut_carries_every_unit(self):
+        t = self.tree_with(self.TABLE)
+        self.assertIsNone(release_tree.cut_pack_readings(t, {"a/one", "held/two"}))
+
+    def test_a_table_line_that_is_no_row_stops_the_cut(self):
+        """A table nobody can read row by row would ship rows nobody filtered, so it is an error and not a file
+        copied through."""
+        t = self.tree_with(self.TABLE.replace('    ("held/two", "r1", 20, "finished"),\n', "    # a comment\n"))
+        with self.assertRaises(ValueError) as e:
+            release_tree.cut_pack_readings(t, {"a/one"})
+        self.assertIn("is no row naming a unit", str(e.exception))
+
+    def test_the_tracked_packer_is_read_row_by_row_and_keeps_every_unit_it_carries(self):
+        """The real tools/oft/pack.py: with every unit it names carried, no row drops; with one held, that one
+        unit's rows drop and nothing else moves."""
+        from oft import pack
+        t = Tree(render=False)
+        self.addCleanup(t.close)
+        with open(os.path.join(REPO, release_tree.PACK), encoding="utf-8") as f:
+            t.write(release_tree.PACK, f.read())
+        units = set(pack.sweep()) | set(pack.farm_checks())
+        self.assertIsNone(release_tree.cut_pack_readings(t, units))
+        # one of its own units, chosen from the table rather than named here: a test ships too
+        held = sorted(units)[0]
+        kept = sorted(units)[-1]
+        text, gone = release_tree.cut_pack_readings(t, units - {held})
+        self.assertEqual(gone, [held])
+        self.assertNotIn(held, text)
+        self.assertIn(kept, text)
+
+
+class CutHandlerRows(unittest.TestCase):
+    """release_tree.cut_handler_rows: failure_handlers.tsv names one unit a row, so the cut takes out the rows of the
+    tree's units it does not carry and every row of a project held back whole, and keeps every other row; it reads the
+    table as the publication gate does, and refuses what the gate would."""
+
+    TABLE = "project\tharness\tvalue\tevidence\na\tone\tnone\tread\nheld\ttwo\tnone\tread\ngone\tthree\tnone\tread\n"
+
+    def tree_with(self, text):
+        t = Tree(render=False)
+        self.addCleanup(t.close)
+        t.write(release_tree.HANDLERS, text)
+        return t
+
+    def test_the_rows_of_a_withheld_unit_go_and_the_rest_stay(self):
+        text, gone = release_tree.cut_handler_rows(self.tree_with(self.TABLE), {"held/two"}, set())
+        self.assertEqual((text, gone), ("project\tharness\tvalue\tevidence\na\tone\tnone\tread\n"
+                                        "gone\tthree\tnone\tread\n", ["held/two"]))
+        self.assertIsNone(release_tree.cut_handler_rows(self.tree_with(self.TABLE), set(), set()))
+
+    def test_every_row_of_a_project_held_back_whole_goes_even_a_fuzz_target_the_tree_no_longer_has(self):
+        # facts.py never removes a row, so a held project may have rows of fuzz targets the tree no longer lists,
+        # and the publication gate refuses a release that keeps any row of a project held back whole (#2647's review
+        # of record, S1)
+        table = self.TABLE + "held\told_one\tnone\tread\n"
+        text, gone = release_tree.cut_handler_rows(self.tree_with(table), {"held/two"}, {"held"})
+        self.assertEqual((text, gone), ("project\tharness\tvalue\tevidence\na\tone\tnone\tread\n"
+                                        "gone\tthree\tnone\tread\n", ["held/old_one", "held/two"]))
+        # with no unit of the tree withheld, the held project's rows still go
+        self.assertEqual(release_tree.cut_handler_rows(self.tree_with(table), set(), {"held"})[1],
+                         ["held/old_one", "held/two"])
+
+    def test_a_table_the_gate_would_refuse_stops_the_cut(self):
+        # the cut refuses each table the publication gate refuses (tools/publish/verify's handler_rows_held), so a
+        # tree the cut accepts makes a release the gate accepts
+        for text in (self.TABLE + "a line\n", self.TABLE + "\n", self.TABLE.replace("project\t", "who\t", 1),
+                     self.TABLE.replace("held\ttwo", "\ufeffheld\ttwo"), self.TABLE.replace("held\ttwo", "Held\ttwo"),
+                     self.TABLE.replace("held\ttwo", " held\ttwo"), self.TABLE.replace("\n", "\r\n"),
+                     self.TABLE.replace("\n", "\r"), self.TABLE.replace("\n", "\u2028")):
+            with self.subTest(text=text), self.assertRaises(ValueError):
+                release_tree.cut_handler_rows(self.tree_with(text), {"held/two"}, {"held"})
+
+    @unittest.skipUnless(INTERNAL_TREE, NOT_INTERNAL)
+    def test_the_gate_accepts_every_table_the_cut_writes(self):
+        # the cut's output, through the gate's own reader: no held row, no malformed line
+        import importlib.machinery
+        import importlib.util
+        verify_path = os.path.join(REPO, "tools", "publish", "verify")
+        loader = importlib.machinery.SourceFileLoader("publish_verify", verify_path)
+        spec = importlib.util.spec_from_loader("publish_verify", loader)
+        verify = importlib.util.module_from_spec(spec)
+        loader.exec_module(verify)
+        table = self.TABLE + "held\told_one\tnone\tread\n"
+        text, _ = release_tree.cut_handler_rows(self.tree_with(table), {"held/two"}, {"held"})
+        self.assertEqual(verify.handler_rows_held(text.encode(), {"held"}), ([], []))
+        # and the control: the uncut table holds held rows the gate refuses
+        self.assertEqual(len(verify.handler_rows_held(table.encode(), {"held"})[0]), 2)
+
+
+class StripInternalBlocks(unittest.TestCase):
+    """release_tree.strip_internal_blocks: a marked block of AGENTS.md is text for this repository only, so the cut
+    takes out each line from one that holds BEGIN-INTERNAL through the next one that holds END-INTERNAL, each with its
+    own line end, and keeps every other line as it is.  It refuses a marker line with no partner."""
+
+    START, END = "<!-- BEGIN-INTERNAL: for this repository only -->", "<!-- END-INTERNAL -->"
+
+    def test_internal_block_none_leaves_the_text_as_it_is(self):
+        for text in ("", "A kept line.\nAnother kept line.\n",
+                     "A kept line about begin-internal and end-internal, in lower case.\n",
+                     "A kept line.\nThe last line, with no line end"):
+            with self.subTest(text=text):
+                self.assertEqual(release_tree.strip_internal_blocks(text), text)
+
+    def test_internal_block_at_the_end_goes_with_its_line_ends(self):
+        # the shape AGENTS.md has: the block after the last paragraph, a blank line after its start, its end the last
+        # line
+        kept = "# Agents\n\nA kept paragraph line.\n"
+        text = (kept + self.START + "\n\n## Only here\n\nA line for this repository only.\nAnother one.\n" + self.END
+                + "\n")
+        self.assertEqual(release_tree.strip_internal_blocks(text), kept)
+
+    def test_internal_block_end_line_with_no_line_end_goes_too(self):
+        text = "A kept line.\n" + self.START + "\nNot for a release.\n" + self.END
+        self.assertEqual(release_tree.strip_internal_blocks(text), "A kept line.\n")
+
+    def test_internal_block_that_is_the_whole_text_leaves_an_empty_text(self):
+        # an empty text, not None: the release keeps the file, empty
+        for text in (self.START + "\nNot for a release.\n" + self.END + "\n", self.START + "\n" + self.END):
+            with self.subTest(text=text):
+                self.assertEqual(release_tree.strip_internal_blocks(text), "")
+
+    def test_internal_blocks_two_are_both_taken_out(self):
+        text = ("before\n" + self.START + "\none\n" + self.END + "\nbetween\n" + self.START + "\ntwo\n" + self.END
+                + "\nafter\n")
+        self.assertEqual(release_tree.strip_internal_blocks(text), "before\nbetween\nafter\n")
+
+    def test_internal_block_line_ends_other_than_lf(self):
+        """Every line break that str.splitlines knows ends a line, and each kept line keeps its own."""
+        b, e = self.START, self.END
+        for name, text, want in (
+                ("CRLF", "kept\r\n" + b + "\r\nbody\r\n" + e + "\r\nafter\r\n", "kept\r\nafter\r\n"),
+                ("a lone CR", "kept\r" + b + "\rbody\r" + e + "\rafter\r", "kept\rafter\r"),
+                ("a form feed", "kept\x0c" + b + "\x0cbody\n" + e + "\x0cafter\n", "kept\x0cafter\n"),
+                ("U+0085", "kept\x85" + b + "\x85body\x85" + e + "\x85after\x85", "kept\x85after\x85"),
+                ("U+2028", "kept\u2028" + b + "\u2028body\u2028" + e + "\u2028after\u2028", "kept\u2028after\u2028"),
+                ("a marker after a U+0085 and a CR", "a\x85b\rBEGIN-INTERNAL\rx END-INTERNAL y\n", "a\x85b\r"),
+                ("each kept line end as it is", "one\r\ntwo\rthree\n" + b + "\r\nbody\x85" + e + "\u2028four",
+                 "one\r\ntwo\rthree\nfour")):
+            with self.subTest(name):
+                self.assertEqual(release_tree.strip_internal_blocks(text), want)
+
+    def test_internal_block_refusals(self):
+        b, e = self.START, self.END
+        for text, why in (
+                ("one\n<!-- BEGIN-INTERNAL END-INTERNAL -->\ntwo\n",
+                 "line 2 holds both BEGIN-INTERNAL and END-INTERNAL"),
+                (b + "\none\n" + b + "\ntwo\n" + e + "\n", "line 3 starts a block inside the block that line 1 starts"),
+                ("one\ntwo\n" + e + "\n", "line 3 ends a block that no line starts"),
+                (b + "\none\n" + e + "\n" + e + "\n", "line 4 ends a block that no line starts"),
+                ("one\n" + b + "\ntwo\n", "line 2 starts a block that no line ends"),
+                (b + "\none\n" + e + "\ntwo\n" + b + "\nthree", "line 5 starts a block that no line ends"),
+                ("one\r" + b + "\rtwo\r", "line 2 starts a block that no line ends")):
+            with self.subTest(text=text), self.assertRaisesRegex(ValueError, "^%s$" % re.escape(why)):
+                release_tree.strip_internal_blocks(text)
 
 
 class WriteApprovals(unittest.TestCase):
@@ -1526,9 +2751,9 @@ class WrittenHere(unittest.TestCase):
 
 class EnrollmentEntry(unittest.TestCase):
     """An entry that the merge of a project's enrollment pull request on the OSS Verify port writes (origin enrollment)
-    names that merge, and is a ceiling: it lists the statements its enrollment facts pull requests wrote, and a release
-    carries the proofs of those statements that exist, that no hold keeps out and that do not refute (the approvals
-    plan)."""
+    names that merge, and is a ceiling: it lists the statements its enrollment facts pull requests wrote (the approvals
+    plan).  The rules still check it (rules._approvals), and a cut with such entries completes; which proofs the cut
+    keeps is KeepRule's, whatever an entry lists."""
 
     def setUp(self):
         self.t = Tree()
@@ -1650,47 +2875,6 @@ class EnrollmentEntry(unittest.TestCase):
         self.cut()
         self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, "plain_halts", "Proof.v")))
         self.assertEqual(index_status(self.t)[APPROVED + "/plain_halts"], "proved")
-
-    def test_a_ceiling_statement_with_no_proof_is_counted_apart(self):
-        """A ceiling's statements with no proof are its normal state: one line counts them.  A statement of an exact
-        entry with no proof is still named."""
-        approve(self.t, entry(RELEASED), enrolled(APPROVED, ["asan_halts", "plain_halts", "ubsan_agrees"]))
-        out = self.cut()
-        self.assertNotIn("listed, but no proof in this checkout: %s/" % APPROVED, out)
-        self.assertIn("listed, but no proof in this checkout: %s/plain_halts\n" % RELEASED, out)
-        self.assertIn("2 statement(s) that enrollment entries list have no proof in this checkout (an enrollment entry "
-                      "is a ceiling)\n", out)
-        self.assertIn("1 listed statement(s) with no proof", out)
-
-    def test_a_refuting_proof_of_an_enrollment_entry_is_not_kept(self):
-        add_proof(self.t, APPROVED + "/asan_halts")
-        refute(self.t, APPROVED + "/asan_halts")
-        self.assertEqual(self.t.generate(), 0, self.t.last_output)
-        approve(self.t, enrolled(APPROVED, ["plain_halts", "asan_halts"]))
-        self.assertEqual(self.errors(), [])
-        self.cut()
-        self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, "plain_halts", "Proof.v")))
-        self.assertFalse(os.path.lexists(self.t.path("proofs", APPROVED, "asan_halts")))
-
-    def test_an_unlisted_proof_is_still_removed(self):
-        add_proof(self.t, APPROVED + "/ubsan_agrees")
-        self.assertEqual(self.t.generate(), 0, self.t.last_output)
-        approve(self.t, enrolled(APPROVED, ["plain_halts"]))
-        self.cut()
-        self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, "plain_halts", "Proof.v")))
-        for gone in ("proofs/%s/ubsan_agrees" % APPROVED, "proofs/" + UNAPPROVED):
-            self.assertFalse(os.path.lexists(self.t.path(gone)), gone)
-
-    def test_a_statement_added_after_the_merge_ships_no_proof(self):
-        # the merge's enrollment facts pull requests added plain_halts; a later change added asan_halts, and its proof
-        approve(self.t, enrolled(APPROVED, ["plain_halts"]))
-        add_proof(self.t, APPROVED + "/asan_halts")
-        self.assertEqual(self.t.generate(), 0, self.t.last_output)
-        self.assertEqual(self.errors(), [])
-        self.cut()
-        self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, "plain_halts", "Proof.v")))
-        self.assertFalse(os.path.lexists(self.t.path("proofs", APPROVED, "asan_halts")))
-        self.assertNotEqual(index_status(self.t).get(APPROVED + "/asan_halts"), "proved")
 
     def test_an_enrollment_entry_naming_a_removed_fuzz_target_or_statement_is_not_an_error(self):
         """N3: a new build removed zlib/gone_fuzzer, and checksum_fuzzer's gone_halts, after their enrollment merge;

@@ -232,6 +232,9 @@ class BaseMovedUnderTheChecks(Case):
         self.assertIn("move 0", out)
         self.assertIn(repo.tip[:7], summary)
 
+    def test_a_base_moved_by_the_licence_record_generator_fails(self):
+        self.fails([{"dev/licence/made_from.py": "made_from\n"}], "dev/licence/made_from.py", "the tools")
+
     def test_a_base_moved_by_the_workflow_fails(self):
         self.fails([{".github/workflows/pr.yml": "name: pr\non: push\n"}], ".github/workflows/pr.yml",
                    "the workflows")
@@ -444,6 +447,7 @@ class TheRule(unittest.TestCase):
                 ("tools/oft/check.py", "the tools"),
                 ("tools/oft/ci/check-units.sh", "the tools"),
                 ("dev/enroll/check.sh", "the tools"),
+                ("dev/licence/made_from.py", "the tools"),
                 (".github/workflows/pr.yml", "the workflows"),
                 (".github/actions/plan-drafts/action.yml", "the workflows"),
                 (".claude/skills/review-facts/SKILL.md", "the tools"),
@@ -655,6 +659,8 @@ class TheRule(unittest.TestCase):
         "approvals.yaml",
         # the change ledgers (oft change-ledger): no job of a run opens them, and `oft release-tree` removes changes/
         "changes/*/*",
+        # the fuzz targets' ledgers (oft change-ledger --target), under changes/ for the same reason
+        "changes/targets/*/*/*",
         # the shared generated files and the pages a merge renders (paths.SHARED, and no check opens a README.md
         # under projects/: test_keys.Checker)
         "README.md", "index/STATUS.md", "index/PROOFS.md", "index/*.tsv", "analyses/harness-checks/checks.tsv",
@@ -663,7 +669,7 @@ class TheRule(unittest.TestCase):
         "projects/{project}/README.md", "projects/{project}/{harness}/README.md",
         # what an agent reads before it works here, and the licences a release ships: no job of a run opens either
         "AGENTS.md", "LICENSES/anthropic-proofs-LICENSE", "LICENSES/anthropic-proofs-LICENSE-MIT",
-        "LICENSES/anthropic-proofs-NOTICE",
+        "LICENSES/anthropic-proofs-NOTICE", "LICENSES/coq-community-huffman-LICENSE",
         # the OSS Verify stream's operational tools: no job reads them from the base.  Without pull request 496,
         # which adds the directory, no job of a run opens dev/stream/ at all; 496 adds a stream_tools job, and that
         # job checks out the head alone and runs the head's own checker over it, on the lines the change wrote

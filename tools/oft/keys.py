@@ -94,7 +94,9 @@ VERSION = "4"
 # and oft/ci/port-check.sh move a tree to the per-project layout and check the moved tree, and oft/nsrename.py renames
 # a tree's Rocq namespace (`oft rename-namespace`); no check opens any of them.  oft/disclosure.py is here because
 # only oft/lint.py and oft/release_tree.py import it, and both are here too; oft/model.py and oft/model.yaml
-# because only oft/lint.py's release rules `model` and `pins` read them; oft/migration-pin.yaml because
+# because only oft/lint.py's release rules `model` and `pins` read them; oft/third-party-proofs.yaml and the schema of
+# its rows, oft/schemas/third-party-proofs.yaml, because only oft/lint.py's licence and private-data rules read them;
+# oft/migration-pin.yaml because
 # only pr.yml's plan step and release-check.yml's read it, from the base, and the pin's own digests leave that file
 # out (pr.yml's plan step); oft/ci/pr-steps.sh and oft/ci/pin-digests.sh because they are run by hand on a clone, to
 # rehearse a pull request's run and to print the digests a pin names; oft/ci/regenerate-shared.sh because index.yml
@@ -103,19 +105,27 @@ VERSION = "4"
 # work (`oft plan --contracts`), oft/prove.py reports a change's functions and contracts from them (`oft prove`),
 # oft/check_run.py posts that report as a pull request check (`oft prove --post-check`) and oft/ci/prove-pr runs both
 # in prove.yml's job: no check reads one; and oft/change_ledger.py sums what a change cost from its sessions'
-# transcripts and git (`oft change-ledger`).  oft/lps_impact.py is here because it is run by hand on a clone, and
-# starts a container that runs `python3 -m oft.check` in an image of its own, so no check loads it.  Two directories
-# are here whole: enroll/, the scripts that carry a merged theorem-labs/oss-verify enrollment into these facts
-# (tools/enroll/README.md), which enroll.yml and enroll-build.yml run and which `oft release-tree` removes from a
-# release, and publish/, the tools that publish a release, which the publishing workflow runs.  No module of
-# tools/oft imports either.
+# transcripts and git (`oft change-ledger`).  oft/deviation.py reads a fuzz target's deviation record again from its
+# build record and the TLS scans of its builds, for oft/lint.py and the enrolment writer; rules.check does not import
+# it, so no check opens it.  oft/lps_impact.py is here because it is run by hand on a clone, and
+# starts a container that runs `python3 -m oft.check` in an image of its own, so no check loads it.  Three
+# directories are here whole: enroll/, the scripts that carry a merged theorem-labs/oss-verify enrollment into these
+# facts (tools/enroll/README.md), which enroll.yml and enroll-build.yml run and which `oft release-tree` removes
+# from a release; publish/, the tools that publish a release, which the publishing workflow runs; and budgetwit/,
+# the generator of budget-premise witness twins, which writes candidate proof text for a person to finish and which
+# no check job opens.  No module of tools/oft imports any of them.
 NOT_THE_CHECKER = re.compile(
-    r"(?:oft/__main__\.py|oft/lint\.py|oft/lint-exceptions\.yaml|oft/urls\.py|oft/ledger\.py|oft/approvals\.py"
+    r"(?:oft/__main__\.py|oft/lint\.py|oft/lint-exceptions\.yaml|oft/third-party-proofs\.yaml"
+    r"|oft/schemas/third-party-proofs\.yaml|oft/urls\.py"
+    r"|oft/ledger\.py|oft/approvals\.py"
     r"|oft/lps_impact\.py|oft/release_tree\.py|oft/revisions\.py|oft/plan\.py|oft/pack\.py|oft/proof-times\.tsv"
     r"|oft/port\.py|oft/nsrename\.py|oft/disclosure\.py|oft/model\.py|oft/model\.yaml|oft/migration-pin\.yaml"
     r"|oft/README\.md|oft/symbols\.py|oft/elf\.py|oft/classify\.py|oft/contracts\.py|oft/prove\.py|oft/check_run\.py"
-    r"|oft/change_ledger\.py"
+    r"|oft/change_ledger\.py|oft/deviation\.py"
     r"|oft/templates/(?!(?:proof|harness)-dune\.tmpl$).*|oft/tests/.*|oft/ci/facts-review-.*|oft/ci/port-check\.sh"
+    r"|budgetwit/.*"
+    # This line ends the pattern, and tools/publish/tests/test_dry_run.py reads '|publish/.*)' from it to tell a
+    # keys.py that already leaves tools/publish/ out whole: keep that text together and last.
     r"|oft/ci/pr-steps\.sh|oft/ci/pin-digests\.sh|oft/ci/regenerate-shared\.sh|oft/ci/prove-pr|enroll/.*|publish/.*)")
 STORE_BRANCH = "check-results"
 
@@ -441,12 +451,64 @@ def check_hand_dune(repo, facts, change=None):
                                        names.rocq_tests(namespace)))
 
 
+def unit_name(unit):
+    """(project, harness) of the unit name <project>/<harness> (layout.split_unit); NoKey, naming it, for any other
+    text: a name that is no such pair names no statement folder, so there is nothing to key, and a lookup refuses
+    rather than defaulting (OSSV-457)."""
+    try:
+        return layout.split_unit(unit)
+    except ValueError:
+        raise NoKey("no unit %r: a unit name is <project>/<harness>" % unit) from None
+
+
+def a_harness_folder(unit, entry):
+    """Whether unit's statement path is a fuzz target's statement folder at a commit where that path's listing line,
+    "<mode> <type> <object id>", is entry (None: the commit has no such path).  It has to be a folder -- a name that
+    lands on a file of the project, projects/<p>/README.md or projects/<p>/project.yaml, is a path that exists and
+    no unit -- and its name has to be none of the names layout.NOT_A_HARNESS keeps for the project's own folders
+    (bin/, patches/, unpatched-bin/), which hold no statement and are no fuzz target's.  NoKey for a name that is
+    no <project>/<harness> pair (unit_name)."""
+    harness = unit_name(unit)[1]
+    return entry is not None and entry.split()[1] == "tree" and harness not in layout.NOT_A_HARNESS
+
+
+def no_unit(unit, statements, facts, change, attrs):
+    """Refuse (NoKey) a unit whose statement folder, projects/<p>/<h> in either layout, is a fuzz target's folder
+    (a_harness_folder) at neither of the commits a key is computed over.  A name like that is a typo, a harness
+    nobody enrolled, or a path of the project that is no unit, and every component it reads of its own -- its
+    harness folder and, for a build, its proofs folder -- is "-", so keys() would answer a well-formed key for a
+    unit no tree has, distinct from the real unit's and comparable with it as a string (OSSV-457, found
+    2026-11-09: zstd/huf-decompress keyed d1b63d9f8f77, zstd/huf_decompress d3594437b472).  "Not found" and
+    "nothing to find" give different answers, so this is a refusal, not a default.
+
+    A harness a change enrols is not this case and still keys: its statement folder is absent at facts, the base,
+    and present at change, and its proofs folder is often absent too.  Of the 2,216 units the 13 commits of main
+    that add a Statements.v bring, 1,346 read "-" for both components at their base, so neither component alone,
+    nor the two together, tells a typo from a new harness; where the folder is does."""
+    if not any(a_harness_folder(unit, a.entry.get(statements)) for a in attrs.values()):
+        where = facts if facts == change else "%s or %s" % (facts, change)
+        raise NoKey("no unit %s: %s is no fuzz target's statement folder at %s" % (unit, statements, where))
+
+
+def have_unit(repo, commit, units):
+    """The units of `units` whose statement folder is a fuzz target's at commit (a_harness_folder), read by one git:
+    the units keys() can key with that commit as its facts.  A caller that keys a tree against a base asks this
+    first, since a unit the base has not is no key there (no_unit) and no comparison either."""
+    want = {layout.statement_dir(*unit_name(u)): u for u in units}
+    rows = ls_tree(repo, commit, "--", *sorted(want)) if want else []
+    return {want[path] for mode, kind, oid, path in rows
+            if path in want and a_harness_folder(want[path], "%s %s %s" % (mode, kind, oid))}
+
+
 def keys(repo, wanted, facts, change, tools, rocqchk=False):
     """{(unit, part): (key, {component: id})} for each (unit, part) in wanted, with the statements of commit facts,
     the proofs, counterexamples and findings of commit change, in either layout, and the checker of the tools at
     commit tools.  A component's id is a digest of its entries and a digest of its files' checkout attributes
     (Attributes.id); "-" is a path that does not exist.  NoKey for a unit with what a part of it reads (its proofs,
-    counterexamples or findings, or its project's unpatched.yaml) in both layouts at change."""
+    counterexamples or findings, or its project's unpatched.yaml) in both layouts at change, and for a name that is
+    a fuzz target's statement folder at neither commit (no_unit, by a_harness_folder: a folder under projects/<p>/
+    whose name is none of layout.NOT_A_HARNESS, so a typo, a harness nobody enrolled, a name that lands on a file
+    of the project and one of the project's own reserved folders are each refused)."""
     checker_id = checker(repo, tools)
     checker_image, runner_image = images(repo, facts)
     attrs = {facts: Attributes(repo, facts, FACTS_PATHS + (layout.OLD_TOPS if change == facts else ()))}
@@ -460,7 +522,7 @@ def keys(repo, wanted, facts, change, tools, rocqchk=False):
     at = attrs[change]
     out = {}
     for unit, part in wanted:
-        p, h = unit.split("/", 1)
+        p, h = unit_name(unit)
         # component: (commit, root, the paths left out of it).  unitpaths.own gives each path in each layout: one that
         # a change brings (layout.is_change) is read at change, in the layout it has there (Attributes.either: NoKey
         # for both), with what unitpaths.drop leaves out of it in that layout; every other path, the same in both
@@ -469,6 +531,7 @@ def keys(repo, wanted, facts, change, tools, rocqchk=False):
             new, old = unitpaths.own(unit, part, layout.NEW), unitpaths.own(unit, part, layout.OLD)
         except ValueError as e:
             raise NoKey(str(e)) from None
+        no_unit(unit, new["harness"], facts, change, attrs)
         own = {}
         for name, rel in new.items():
             if layout.is_change(rel):

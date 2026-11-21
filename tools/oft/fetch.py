@@ -155,8 +155,9 @@ def _download(url_or_path, dest, want_bytes, want_sha, pins):
 
 
 def _expected(proj):
-    """{member name: its pin (file, bytes, sha256)} for every published build."""
-    return {"%s/%s" % (h.name, rec["file"]): rec for h in proj.harnesses.values() for _b, rec in h.builds()}
+    """{member name: its pin (file, bytes, sha256)} for every published build, original and classifier."""
+    return {"%s/%s" % (h.name, rec["file"]): rec for h in proj.harnesses.values()
+            for _ident, _module, rec, _rel in h.published_images()}
 
 
 def _other_harnesses(proj, want):
@@ -393,12 +394,11 @@ def fetch(root, projects, source=None, all_projects=False, only_check_assets=Fal
 
 
 def verify_builds(root, h, out=sys.stdout):
-    """(builds checked, problems) of harness h: each published build is present under root, with the size and SHA-256
-    its harness.yaml records.  Prints a line for each problem."""
+    """(binaries checked, problems) of harness h: each published build, original and classifier is present under root,
+    with the size and SHA-256 its harness.yaml records.  Prints a line for each problem."""
     n = bad = 0
-    for b, rec in h.builds():
+    for _ident, _module, rec, rel in h.published_images():
         n += 1
-        rel = h.elf_path(b)
         p = os.path.join(root, rel)
         if not os.path.isfile(p):
             print("%s: missing (run ./oft fetch %s)" % (rel, h.project.name), file=out)
@@ -410,8 +410,8 @@ def verify_builds(root, h, out=sys.stdout):
 
 
 def verify_sha(root, projects, out=sys.stdout):
-    """Every published build of every included harness of the projects is present, and has the size and SHA-256 its
-    harness.yaml records (verify_builds)."""
+    """Every published build, original and classifier of every included harness of the projects is present, and has
+    the size and SHA-256 its harness.yaml records (verify_builds)."""
     tree = facts.load(root)
     bad = n = 0
     for name in projects:

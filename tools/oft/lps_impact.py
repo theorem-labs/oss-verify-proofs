@@ -136,6 +136,9 @@ STAGE_OF_EXIT = {124: "timeout", 125: "docker-start", 126: "not-executable", 127
 WORK_IN_CONTAINER = "/oftwork"
 # `oft check` names the compiler's log of a failure in its error line, as `(see <path>)`.
 SEE_LOG = re.compile(r"\(see ([^)\s]+)\)")
+# The line that fail_details prints on standard error for each log path that log_detail refuses: the arm, the path.
+REFUSED = ("lps-impact: %s: refused the log path a failure names, "
+           "it is not a file of this unit's harvested logs: %s\n")
 # What is worth copying out of the container's TMPDIR, and how much of a log is kept.
 LOG_SUFFIXES = (".log", ".out", ".stderr", ".err")
 LOG_TAIL_BYTES = 1 << 20
@@ -219,16 +222,28 @@ def order_first(units, first):
 ERROR_LINE = re.compile(r"^(?:FAIL |error: |Error)")
 
 
+def one_line(line):
+    """A line of output as a row keeps it: stripped, each run of white space one space, at most 400 characters.
+    first_error and proof_outcomes keep a line this way, and fail_details keys a line this way for with_detail."""
+    return re.sub(r"\s+", " ", line.strip())[:400]
+
+
 def first_error(text):
     """The first line of `oft check` output that names a failure; "" when none does."""
     for line in text.splitlines():
         line = line.strip()
         if ERROR_LINE.match(line):
-            return re.sub(r"\s+", " ", line)[:400]
+            return one_line(line)
     for line in text.splitlines():
         if "Error" in line or "error" in line:
-            return re.sub(r"\s+", " ", line.strip())[:400]
+            return one_line(line)
     return ""
+
+
+def fail_label(line):
+    """The label of a `FAIL <label>: ...` line, or None when the line has none."""
+    m = FAIL_LABEL.match(line)
+    return m.group(1).strip() if m else None
 
 
 def is_proof_label(label):
@@ -245,11 +260,10 @@ def proof_outcomes(text):
     and a proof named by neither never ran: the unit ended before it."""
     failed, passed = {}, set()
     for raw in text.splitlines():
-        m = FAIL_LABEL.match(raw)
-        if m:
-            label = m.group(1).strip()
+        label = fail_label(raw)
+        if label is not None:
             if is_proof_label(label):
-                failed.setdefault(label, re.sub(r"\s+", " ", raw.strip())[:400])
+                failed.setdefault(label, one_line(raw))
             continue
         m = PROOF_PASS.match(raw)
         if m and is_proof_label(m.group(1)):
@@ -265,10 +279,9 @@ def stage_of(code, err):
         return "none"
     if code in STAGE_OF_EXIT:
         return STAGE_OF_EXIT[code]
-    m = FAIL_LABEL.match(err or "")
-    if not m:
+    label = fail_label(err or "")
+    if label is None:
         return "no-diagnostic"
-    label = m.group(1).strip()
     if label == "statements":
         return "statements"
     if is_proof_label(label):
@@ -445,35 +458,67 @@ def harvest_logs(tmp, dest):
     return n
 
 
-def log_detail(err, dest):
-    """The first error of the log that `err` names, read from the copy harvested into `dest`; "" when the error
-    names no log, or the log holds no error.  This is the Rocq diagnostic: without it `err` is one line saying a
-    proof did not type-check, naming a file inside a container that no longer exists, and every real break reads
-    `other`.
+def log_detail(named, dest):
+    """The first error of the log at `named`, the path in the container that the first `(see ...)` of a `FAIL `
+    line names, read from the copy harvested into `dest`.  This is the Rocq diagnostic: without it a failure is one
+    line saying a proof did not type-check, naming a file inside a container that no longer exists, and every real
+    break reads `other`.
 
-    The path comes from the container's own output, so it is read only when it resolves inside this unit's
-    harvested directory: `(see /oftwork/../outside.log)` would otherwise quote a file of this host as a unit's
-    build error, in a column that is published as evidence about the proof trees."""
-    m = SEE_LOG.search(err or "")
-    if not m or not m.group(1).startswith(WORK_IN_CONTAINER + "/"):
-        return ""
-    path = os.path.realpath(os.path.join(dest, os.path.relpath(m.group(1), WORK_IN_CONTAINER)))
+    The path comes from the container's own output, and a row is published as evidence about the proof trees.  So
+    the path is refused, and nothing is read, when it does not start with `/oftwork/`, when a segment of it is `..`,
+    when it holds a NUL (no file has such a name, and the calls below raise on one), when it resolves outside
+    `dest`, or when it is not a regular file there: `(see /oftwork/../outside.log)` would otherwise quote a file of
+    this host as a unit's build error.
+    -> (detail, refused); ("", False) when nothing is at that path in `dest`, or when the log holds no error"""
     root = os.path.realpath(dest)
-    if path != root and not path.startswith(root + os.sep):
-        return ""
+    if not named.startswith(WORK_IN_CONTAINER + "/") or ".." in named.split("/") or "\0" in named:
+        return "", True
+    path = os.path.realpath(os.path.join(root, os.path.relpath(named, WORK_IN_CONTAINER)))
+    if not path.startswith(root + os.sep):
+        return "", True
     try:
-        if not stat.S_ISREG(os.lstat(path).st_mode):
-            return ""
+        mode = os.lstat(path).st_mode
+    except OSError:                      # nothing is there: the container left no such log
+        return "", False
+    if not stat.S_ISREG(mode):
+        return "", True
+    try:
         with open(path, encoding="utf-8", errors="replace") as f:
             text = f.read()
     except OSError:
-        return ""
-    return first_error(text)
+        return "", False
+    return first_error(text), False
 
 
-def with_detail(err, dest):
-    """`err` with the diagnostic of the log it names, so that one line carries both what failed and why."""
-    detail = log_detail(err, dest)
+def fail_details(text, dest, name):
+    """{line: detail} of the output `text` of the arm `name`: for each raw `FAIL ` line, that line as a row keeps
+    it (one_line), and the detail log_detail reads from the log that the line's first `(see ...)` names.  When two
+    raw lines keep the same text, the first one gives the detail.
+
+    A raw line is the text between two `\\n`, before any strip, cut or change of white space.  Only a raw line that
+    starts with `FAIL ` gives a path: `oft check` writes its verdicts there, and it starts each line of a log it
+    quotes with `  | ` (check.py QUOTE), so proof text cannot start one.  Each distinct path is checked and read
+    once, and each path refused is one line on standard error that names the arm."""
+    firsts, seen = {}, {}
+    for raw in text.split("\n"):
+        if not raw.startswith("FAIL "):
+            continue
+        m = SEE_LOG.search(raw)
+        named = m.group(1) if m else None
+        if named and named not in seen:
+            seen[named] = log_detail(named, dest)
+        firsts.setdefault(one_line(raw), seen[named][0] if named else "")
+    refused = [p for p, (_, refuse) in seen.items() if refuse]
+    if refused:
+        sys.stderr.write("".join(REFUSED % (name, p) for p in refused))
+    return firsts
+
+
+def with_detail(err, firsts):
+    """`err` with the detail of the first raw `FAIL ` line whose text, as one_line keeps it, is `err`, so that one
+    line carries both what failed and why.  `firsts` is fail_details of the same output.  An error that first_error
+    took from another line gets no detail."""
+    detail = firsts.get(err, "")
     return "%s | %s" % (err[:300], detail[:300]) if detail else err
 
 
@@ -535,7 +580,9 @@ def _arm(image, work, tools, pydeps, work_root, unit, parts, timeout, proof_jobs
     read its per-proof outcome.  Both arms run through here, so neither can drift from the other.
 
     `raw_error` is the first error as the checker printed it, which `stage_of` and the statements-step test read;
-    `error` is that line with the diagnostic of the log it names, which is what a reader of a row gets.
+    `error` is that line with the diagnostic of the log its own `FAIL ` line names, which is what a reader of a row
+    gets.  A log path is taken only from a line that starts with `FAIL `, log_detail says which paths it refuses, and
+    each path refused is one line on standard error (fail_details).
     -> dict(exit, stage, raw_error, error, passed, failed, wall_s)"""
     tmp = _fresh(os.path.join(tmp_root, name)) if tmp_root else None
     dest = os.path.join(logs, name + ".d")
@@ -547,9 +594,10 @@ def _arm(image, work, tools, pydeps, work_root, unit, parts, timeout, proof_jobs
         shutil.rmtree(tmp, ignore_errors=True)
     failed, passed = proof_outcomes(text)
     raw = first_error(text)
+    firsts = fail_details(text, dest, name)
     return dict(exit=code, stage=stage_of(code, raw), raw_error=raw, wall_s=wall, passed=sorted(passed),
-                failed={p: with_detail(line, dest) for p, line in failed.items()},
-                error="" if code == 0 else with_detail(raw or "exit %d" % code, dest))
+                failed={p: with_detail(line, firsts) for p, line in failed.items()},
+                error="" if code == 0 else with_detail(raw or "exit %d" % code, firsts))
 
 
 def check_one(work, tools, pydeps, work_root, unit, parts, image, control, timeout, logs, proof_jobs,

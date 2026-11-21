@@ -68,24 +68,42 @@
 #   queue_run      never run; GitHub starts it for a push only, and its outputs are '' here (a push the merge queue did
 #                  not check)
 #   plan           its base, plan and reach steps
-#   lint           its base, ledger, lint and generate steps
+#   lint           its base, ledger, strip, lint and generate steps; its step lint_since, which reads the record of
+#                  this pull request's last passing lint from the runner's cache, is not run, so the lint step's SINCE
+#                  is '', as on a run that restored no record (lint then takes --changed-only BASE when routed)
 #   tests          its step, at the change, with the change's venv
-#   rekey          its base and rekey steps, with the base's venv (rule D11: keys.checker of the base and of the
-#                  head); the window is OSSV_REKEY_WINDOW from the caller's environment (unset: closed, as the
-#                  repository variable's absence is)
+#   rekey          its base, rekey and own steps, with the base's venv: the rekey step is rule D11's verdict
+#                  (keys.checker of the base and of the head, by the base's tools), and reads the window,
+#                  .github/rekey-window, from the base's tree in the shared head/ clone, as on GitHub, and no variable
+#                  of the caller's reaches it; the own step, the head's id by the change's own tools, runs only when the
+#                  verdict passed, given the verdict's outputs, as on GitHub, and the first step that fails is the
+#                  job's failure
 #   fetch-drafts   never run: when its `if:` is true, `FAIL(-) fetch-drafts/not-run (GitHub starts it: ...)`
 #   check          never run: when its `if:` is true, `FAIL(-) check/not-run (GitHub starts it: units=<N>)`
 #   controls       never run, and taken as skipped: required/collect is given CONTROLS=false and
 #                  CONTROLS_RESULT=skipped, and summary.txt says so when reach answered controls=true
+#   lps_pin        never run, and taken as skipped: required/collect is given LPS_PIN=false and
+#                  LPS_PIN_RESULT=skipped, and summary.txt says so when reach answered lps_pin=true
+#   release_window never run, and taken as skipped: its verdict rests on whether the tag ossv/release-window exists
+#                  on GitHub now, which a run cannot tell (its clones hold REPO's tags as REPO last fetched them, a
+#                  tag deleted since among them); while the tag exists, it also fails a head whose .github/rekey-window
+#                  reads open, and a change to what the base's platform_drift reports.  required/collect reads nothing
+#                  of it; summary.txt says so when its `if:` is true
 #   stream_tools   never run: when its `if:` is true, `FAIL(-) stream_tools/not-run (GitHub starts it: ...)`;
 #                  required/collect is given the plan's stream_tools answer and the job's result
 #   farm_tests     never run, as stream_tools: when its `if:` is true, `FAIL(-) farm_tests/not-run (GitHub starts it:
 #                  ...)`; required/collect is given the plan's farm_tests answer and the job's result
+#   made_from      never run, as farm_tests: when its `if:` is true, `FAIL(-) made_from/not-run (GitHub starts it:
+#                  ...)`; required/collect is given the plan's made_from and made_from_proofs answers and the job's
+#                  result
+#   public_rows    never run, as made_from: when its `if:` is true, `FAIL(-) public_rows/not-run (GitHub starts it:
+#                  ...)`; required/collect is given the plan's public_rows answer and the job's result
 #   required       its step "every job green, and something checked when the plan named anything", with what those
 #                  jobs gave (PLAN_RESULT, LINT_RESULT, TESTS_RESULT, FETCH_DRAFTS_RESULT and CHECK_RESULT, the plan's
 #                  outputs, QUEUED as pr.yml computes it; for merge-pr.sh's evidence comment GH_TOKEN, an empty PR and
 #                  HEAD_SHA, which the step never reads here, since the hold stand-in is none); when GitHub would start
-#                  fetch-drafts or check, there is no verdict to rehearse, and the step is skipped
+#                  one of fetch-drafts, check, stream_tools, farm_tests, made_from and public_rows, jobs that this
+#                  script does not run, there is no verdict to rehearse, and the step is skipped
 #   main-gate, and required's other steps: not run
 # Within a job, a step after one that failed still runs when the job's base step passed (the steps after it read only
 # the base step's workspace), so one rehearsal shows every failure; GitHub stops the job there, and the job's result
@@ -108,8 +126,9 @@
 #   release-check   plan: deferred=<true|false> units=<N> full=<true|false>
 # checked_elsewhere=false when the plan job gives no such output; `-` for an answer it does not give.
 # Exit 0 when every step run passed and no job GitHub starts was left unrun, 1 otherwise (or when the setup failed),
-# 2 for a usage error.  The one exception is controls, which needs the checker image and a 150 GB runner: it is
-# taken as skipped, with a note, and does not by itself make the exit 1.
+# 2 for a usage error.  The exceptions are controls, which needs the checker image and a 150 GB runner, lps_pin,
+# which holds the model's pins and the checker image, and release_window, which reads the tag ossv/release-window on
+# GitHub: each is taken as skipped, with a note, and does not by itself make the exit 1.
 #
 # Optional environment: BASE_BRANCH, the branch BASE is the tip of, which the pull request goes into (default main;
 # BASE_REF, INTO, GITHUB_REF and QUEUED follow from it); VENVS, where the venvs are (default WORK/venvs): one per
@@ -132,17 +151,19 @@ pr.yml	plan	elsewhere	the parts a check of record outside this run checked
 pr.yml	plan	reach	reach
 pr.yml	lint	base	base
 pr.yml	lint	ledger	the findings ledger over the change's history, by the base's rules
+pr.yml	lint	strip	a proof file of a unit with a licence record keeps Anthropic's copyright line (the strip check)
 pr.yml	lint	lint	lint, by the base's rules
 pr.yml	lint	generate	generated files equal their rendering
 pr.yml	tests	tests	the tools' own tests, at this change, one process per test class
 pr.yml	rekey	base	base
 pr.yml	rekey	rekey	rekey
+pr.yml	rekey	own	own
 pr.yml	required	collect	every job green, and something checked when the plan named anything
 release-check.yml	plan	plan	plan
 STEPS
 )
 # the jobs whose `if:` decides what this script runs or reports, per workflow
-JUDGED_PR="queue_run plan lint tests rekey fetch-drafts check stream_tools farm_tests required"
+JUDGED_PR="queue_run plan lint tests rekey fetch-drafts check stream_tools farm_tests made_from public_rows release_window required"
 JUDGED_RC="plan fetch-drafts check"
 
 usage() {
@@ -319,16 +340,27 @@ PY=$hv/bin/python
 # The steps, from the checked-out commit's own workflow: for each, <job>-<short>.sh (its script), .wd (its
 # working-directory), .env (its literal env: values, NAME=VALUE), .keys (the names of its ${{ }} env: values), the
 # workflow's, the job's and the step's env: together, as GitHub merges them, and .if (its own `if:`, when it has one);
-# and jobs.json, each job's needs, `if:` and outputs (as step id and output name), and the step ids this run runs.
+# and jobs.json, each job's needs, `if:` and outputs (as step id and output name), and the step ids this run runs.  A
+# step whose whole `run:` is a call of a script of .github/scripts/pr/ (SCRIPT_CALL) runs that file of the same commit,
+# which holds the step's text byte for byte (Dispatch issue OSSV-841): its script here is that file's text, read from
+# the checkout, and the changes below are made to it as to any step's text.
 git -C "$REPO" show "$commit:.github/workflows/$wf" > "$W/workflow.yml" 2>> "$OUT/setup.log" ||
   setup_fail "$commit has no .github/workflows/$wf"
-STEPS=$STEPS "$PY" - "$W/workflow.yml" "$wf" "$W" <<'PY' 2>> "$OUT/setup.log" ||
+STEPS=$STEPS "$PY" - "$W/workflow.yml" "$wf" "$W" "$checkout" <<'PY' 2>> "$OUT/setup.log" ||
 import json, os, re, sys, yaml
-path, name, w = sys.argv[1:]
+path, name, w, checkout = sys.argv[1:]
 out = os.path.join(w, "steps")
 with open(path) as f:
     wf = yaml.safe_load(f)
 rows = [line.split("\t") for line in os.environ["STEPS"].splitlines() if line.startswith(name + "\t")]
+SCRIPT_CALL = re.compile(
+    r'exec bash --noprofile --norc -eo pipefail "\$GITHUB_WORKSPACE/head/(\.github/scripts/pr/[a-z0-9-]+\.sh)"')
+def run_text(s):
+    m = SCRIPT_CALL.fullmatch(s["run"])
+    if not m:
+        return s["run"]
+    with open(os.path.join(checkout, m.group(1))) as f:
+        return f.read()
 def text(v):
     return "" if v is None else ("true" if v else "false") if isinstance(v, bool) else str(v)
 def run_defaults(block, key):
@@ -362,6 +394,14 @@ for _wf, job, short, key in rows:
     if "${{" in s["run"]:
         problems.append("%s/%s: its script holds ${{ }}, which GitHub fills in and this script does not" % (job, short))
         continue
+    try:
+        run = run_text(s)
+    except OSError as e:
+        problems.append("%s/%s: its script %s cannot be read: %s" % (job, short, s["run"], e))
+        continue
+    if "${{" in run:
+        problems.append("%s/%s: its script file holds ${{ }}, which no one fills in" % (job, short))
+        continue
     env = {}
     for block in (wf.get("env"), j.get("env"), s.get("env")):
         env.update({k: text(v) for k, v in (block or {}).items()})
@@ -369,7 +409,7 @@ for _wf, job, short, key in rows:
     # the full clone already holds every commit, so a `git -C head fetch` is made a no-op success: the command and its
     # arguments only (a quoted argument may hold spaces), never past `||`, `&&`, `;`, `}` or `)`, so that
     # `if … && ! git -C head fetch …; then` and `git -C head fetch … || { …; exit 1; }` stay as they are
-    script = re.sub(r'git -C head fetch(?:[ \t]+(?:"[^"]*"|[^\s;|&)}"]+))*', "true", s["run"])
+    script = re.sub(r'git -C head fetch(?:[ \t]+(?:"[^"]*"|[^\s;|&)}"]+))*', "true", run)
     found[job + "-" + short] = (script, wd, env, None if "if" not in s else text(s["if"]))
     if s.get("id"):
         jobs[job]["steps"][s["id"]] = job + "-" + short
@@ -583,7 +623,7 @@ vars_for() {
       plan/base) printf '%s\n' "GH_TOKEN=pr-steps-stand-in" "PR=0" ;;
       plan/plan|plan/plan-head-tools)
         printf '%s\n' "BASE=$(output plan base base)" "ROUTED=$(output plan base routed)" ;;
-      plan/reach) printf '%s\n' "ROUTED=$(output plan base routed)" ;;
+      plan/reach) printf '%s\n' "BASE=$(output plan base base)" "ROUTED=$(output plan base routed)" ;;
       plan/elsewhere)
         # a rehearsal is no merge queue group and names no pull request (PR is empty), so this step answers false
         # before it calls gh at all, unless the base pins this tree for a deferred check, which the plan step answered
@@ -594,15 +634,22 @@ vars_for() {
           "PR=" "PR_HEAD=$([ "$event" = pull_request ] && echo "$prhead")" "HOLD=none" ;;
       lint/base) printf '%s\n' "PLAN_BASE=$(job_output plan base)" "PLAN_ROUTED=$(job_output plan routed)" ;;
       lint/ledger) printf '%s\n' "BASE=$(output lint base base)" "ROUTED=$(output lint base routed)" ;;
+      lint/strip) printf '%s\n' "BASE=$(output lint base base)" ;;
       lint/lint|lint/lint-head-tools)
+        # SINCE is the output of the step lint_since, which this script does not run: '' (the header says why)
         printf '%s\n' "BASE=$(output lint base base)" "ROUTED=$(output lint base routed)" \
-          "INTO=refs/heads/$BASE_BRANCH" "PLANNED_TOOLS=$(job_output plan tools)" ;;
+          "INTO=refs/heads/$BASE_BRANCH" "PLANNED_TOOLS=$(job_output plan tools)" "SINCE=" ;;
       tests/tests)
         printf '%s\n' "OFT_SKIP_REPOSITORY_LINT=$([ "$(job_output plan repository_lint)" = true ] && echo 0 || echo 1)" ;;
       rekey/base) printf '%s\n' "BASE=$(job_output plan base)" ;;
       rekey/rekey)
-        printf '%s\n' "BASE=$(job_output plan base)" "WINDOW=${OSSV_REKEY_WINDOW:-}" \
+        printf '%s\n' "BASE=$(job_output plan base)" \
           "BASE_REF=$([ "$event" = pull_request ] && echo "$BASE_BRANCH")" ;;
+      rekey/own)
+        printf '%s\n' "BASE=$(job_output plan base)" "FROM=$(output rekey rekey from)" \
+          "TO_BASE=$(output rekey rekey to_base)" "OUTSIDE=$(output rekey rekey outside)" \
+          "MAY_MOVE=$(output rekey rekey may_move)" "WHY=$(output rekey rekey why)" \
+          "STATE=$(output rekey rekey state)" ;;
       required/collect)
         printf '%s\n' "PLAN_RESULT=$(job_result plan)" "TESTS=$(job_output plan tests)" \
           "CONTROLS=false" "REPOSITORY_LINT=$(job_output plan repository_lint)" "UNITS=$(job_output plan units)" \
@@ -615,6 +662,10 @@ vars_for() {
           "CHECKED_ELSEWHERE_NOTE=$(job_output plan checked_elsewhere_note)" \
           "STREAM_TOOLS=$(job_output plan stream_tools)" "STREAM_TOOLS_RESULT=$(job_result stream_tools)" \
           "FARM_TESTS=$(job_output plan farm_tests)" "FARM_TESTS_RESULT=$(job_result farm_tests)" \
+          "MADE_FROM=$(job_output plan made_from)" "MADE_FROM_PROOFS=$(job_output plan made_from_proofs)" \
+          "MADE_FROM_RESULT=$(job_result made_from)" \
+          "PUBLIC_ROWS=$(job_output plan public_rows)" "PUBLIC_ROWS_RESULT=$(job_result public_rows)" \
+          "LPS_PIN=false" "LPS_PIN_RESULT=skipped" \
           "GH_TOKEN=pr-steps-stand-in" "PR=" "HEAD_SHA=$([ "$event" = pull_request ] && echo "$prhead")" ;;
     esac
   else
@@ -752,11 +803,12 @@ note "reach: repository_lint=$(answer plan repository_lint) tests=$(answer plan 
 # lint job
 decide lint
 if [ "$verdict" != true ]; then
-  for s in base ledger lint generate; do skip "lint/$s" "the lint job's if: is false"; done
+  for s in base ledger strip lint generate; do skip "lint/$s" "the lint job's if: is false"; done
   record lint skipped
 else
   if run_step lint base; then
     run_step lint ledger
+    run_step lint strip
     run_step lint lint
     run_step lint generate
     if [ -n "$diag" ]; then
@@ -765,9 +817,9 @@ else
       VENV=$bv
     fi
   else
-    for s in ledger lint generate; do skip "lint/$s" "the job's base step failed"; done
+    for s in ledger strip lint generate; do skip "lint/$s" "the job's base step failed"; done
   fi
-  record lint "$(steps_result lint base ledger lint generate)"
+  record lint "$(steps_result lint base ledger strip lint generate)"
 fi
 
 # tests job, at this change, with its own venv
@@ -786,19 +838,24 @@ fi
 # rekey job (rule D11), with the base's venv
 decide rekey
 if [ "$verdict" != true ]; then
-  for s in base rekey; do skip "rekey/$s" "the rekey job's if: is false"; done
+  for s in base rekey own; do skip "rekey/$s" "the rekey job's if: is false"; done
   record rekey skipped
 else
   VENV=$bv
-  if run_step rekey base; then
-    run_step rekey rekey
-  else
+  if ! run_step rekey base; then
     skip rekey/rekey "the job's base step failed"
+    skip rekey/own "the job's base step failed"
+  elif ! run_step rekey rekey; then
+    skip rekey/own "the verdict failed (a failed step skips the steps after it)"
+  else
+    run_step rekey own
   fi
-  record rekey "$(steps_result rekey base rekey)"
+  record rekey "$(steps_result rekey base rekey own)"
 fi
 
-# the jobs this script never runs: one GitHub starts leaves this rehearsal without a verdict
+# the jobs this script never runs: when GitHub starts fetch-drafts, check, stream_tools, farm_tests, made_from or
+# public_rows, this rehearsal has no verdict; controls, lps_pin and release_window are taken as skipped (the header
+# says why for controls, and the notes of lps_pin and release_window, below, say why for them)
 units_note
 decide fetch-drafts
 if [ "$verdict" = true ]; then
@@ -820,9 +877,18 @@ record controls skipped
 if [ "$(job_output plan controls)" = true ]; then
   say "note: reach answered controls=true: required/collect is judged with CONTROLS=false and CONTROLS_RESULT=skipped; GitHub's required also needs the controls job, which is not run here"
 fi
+record lps_pin skipped
+if [ "$(job_output plan lps_pin)" = true ]; then
+  say "note: reach answered lps_pin=true: required/collect is judged with LPS_PIN=false and LPS_PIN_RESULT=skipped; GitHub's required also needs the lps_pin job, which holds the model's pins and the checker image and is not run here"
+fi
+decide release_window
+record release_window skipped
+if [ "$verdict" = true ]; then
+  say "note: GitHub starts release_window, whose verdict rests on whether the tag ossv/release-window (the release window) exists on GitHub now; while it exists, the job fails a head whose .github/rekey-window reads open, and a change in which the base and the head differ in a path the base's platform_drift reports. This run cannot tell whether the tag exists on GitHub now (its clones hold REPO's tags as REPO last fetched them), so the job is taken as skipped. required/collect reads nothing of it; GitHub's required also needs it"
+fi
 decide stream_tools
 if [ "$verdict" = true ]; then
-  say "FAIL(-) stream_tools/not-run (GitHub starts it: dev/stream/ changed)"
+  say "FAIL(-) stream_tools/not-run (GitHub starts it: dev/stream/, or a file of tools/publish/ that its tests read, changed)"
   not_rehearsed=1
   record stream_tools success
 else
@@ -835,6 +901,22 @@ if [ "$verdict" = true ]; then
   record farm_tests success
 else
   record farm_tests skipped
+fi
+decide made_from
+if [ "$verdict" = true ]; then
+  say "FAIL(-) made_from/not-run (GitHub starts it: the plan named a unit with a made-from record or generator)"
+  not_rehearsed=1
+  record made_from success
+else
+  record made_from skipped
+fi
+decide public_rows
+if [ "$verdict" = true ]; then
+  say "FAIL(-) public_rows/not-run (GitHub starts it: tools/publish/public-before-hold.tsv changed)"
+  not_rehearsed=1
+  record public_rows success
+else
+  record public_rows skipped
 fi
 
 decide required

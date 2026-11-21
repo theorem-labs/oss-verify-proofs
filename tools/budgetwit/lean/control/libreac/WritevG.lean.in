@@ -1,0 +1,101 @@
+-- Lean-only: no Rocq source. A Lean-only helper of `BudgetWitness.lean`.
+import {{unit_prefix}}.BudgetWit.Rzb
+import {{unit_prefix}}.BudgetWit.RunB
+import {{unit_prefix}}.BudgetWit.WritevF
+import {{package}}.Reusable.YN3g
+import {{package}}.Reusable.YL0v
+
+/-! The `writev` lemmas of `YN3g.lean` and `YL0v.lean` over `Rzb.rzb`.
+
+This file mirrors the declarations of R1's `Reusable/YN3g.lean` and `Reusable/YL0v.lean` that
+produce `YK15.realizes` on the driver's usage path: each statement is R1's with `realizes`
+written `rzb`, under the name R1's with `rz_` written `rzb_` (`rz_writev_empty` →
+`rzb_writev_empty`) or, with neither, `_b` appended (`wl2_sound` → `wl2_sound_b`). The proofs
+are R1's, with each mirrored lemma called under its mirror's name (`rz_ret_only_copyins_silent`
+→ `RunB.rzb_ret_only_copyins_silent`, `wl_entry_pend` → `WritevF.wl_entry_pend_b`). One step
+differs: `RunB.rzb_ret_only_copyins_silent` takes `grant_ok` for its pending syscall right after
+its `check_syscall` hypothesis, and `rzb_writev_empty` gives it by `grant_ok_no` from its
+hypothesis that the syscall number is 66.
+
+Declarations that do not mention `realizes` are R1's, used through `open`. Copied from `YN3g`,
+still `private` and under their R1 names (private names are not visible across modules):
+`yn3g_if1`, `yn3g_if2`, `yn3g_iov_read2`, `yn3g_store`. R1's private `yn3g_cont` is mirrored, as
+the private `yn3g_cont_b`. Not mirrored: `YL0v`'s tactic macros `yl0v_wl_writev2`,
+`yl0v_wl_writev1`, `yl0v_wl_writev0` (the usage path, `YL0y`, does not use them).
+
+Each R1 file's proofs resolve names under that file's `open` list, so the opens the two lists
+share are at the top and the rest are in one section per R1 file. -/
+
+namespace {{unit_prefix}}.BudgetWit.WritevG
+open {{package}}.Reusable.YP03
+open {{package}}.Reusable.YP04
+open {{package}}.Reusable.YH00
+open {{package}}.Reusable.YM05
+open {{package}}.Reusable.R.Cfg
+open {{unit_prefix}}.BudgetWit.Rzb
+open {{unit_prefix}}.BudgetWit.RunB
+open {{unit_prefix}}.BudgetWit.WritevF
+
+section Addr
+-- The section is empty: the code addresses these lemmas name are R1's `YN3g.WL_DONE`,
+-- `YN3g.WL_ECALL1` and `YN3f`'s, used through `open`.
+end Addr
+
+/-! ## Mirrors of `YN3g.lean` -/
+
+section YN3gMirror
+
+open LinuxProcessSemantics.Riscv.DecodeC
+open LinuxProcessSemantics.Riscv.Sem
+open LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Fs.ReadWrite (check_writev)
+open LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite (iovcnt32)
+open {{package}}.Reusable.YN3v
+open {{package}}.Reusable.YN3f
+open {{package}}.Reusable.YN3g
+
+/-- A copy of `YN3g`'s private `yn3g_if1`. -/
+private theorem yn3g_if1 (x y : Int) : (if decide ((1 : Int) = 2) then x else y) = y :=
+  ite_eq_right (by decide)
+/-- A copy of `YN3g`'s private `yn3g_if2`. -/
+/-- Mirror of `YN3g.rz_writev_empty` (`YN3g.lean:327`). -/
+    (Z_to_bv 64 0) model T Hh Hlz ?_
+    (grant_ok_no segs (pend_at regs pc mem rom) model (getr regs 17) 66 rfl Hno
+      (by decide) (by decide) (by decide) (by decide))
+    Hh Hlz Hc
+    import_iovecs_accesses, {{package}}.Reusable.YK11.bv_eqb_refl,
+    Hiok, Bool.not_true, Hent, Hmin, Hok0, Htz]
+
+/-- A copy of `YN3g`'s private `yn3g_iov_read2`. -/
+/-- A copy of `YN3g`'s private `yn3g_store`. -/
+/-- Mirror of `YN3g`'s private `yn3g_cont` (`YN3g.lean:460`). -/
+/-- Mirror of `YN3g.rz_sym_stdio_writev2` (`YN3g.lean:532`). -/
+/-- Mirror of `YN3g.rz_sym_stdio_writev1` (`YN3g.lean:627`). -/
+/-- Mirror of `YN3g.rz_sym_writev_empty` (`YN3g.lean:708`). -/
+  · refine {{package}}.Reusable.YN3f.ms_read_u64_of_rdn
+      _ _ _ _ _ ?_
+    rw [Ha11]
+    exact M0
+  · refine {{package}}.Reusable.YN3f.ms_read_u64_of_rdn
+      _ _ _ _ _ ?_
+end YN3gMirror
+
+/-! ## Mirrors of `YL0v.lean` -/
+
+section YL0vMirror
+
+open LinuxProcessSemantics.LinuxProcessSem.StackLayout
+open {{package}}.Reusable.YK0k (t_emit_app)
+open {{package}}.Reusable.YP08 (z_strs z_rand stack_tail
+  stack_tail_end rand_off_mod8 mod8_of_mod16)
+open {{package}}.Reusable.YP0f
+open {{package}}.Reusable.YN3g (WL_ECALL1 wl_after)
+open {{package}}.Reusable.YL0v
+
+/-- Mirror of `YL0v.wl2_sound` (`YL0v.lean:375`). -/
+      exact rzb_sym_stdio_writev2 E ss ms model (Z_to_bv 64 fd) ch i b K F r vb0 vl0 vb1 vl1 bs0
+        bs1 _ k T Hh Hlz HS Hrv Hpc H17 D10 Hch H32 Hfd31 H12 (H18.trans H12) H2 H19'
+/-- Mirror of `YL0v.wl1_sound` (`YL0v.lean:429`). -/
+/-- Mirror of `YL0v.wl0_sound` (`YL0v.lean:1063`). -/
+end YL0vMirror
+
+end {{unit_prefix}}.BudgetWit.WritevG

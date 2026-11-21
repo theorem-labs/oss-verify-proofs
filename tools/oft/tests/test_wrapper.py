@@ -18,6 +18,10 @@ TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(cli.__file__)))
 ROOT = os.path.dirname(TOOLS)
 WRAPPER = os.path.join(ROOT, "oft")
 REQUIREMENTS = os.path.join(TOOLS, "oft", "requirements.txt")
+# ./oft is at the root of a checkout; tools/oft alone, as the runner image carries it, has no such file, and the test
+# that reads it says so instead of ending in FileNotFoundError (images.yml run 42574457306, 2026-11-09).
+HAVE_WRAPPER = os.path.exists(WRAPPER)
+NO_WRAPPER = "no ./oft: tools/oft without the checkout around it"
 
 
 def pin_line(dist):
@@ -44,6 +48,7 @@ class Requirements(unittest.TestCase):
     def test_requirements_txt_pins_what_the_tools_import(self):
         self.assertEqual(sorted(pinned()), ["PyYAML", "idna"])
 
+    @unittest.skipUnless(HAVE_WRAPPER, NO_WRAPPER)
     def test_the_wrapper_probes_every_pinned_distribution(self):
         with open(WRAPPER, encoding="utf-8") as f:
             found = re.search(r'^oft_imports="([^"]*)"$', f.read(), re.M)

@@ -1,0 +1,141 @@
+-- Lean-only: no Rocq source. The budget-premise witness of `fuzz_knock`'s plain image.
+import OssFuzzTheorems.Core.Premises
+import {{unit_prefix}}.Images
+import {{unit_prefix}}.Statements
+import {{unit_prefix}}.proofs.plain_halts.Proof
+import {{unit_prefix}}.BudgetWit.StartB
+import {{unit_prefix}}.BudgetWit.UsageB
+
+/-! # libreac / fuzz_knock: the plain image meets `plain_halts`'s three premises together
+
+`Statements.plain_halts` quantifies over every `en` and `inp` and has three premises:
+`valid_entry Images.plain en inp`, `valid_input inp` and the budget premise
+`¬ run_scfg_budget_refused forced_only_cfg Images.plain 0x400000000 en inp`. A theorem whose
+premises never hold together proves nothing. `Core.Premises` (the port of `theories/Premises.v`)
+gives the first two for any well-formed image and leaves the third, which reads the run.
+This file discharges the third for this image.
+
+The input is `Premises.witness_input false`: one empty argument (so `argc = 1`), no
+environment, an empty file system. With `argc ≠ 2` the driver's `main` writes its usage line to
+fd 2 and exits with status 2. On that path the program makes three kinds of system call:
+set_tid_address (96) in musl's start-up, writev (66) for the diagnostic, exit or exit_group
+(93/94). None is an allocation call (brk 214, mremap 216, mmap 222, mprotect 226), and no
+mapping is lazy (`m_vm_lazy = []` throughout), so no configuration the run reaches is refused
+by the budget.
+
+The proof follows R1's own proof of that path (`YN3e.src0_start`, `YL0j.src0_realizes_specX`'s
+`argc ≠ 2` branch, `YL0y.src0_usage`), restated over `BudgetWit.Rzb.rzb`: R1's `realizes` with no
+cut and a grant check at every node (`BudgetWit/Rzb.lean` says why `realizes` itself cannot carry
+the fact). `usage_rzb` is that walk at `MayFail`; `Rzb.rzb_never_refused_cfg` turns it into the
+budget premise, for every spurious-failure configuration and every limit (`usage_never_refused`).
+`plain_budget_witness` is the three premises at one entry and one input;
+`plain_halts_not_vacuous` feeds them to `Proof.plain_halts_holds`, so the released statement's
+conclusion holds at a pair that meets all its premises, with no hypothesis left. -/
+
+namespace {{unit_prefix}}.BudgetWitness
+
+section Addr
+-- The section is empty: this file states no fact about the binary. 2 is the driver's
+-- argument count, the same in all nine libreac targets (`YL0p.lean`'s `section Addr`).
+end Addr
+
+open LinuxProcessSemantics.Riscv.Prelude (word bv_unsigned Z_to_bv)
+open LinuxProcessSemantics.Riscv.Sem (branch_taken)
+open LinuxProcessSemantics.LinuxProcessSem
+open LinuxProcessSemantics.LinuxProcessSem.BvBase
+open LinuxProcessSemantics.LinuxProcessSem.MemImageType
+open LinuxProcessSemantics.LinuxProcessSem.StackLayout
+open LinuxProcessSemantics.LinuxProcessSem.State
+open LinuxProcessSemantics.LinuxProcessSem.Run
+open LinuxProcessSemantics.EquivalenceDefinition.MustExit (must_exit_in_scfg)
+open OssFuzzTheorems.Core.Shapes
+open OssFuzzTheorems.Core.ZFacts (Z_to_bv_bv_unsigned)
+open {{package}}.Reusable.YK11 (bv_eqb_neq)
+open {{package}}.Reusable.YK0i (fdchan)
+open {{package}}.Reusable.YH00 (src0segs)
+open {{package}}.Reusable.YP0m (sv_denot)
+open {{package}}.Reusable.YP06 (st_ok_add_cond)
+open {{package}}.Reusable.YP08 (ew3)
+open {{package}}.Reusable.YN3e (E_main xw_main xd_main)
+open {{package}}.Reusable.YO05 (diag msg_usage)
+open {{package}}.Reusable.R.Cfg (MayFail)
+open {{unit_prefix}}.BudgetWit.Rzb (rzb)
+open {{unit_prefix}}.images
+
+attribute [local instance] {{package}}.Reusable.YK11.fx0
+
+/-- The `argc ≠ 2` branch of `YL0j.src0_realizes_specX`, over `rzb` at `MayFail`: start-up
+(`StartB.src0_start_b`), then `main`'s usage path (`UsageB.src0_usage_b`). -/
+theorem usage_rzb : ∀ (sp brk mbase : word) (rnd : EntryDraw) (lim : Int) (inp : ProcInput),
+    valid_sp sp → valid_argv inp.in_argv → valid_envp inp.in_envp →
+    entry_stack_fits sp inp.in_argv inp.in_envp →
+    inp.in_argv.length ≠ 2 →
+    @rzb src0segs MayFail
+      (init_config src0segs Plain.M.init_pc Plain.M.phdrs sp brk mbase rnd lim inp)
+      (diag (msg_usage (inp.in_argv.getD 0 [])) inp.in_fs) := by
+  intro sp brk mbase rnd lim inp Hsp Hva Hve Hfits Hlen
+  refine {{unit_prefix}}.BudgetWit.StartB.src0_start_b (AM := MayFail)
+    false sp brk mbase rnd lim inp _ Hsp Hva Hve Hfits trivial ?_
+  intro ms tid Htid HS HR
+  have H3 : bv_unsigned ((E_main sp inp.in_argv inp.in_envp tid rnd).ew 3) = (inp.in_argv.length : Int) :=
+    ew3 sp inp.in_argv inp.in_envp Hva (xw_main sp inp.in_argv inp.in_envp tid rnd) (xd_main rnd)
+  have hne : (E_main sp inp.in_argv inp.in_envp tid rnd).ew 3 ≠ Z_to_bv 64 2 := by
+    intro Heq
+    rw [Heq] at H3
+    have h2 : bv_unsigned (Z_to_bv 64 2 : word) = 2 := by decide
+    omega
+  have HB : branch_taken .BC_NE (sv_denot (E_main sp inp.in_argv inp.in_envp tid rnd) (.SOff 3 0))
+      (sv_denot (E_main sp inp.in_argv inp.in_envp tid rnd) (.SLit 2)) = true := by
+    show (!(LinuxProcessSemantics.Riscv.Prelude.bv_eqb
+      (Z_to_bv 64 (bv_unsigned ((E_main sp inp.in_argv inp.in_envp tid rnd).ew 3) + 0))
+      (Z_to_bv 64 2))) = true
+    rw [Int.add_zero, Z_to_bv_bv_unsigned, bv_eqb_neq _ _ hne]
+    rfl
+  exact {{unit_prefix}}.BudgetWit.UsageB.src0_usage_b (AM := MayFail)
+    sp inp.in_argv inp.in_envp tid rnd Hsp Hva Hve Hfits Hlen ms
+    (with_tid tid (init_model (segments_reserved src0segs) brk mbase sp lim inp))
+    (st_ok_add_cond src0segs _ _ _ _ _ _ HS HB) HR rfl rfl (by unfold fdchan; exact ⟨rfl, rfl⟩)
+
+/-- On every valid entry of the plain image and every valid input whose `argv` has not two
+entries, no configuration of the run is refused by the budget, whatever the spurious-failure
+configuration and whatever the limit. -/
+theorem usage_never_refused : ∀ (en : ExecEntry) (inp : ProcInput),
+    valid_entry Images.plain en inp → valid_input inp → inp.in_argv.length ≠ 2 →
+    ∀ (cfg : SpuriousCfg) (lim : Int), ¬ run_scfg_budget_refused cfg Images.plain lim en inp := by
+  intro en inp Hen Hinp Hlen cfg lim
+  obtain ⟨sp, brk, mbase, rnd⟩ := en
+  have hv := valid_input_va_size inp Hinp
+  rw [valid_entry_sv48 _ _ _ hv] at Hen
+  obtain ⟨Hsp, -, -, Hfits⟩ := Hen
+  exact {{unit_prefix}}.BudgetWit.Rzb.rzb_never_refused_cfg src0segs cfg _ _
+    (usage_rzb sp brk mbase rnd lim inp Hsp Hinp.1 Hinp.2.1 Hfits Hlen)
+
+/-- `plain_halts`'s three premises hold together: at `Premises.witness_input false` and the
+entry `Premises.valid_input_entry` gives for it. -/
+theorem plain_budget_witness :
+    ∃ en inp, valid_entry Images.plain en inp ∧ valid_input inp
+      ∧ ¬ run_scfg_budget_refused forced_only_cfg Images.plain 0x400000000 en inp := by
+  obtain ⟨en, Hen⟩ := OssFuzzTheorems.Core.Premises.valid_input_entry Images.plain
+    (OssFuzzTheorems.Core.Premises.witness_input false) Images.plain_wf
+    OssFuzzTheorems.Core.Premises.witness_valid_input
+  exact ⟨en, _, Hen, OssFuzzTheorems.Core.Premises.witness_valid_input,
+    usage_never_refused en _ Hen OssFuzzTheorems.Core.Premises.witness_valid_input (by decide)
+      forced_only_cfg 0x400000000⟩
+
+/-- `Statements.plain_halts`, which `Proof.plain_halts_holds` proves, at an entry and an input
+that meet all three of its premises: its conclusion holds there with no hypothesis left. -/
+theorem plain_halts_not_vacuous :
+    ∃ en inp, valid_entry Images.plain en inp ∧ valid_input inp
+      ∧ ¬ run_scfg_budget_refused forced_only_cfg Images.plain Budgets.Standard.lim_source en inp
+      ∧ must_exit_in_scfg forced_only_cfg Exits.ok_or_refused Images.plain
+          Budgets.Standard.lim_source en inp := by
+  obtain ⟨en, Hen⟩ := OssFuzzTheorems.Core.Premises.valid_input_entry Images.plain
+    (OssFuzzTheorems.Core.Premises.witness_input false) Images.plain_wf
+    OssFuzzTheorems.Core.Premises.witness_valid_input
+  have Hnr := usage_never_refused en _ Hen OssFuzzTheorems.Core.Premises.witness_valid_input
+    (by decide) forced_only_cfg Budgets.Standard.lim_source
+  exact ⟨en, _, Hen, OssFuzzTheorems.Core.Premises.witness_valid_input, Hnr,
+    {{unit_prefix}}.proofs.plain_halts.Proof.plain_halts_holds en _ Hen
+      OssFuzzTheorems.Core.Premises.witness_valid_input Hnr⟩
+
+end {{unit_prefix}}.BudgetWitness

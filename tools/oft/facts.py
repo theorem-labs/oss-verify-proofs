@@ -22,13 +22,16 @@ import os
 import re
 import stat
 
-from . import layout, names, render, rocq, schema, shapes, yamlio
+from . import claims, layout, names, render, rocq, schema, shapes, yamlio
 
 PHRASEBOOK = yamlio.load_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), "phrasebook.yaml"))
 # The version of the fingerprint.  Version 2 hashes the code of theories/Shapes.v and theories/Images.v (rocq.code),
 # not their bytes; `oft revisions` compares two trees under one version (docs/versioning.md).
 FINGERPRINT_TAG = "oss-fuzz-theorems/statement/2"
 THEORIES = ("theories/Shapes.v", "theories/Images.v")
+# The theory of the classifier statements' own shapes.  Its code enters their fingerprints alone, beside Shapes.v's and
+# Images.v's, so a change to it moves no other statement's fingerprint.
+CLASSIFIER_THEORY = "theories/ClassifierShapes.v"
 # Every fingerprint hashes theories/Shapes.v and theories/Images.v with the release's Rocq namespace (release.yaml's
 # `namespace`) read as this name wherever it starts a dotted path, whatever the release names: so a release that renames
 # the namespace states the same statements, and every revision and proof pin holds (docs/versioning.md).
@@ -159,13 +162,53 @@ class Harness:
 
     def builds(self, published_only=True):
         """[(build, record)] in the fixed order plain, ubsan, asan, asan-ubsan."""
+        if published_only:
+            return claims.builds(self.data)
         b = self.data.get("builds") or {}
-        return [(k, b[k]) for k in schema.BUILDS
-                if k in b and not (published_only and b[k].get("withheld"))]
+        return [(k, b[k]) for k in schema.BUILDS if k in b]
+
+    def bin_path(self, rec):
+        """Where the binary of harness.yaml record `rec`, a build's, an original's or a classifier's, lies:
+        projects/<project>/bin/<harness>/<its file> (claims.elf_path)."""
+        return claims.elf_path(self.project.name, self.name, rec)
 
     def elf_path(self, build):
-        rec = self.data["builds"][build]
-        return os.path.join("projects", self.project.name, "bin", self.name, rec["file"])
+        return self.bin_path(self.data["builds"][build])
+
+    def classifier_builds(self, published_only=True):
+        """[(role, sanitizer build, record)] of the classifiers harness.yaml lists, in the fixed build order, a before
+        b."""
+        if published_only:
+            return claims.classifiers(self.data)
+        c = self.data.get("classifiers") or {}
+        return [(role, k, c[k][role]) for k in schema.SANITIZER_BUILDS if k in c for role in ("a", "b") if role in c[k]]
+
+    def original_builds(self, published_only=True):
+        """[(build, record)] of the originals harness.yaml lists, in the fixed build order."""
+        if published_only:
+            return claims.originals(self.data)
+        o = self.data.get("originals") or {}
+        return [(k, o[k]) for k in schema.BUILDS if k in o]
+
+    def image(self, what, build, role=None):
+        """The record harness.yaml lists for an image a classifier statement names besides its builds
+        (shapes.classifier_images): classifier role of the build pair (what "classifier", harness.yaml `classifiers`)
+        or the original of build (what "original", `originals`); None when harness.yaml does not list it.  Any other
+        what is a ValueError."""
+        if what == "classifier":
+            return ((self.data.get("classifiers") or {}).get(build) or {}).get(role)
+        if what == "original":
+            return (self.data.get("originals") or {}).get(build)
+        raise ValueError("%r is no image a classifier statement names: those are a classifier and an original"
+                         % (what,))
+
+    def published_images(self):
+        """[(identifier, module, record, path)] of every binary this harness publishes: its published builds, then its
+        originals, then its classifiers (harness.yaml `builds`, `originals`, `classifiers`), each in the fixed build
+        order and pinned by bytes and SHA-256, with its Images.v identifier, its images/ module and its path
+        (bin_path).  `oft fetch` stages and checks exactly these, and Images.v and the images dune file define exactly
+        these (claims.images, claims.images_v, claims.images_dune)."""
+        return [(ident, module, rec, self.bin_path(rec)) for ident, module, rec in claims.images(self.data)]
 
     def unpatched_elf_path(self, build):
         """Where `oft fetch --findings` puts the unpatched binary of this build, which the findings run on."""
@@ -220,6 +263,33 @@ class Statement:
     def rendered(self):
         """True if Statements.v carries this statement's Definition."""
         return self.data.get("status") not in ("withheld", "withdrawn")
+
+    @property
+    def _distribution(self):
+        """Whether the statement's harness has an input distribution (harness.yaml `distribution`), which chooses a
+        classifier-maybe statement's shape and whether it takes a bound (shapes.term, shapes.takes_bound)."""
+        return "distribution" in self.harness.data
+
+    def term(self):
+        """(parameters, body) of this statement's Definition (shapes.term), with its project's budgets and its
+        harness's distribution."""
+        return shapes.term(self.data, project=self.harness.project.data, distribution=self._distribution)
+
+    def shape_name(self):
+        """The shape this statement's Definition uses (shapes.shape_name), with its harness's distribution."""
+        return shapes.shape_name(self.data, distribution=self._distribution)
+
+    def takes_bound(self):
+        """Whether this statement takes a bound (b : Q) first (shapes.takes_bound), with its harness's distribution."""
+        return shapes.takes_bound(self.kind, self._distribution)
+
+    def instance_lemma(self):
+        """The path, from the tree's root, of the lemma of this statement's instance: <s>_instance in Instances/<s>.v
+        of the fuzz target's proof library (check.check_instance checks it; the harness README lists it)."""
+        h = self.harness
+        unit = "%s/%s" % (h.project.name, h.name)
+        lib = h.tree.proof_libs.get(unit) or layout.proof_lib_dir(h.project.name, h.name, h.tree.unit_layout(unit))
+        return os.path.join(lib, "Instances", self.name + ".v")
 
 
 class ProofDir:
@@ -728,6 +798,9 @@ def bin_recipe(tree, proj):
 
 FINDING_FILE_CAP = 64 << 10
 FINDING_INPUT_CAP = 1 << 20
+# An instance file (harness.yaml statements.<s>.instance) is an input the driver reads, and the driver refuses one of
+# max_input_bytes or more (theories/Driver.v): lint and check read one of fewer bytes than this.
+INSTANCE_MAX_BYTES = 64 << 20
 # The size cap of a file of the tree: the first entry of CAPS whose pattern matches its whole path, else MAX_BYTES.
 # The patterns are regular expressions, not paths.py's globs: the checker runs rules.check, which reads files within
 # these caps, and it never reads paths.py (keys.NOT_THE_CHECKER).  Each is the glob it replaces, part for part: a
@@ -746,6 +819,7 @@ CAPS = [(re.compile(pattern, re.DOTALL), cap) for pattern, cap in (
     (r"projects/[^/]*/unpatched\.yaml", FINDING_FILE_CAP),
     (r"proofs/[^/]*/[^/]*/[^/]*/classifier(?:/.*)?", 1 << 20),
     (r"projects/[^/]*/[^/]*/proofs/[^/]*/classifier(?:/.*)?", 1 << 20),
+    (r"projects/[^/]*/[^/]*/proofs/provenance/evidence/instances/[^/]*", INSTANCE_MAX_BYTES),
 )]
 
 
@@ -833,17 +907,36 @@ def _finding_yaml(tree, rel, kind):
 
 # The longest driver header: its length word, a config of at most 0x7fff bytes, and the allocation mask.
 DRIVER_HEADER_MAX = 2 + 0x7fff + 4
+# The shortest: the length word and the allocation mask, with no config byte.
+DRIVER_HEADER_MIN = 2 + 4
+
+
+def driver_header_bytes(data):
+    """The length of the driver header that begins data (theories/Driver.v): its length word, the config bytes the
+    word asks for (its low 15 bits) and the allocation mask; None when data does not hold the length word."""
+    if len(data) < 2:
+        return None
+    return DRIVER_HEADER_MIN + (int.from_bytes(data[:2], "little") & 0x7fff)
 
 
 def driver_calls(data):
     """The driver calls a harness 1 to 4 times according to the bounded header
     that begins data, or None when that header is incomplete."""
-    if len(data) < 2:
+    n = driver_header_bytes(data)
+    if n is None or len(data) < n:
         return None
-    n = int.from_bytes(data[:2], "little") & 0x7fff
-    if len(data) < 2 + n + 4:
-        return None
-    return (data[2] & 3) + 1 if n else 1
+    return (data[2] & 3) + 1 if n > DRIVER_HEADER_MIN else 1
+
+
+InstanceFile = collections.namedtuple("InstanceFile", "data bytes sha256")
+
+
+def read_instance(path):
+    """The InstanceFile (its bytes, their number and their SHA-256) of the instance file at path (harness.yaml
+    statements.<s>.instance.file): a regular file of fewer than INSTANCE_MAX_BYTES bytes, read without following a
+    symbolic link.  Lint and oft check both read an instance file with it.  Raises BoundedFileError."""
+    data = read_bounded(path, INSTANCE_MAX_BYTES - 1)
+    return InstanceFile(data, len(data), hashlib.sha256(data).hexdigest())
 
 
 def _driver_calls(fd):
@@ -867,10 +960,14 @@ def holding(tree):
     return out
 
 
-class Hold(collections.namedtuple("Hold", "held private statements")):
+class Hold(collections.namedtuple("Hold", "held private statements harnesses", defaults=({},))):
     """What a public release leaves out (hold): held, the projects a finding holds back whole; private, those whose
     project.yaml says `release: private`; statements, {project: {"<harness>/<statement>"}} that open findings of an
-    enrolled project hold back, for a project in neither.  A project in held or private (whole) ships only as held."""
+    enrolled project hold back, for a project in neither; harnesses, {project: (each name of its private_harnesses,
+    sorted, once)} for each project whose project.yaml lists a name there: the fuzz targets that no public repository
+    may hold while the rest of the project publishes.  A project in held or private (whole) ships only as held.
+    harnesses has a default, {}, so that a Hold made from the first three values alone (tools/publish/verify makes one
+    so for its needles) holds no fuzz target."""
     __slots__ = ()
 
     @property
@@ -883,14 +980,23 @@ class Hold(collections.namedtuple("Hold", "held private statements")):
         statements' keys are read."""
         return frozenset("%s/%s" % (p, s) for p, sts in self.statements.items() for s in sts)
 
+    @property
+    def entries(self):
+        """Each held fuzz target of harnesses as a held entry, <project>/<harness>: the one place harnesses' keys and
+        names are read together."""
+        return frozenset("%s/%s" % (p, h) for p, hs in self.harnesses.items() for h in hs)
+
 
 def hold(tree):
     """The tree's Hold.  A project with a finding that is open, patched or reported is held whole, unless the finding
     hold of an enrolled project stays per statement (_held_statements); a private project is held whole either way, so
-    its findings hold it whole too (it is in held when one holds it back)."""
+    its findings hold it whole too (it is in held when one holds it back).  The held fuzz targets are the names of
+    each project's private_harnesses, whatever else holds the project."""
     private = {n for n, p in tree.projects.items() if p.data.get("release") == "private"}
     statements = {p: s for p, s in _held_statements(tree).items() if p not in private}
-    return Hold(set(holding(tree)) - set(statements), private, statements)
+    harnesses = {n: tuple(sorted(set(p.data["private_harnesses"])))
+                 for n, p in tree.projects.items() if p.data.get("private_harnesses")}
+    return Hold(set(holding(tree)) - set(statements), private, statements, harnesses)
 
 
 def written_here(tree, project, harness):
@@ -903,8 +1009,9 @@ def written_here(tree, project, harness):
 def _held_statements(tree):
     """{project: {"<harness>/<statement>"}}: for an enrolled project (`enrolled: true`) whose findings that hold it back
     are all open, the statements they name and every agreement or halts statement of the harness their recorded input
-    shows false (_recorded_false), with the bound and decidability statements of each held agreement's pair (which go
-    with it, rules.py).  Only those are held back: its binaries carry no patch yet.  Once one of the findings is
+    shows false (_recorded_false), with the bound, decidability and classifier statements of each held agreement's
+    pair and each twin of a held statement (which go with it, rules.py).  Only those are held back: its binaries carry
+    no patch yet.  Once one of the findings is
     patched or reported, its binaries carry the fix, so the whole project is held (hold); so it is when the
     hold would leave a harness with no statement, since the project's archive still holds that harness's binaries
     (oft fetch refuses a member the facts do not list) and a project with no build left cannot be available, or would
@@ -913,7 +1020,10 @@ def _held_statements(tree):
     (lib/ in a fuzz target's proofs folder, which ships unchecked); when a harness's build record names a held
     statement in its proofs.written_here (that record ships whole, so the name would stay in the release); and when a
     build it publishes is not the one its findings run on (the project's unpatched.yaml), since that build may carry
-    a fix that a reader could compare with the source."""
+    a fix that a reader could compare with the source; and when it publishes a classifier or an original (harness.yaml
+    classifiers, originals), since a classifier of a held pair rejects the finding's input whatever its statements
+    say.  A held agreement holds the bound, decidability and classifier statements of its pair with it, and a held
+    statement holds each twin of it, which goes with its first statement (rules._twin)."""
     out = {}
     for p, fs in holding(tree).items():
         proj = tree.projects.get(p)
@@ -932,8 +1042,15 @@ def _held_statements(tree):
                 held.add("%s/%s" % (f.harness, name))
                 st = h.statements.get(name)
                 if st is not None and st.kind == "agreement":
+                    # a bound, a decidability or a classifier statement of the pair says where its builds agree
                     held.update("%s/%s" % (f.harness, s.name) for s in h.statements.values()
-                                if s.kind in ("bound", "decidability") and s.data["builds"] == st.data["builds"])
+                                if s.kind in ("bound", "decidability") + shapes.CLASSIFIER_KINDS
+                                and s.data["builds"] == st.data["builds"])
+            # a twin goes with its first statement, the one its kind, builds and reading name without the twin
+            # (rules._twin), so the cut must not keep it alone: each twin of a held statement is held with it
+            held.update("%s/%s" % (f.harness, s.name) for s in h.statements.values()
+                        if "twin" in s.data and s.kind in ("agreement", "halts")
+                        and names.statement_name(s.kind, s.data["builds"], s.data.get("reading")) in agreements)
         if any(_emptied(n, h, held) for n, h in proj.harnesses.items()):
             continue
         # a fuzz target's proof library ships unchecked and may hold anything, a held statement's proof or the finding's
@@ -946,6 +1063,11 @@ def _held_statements(tree):
         pins = (tree.unpatched.get(p) or {}).get("harnesses") or {}
         if any((pins.get(n) or {}).get(b, {}).get("sha256") != rec.get("sha256")
                for n, h in proj.harnesses.items() for b, rec in h.builds()):
+            continue
+        # a published classifier or original is a binary the hold cannot cut by statement: a classifier of a held pair
+        # rejects the finding's input whatever its statements say, and an original is a build without the patches, so
+        # a reader could compare it with the published build.  A project that publishes one is held whole
+        if any(h.classifier_builds() or h.original_builds() for h in proj.harnesses.values()):
             continue
         # a build record ships whole, so a held statement its proofs.written_here names would stay in the release
         # while the cut's facts no longer carry that statement (rules._written_here refuses that)
@@ -1008,8 +1130,16 @@ def cut(tree, shipped, held):
     finding exists.  A held statement leaves its harness with its counterexample.  shipped: the statement ids whose
     proofs the release carries; every other proof goes, and a proof library with no proof left of its fuzz target goes
     with it.  Findings and approvals.yaml never ship, so the cut has neither, and each statement's status is derived
-    again from what is left."""
-    whole, ids, pages = held.whole, held.ids, []
+    again from what is left.
+
+    A held fuzz target (held.harnesses, from the project's private_harnesses) goes whole from a project that publishes:
+    its harness, its entry in the project's `harnesses`, its proofs and proof library, its build record and its
+    counterexamples.  The field private_harnesses goes from every project.  The port repository of a project with a
+    held fuzz target whose port is this repository's internal copy (schema.INTERNAL_PORT_REPOSITORY) becomes `none`
+    (schema.NO_PORT_REPOSITORY), and the port's commit and path stay: no public file names the internal copy.  The
+    loaded facts hold no port of a build record, so oft release-tree writes `none` into each build record that the
+    release keeps, as it writes the other changes into the project.yaml files."""
+    whole, ids, pages, gone = held.whole, held.ids, [], held.entries
     for n in sorted(whole):
         proj = tree.projects[n]
         if "oss_fuzz" in proj.data:
@@ -1022,25 +1152,41 @@ def cut(tree, shipped, held):
         h = tree.projects[p].harnesses[unit]
         del h.statements[name]
         h.data = dict(h.data, statements={k: v for k, v in h.data["statements"].items() if k != name})
-    tree.proofs = {k: v for k, v in tree.proofs.items() if k in shipped}
-    tree.proof_libs = {k: v for k, v in tree.proof_libs.items() if any(s.startswith(k + "/") for s in shipped)}
-    # a build record goes with its fuzz target's proof directory: it ships only beside a proof the release carries
-    tree.records = {(p, h): v for (p, h), v in tree.records.items()
-                    if p not in whole and any(s.startswith("%s/%s/" % (p, h)) for s in shipped)}
-    tree.record_proofs = {(p, h): v for (p, h), v in tree.record_proofs.items()
-                          if p not in whole and any(s.startswith("%s/%s/" % (p, h)) for s in shipped)}
-    tree.records_at = {(p, h): v for (p, h), v in tree.records_at.items()
-                       if p not in whole and any(s.startswith("%s/%s/" % (p, h)) for s in shipped)}
+    for n, proj in sorted(tree.projects.items()):
+        names = () if n in whole else held.harnesses.get(n, ())
+        if "private_harnesses" not in proj.data and not names:
+            continue
+        data = {k: v for k, v in proj.data.items() if k != "private_harnesses"}
+        if names and isinstance(data.get("harnesses"), list):
+            data["harnesses"] = [e for e in data["harnesses"] if not (isinstance(e, dict) and e.get("name") in names)]
+        own = port(proj)
+        if names and own and own.get("repository") == schema.INTERNAL_PORT_REPOSITORY:
+            data["build"] = dict(data["build"], oss_verify=dict(own, repository=schema.NO_PORT_REPOSITORY))
+        proj.data = data
+        proj.harnesses = {h: x for h, x in proj.harnesses.items() if h not in names}
+    tree.proofs = {k: v for k, v in tree.proofs.items() if k in shipped and k.rsplit("/", 1)[0] not in gone}
+    tree.proof_libs = {k: v for k, v in tree.proof_libs.items()
+                       if k not in gone and any(s.startswith(k + "/") for s in shipped)}
+
+    def ships_record(p, h):
+        """Whether the build record of fuzz target p/h ships: it goes with its fuzz target's proof directory, so it
+        ships only beside a proof the release carries."""
+        return p not in whole and "%s/%s" % (p, h) not in gone and any(s.startswith("%s/%s/" % (p, h)) for s in shipped)
+    tree.records = {k: v for k, v in tree.records.items() if ships_record(*k)}
+    tree.record_proofs = {k: v for k, v in tree.record_proofs.items() if ships_record(*k)}
+    tree.records_at = {k: v for k, v in tree.records_at.items() if ships_record(*k)}
     tree.counterexamples = {k: v for k, v in tree.counterexamples.items()
-                            if k.split("/")[0] not in whole and k not in ids}
+                            if k.split("/")[0] not in whole and k not in ids and k.rsplit("/", 1)[0] not in gone}
     tree.findings, tree.unpatched, tree.finding_series, tree.approvals = {}, {}, {}, None
     tree.unpatched_paths = {}
     # a fuzz target keeps a proofs folder while the cut keeps a proof, its library or its build record in it, and a
-    # counterexamples folder while it keeps a counterexample; findings never ship
+    # counterexamples folder while it keeps a counterexample; findings never ship, and a held fuzz target has none
     kept = {"proofs": ({s.rsplit("/", 1)[0] for s in tree.proofs} | set(tree.proof_libs)
                        | {"%s/%s" % k for k in tree.records_at}),
             "counterexamples": {s.rsplit("/", 1)[0] for s in tree.counterexamples}}
-    tree.unit_kinds = {u: {k for k in kinds if u in kept.get(k, ())} for u, kinds in tree.unit_kinds.items()}
+    tree.unit_kinds = {u: {k for k in kinds if u in kept.get(k, ())} for u, kinds in tree.unit_kinds.items()
+                       if u not in gone}
+    tree.unit_layouts = {u: lay for u, lay in tree.unit_layouts.items() if u not in gone}
     _derive(tree)
     return pages
 
@@ -1203,7 +1349,7 @@ def _derive(tree):
             continue
         st.counterexample = cx
     digests = {}
-    for f in THEORIES:
+    for f in THEORIES + (CLASSIFIER_THEORY,):
         digests[f] = code_sha256(tree.path(f), tree.namespace) if os.path.isfile(tree.path(f)) else None
     lps = ((tree.release or {}).get("semantics") or {}).get("version")
     _refute_agreements(tree)
@@ -1224,6 +1370,8 @@ def _derive(tree):
             st.fingerprint = fingerprint(st, digests, lps)
         except shapes.PairError:
             pass                    # no fingerprint; reported once, against project.yaml, above
+        except UnpinnedImage:
+            pass                    # no fingerprint; rules._classifier_statement or rules._published_image reports it
         except (shapes.ShapeError, KeyError, TypeError) as e:
             tree.err(st.id, "cannot be stated: %s" % e)
 
@@ -1252,20 +1400,43 @@ def _refute_agreements(tree):
                     break
 
 
+class UnpinnedImage(Exception):
+    """A classifier or an original that a classifier statement names and harness.yaml does not pin: it does not list
+    it (rules._classifier_statement reports that), or lists it with no sha256 and no withheld, a published image with a
+    field missing (rules._published_image reports that).  The statement has no fingerprint, and adds no finding of its
+    own."""
+
+
 def fingerprint(st, digests, lps):
     """SHA-256 over what fixes the statement's meaning, and nothing else:
     no docstring, no image, .hex or .vo digest.  digests: the SHA-256 of the
     code of each of THEORIES."""
     if digests["theories/Shapes.v"] is None or digests["theories/Images.v"] is None:
         raise KeyError("theories/Shapes.v and theories/Images.v")
-    params, body = shapes.term(st.data, project=st.harness.project.data)
+    params, body = st.term()
     builds = st.harness.data["builds"]
     lines = [FINGERPRINT_TAG, st.id, "Definition %s%s : Prop := %s." % (st.name, params, body)]
     for b in sorted(set(st.data["builds"])):
         lines.append("build %s %s" % (b, builds[b]["sha256"]))
+    classifier = st.kind in shapes.CLASSIFIER_KINDS
+    if classifier:
+        # the classifier, and the originals it compares with, are images the statement names besides its builds
+        for what, b, role in shapes.classifier_images(st.data):
+            rec = st.harness.image(what, b, role)
+            if rec is None or ("sha256" not in rec and "withheld" not in rec):
+                raise UnpinnedImage(what, b)
+            if "sha256" not in rec:
+                raise shapes.ShapeError("the %s of the %s build is withheld, so only a withheld statement names it"
+                                        % (what, b))
+            lines.append("%s %s %s" % (what, b, rec["sha256"]))
     lines += ["shapes %s" % digests["theories/Shapes.v"], "images %s" % digests["theories/Images.v"],
               "semantics %s" % lps]
-    if st.kind == "bound":
+    if classifier:
+        if digests.get(CLASSIFIER_THEORY) is None:
+            raise shapes.ShapeError("%s is missing, which a classifier statement's fingerprint reads"
+                                    % CLASSIFIER_THEORY)
+        lines.append("classifier-shapes %s" % digests[CLASSIFIER_THEORY])
+    if st.takes_bound():
         dist = st.harness.distribution_body()
         if dist is None:
             raise KeyError("Distribution.v")

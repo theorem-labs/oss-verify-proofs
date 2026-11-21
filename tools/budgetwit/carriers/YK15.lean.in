@@ -1,0 +1,329 @@
+-- Lean-only: no Rocq source. A Lean-only helper of `BudgetWitness.lean`.
+import {{package}}.Reusable.YK15
+import {{package}}.BWorld
+
+/-! `rzb`: `YK15.realizes` without the cut, and with a grant check at every node.
+
+`YK15.realizes segs c T` (`YK15.lean:324`) ties a trace shape to the exact one-step families of
+the configurations a run reaches; its `rz_cut` lets an `AcfgMode` derivation stop at any
+configuration where the budget refuses memory, so a derivation of it records nothing about which
+configurations are refused. `rzb` has the same constructors less `rz_cut`, and its two node
+constructors ask, besides `node_ok`, for `grant_ok segs c`: if a syscall is pending at `c`, the
+budget mark's dispatcher `Run.alloc_budget_refused_b` answers `false` on it.
+
+`rzb_never_refused` reads a `MayFail` derivation (`mcfg = may_fail_cfg`, where `sstep_cfg` is
+`sstep`, twin `Run.sstep_cfg_may_fail`): no configuration the unfiltered run reaches from `c` is
+budget-refused. The two first-touch clauses of `Run.budget_refused_at` are premises of an
+`SError` step (twin `Run.budget_fault_instr_sstep_error`, `budget_fault_syscall_sstep_error`),
+which `node_ok`'s completeness half excludes; the grant clause is `grant_ok`'s negation.
+
+The rest of the file is `YK15`'s lemmas that build a `realizes` node, restated over `rzb`, with
+`YK15`'s names and `rz_`/`realizes` written `rzb_`/`rzb`. Each lemma that takes a `node_ok`
+also takes `grant_ok` for the same configuration; `grant_ok_instr` and `grant_ok_nonalloc` give
+it at an instruction and at a syscall off the four allocation numbers. -/
+
+namespace {{unit_prefix}}.BudgetWit.Rzb
+
+open LinuxProcessSemantics.Riscv.Prelude
+open LinuxProcessSemantics.LinuxProcessSem
+open LinuxProcessSemantics.LinuxProcessSem.BvBase
+open LinuxProcessSemantics.LinuxProcessSem.MemImageType
+open LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics
+open LinuxProcessSemantics.LinuxProcessSem.State
+open LinuxProcessSemantics.LinuxProcessSem.Monad
+open LinuxProcessSemantics.LinuxProcessSem.Specs
+open LinuxProcessSemantics.LinuxProcessSem.Run
+open LinuxProcessSemantics.LinuxProcessSem.OmniRun
+open {{package}}.Reusable.YK15
+open {{package}}.Reusable.YK0n (is_exit_no sstep_exit_inv exit_dispatch_ok)
+open {{package}}.Reusable.YK0i (msteps)
+open {{package}}.Reusable.R.Cfg
+
+section Addr
+-- The section is empty: this file states no fact about the target's binary. 214, 216, 222
+-- and 226 are the RISC-V Linux numbers of brk, mremap, mmap and mprotect.
+end Addr
+
+/-- If a syscall is pending at `c`, the budget does not refuse it as a grant. -/
+def grant_ok (segs : List Segment) (c : config) : Prop :=
+  ∀ x8, c.cfg_ms.ms_svc_pending = some x8 →
+    alloc_budget_refused_b (sys_input segs c.cfg_ms x8) c.cfg_model = false
+
+theorem grant_ok_instr (segs : List Segment) : ∀ ms model,
+    ms.ms_svc_pending = none → grant_ok segs (config.mkCfg ms model) := by
+  intro ms model Hsvc x8 Hx
+  exact nomatch (Hsvc.symm.trans Hx)
+
+theorem grant_ok_nonalloc (segs : List Segment) : ∀ ms model x8,
+    ms.ms_svc_pending = some x8 →
+    bv_unsigned x8 ≠ 214 → bv_unsigned x8 ≠ 216 → bv_unsigned x8 ≠ 222 → bv_unsigned x8 ≠ 226 →
+    grant_ok segs (config.mkCfg ms model) := by
+  intro ms model x8 Hsvc H1 H2 H3 H4 y8 Hy
+  have hxy : x8 = y8 := Option.some.inj (Hsvc.symm.trans Hy)
+  subst hxy
+  exact {{package}}.BWorld.abr_other _ _ H1 H2 H3 H4
+
+/-- A syscall whose number is a literal off the four allocation numbers. -/
+theorem grant_ok_no (segs : List Segment) : ∀ ms model x8 (n : Int),
+    ms.ms_svc_pending = some x8 → bv_unsigned x8 = n →
+    n ≠ 214 → n ≠ 216 → n ≠ 222 → n ≠ 226 →
+    grant_ok segs (config.mkCfg ms model) := by
+  intro ms model x8 n Hsvc Hn H1 H2 H3 H4
+  subst Hn
+  exact grant_ok_nonalloc segs ms model x8 Hsvc H1 H2 H3 H4
+
+inductive rzb (segs : List Segment) [AM : AllocMode] : config → TSet → Prop
+  | rzb_node : ∀ c (I : Type) (evs : I → List event) (nx : I → config)
+      (T : I → TSet) (i0 : I),
+      @node_ok segs AM c I evs nx →
+      grant_ok segs c →
+      (∀ i, rzb segs (nx i) (T i)) →
+      rzb segs c (t_alt (fun i => t_emit (evs i) (T i)))
+  | rzb_halt : ∀ c,
+      m_halted c.cfg_model ≠ none →
+      rzb segs c t_nil
+  | rzb_conseq_m : ∀ c T T',
+      rzb segs c T →
+      (if @amf AM = true then (∀ tr, T tr → T' tr) else t_eq T T') →
+      rzb segs c T'
+  | rzb_silent : ∀ c (I : Type) (nx : I → config) (T : I → TSet) (i0 : I),
+      @node_ok segs AM c I (fun _ => []) nx →
+      grant_ok segs c →
+      (∀ i, rzb segs (nx i) (T i)) →
+      rzb segs c (t_alt T)
+
+export rzb (rzb_node rzb_halt rzb_conseq_m rzb_silent)
+
+/-! ## Soundness at `MayFail` -/
+
+/-- A `MayFail` node with the grant check is not budget-refused. -/
+theorem node_not_refused (segs : List Segment) : ∀ c (I : Type) (evs : I → List event)
+    (nx : I → config),
+    @node_ok segs MayFail c I evs nx → grant_ok segs c → ¬ budget_refused_at segs c := by
+  intro c I evs nx Hn Hg Hb
+  have Herr : ¬ sstep segs c [] SError := by
+    intro Hs
+    obtain ⟨i, -, Hbad⟩ := Hn.2 [] SError ((sstep_cfg_may_fail segs c [] SError).1 Hs)
+    cases Hbad
+  cases c with
+  | mkCfg ms model =>
+    obtain ⟨Hh, Hc⟩ := Hb
+    rcases Hc with ⟨Hsvc, report, Hstep, Hmat⟩ | ⟨x8, Hx8, Hgr | ⟨eff, model', evs', Hspec, Hh', Hmat⟩⟩
+    · exact Herr (budget_fault_instr_sstep_error segs ms model report Hh Hsvc Hstep Hmat)
+    · exact Bool.false_ne_true ((Hg x8 Hx8).symm.trans Hgr)
+    · exact Herr (budget_fault_syscall_sstep_error segs ms model x8 eff model' evs' Hh Hx8 Hspec
+        Hh' Hmat)
+
+theorem rzb_star_not_refused (segs : List Segment) : ∀ c T, @rzb segs MayFail c T →
+    ∀ tr c', star segs c tr c' → ¬ budget_refused_at segs c' := by
+  intro c T H
+  induction H with
+  | rzb_node c I evs nx T i0 Hnode Hg Hcont IH =>
+    intro tr c' Hstar
+    cases Hstar with
+    | star_refl => exact node_not_refused segs c I evs nx Hnode Hg
+    | star_step _ e c2 tr2 _ Hss Hstar2 =>
+      obtain ⟨i, -, Heq2⟩ := Hnode.2 e (SNext c2) ((sstep_cfg_may_fail segs c e (SNext c2)).1 Hss)
+      cases Heq2
+      exact IH i tr2 c' Hstar2
+  | rzb_halt c Hh =>
+    intro tr c' Hstar
+    cases Hstar with
+    | star_refl => exact fun Hb => Hh Hb.1
+    | star_step _ e c2 tr2 _ Hss _ => exact absurd (sstep_from_running segs c e _ Hss) Hh
+  | rzb_conseq_m c T T' _ _ IH =>
+    exact IH
+  | rzb_silent c I nx T i0 Hnode Hg Hcont IH =>
+    intro tr c' Hstar
+    cases Hstar with
+    | star_refl => exact node_not_refused segs c I (fun _ => []) nx Hnode Hg
+    | star_step _ e c2 tr2 _ Hss Hstar2 =>
+      obtain ⟨i, -, Heq2⟩ := Hnode.2 e (SNext c2) ((sstep_cfg_may_fail segs c e (SNext c2)).1 Hss)
+      cases Heq2
+      exact IH i tr2 c' Hstar2
+
+/-- No configuration the run reaches from a `MayFail` `rzb` configuration is budget-refused. -/
+theorem rzb_never_refused (segs : List Segment) : ∀ c T, @rzb segs MayFail c T →
+    ¬ reaches_budget_refused segs c := by
+  rintro c T H ⟨tr, c', Hstar, Hb⟩
+  exact rzb_star_not_refused segs c T H tr c' Hstar Hb
+
+/-- …and so under every configuration (twin `Run.reaches_budget_refused_cfg_sub`). -/
+theorem rzb_never_refused_cfg (segs : List Segment) (cfg : SpuriousCfg) : ∀ c T,
+    @rzb segs MayFail c T → ¬ reaches_budget_refused_cfg segs cfg c :=
+  fun c T H Hr => rzb_never_refused segs c T H (reaches_budget_refused_cfg_sub segs cfg c Hr)
+
+/-! ## `YK15`'s node lemmas over `rzb` -/
+
+theorem rzb_conseq (segs : List Segment) [AM : AllocMode] : ∀ c T T',
+    rzb segs c T → t_eq T T' → rzb segs c T' := by
+  intro c T T' H Heq
+  apply rzb_conseq_m c T T' H
+  by_cases hm : @amf AM = true
+  · rw [if_pos hm]
+    exact fun tr HT => (Heq tr).1 HT
+  · rw [if_neg hm]
+    exact Heq
+
+theorem rzb_weak (segs : List Segment) [AM : AllocMode] : ∀ c T T',
+    amf = true → rzb segs c T → (∀ tr, T tr → T' tr) → rzb segs c T' := by
+  intro c T T' Hm H Hs
+  apply rzb_conseq_m c T T' H
+  rw [if_pos Hm]
+  exact Hs
+
+theorem rzb_emit_nil (segs : List Segment) [AM : AllocMode] : ∀ c T,
+    rzb segs c T → rzb segs c (t_emit [] T) := by
+  intro c T H
+  induction H with
+  | rzb_node c I evs nx T i0 Hnode Hg Hcont _ =>
+    have H0 : t_alt (fun i => t_emit (evs i) (T i)) [] := ⟨i0, t_emit_has_nil (evs i0) (T i0)⟩
+    exact rzb_conseq segs c (t_alt (fun i => t_emit (evs i) (T i)))
+      (t_emit [] (t_alt (fun i => t_emit (evs i) (T i))))
+      (rzb_node c I evs nx T i0 Hnode Hg Hcont)
+      (t_eq_sym _ _ (t_emit_nil_eq (t_alt (fun i => t_emit (evs i) (T i))) H0))
+  | rzb_halt c Hh =>
+    have H0 : t_nil [] := rfl
+    exact rzb_conseq segs c t_nil (t_emit [] t_nil) (rzb_halt c Hh)
+      (t_eq_sym _ _ (t_emit_nil_eq t_nil H0))
+  | rzb_conseq_m c T T' _ Heq IH =>
+    apply rzb_conseq_m c (t_emit [] T) (t_emit [] T') IH
+    by_cases hm : @amf AM = true
+    · rw [if_pos hm] at Heq ⊢
+      intro tr
+      rintro (Hp | ⟨tr', htr, HT⟩)
+      · exact Or.inl Hp
+      · exact Or.inr ⟨tr', htr, Heq tr' HT⟩
+    · rw [if_neg hm] at Heq ⊢
+      intro tr
+      constructor
+      · rintro (Hp | ⟨tr', htr, HT⟩)
+        · exact Or.inl Hp
+        · exact Or.inr ⟨tr', htr, (Heq tr').1 HT⟩
+      · rintro (Hp | ⟨tr', htr, HT⟩)
+        · exact Or.inl Hp
+        · exact Or.inr ⟨tr', htr, (Heq tr').2 HT⟩
+  | rzb_silent c I nx T i0 Hnode Hg _ IH =>
+    refine rzb_conseq segs c (t_alt (fun i => t_emit [] (T i))) (t_emit [] (t_alt T))
+      (rzb_silent c I nx (fun i => t_emit [] (T i)) i0 Hnode Hg IH) ?_
+    intro tr
+    constructor
+    · rintro ⟨i, Hp | ⟨tr', htr, HT⟩⟩
+      · exact Or.inl Hp
+      · exact Or.inr ⟨tr', htr, ⟨i, HT⟩⟩
+    · rintro (Hp | ⟨tr', htr, ⟨i, HT⟩⟩)
+      · exact ⟨i0, Or.inl Hp⟩
+      · exact ⟨i, Or.inr ⟨tr', htr, HT⟩⟩
+
+theorem rzb_silent1 (segs : List Segment) [AM : AllocMode] : ∀ c c' T,
+    node_ok segs c Unit (fun _ => []) (fun _ => c') →
+    grant_ok segs c →
+    rzb segs c' T →
+    rzb segs c T := by
+  intro c c' T Hnode Hg Hc
+  exact rzb_conseq segs c (t_alt (fun _ : Unit => T)) T
+    (rzb_silent c Unit (fun _ => c') (fun _ => T) () Hnode Hg (fun _ => Hc))
+    (t_alt_unit (fun _ : Unit => T))
+
+theorem rzb_emit1 (segs : List Segment) [AM : AllocMode] : ∀ c c' e T,
+    node_ok segs c Unit (fun _ => e) (fun _ => c') →
+    grant_ok segs c →
+    rzb segs c' T →
+    rzb segs c (t_emit e T) := by
+  intro c c' e T Hnode Hg Hc
+  exact rzb_conseq segs c (t_alt (fun _ : Unit => t_emit e T)) (t_emit e T)
+    (rzb_node c Unit (fun _ => e) (fun _ => c') (fun _ => T) () Hnode Hg (fun _ => Hc))
+    (t_alt_unit (fun _ : Unit => t_emit e T))
+
+theorem rzb_alt2 (segs : List Segment) [AM : AllocMode] : ∀ c (IA IB : Type)
+    (nx : IA ⊕ IB → config) (A B : TSet) (a0 : IA) (b0 : IB),
+    node_ok segs c (IA ⊕ IB) (fun _ => []) nx →
+    grant_ok segs c →
+    (∀ i, rzb segs (nx (Sum.inl i)) A) →
+    (∀ i, rzb segs (nx (Sum.inr i)) B) →
+    rzb segs c (t_alt2 A B) := by
+  intro c IA IB nx A B a0 b0 Hnode Hg HA HB
+  refine rzb_conseq segs c
+    (t_alt (fun i : IA ⊕ IB => match i with | Sum.inl _ => A | Sum.inr _ => B)) _
+    (rzb_silent c (IA ⊕ IB) nx
+      (fun i => match i with | Sum.inl _ => A | Sum.inr _ => B) (Sum.inl a0) Hnode Hg ?_) ?_
+  · intro i
+    cases i with
+    | inl i => exact HA i
+    | inr i => exact HB i
+  · intro tr
+    constructor
+    · rintro ⟨i, Hi⟩
+      cases i with
+      | inl i => exact Or.inl Hi
+      | inr i => exact Or.inr Hi
+    · rintro (H | H)
+      · exact ⟨Sum.inl a0, H⟩
+      · exact ⟨Sum.inr b0, H⟩
+
+theorem rzb_silent_allI (segs : List Segment) [AM : AllocMode] : ∀ c (I : Type)
+    (nx : I → config) (i0 : I) T,
+    node_ok segs c I (fun _ => []) nx →
+    grant_ok segs c →
+    (∀ i, rzb segs (nx i) T) →
+    rzb segs c T := by
+  intro c I nx i0 T Hnode Hg Hc
+  exact rzb_conseq segs c (t_alt (fun _ : I => T)) T
+    (rzb_silent c I nx (fun _ => T) i0 Hnode Hg Hc)
+    (fun tr => ⟨fun ⟨_, Hi⟩ => Hi, fun HT => ⟨i0, HT⟩⟩)
+
+theorem rzb_step (segs : List Segment) [AM : AllocMode] : ∀ ms model ms' T,
+    m_halted model = none →
+    m_vm_lazy model = [] →
+    ms.ms_svc_pending = none →
+    RiscvSemantics.step segs ms = MachineOk ms' →
+    rzb segs (config.mkCfg ms' model) T →
+    rzb segs (config.mkCfg ms model) T := by
+  intro ms model ms' T Hh Hlazy Hsvc Hstep Hc
+  exact rzb_silent1 segs _ _ T (node_instr segs ms model ms' Hh Hlazy Hsvc Hstep)
+    (grant_ok_instr segs ms model Hsvc) Hc
+
+theorem rzb_msteps (segs : List Segment) [AM : AllocMode] : ∀ ms ms' model T,
+    m_halted model = none →
+    m_vm_lazy model = [] →
+    msteps segs ms ms' →
+    rzb segs (config.mkCfg ms' model) T →
+    rzb segs (config.mkCfg ms model) T := by
+  intro ms ms' model T Hh Hlazy Hms
+  induction Hms with
+  | mst_refl => exact fun Hc => Hc
+  | mst_step ms ms1 ms2 Hsvc Hstep _ IH =>
+    intro Hc
+    exact rzb_step segs ms model ms1 T Hh Hlazy Hsvc Hstep (IH Hc)
+
+/-- The exit (93 or 94) is off the four allocation numbers. -/
+theorem grant_ok_exit (segs : List Segment) : ∀ ms model x8,
+    ms.ms_svc_pending = some x8 → is_exit_no x8 → grant_ok segs (config.mkCfg ms model) := by
+  intro ms model x8 Hsvc Hx
+  rcases Hx with E | E
+  · exact grant_ok_no segs ms model x8 93 Hsvc E (by decide) (by decide) (by decide) (by decide)
+  · exact grant_ok_no segs ms model x8 94 Hsvc E (by decide) (by decide) (by decide) (by decide)
+
+theorem rzb_exit (segs : List Segment) [AM : AllocMode] : ∀ ms model x8,
+    m_halted model = none →
+    ms.ms_svc_pending = some x8 →
+    is_exit_no x8 →
+    rzb segs (config.mkCfg ms model)
+      (t_exit (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) (m_fs model)) := by
+  intro ms model x8 Hh Hsvc Hx8
+  let code := bv_and (ms_gpr ms 0) (Z_to_bv 64 255)
+  apply rzb_emit1 segs (config.mkCfg ms model) (config.mkCfg ms (with_halted code model))
+  · apply node_ok_of_pnode segs _ _ _ _ (transparent_exit segs ms model x8 Hsvc Hx8)
+    constructor
+    · intro _
+      exact sstep.sstep_exit ms model x8 _ _ [] code Hh Hsvc
+        (exit_dispatch_ok _ model Hx8) rfl rfl
+    · intro e st Hss
+      obtain ⟨rfl, rfl⟩ := sstep_exit_inv segs ms model x8 e st Hh Hsvc Hx8 Hss
+      exact ⟨(), rfl, rfl⟩
+  · exact grant_ok_exit segs ms model x8 Hsvc Hx8
+  · apply rzb_halt
+    intro H
+    cases H
+
+end {{unit_prefix}}.BudgetWit.Rzb

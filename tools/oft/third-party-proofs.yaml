@@ -1,0 +1,289 @@
+# Third-party proof files: files of a fuzz target's proofs folder that come from another project's proofs and keep
+# that project's licence (docs/adding-a-proof.md, requirement 7, case 3).  `oft lint` (tools/oft/lint.py,
+# load_third_party) accepts a proof file whose SPDX-License-Identifier line is LGPL-2.1-or-later only when its path is
+# a row here and the SHA-256 of its bytes is the row's, and it refuses a row's file whose bytes are not the row's.  A
+# row may come before its file: a row whose file the tree does not hold publishes nothing.  The lines of the upstream
+# author's notice, which name the author's address, are the one part of a row's file that the private-data rule does
+# not read, for any of its shapes; the row names them by number, and the pinned bytes fix what they hold.  Only lint.py
+# reads this file (tools/oft/keys.py, NOT_THE_CHECKER).  A maintainer adds a row, and review judges it; a contributor's
+# pull request changes nothing here.
+#
+# Each row has the form tools/oft/schemas/third-party-proofs.yaml defines.  What that schema cannot say, lint.py
+# (load_third_party) checks: the table is one mapping whose one key, `files`, is the list of rows; a row's path is a
+# Rocq file of a fuzz target's proofs folder (lint.proof_rocq); its notice's first line is not after its last; and no
+# two rows name one path, in either layout.
+#
+# coq-community/huffman: the 18 files of the Huffman library under each of three proof folders of
+# zlib/compress_fuzzer.  Its licence file, LICENSES/coq-community-huffman-LICENSE, comes into the tree with the files;
+# lint pins its bytes (PINNED_VERBATIM).
+files:
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/AuxLib.v
+  sha256: 6c6410be2f9cce8b0f4976ba84c1df88b9293b761b6fba54810ae3c91efcc23c
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/AuxLib.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/BTree.v
+  sha256: fc705931fba66e2a93fa145e1f9ccdaf9e2f6158da090bcb5b21e4c69f38cc9f
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/BTree.v}
+  notice: {first: 22, last: 22}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/Build.v
+  sha256: 44d0d97a63acc1c831e5a64871df502e4ee52945c77fa18cbea070524c306a33
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Build.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/Code.v
+  sha256: 76efb86451e400923f56fcf0035473ea0dd2bad0c9cdecfa1ec3306cedac6ac3
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Code.v}
+  notice: {first: 22, last: 22}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/Cover.v
+  sha256: 015999452bd1662f03baf7bb824948815b2f03f79e094914beeca8b3c099eddf
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Cover.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/CoverMin.v
+  sha256: f4d7552bfc1c9bb07be4f8bb632f349b6660e02f21170426dbe9791df343484d
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/CoverMin.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/Frequency.v
+  sha256: e78baf3bbf154861b1e20d46809a5036ff9ab6c7083d81e13c807af927f0d2ba
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Frequency.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/HeightPred.v
+  sha256: 69edb6736ac949da411ce5eab6a6a3c82dead09b425a2b20419269ccaeee3214
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/HeightPred.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/ISort.v
+  sha256: 1c99ffce899ac209fa2f21e5df73e6ce4d65c5de313a043eac01de484d0c9421
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/ISort.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/OneStep.v
+  sha256: 243ca535d1f311ffbf65732a1b93c950b2c629d535bd6608dd8dbaaadac398ff
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/OneStep.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/Ordered.v
+  sha256: 77d6a2ead29cda082c0665be3ed279db8c5db2209ad81afd5aa9ed052ba873a8
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Ordered.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/OrderedCover.v
+  sha256: c6b38b603f5b5a7835382af9d541ae8ec280313c5d08ecd3ad1246a5a2d0f26e
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/OrderedCover.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/Prod2List.v
+  sha256: 857767073a1f80ffc47b3576962228a11a74eb355797f022f8b4771af74c0d9e
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Prod2List.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/SameSumLeaves.v
+  sha256: ec0c5690dce9a661f92568742306b25701397b1a5dd285875e41470388b64d44
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/SameSumLeaves.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/SubstPred.v
+  sha256: 3c5cfbfba0fb1051847d5207e7dcbaf5e174b969ef4d5205ff30d0f1030f577b
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/SubstPred.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/UniqueKey.v
+  sha256: 688a42de64276b0c5bcb03a3a18f8dc4fc3f9a642fbbba965f32edb1f8e09fee
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/UniqueKey.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/Weight.v
+  sha256: a83de10ea42d134371b4ed905001ab8881b2b626010f50330e1561a458b92b06
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Weight.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/asan_ubsan_agrees_alloc_forced_only/Huffman/WeightTree.v
+  sha256: 7c0b510989d835fdeb4a8b9afdd5e64050eaa12e9b9de1b0f85b07e201f2cb21
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/WeightTree.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/AuxLib.v
+  sha256: 6c6410be2f9cce8b0f4976ba84c1df88b9293b761b6fba54810ae3c91efcc23c
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/AuxLib.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/BTree.v
+  sha256: f290737190bb759257dac7d3aebe5a74de36a0fc3757f2278d507814b3077db4
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/BTree.v}
+  notice: {first: 22, last: 22}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/Build.v
+  sha256: 8fbd4c9c4ac5916aca6c6d743275331f1e49312fb9f9417f3c097ef9cffad3c6
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Build.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/Code.v
+  sha256: aa10ca831b4204a6af55b2fbf37c14eefe54bc4ee3a4de0e098428b297b805bd
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Code.v}
+  notice: {first: 22, last: 22}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/Cover.v
+  sha256: 2840401eada0e6e0f69d0e870d1ae75ab0f30cb05736a8a60f65f6f407c15ede
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Cover.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/CoverMin.v
+  sha256: f8eaf52911842d6aa4ac4df6865e56811d0573ea377c53c31821af7ffdab5442
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/CoverMin.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/Frequency.v
+  sha256: a2abbd598018f39530ef3428eddccc27a1c78d0ef032d114293eb5fff317a25b
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Frequency.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/HeightPred.v
+  sha256: 080e1cda25de2e6cf93bc8a95aaa0e7a216f9197e9fe7d2fcb58c2dbde2c1841
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/HeightPred.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/ISort.v
+  sha256: 7f2cf71a1c2b28702773aad8122d48b49de197d48af0bd4770f7bf0f5b5b0b99
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/ISort.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/OneStep.v
+  sha256: 3f60bf52d77be345fdc115ffbd9ebcc7cedeaf65dd088866fa9efc773cc22c75
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/OneStep.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/Ordered.v
+  sha256: 3a362d985aece625fddf2562d9f60036f54e3caaf3d5396190cd4c77a89c8953
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Ordered.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/OrderedCover.v
+  sha256: 99ce16804fbf5537bb2f07148388b4a12186e0446e0a14f937af16052ec55a11
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/OrderedCover.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/Prod2List.v
+  sha256: 6ccd5e718517a856004b2665d02d9d63e1374421ee10c5ae9316f34cb63bc5b2
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Prod2List.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/SameSumLeaves.v
+  sha256: caf7109b2206f4229e08172ce2dcedb5bd89283467803c00536f4c9d444dbf5e
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/SameSumLeaves.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/SubstPred.v
+  sha256: b956bb81ebc76285f3b205042e3e13fce761f6f46957a5135a693cfe5d550977
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/SubstPred.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/UniqueKey.v
+  sha256: 8741104436224dbb590729220764e33a69a32910ed25c8ed60938e52302aac26
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/UniqueKey.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/Weight.v
+  sha256: 05a2eea35927e87499646e4e2c443ca771dcaa2ed77851ca52665fa64af679db
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Weight.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/ubsan_agrees_alloc_forced_only/Huffman/WeightTree.v
+  sha256: bb1d5f24da746d99fef82bc18936b9e5bbb55950e8cb1a904ba4cacac2c6683f
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/WeightTree.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/AuxLib.v
+  sha256: 6c6410be2f9cce8b0f4976ba84c1df88b9293b761b6fba54810ae3c91efcc23c
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/AuxLib.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/BTree.v
+  sha256: 176fdbc0e28446021d3e592e3af9080ed651c4f1484ba7145719d4f92b2de2ba
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/BTree.v}
+  notice: {first: 22, last: 22}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/Build.v
+  sha256: 7ee3f7fc93ff1f211577aaaf3ed5a690536eb9870c40d47e2af0aaeaf2710e26
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Build.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/Code.v
+  sha256: b500a457389506a35310d9d16dcf3cbfca9b4cb29f81c349e5daa67c457828a0
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Code.v}
+  notice: {first: 22, last: 22}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/Cover.v
+  sha256: bb804d6073593286c4afc8cc0303ff465ca8237d01e93e6208bca01e5118c8c2
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Cover.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/CoverMin.v
+  sha256: a7843bc2a26e49596fb40e0c16739618b5ed05a991f59a1bdae9344513adf788
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/CoverMin.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/Frequency.v
+  sha256: 227082c4c05d082b9c6404c1234a8328604f1df9689a94c3ceb1e78c5951d3dd
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Frequency.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/HeightPred.v
+  sha256: a171dc45a40be156ab6234121e979af4df0587fda4dceb950441e1a1ab7ae321
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/HeightPred.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/ISort.v
+  sha256: 543add361d5c0710329bf5368af36e96ca77153b68747af6ce5dc49ffad84a51
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/ISort.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/OneStep.v
+  sha256: 631bc7e934e8395f761482636d2945db6632d76ca5f6ebd61a0eb683ae0732f9
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/OneStep.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/Ordered.v
+  sha256: d9df10e25fa2cf44e5fbe04c1c5a2042f142e2463be380985c2c31ac00931278
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Ordered.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/OrderedCover.v
+  sha256: b4c662fe76c86b05fe0a508af009f06cc93a35c9cfe5520fb888a55693e6520a
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/OrderedCover.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/Prod2List.v
+  sha256: 4d881164d1f0e2e316b71d7f404027baa24cee8c340624b9bf9a492b922912ef
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Prod2List.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/SameSumLeaves.v
+  sha256: 70ac7235a5230639978454cbc207de3e347884baad6236b1e1fa72f491dea55b
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/SameSumLeaves.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/SubstPred.v
+  sha256: 5882687e41b95374801a43b1dd284ffeea1716f4f2d6697adee0801d4604189f
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/SubstPred.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/UniqueKey.v
+  sha256: c74309696addfc4011c551dc2d7bb2e8558ac37dac4be0721b8af85dc6f2fa30
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/UniqueKey.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/Weight.v
+  sha256: 6a37de09579346b37ec1be126003a5837d4dc7f05a14ffa553d85851ebb7f3c6
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/Weight.v}
+  notice: {first: 21, last: 21}
+- path: projects/zlib/compress_fuzzer/proofs/lib/plain_halts_any_exit/Huffman/WeightTree.v
+  sha256: 25ef1e6791bfe363b9305351d2e7656d863787a1eb9c88b08b2f5516ba688af6
+  spdx: LGPL-2.1-or-later
+  upstream: {repository: coq-community/huffman, commit: cc7d4cc41ef623f85b417e723cd8e4c2e5be1f6a, path: theories/WeightTree.v}
+  notice: {first: 21, last: 21}

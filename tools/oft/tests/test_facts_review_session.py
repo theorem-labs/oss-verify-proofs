@@ -10,6 +10,7 @@ import os
 import pathlib
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -331,7 +332,9 @@ class Session(unittest.TestCase):
         (self.tmp / "review.md").write_text("No findings.\n")
         c = subprocess.run([COMMENT, str(self.tmp / "review.md")], capture_output=True, text=True, check=True,
                            env=child_environment(str(self.home), TRIES="\n".join(self.tries()),
-                                                 SERVED=(self.checkout / "review" / "served").read_text()))
+                                                 SERVED=(self.checkout / "review" / "served").read_text(),
+                                                 # as test_facts_review_scripts.Scripts: this interpreter, not a shim
+                                                 PATH=os.path.dirname(sys.executable) + os.pathsep + os.environ["PATH"]))
         self.assertIn(f"ended: {self.tries()[0]}.</sub>", c.stdout)
 
     @unittest.skipUnless(HAVE_WORKFLOW, NO_WORKFLOW)

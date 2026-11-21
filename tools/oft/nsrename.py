@@ -85,9 +85,12 @@ _FORBIDDEN = '"()*.'
 # what those runs read and printed (renamed, they would record runs that never happened, and their MANIFEST's sha256
 # would no longer match), and which no build reads.  And dev/stream/, the stream's internal tools, which the release
 # cut removes (release_tree.INTERNAL): some of its files already use the new name by design, and a compiled .glob there
-# keeps the old one.  A path ending in `/` names a folder; a `*` stands for one path component.
+# keeps the old one.  And dev/licence/, the shared licence-record generator of OSSV-400, whose module-path mask names
+# both namespaces on purpose (`(?:OssFuzzTheorems|OSSVerify)\.`): it already holds the new name, so the rename would
+# refuse the tree, and in a renamed tree lint would refuse its old one.  A path ending in `/` names a folder; a `*`
+# stands for one path component.
 EXEMPT = ("tools/", "CHANGELOG.md", "docs/versioning.md", "docs/statements.md", "tests/negative/old_namespace/",
-          "projects/*/*/proofs/provenance/evidence/", "dev/stream/")
+          "projects/*/*/proofs/provenance/evidence/", "dev/stream/", "dev/licence/")
 
 
 class Error(Exception):

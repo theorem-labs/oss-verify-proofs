@@ -81,14 +81,14 @@ import urllib.parse
 
 # The providers a review may ask for, each with the name the tool gives it in `.modelUsage[*].provider` and the host
 # of its API. An allow list: a provider the tool names otherwise, a new one included, is never taken for the one
-# asked for. `ossv-gateway` is the OSS Verify model gateway (Dispatch issue INFRA-481), which facts-review.yml's
+# asked for. `model-gateway` is the model gateway (Dispatch issue INFRA-481), which facts-review.yml's
 # review job asks for: a LiteLLM proxy that Theorem runs on its tailnet, which the tool reports as "firstParty" since
 # it speaks Anthropic's API. Its host is not written here: a tailnet's names stay out of this repository's text
 # (oft lint, private-data), so it is REVIEW_GATEWAY_URL's, which must be exactly https://<host>, and the tool's
 # ANTHROPIC_BASE_URL must be that URL (endpoint). The workflow sets REVIEW_GATEWAY_URL from the repository variable
-# OSSV_MODEL_GATEWAY_URL. Its turns are the gateway's word for which model answered; `anthropic` is Anthropic's own
+# MODEL_GATEWAY_URL. Its turns are the gateway's word for which model answered; `anthropic` is Anthropic's own
 # API, for a person's run.
-GATEWAY = "ossv-gateway"
+GATEWAY = "model-gateway"
 TOOL_PROVIDER = {"anthropic": ("firstParty", "api.anthropic.com"),
                  GATEWAY: ("firstParty", None)}
 # The tool's own variables (ANTHROPIC_*, CLAUDE_CODE_*, _CLAUDE_CODE_*), in its environment or a settings file's `env`:

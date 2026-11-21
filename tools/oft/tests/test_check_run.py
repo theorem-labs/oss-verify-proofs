@@ -118,7 +118,7 @@ class Payload(unittest.TestCase):
                                  {"name": "theorem/prove: zlib/checksum_fuzzer", "head_sha": SHA,
                                   "status": "completed", "conclusion": "success",
                                   "output": {"title": "0 contracts need work, 0 functions changed",
-                                             "summary": prove.markdown(r)}})
+                                             "summary": prove.markdown(r), "text": text_of(r)}})
 
     def test_each_unit_has_a_check_of_its_own(self):
         """Two units' reports on one head: two check runs of two names, so that neither hides the other (GitHub shows
@@ -143,7 +143,7 @@ class Payload(unittest.TestCase):
         got = check_run.payload(r, SHA)
         self.assertEqual((got["conclusion"], got["output"]),
                          ("neutral", {"title": "0 contracts need work, 0 functions changed, 2 data changed",
-                                      "summary": NEUTRAL + prove.markdown(r)}))
+                                      "summary": NEUTRAL + prove.markdown(r), "text": text_of(r)}))
 
     def test_the_title_counts(self):
         """Contracts that need work are those that need work, changed contracts and removed ones; functions changed
@@ -222,6 +222,70 @@ def lists(md):
 def left_out(n, total):
     return ("\n\n_%d of the report's %d rows are left out to keep this summary within GitHub's 65,535 characters: the "
             "full report is the output of `oft prove`, and every row is in `oft prove --json`._\n" % (n, total))
+
+
+def text_of(r):
+    """The output.text the theorem CLI reads: the marker line, then the report's JSON alone in one fenced block."""
+    return f"<!-- theorem-prove-json -->\n```json\n{json.dumps(prove.as_json(r), sort_keys=True)}\n```\n"
+
+
+def json_in(text):
+    """The data of the one fenced `json` block after the marker line, as a reader that parses no prose finds it."""
+    first, rest = text.split("\n", 1)
+    assert first == "<!-- theorem-prove-json -->", first
+    assert rest.startswith("```json\n") and rest.endswith("\n```\n"), rest[:40] + "..." + rest[-40:]
+    return json.loads(rest[len("```json\n"):-len("\n```\n")])
+
+
+class Text(unittest.TestCase):
+    """A check run's output.text is for a program, the theorem CLI's prove plug-in: `oft prove --json`'s data, schema
+    oss-verify/prove/1, alone in one fenced block after a fixed line; a report whose JSON passes GitHub's limit of
+    65,535 characters carries a stub that says so, never a cut JSON."""
+
+    def test_the_text_holds_the_report_s_json_whole(self):
+        """The data read back is `oft prove --json`'s, with the schema, for any conclusion and with a pull request."""
+        for r, url in ((report("needs work", functions=("changed", "moved")), None),
+                       (report("unchanged", "data changed"), None), (report(), "https://github.com/acme/libreac/pull/7")):
+            with self.subTest(contracts=len(r.contracts), url=url):
+                got = json_in(check_run.payload(r, SHA, url)["output"]["text"])
+                self.assertEqual(got, json.loads(json.dumps(prove.as_json(r))))
+                self.assertEqual(got["schema"], "oss-verify/prove/1")
+                self.assertEqual((got["unit"], got["base"], got["head"]), (r.unit, BASE, HEAD))
+
+    def test_a_report_too_large_for_the_text_carries_the_stub(self):
+        """The report's JSON would pass the limit: the block holds only the schema and truncated, which a reader
+        refuses to take for a report; a report of the limit or under carries its JSON."""
+        r = report("needs work", functions=("changed",) * 2000)
+        self.assertGreater(len(text_of(r)), 65535)
+        text = check_run.payload(r, SHA)["output"]["text"]
+        self.assertEqual(json_in(text), {"schema": "oss-verify/prove/1", "truncated": True})
+        self.assertLessEqual(len(text), 65535)
+        small = report("needs work", functions=("changed",) * 10)
+        self.assertLessEqual(len(text_of(small)), 65535)
+        self.assertEqual(check_run.payload(small, SHA)["output"]["text"], text_of(small))
+
+    def test_a_text_of_exactly_the_limit_is_the_report(self):
+        """GitHub's limit is inclusive: a text of 65,535 characters carries the report's JSON, and one of 65,536
+        carries the stub."""
+        for size, truncated in ((65535, False), (65536, True)):
+            with self.subTest(size=size):
+                r = report("needs work")
+                r.contracts[0]["why"] += "x" * (size - len(text_of(r)))
+                self.assertEqual(len(text_of(r)), size)
+                text = check_run.payload(r, SHA)["output"]["text"]
+                if truncated:
+                    self.assertEqual(json_in(text), {"schema": "oss-verify/prove/1", "truncated": True})
+                else:
+                    self.assertEqual(text, text_of(r))
+
+    def test_oft_prove_json_names_its_schema(self):
+        """`oft prove --json` prints the same data as the check run's text, with its schema."""
+        out = io.StringIO()
+        with mock.patch.object(prove, "report", return_value=report("needs work", functions=("changed",))):
+            prove.run(".", UNIT, BASE, HEAD, True, out)
+        data = json.loads(out.getvalue())
+        self.assertEqual(data["schema"], "oss-verify/prove/1")
+        self.assertEqual(data, json.loads(json.dumps(prove.as_json(report("needs work", functions=("changed",))))))
 
 
 class Summary(unittest.TestCase):
@@ -591,45 +655,6 @@ class PostCheck(unittest.TestCase):
         done = subprocess.run([sys.executable, "-c", "import sys, oft.prove; print('oft.check_run' in sys.modules)"],
                               capture_output=True, text=True, env=dict(os.environ, PYTHONPATH=TOOLS))
         self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "False\n", ""))
-
-
-class CodeLine(unittest.TestCase):
-    """check_run.code_target: the commit of the code repository a pull request's body names on a line of its own,
-    `Code: OWNER/REPO@SHA`, where the prove workflow also posts the check; and what is wrong with its Code: lines."""
-
-    def test_a_valid_line(self):
-        for body in ("Code: example/libreac@%s" % SHA,
-                     "The symbol facts of v1.9.0.\r\n\r\n  Code: example/libreac@%s  \r\nMore text.\r\n" % SHA,
-                     "First line\nCode: example/libreac@%s\n" % SHA):
-            with self.subTest(body=body):
-                self.assertEqual(check_run.code_target(body), (("example/libreac", SHA), []))
-
-    def test_no_line(self):
-        for body in (None, "", "No code repository.", "Codes: example/libreac@%s" % SHA,
-                     "The Code: example/libreac@%s line" % SHA, "code: example/libreac@%s" % SHA):
-            with self.subTest(body=body):
-                self.assertEqual(check_run.code_target(body), (None, []))
-
-    def test_a_malformed_line_is_named_by_its_number_and_not_shown(self):
-        """Its text is the pull request author's: the problem names the line, never quotes it."""
-        for value in ("example/libreac@" + SHA[:12], "example/libreac@" + SHA.upper(), "example/libreac " + SHA,
-                      "example/libreac@%s and more" % SHA, "", "example/..@" + SHA, "::warning::x@" + SHA):
-            with self.subTest(value=value):
-                self.assertEqual(check_run.code_target("Title\n\nCode: " + value),
-                                 (None, ["line 3 of the pull request's body starts with `Code:` but is not "
-                                         "`Code: OWNER/REPO@SHA` with the full 40-hex commit id"]))
-
-    def test_several_lines(self):
-        other = "f" * 40
-        line = "Code: example/libreac@%s\n" % SHA
-        self.assertEqual(check_run.code_target(line + "text\n" + line), (("example/libreac", SHA), []))
-        self.assertEqual(check_run.code_target(line + "Code: example/libreac@%s\n" % other),
-                         (None, ["the pull request's body names 2 code commits on `Code:` lines (example/libreac@%s, "
-                                 "example/libreac@%s): none is posted" % (SHA, other)]))
-        self.assertEqual(check_run.code_target(line + "Code: example/libreac\n"),
-                         (("example/libreac", SHA),
-                          ["line 2 of the pull request's body starts with `Code:` but is not `Code: OWNER/REPO@SHA` "
-                           "with the full 40-hex commit id"]))
 
 
 if __name__ == "__main__":

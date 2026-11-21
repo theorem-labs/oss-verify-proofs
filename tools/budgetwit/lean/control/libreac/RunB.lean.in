@@ -1,0 +1,124 @@
+-- Lean-only: no Rocq source. A Lean-only helper of `BudgetWitness.lean`.
+import {{unit_prefix}}.BudgetWit.Rzb
+import {{package}}.Reusable.YP0n
+import {{package}}.Reusable.YP03
+import {{package}}.Reusable.YP04
+import {{package}}.Reusable.YN35
+
+/-! The `realizes` lemmas of R1's `Reusable/YP0n.lean`, `YP03.lean`, `YP04.lean` and
+`YN35.lean` that the driver's usage path uses, restated over `Rzb.rzb`.
+
+Each declaration mirrors the R1 declaration named in its doc comment: its name is the R1 name
+with `rz_` written `rzb_` and `realizes_` written `rzb_` (or `_b` appended when the name has
+neither), its statement is the R1 statement with `realizes` written `rzb`, and its proof is the
+R1 proof with the mirrored lemmas renamed. Where R1 builds a node, the proof also gives
+`grant_ok` for it: `grant_ok_no … 96 …` at `set_tid_address` (`rzb_set_tid_first`).
+
+Two statements differ from the mirror rule. R1's `rz_chk1_silent` and
+`rz_ret_only_copyins_silent` take no `node_ok`, but build a node at a syscall whose number they
+do not fix, so their hypotheses do not give `grant_ok`; `rzb_chk1_silent` and
+`rzb_ret_only_copyins_silent` take `grant_ok segs (config.mkCfg (pend_at regs pc mem rom) model)`
+as an extra hypothesis right after their `check_syscall` hypothesis. Their caller on the usage
+path (`WritevG`'s mirror of `YN3g.rz_writev_empty`) has `bv_unsigned (getr regs 17) = 66` and
+discharges it with `grant_ok_no`.
+
+Private helpers copied from `YP0n.lean` (used by `rzb_chk1_silent`'s proof):
+`yp0n_checked_table_arms`, `yp0n_agree`.
+
+Each part opens the namespaces its R1 file opens, so each proof elaborates in R1's scope. -/
+
+namespace {{unit_prefix}}.BudgetWit.RunB
+open {{package}}.Reusable.YK15
+open {{package}}.Reusable.R.Cfg
+open {{unit_prefix}}.BudgetWit.Rzb
+
+section Addr
+-- The section is empty: this file states no fact about the target's binary; 96 is the RISC-V
+-- Linux number of set_tid_address, and the stop address is `YN35.SRC1_STDIO_WRITE`.
+end Addr
+
+/-! ## `YP0n.lean` -/
+
+section YP0nPart
+
+open {{package}}.Reusable.YP0n
+
+/-- Copied from `YP0n.lean:159` (private there). -/
+/-- Copied from `YP0n.lean:164` (private there). -/
+/-- `YP0n.rz_chk1_silent` (`YP0n.lean:462`), with `grant_ok` for the pending configuration
+after the `check_syscall` hypothesis. -/
+    grant_ok segs (config.mkCfg (pend_at regs pc mem rom) model) →
+  intro regs pc mem rom model eff m' T Hh Hlz Hok Hg Hh' Hlz' Huniq Hc
+  refine rzb_silent1 segs _
+    (config.mkCfg (advance_past_svc (apply_effect (pend_at regs pc mem rom) eff)) m') T ?_ Hg ?_
+/-- `YP0n.rz_ret_only_copyins_silent` (`YP0n.lean:563`), with `grant_ok` for the pending
+configuration after the `check_syscall` hypothesis. -/
+    grant_ok segs (config.mkCfg (pend_at regs pc mem rom) model) →
+  intro regs pc mem rom model reads r m' T Hh Hlz Hchk Hg Hh' Hlz' Hc
+  refine rzb_chk1_silent segs regs pc mem rom model (with_copyins reads (mkEffect r [] [])) m' T
+    Hh Hlz ?_ Hg Hh' Hlz' ?_ ?_
+/-- `YP0n.rz_exit_at` (`YP0n.lean:583`). -/
+/-- `YP0n.rz_exit_small` (`YP0n.lean:593`). -/
+/-- `YP0n.rz_set_tid_first` (`YP0n.lean:641`); the node's `grant_ok` is `grant_ok_no … 96 …`. -/
+    ⟨Z_to_bv 64 1, H1⟩ T ?_
+    (grant_ok_no segs (pend_at regs pc mem rom) model (getr regs 17) 96 rfl Hno (by decide)
+      (by decide) (by decide) (by decide)) ?_
+end YP0nPart
+
+/-! ## `YP03.lean` -/
+
+section YP03Part
+
+open LinuxProcessSemantics.Riscv.Instr
+open LinuxProcessSemantics.Riscv.Sem
+
+/-- `YP03.rz_run_gen` (`YP03.lean:217`). -/
+/-- `YP03.rz_run_stop` (`YP03.lean:231`). -/
+/-- `YP03.rz_run_running` (`YP03.lean:243`). -/
+/-- `YP03.rz_run_ecall` (`YP03.lean:255`). -/
+/-- `YP03.rz_run_to_gen` (`YP03.lean:267`). -/
+/-- `YP03.rz_branch` (`YP03.lean:303`). -/
+/-- `YP03.rz_sym_exit` (`YP03.lean:716`). -/
+end YP03Part
+
+/-! ## `YP04.lean` -/
+
+section YP04Part
+
+open LinuxProcessSemantics.Riscv.Instr
+open LinuxProcessSemantics.Riscv.Sem
+open LinuxProcessSemantics.Common.PropExec (bv_wrap Z_to_bv_unsigned bv_eq_of_unsigned Z_shiftl)
+open {{package}}.Reusable.YK11
+open {{package}}.Reusable.YK0h
+open {{package}}.Reusable.YK0i
+open {{package}}.Reusable.YK14
+open {{package}}.Reusable.YK1b
+open {{package}}.Reusable.YK0n
+open {{package}}.Reusable.YP0n
+open {{package}}.Reusable.YP0m
+open {{package}}.Reusable.YP09
+open {{package}}.Reusable.YP02
+open {{package}}.Reusable.YP0l
+open {{package}}.Reusable.YP0k
+open {{package}}.Reusable.YP06
+open {{package}}.Reusable.YP03
+
+/-- `YP04.rz_run_to_stop` (`YP04.lean:112`). -/
+/-- `YP04.rz_run_to_running` (`YP04.lean:126`). -/
+/-- `YP04.rz_run_to_ecall` (`YP04.lean:140`). -/
+end YP04Part
+
+/-! ## `YN35.lean` -/
+
+section YN35Part
+
+open {{package}}.Reusable.YK11
+open {{package}}.Reusable.YN35
+
+/-- `YN35.realizes_exit_by_run` (`YN35.lean:101`). -/
+/-- `YN35.realizes_run_to` (`YN35.lean:145`). -/
+/-- `YN35.src0_exit` (`YN35.lean:166`). -/
+/-- `YN35.src0_exit_to_flush` (`YN35.lean:175`). -/
+end YN35Part
+
+end {{unit_prefix}}.BudgetWit.RunB

@@ -8,13 +8,29 @@
                   lies beside a per-project one (layout.py), and a symbol fact
                   is named for a build its harness.yaml publishes
     schema        closed schemas and the rules between facts (schema.py, rules.py),
-                  and each symbol fact reads whole and is of the binary
-                  harness.yaml pins (check_symbols)
+                  each symbol fact reads whole and is of the binary
+                  harness.yaml pins (check_symbols), a deviation record says
+                  what its build record and the TLS scans of its builds say
+                  (check_deviation), and each statement's instance is the
+                  file its record names, of fewer than 64 MiB, on the path
+                  the driver takes with it (check_instances); a project of
+                  shapes.REQUIRED must carry both; each name of a
+                  project's private_harnesses is one that every reader of the
+                  held entries can hold and that neither the cut nor the
+                  scanners find in the name, path or Rocq module of a kept
+                  fuzz target or in a project's name, in any case, and the
+                  field leaves its project a fuzz
+                  target that publishes a build when it has one, unless the
+                  project is `release: private` (check_private_harnesses);
+                  and the internal tree (with tools/publish/) names no port
+                  repository `none` (check_port_none)
     private-data  no host paths (but in the change ledgers, changes/, which
                   the release removes), private network addresses, private host
                   names, private theorem-labs repositories named in a path,
                   e-mail addresses, private keys or access tokens in what this
-                  repository wrote, and no build host in a port build record
+                  repository wrote (the lines of the upstream author's notice
+                  in a third-party proof file whose row pins its bytes are not
+                  read), and no build host in a port build record
     links         links point only where they may: never to a machine on a
                   private network or to a private theorem-labs repository
     free-text     every free-text field has a place in the rendering
@@ -22,7 +38,14 @@
                   proofs folder, no file reads (Load, Cd, Extra Dependency) in
                   the generated Rocq files of projects/, and no wall-clock
                   limits in a Rocq file
-    licence       a proof file's licence lines agree with NOTICE (scan_licence)
+    licence       a proof file's licence lines agree with NOTICE, or, in a
+                  third-party proof file, with its row of
+                  tools/oft/third-party-proofs.yaml, which pins its bytes,
+                  and its licence's text is in LICENSES/; a licence text
+                  lint pins is its pinned bytes; and while a harness
+                  publishes a classifier or an original, NOTICE holds its
+                  sentence on them (scan_licence, load_third_party,
+                  scan_third_party_text, scan_pinned, check_notice)
     contract-literals
                   a contract file (lib/[UAB/]Prog/**/<fn>_c.v) of a fuzz
                   target with a symbol fact writes no numeral, hexadecimal
@@ -30,6 +53,16 @@
                   builds, and
                   names only what its build's Symbols.v defines
                   (scan_contract)
+    read-from     a proof file's `(* Read from: ... *)` comment names a
+                  binary its own fuzz target's harness.yaml records, and
+                  every SHA-256 it holds is that build's pin; the unstripped
+                  twin, which harness.yaml does not pin, and a withheld
+                  build, which shows none, are left alone.  A relocated
+                  file's donor line, which names another fuzz target's
+                  binary, is exempt only where the same file names the
+                  pinned build of its own fuzz target too, and is then
+                  counted and reported rather than passed in silence
+                  (scan_read_from, split_donors)
     withheld      a withheld item shows no detail anywhere
     records       (--release) every proof's build record is complete and says
                   what the facts say of its binaries and what built them
@@ -51,12 +84,28 @@ information.
 Every rule fails when it examined nothing, but `records` in a tree with no
 proof and no build record.  `run` returns the findings; the command exits 1 if
 there is any.
+
+A whole-tree run also prints, on stderr, how many proof files carry no licence
+line at all, in total and per fuzz target (bare_licence, bare_report).  That is
+a count and no rule: requirement 7 of docs/adding-a-proof.md says a file with no
+licence lines was written here under MIT, so none of these is a finding (none
+outside a project that is `release: private` with a NOTICE, where no proof file
+is under MIT: private_projects), but a
+file whose Anthropic header was dropped is the same bytes as one written here,
+and within lint only a count makes the second visible.  The strip check of
+pr.yml's lint job sees the drop in the change itself: it compares each proof
+file with that file at the base, and fails the change in a fuzz target whose
+proofs/provenance/evidence/licence/made-from.tsv is in the tree at the base
+or at the head (today curl/fuzz_bufq, curl/fuzz_fnmatch and
+libreac/fuzz_scene).  In other fuzz targets it prints a notice.  The count
+fails nothing.
 """
 import bisect
 import collections
 import concurrent.futures
 import concurrent.futures.process
 import datetime
+import functools
 import hashlib
 import ipaddress
 import multiprocessing
@@ -70,7 +119,8 @@ import threading
 import time
 import urllib.parse
 
-from . import facts, layout, model, names, nsrename, paths, rocq, rules, schema, symbols, urls, yamlio
+from . import (deviation, facts, generate, layout, model, names, nsrename, paths, rocq, rules, schema, shapes, symbols,
+               urls, yamlio)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -159,11 +209,16 @@ def read_text(path, cap=facts.MAX_BYTES):
 
 
 # Verbatim copies of files from elsewhere, pinned by content: the licence texts and the notice that came with the proofs
-# made from a bundle under Apache-2.0 OR MIT.  A changed byte makes any of them ordinary text, held to every rule.
+# made from a bundle under Apache-2.0 OR MIT, and the licence file of coq-community/huffman, whose proof files some
+# fuzz targets carry under LGPL-2.1-or-later (THIRD_PARTY).  Each is held to its bytes: a file of them that the tree
+# holds with other bytes is a licence finding (scan_pinned), and is ordinary text, held to every other rule too.  A
+# row's file of THIRD_PARTY needs its licence's text to be one of them, not one of Anthropic's own (ANTHROPIC_TEXTS),
+# and in the tree (scan_third_party_text).
 PINNED_VERBATIM = {
     "LICENSES/anthropic-proofs-LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "LICENSES/anthropic-proofs-LICENSE-MIT": "2e6105c36a95f04adbc36000b7b1ce65544385e27f8febb1b2f53b61fdb62bca",
     "LICENSES/anthropic-proofs-NOTICE": "f4cbf47ffed57359084432af1ca4b22347ecb995fcf7a2e4e346f180d2e5001d",
+    "LICENSES/coq-community-huffman-LICENSE": "3f5037854d29f6b9621925b165e18ea223d8f81de4ed29ca0da5860d55f14701",
 }
 
 
@@ -287,8 +342,9 @@ PRIVATE_IP = re.compile(r"(?<![\d.])(?:10\.\d{1,3}|100\.(?:6[4-9]|[7-9]\d|1[01]\
 PRIVATE_SUFFIXES = ("localhost", "internal", "local", "corp", "lan", "home.arpa", "ts.net",
                     "internal.cloudapp.net")
 # static-asan is asan-static's former name; GitHub redirects it there, so it names a public repository.
+# rocq is the public fork that Theorem's Rocq releases publish to.
 PUBLIC_REPOS = ("oss-verify", "oss-verify-proofs", "rocq-linux-process-semantics", "rocq-read-file", "asan-static",
-                "static-asan")
+                "static-asan", "rocq")
 INTERNAL_PORT_REPO = schema.INTERNAL_PORT_REPOSITORY.split("/", 1)[1]
 # Private names, refused in any text whether or not it is a link (the link rule judges links by what they open):
 # a host name under a private suffix, in any case; and a theorem-labs repository named as a path (after a /,
@@ -336,24 +392,108 @@ def _github_org_page(line, match):
             and GITHUB_ORG_PACKAGES.search(line[:match.start()]) is not None)
 
 
+# a build record (provenance/PROVENANCE.yaml of a fuzz target's proofs folder), in either layout, with its project
+# captured: group 1 in the old layout, group 2 in the new
+_BUILD_RECORD = re.compile(layout.PROOF_HARNESS_PROJECT_RE + r"/provenance/PROVENANCE\.yaml$")
+# A record's port and project.yaml's build.oss_verify: the two fields that name where the recipe was read from, one in
+# project.yaml and one in each build record (tools/enroll/facts.py writes them equal)
+PORT_FIELD = {("project.yaml",): ("build", "oss_verify", "repository"),
+              ("proofs", "provenance", "PROVENANCE.yaml"): ("port", "repository")}
+# The organisation whose repositories a private project's library may be (_library_name)
+ORG = schema.OSS_VERIFY_REPOSITORY.split("/", 1)[0]
+# The table facts.py writes a row of for every fuzz target it enrolls, a private project's among them: its first
+# column names the row's project
+HANDLER_ROWS = "analyses/failure-handlers/failure_handlers.tsv"
+
+
+def _project_of(tree, where):
+    """(the project a file of projects/<p>/ belongs to, in either layout, or None; the file's new-layout parts)."""
+    parts = layout.canonical(where).split("/")
+    if len(parts) < 3 or parts[0] != "projects":
+        return None, parts
+    return tree.projects.get(parts[1]), parts
+
+
+def _internal_port_projects(tree):
+    """rules.internal_port_projects(facts.hold(tree)), computed once for each tree a lint reads: _internal_port_lines
+    asks for it for every project.yaml and every build record that names the port's internal copy, and the hold reads
+    every finding of the tree."""
+    projects = getattr(tree, "_lint_internal_port_projects", None)
+    if projects is None:
+        projects = tree._lint_internal_port_projects = frozenset(rules.internal_port_projects(facts.hold(tree)))
+    return projects
+
+
 def _internal_port_lines(tree, where, text):
-    """The lines of a held project's build.oss_verify.repository, the sole
-    field that may name the port's internal copy: no other field of that file
-    may name it."""
-    parts = where.split("/")
-    if len(parts) != 3 or parts[0] != "projects" or parts[2] != "project.yaml":
+    """The lines of the one field of where that may name the port's internal copy (PORT_FIELD):
+    build.oss_verify.repository of projects/<p>/project.yaml, and port.repository of a build record of p
+    (provenance/PROVENANCE.yaml of a fuzz target's proofs folder, in either layout).  Only a project that may build
+    from that copy has such lines (rules.internal_port_projects: a project that a finding holds back whole, a project
+    whose project.yaml says `release: private`, or a project with a held fuzz target).  No other field of these files,
+    and no other file, may name it."""
+    project, parts = _project_of(tree, where)
+    if project is None or schema.INTERNAL_PORT_REPOSITORY not in text:
         return frozenset()
-    project = tree.projects.get(parts[1])
-    if project is None or project.name not in facts.hold(tree).held:
+    keys = PORT_FIELD.get(tuple(parts[2:])) or (PORT_FIELD.get(tuple(parts[3:])) if len(parts) == 6 else None)
+    if keys is None or project.name not in _internal_port_projects(tree):
         return frozenset()
     node = yamlio.compose(text)
-    for key in ("build", "oss_verify", "repository"):
+    for key in keys:
         node = yamlio.mapping_value(node, key)
         if node is None:
             return frozenset()
     if getattr(node, "value", None) != schema.INTERNAL_PORT_REPOSITORY:
         return frozenset()
     return frozenset(range(node.start_mark.line + 1, node.end_mark.line + 2))
+
+
+def _library_name(project):
+    """{the name of the project's library repository} for a project whose project.yaml says `release: private`, which
+    builds from the port's internal copy, and whose library.repository is the https URL of an ORG repository on GitHub,
+    owner and name alone: a library that is not public, which builds in the internal mode alone (OSSV-618).  Empty for
+    every other project.  The name is read as scan_shapes reads one (lower case, trailing dots and one .git off), and
+    there is none when what is left still ends in . or .git, or is the port's internal copy, which names only its own
+    fields (_internal_port_lines)."""
+    port = facts.port(project) if project is not None else None
+    if project is None or project.data.get("release") != "private" or not isinstance(port, dict) \
+            or port.get("repository") != schema.INTERNAL_PORT_REPOSITORY:
+        return frozenset()
+    library = project.data.get("library")
+    repo = library.get("repository") if isinstance(library, dict) else None
+    if not isinstance(repo, str):
+        return frozenset()
+    u = urllib.parse.urlsplit(repo)
+    parts = u.path.split("/")
+    if (u.scheme, u.netloc, u.query, u.fragment) != ("https", "github.com", "", "") or len(parts) != 3 \
+            or parts[0] or parts[1].lower() != ORG:
+        return frozenset()
+    name = parts[2].lower().rstrip(".").removesuffix(".git")
+    if not name or name.endswith((".", ".git")) or name == INTERNAL_PORT_REPO:
+        return frozenset()
+    return frozenset({name})
+
+
+def _no_library(no):
+    """No line names a library of its own (_own_library)."""
+    return frozenset()
+
+
+def _own_library(tree, where, text):
+    """The repository names a line of the file may name as its project's own library (_library_name), as a function
+    of the line's number: every line of a file of projects/<p>/, in either layout, gets that project's, and each row
+    of failure_handlers.tsv, which facts.py writes for a private project too, its project column's when its harness
+    column is a fuzz target of that project.  Every other line gets none, so the name stays refused anywhere else: no
+    release carries those files or rows (release_tree cuts the rows of the tree's fuzz targets it does not carry, and
+    keeps a row of a fuzz target the tree no longer has, which therefore gets no name)."""
+    if where == HANDLER_ROWS:
+        rows = {}
+        for no, line in enumerate(text.split("\n"), 1):
+            project, harness = (line.split("\t") + [""])[:2]
+            p = tree.projects.get(project)
+            rows[no] = _library_name(p) if p is not None and harness in p.harnesses else frozenset()
+        return lambda no: rows.get(no, frozenset())
+    own = _library_name(_project_of(tree, where)[0])
+    return lambda no: own
 
 
 def _repository_value(line, match):
@@ -367,7 +507,7 @@ def _repository_value(line, match):
 
 # What the text rules read in an internal path (is_internal: INTERNAL of paths.py, and LINT_ONLY_INTERNAL): a private
 # key or an access token, which is as bad there as in a shipped file.  The rest of private-data, and links and proofs,
-# judge the published text: no release carries an internal path, and tools/publish/ holds the publishing scanner's
+# judge the published text: no release carries an internal path, and dev/stream/bin/ holds the publishing scanner's
 # needles, host paths and addresses on purpose.
 SECRETS = (("a private key", PRIVATE_KEY), ("an access token", TOKEN))
 
@@ -396,7 +536,7 @@ def _key(text):
 
 
 def scan_shapes(text, where, source=False, internal=False, email_text=None, internal_port_lines=frozenset(),
-                host_paths=True):
+                host_paths=True, own_library=_no_library):
     """private-data.  Upstream copies (source=True) keep their authors'
     addresses and their own example addresses, so there only paths, keys,
     tokens and private repository names count.  In a directory no release
@@ -409,7 +549,9 @@ def scan_shapes(text, where, source=False, internal=False, email_text=None, inte
     address's shape.  Everything else is still searched inside those strings.
     host_paths=False leaves host paths out for a change ledger, which records
     where its inputs live and is removed by release-tree; every other shape
-    still counts."""
+    still counts.  own_library: a function of a line's number, the repository
+    names that line may name as its private project's own library's
+    (_own_library)."""
     out = []
     # a key and a token are literal credential material: they count wherever they are written
     rx = [("a private key", PRIVATE_KEY), ("an access token", TOKEN)]
@@ -437,8 +579,9 @@ def scan_shapes(text, where, source=False, internal=False, email_text=None, inte
                             continue
                         name = (m.group(1) or m.group(2)).lower().rstrip(".").removesuffix(".git")
                         bare = m.group(1) is not None and m.group()[:1].lower() == "t"
-                        if name in PUBLIC_REPOS or (no in internal_port_lines and bare and name == INTERNAL_PORT_REPO
-                                                    and _repository_value(variant, m)):
+                        if name in PUBLIC_REPOS or name in own_library(no) or (
+                                no in internal_port_lines and bare and name == INTERNAL_PORT_REPO
+                                and _repository_value(variant, m)):
                             continue
                     if r is PRIVATE_HOST_NAME and _ordinary_code_name(where, variant, m):
                         continue
@@ -583,9 +726,10 @@ def sanitizer_url(ref):
     return bool(ref) and (ref in SANITIZER_URLS or SANITIZER_TAIL.sub("", ref, count=1) in SANITIZER_URLS)
 
 
-def judge(u, known, strict=True, full=True, ref=None):
+def judge(u, known, strict=True, full=True, ref=None, own_library=frozenset()):
     """Whether a parsed link (urls.parse) may stay: it must not name a machine on a private network or a theorem-labs
-    repository that is not public.  A full link in rendered text, docs and facts (strict) must also be https and be
+    repository that is not public, but own_library's (the names the link's line may name as its private project's own
+    library: _own_library).  A full link in rendered text, docs and facts (strict) must also be https and be
     one of ours, OSS-Fuzz's, one the facts record, or one of the two pages ASan's runtime prints, written as
     sanitizer_url wants it: ref, the link urls.links read, not the page it opens.  A link that opens nothing
     (None) is judged by its text alone."""
@@ -593,7 +737,7 @@ def judge(u, known, strict=True, full=True, ref=None):
         return True
     if u.host and (u.scheme in WEB_SCHEMES or NETWORK_HOST.fullmatch(u.host)) and private_host(u.host):
         return False
-    if any(r not in PUBLIC_REPOS for r in theorem_repositories(u)):
+    if any(r not in PUBLIC_REPOS and r not in own_library for r in theorem_repositories(u)):
         return False
     if public_repository(u):
         return True
@@ -618,13 +762,13 @@ def _bases(where):
     return [urls.parse(b) for b in bases]
 
 
-def scan_links(text, where, known, strict=True):
+def scan_links(text, where, known, strict=True, own_library=_no_library):
     """links.  Every link a reader can follow (urls.links), judged by what a browser opens for it: an absolute URL
     alone, a Markdown or HTML link against each page that shows the file, and another reading of the same text
     (GitHub's extent of a bare URL, the text with character references decoded, a line of Markdown as GitHub shows
     its text) for privacy only.  A URL urls.parse cannot read for sure is refused wherever this rule reads; one that
     opens nothing, only in rendered text, docs and facts (strict), and only as an absolute URL.  One finding per line
-    and target."""
+    and target.  own_library: as scan_shapes takes it, of the link's line."""
     out, reported, judged = [], set(), set()
     bases = None
     for link in urls.links(text, bool(urls.MARKDOWN.search(where))):
@@ -646,7 +790,8 @@ def scan_links(text, where, known, strict=True):
             elif target is None:
                 ok = link.kind != "url" or not strict
             else:
-                ok = judge(target, known, strict, full=link.kind != "reading", ref=link.ref)
+                ok = judge(target, known, strict, full=link.kind != "reading", ref=link.ref,
+                           own_library=own_library(link.line))
             if not ok and key not in reported:
                 reported.add(key)
                 out.append(Finding("links", "%s:%d" % (where, link.line),
@@ -897,14 +1042,36 @@ def scan_proof(text, where):
 # `SPDX-License-Identifier: Apache-2.0 OR MIT`, and its fuzz target's build record names the three texts that licence
 # ships with; a file written here is under the MIT licence, with no licence line or the one line `MIT`; a file that
 # restates a program's instruction words or holds data computed from one opens with the comment of its kind
-# (PROGRAM_LINES) and has no other licence lines, since its code keeps the program's licences.
+# (PROGRAM_LINES) and has no other licence lines, since its code keeps the program's licences; and a third-party proof
+# file, taken from another project's proofs, keeps that project's licence, one of THIRD_PARTY_LICENCES, and is a row
+# of THIRD_PARTY that pins its bytes (load_third_party).  In a project whose project.yaml says `release: private` and
+# whose folder holds a NOTICE file (private_projects), a file written here is under that NOTICE instead, and has the
+# two lines PRIVATE_LINES with {project} its own project: no proof file there is under MIT.  PRIVATE_LINES is the one
+# statement of that form: requirement 7 quotes it, and test_lint.Licence.test_the_docs_quote_the_private_lines holds
+# the two together.
 ANTHROPIC_TEXTS = ("LICENSES/anthropic-proofs-LICENSE", "LICENSES/anthropic-proofs-LICENSE-MIT",
                    "LICENSES/anthropic-proofs-NOTICE")
 ANTHROPIC_LICENCE = "Apache-2.0 OR MIT"
 PROOF_LICENCES = (ANTHROPIC_LICENCE, "MIT")
+THIRD_PARTY = "tools/oft/third-party-proofs.yaml"
+# the schema of a row of THIRD_PARTY (schemas/third-party-proofs.yaml), and the licences it lets a row give
+THIRD_PARTY_SCHEMA = "third-party-proofs"
+THIRD_PARTY_LICENCES = tuple(schema.load_schema(THIRD_PARTY_SCHEMA)["defs"]["row"]["fields"]["spdx"]["values"])
+PRIVATE_LICENCE = "LicenseRef-Proprietary"
+# a project's NOTICE, as a pattern of paths.py (lint alone admits it: LINT_ONLY_HAND)
+PROJECT_NOTICE = "projects/{project}/NOTICE"
+PRIVATE_LINES = ("(* Copyright Theorem Labs. All rights reserved: see %s. *)" % PROJECT_NOTICE,
+                 "(* SPDX-License-Identifier: %s *)" % PRIVATE_LICENCE)
 PROGRAM_LINES = ("(* Machine-generated data computed from the task's compiled program image",
                  "(* This file states or restates instruction words of the task's compiled program")
 HEADER_LINES = 10
+# NOTICE, and its sentence on the classifiers and the originals that a harness publishes (docs/licensing.md, "Harness
+# copies and binaries"), which the root README says too (templates/README.md.tmpl): while a harness.yaml publishes one,
+# NOTICE holds the sentence (check_notice).  NOTICE wraps its lines, so there each run of blanks and line ends reads
+# as one space.
+NOTICE = "NOTICE"
+NOTICE_IMAGES = ("The classifiers and the originals that a harness publishes are under the licences of the code that "
+                 "they are built from, as its builds are.")
 # a licence tag wherever it is on its line, in any comment style: a tag the rule cannot see ships the wrong licence.  A
 # carriage return before a line feed is part of the line end, here and in _ANTHROPIC_COPYRIGHT.
 _SPDX = re.compile(r"SPDX-License-Identifier:[ \t]*(.*?)[ \t\r]*(?:\*\)|$)", re.M)
@@ -914,9 +1081,51 @@ _ANTHROPIC_COPYRIGHT = re.compile(r"^\(\* Copyright \d{4} Anthropic PBC \*\)[ \t
 _ANTHROPIC_NAMED = re.compile(r"Copyright\b[^\n]*?\bAnthropic\b", re.I)
 # Anthropic's copyright in its own words, ending there: how a doc comment under the licence lines restates the notice
 _ANTHROPIC_RESTATED = re.compile(r"Copyright \d{4} Anthropic PBC(?=[ \t]*(?:[.;,]|\*\)|\r?$))", re.M)
-# a licence tag or a copyright of Anthropic, changed or not, wherever it is on its line: below HEADER_LINES it is out
-# of place
-_LICENCE_LINE = re.compile(r"SPDX-License-Identifier:|(?i:Copyright\b[^\n]*?\bAnthropic\b)")
+# the words of PRIVATE_LINES' copyright line, for any project (group 1), wherever they are on a line, in any comment: in
+# the head they name the file's own project, and below it they are out of place.  _PRIVATE_ANY_CASE reads them in any
+# case, as _ANTHROPIC_NAMED reads Anthropic's name: in the head a copy that is not in _PRIVATE_NAMED's case was changed.
+# _PRIVATE_MARK is a plain text, lower-cased, that every match holds, for a cheap search first.
+_PRIVATE_WORDS = PRIVATE_LINES[0][len("(* "):-len(". *)")]
+_PRIVATE_MARK = _PRIVATE_WORDS.split("{project}")[0].lower()
+_PRIVATE_NAMED = re.compile(re.escape(_PRIVATE_WORDS).replace(re.escape("{project}"), r"([^/\s]+)"))
+_PRIVATE_ANY_CASE = re.compile(_PRIVATE_NAMED.pattern, re.I)
+# a licence tag, a copyright of Anthropic, changed or not, or the words of PRIVATE_LINES' copyright line, in any case,
+# wherever it is on its line: below HEADER_LINES it is out of place
+_LICENCE_LINE = re.compile(r"SPDX-License-Identifier:|(?i:Copyright\b[^\n]*?\bAnthropic\b)|(?i:%s)"
+                           % _PRIVATE_NAMED.pattern)
+# the copyright line of PRIVATE_LINES, for any project (group 1), as a whole line: how scan_licence reads it in the head
+_PRIVATE_COPYRIGHT = re.compile("^" + re.escape(PRIVATE_LINES[0]).replace(re.escape("{project}"), r"([^/\s]+)")
+                                + r"[ \t]*\r?$", re.M)
+# a licence named in words: in a head with no licence line (no tag, no copyright of Anthropic's and no copyright line of
+# a project's NOTICE) a file under another licence would read as one written here, so scan_licence asks it for the tag
+# of the licence it names.  Each entry starts and ends on a word boundary.  The words of a notice match in any case; a
+# short name only in the spellings of the licence itself (GPL, not gpl), since in other cases it is an ordinary
+# identifier (`Definition mpl := 0.`).  A phrase may wrap, so between two of its words any run of blanks, line ends and
+# comment marks (_WRAP) stands for the space; each "Licen[cs]e" takes either spelling.
+_WRAP = r"(?:\s|\(\*|\*\)|\*)+"
+_LICENCE_WORDS = re.compile(r"\b(?:%s)\b" % "|".join(["(?i:%s)" % w.replace(" ", _WRAP) for w in (
+    # the licences by the names their notices give them
+    "GNU General Public Licen[cs]e", "GNU Lesser General Public Licen[cs]e", "GNU Library General Public Licen[cs]e",
+    "GNU Affero General Public Licen[cs]e", "Apache Licen[cs]e", "Mozilla Public Licen[cs]e",
+    "Eclipse Public Licen[cs]e", "Boost Software Licen[cs]e", "BSD Licen[cs]es?", "ISC Licen[cs]e",
+    "Creative Commons",
+    # the opening words of the notices that need not name their licence: MIT's grant, BSD's conditions, the GNU
+    # licences' first sentence, and the grant of any licence by name
+    "Permission is hereby granted", "Redistribution and use in source and binary forms",
+    "This program is free software", "Licen[cs]ed under")] + [
+    # the short names a notice or a comment uses for them, a version joined on or not (GPLv2, LGPL-2.1, CECILL-2.1)
+    r"[LA]?GPL(?:v\d+(?:\.\d+)*)?", "MPL", "CeCILL", "CECILL"]))
+
+
+@functools.lru_cache(maxsize=1)   # scan_file reads the same head twice, in scan_licence and then in bare_licence
+def _licence_words(head):
+    """The matches of _LICENCE_WORDS in a file's head outside its string literals, whose encoded data can spell a short
+    name by chance (as the e-mail and link checks read a proof); offsets are the head's.  A tuple, since the cache
+    gives each caller the same one."""
+    if _LICENCE_WORDS.search(head) is None:   # most heads name none: lex only the ones that may
+        return ()
+    return tuple(_LICENCE_WORDS.finditer(rocq.strip(head, comments=False)))
+
 
 # a Rocq file of a fuzz target's proofs folder, in either layout (layout.PROOF_HARNESS_PROJECT_RE)
 _PROJECT_PROOF = re.compile(layout.PROOF_HARNESS_PROJECT_RE + r"/.+\.v$")
@@ -946,15 +1155,197 @@ def anthropic_targets(root):
     return frozenset(out)
 
 
-def scan_licence(text, where, targets):
+# The table of third-party proof files, THIRD_PARTY: what it holds, and the one exemption its rows make.  Each row pins
+# one file of a fuzz target's proofs folder that comes from another project's proofs (docs/adding-a-proof.md,
+# requirement 7, case 3) by its path and the SHA-256 of its bytes, and names its licence (spdx, one of
+# THIRD_PARTY_LICENCES), where it comes from (upstream: the repository, as <owner>/<name> on GitHub, the commit and,
+# when given, the file's path there) and the lines of the upstream author's notice (notice: its first and last line,
+# from 1).  Those bytes, and no others, are under that licence (scan_licence), and the notice's lines are the one part
+# of them the private-data rule does not read (scan_file): the notice names its author's address, and every other line
+# of the file is read as in any proof.  The row names the lines by number, so the table holds no address of its own;
+# the pinned bytes fix what those lines hold.  A file under the row's licence ships with that licence's text: the tree
+# holds it at LICENSES/<owner>-<name>-LICENSE of the upstream repository, a text of PINNED_VERBATIM but none of
+# ANTHROPIC_TEXTS, so lint holds it to its bytes (scan_third_party_text, scan_pinned).  A row may come before its file:
+# a row whose file the tree does not hold publishes nothing, and is no finding.  Only this module reads the table and
+# the schema of its rows, schemas/third-party-proofs.yaml (keys.NOT_THE_CHECKER names both).
+
+
+def _third_party_row(row, at):
+    """What is wrong with row, the row of THIRD_PARTY at `at` (files[<i>]), each naming its field: what the schema of
+    a row says (THIRD_PARTY_SCHEMA, schema.validate_def), and then what it cannot say, that its path is a Rocq file of
+    a fuzz target's proofs folder and its notice's first line is not after its last."""
+    problems = schema.validate_def(THIRD_PARTY_SCHEMA, "row", row, at)
+    if problems:
+        return problems
+    if not proof_rocq(row["path"]):
+        problems.append("%s.path: %r is not a Rocq file of a fuzz target's proofs folder" % (at, row["path"]))
+    if row["notice"]["first"] > row["notice"]["last"]:
+        problems.append("%s.notice: its first line, %d, is after its last, %d"
+                        % (at, row["notice"]["first"], row["notice"]["last"]))
+    return problems
+
+
+def load_third_party(root):
+    """({path in the per-project layout (layout.canonical): row of THIRD_PARTY}, the licence findings of the table
+    itself).  A tree without the table has no third-party proof file.  A table that does not load, or is not
+    one mapping whose one key, `files`, is the list of its rows, is a finding and gives no row; a row that is not of its
+    form (_third_party_row), or whose path an earlier row names, in either layout, is a finding that names what is
+    wrong, field by field, and is no row, so its file is held to the rules of any other proof file."""
+    p = os.path.join(root, THIRD_PARTY)
+    if not os.path.isfile(p):
+        return {}, []
+    try:
+        with open(p, encoding="utf-8") as f:
+            data = yamlio.load(f.read(), THIRD_PARTY)
+    except (OSError, UnicodeDecodeError, yamlio.YamlError) as e:
+        return {}, [Finding("licence", THIRD_PARTY, "the table of third-party proof files does not load: %s" % e)]
+    if not isinstance(data, dict) or set(data) != {"files"} or not isinstance(data["files"], list):
+        return {}, [Finding("licence", THIRD_PARTY, "the table of third-party proof files is one mapping whose one "
+                                                  "key, files, is the list of its rows (files: [] when there is none)")]
+    rows, out = {}, []
+    for i, row in enumerate(data["files"]):
+        at = "files[%d]" % i
+        problems = _third_party_row(row, at)
+        if not problems and layout.canonical(row["path"]) in rows:
+            problems = ["%s.path: %r is a path an earlier row names, in either layout" % (at, row["path"])]
+        if problems:
+            out.append(Finding("licence", THIRD_PARTY, "; ".join(problems)))
+            continue
+        rows[layout.canonical(row["path"])] = row
+    return rows, out
+
+
+def file_sha256(path, cap):
+    """The SHA-256, in hex, of the bytes of the regular file at path, of at most cap bytes; None when it is not one
+    (facts.read_bounded)."""
+    try:
+        return hashlib.sha256(facts.read_bounded(path, cap)).hexdigest()
+    except facts.BoundedFileError:
+        return None
+
+
+def scan_pinned(path, rel):
+    """The licence finding of rel, the file at path, when it is a text of PINNED_VERBATIM whose bytes are not its pin,
+    whatever the other rules find in it.  Any other file has none."""
+    if rel not in PINNED_VERBATIM:
+        return []
+    digest = file_sha256(path, facts.file_cap(rel))
+    if digest == PINNED_VERBATIM[rel]:
+        return []
+    return [Finding("licence", rel, "a licence text that lint pins is the bytes of its pin (PINNED_VERBATIM in "
+                                    "tools/oft/lint.py): this file's SHA-256 is %s, the pin's %s "
+                                    "(docs/adding-a-proof.md, requirement 7)"
+                                    % (digest or "unread", PINNED_VERBATIM[rel]))]
+
+
+def third_party_text(row):
+    """The path of the licence text of a row of THIRD_PARTY: LICENSES/<owner>-<name>-LICENSE of its upstream
+    repository, <owner>/<name> (docs/adding-a-proof.md, requirement 7, case 3)."""
+    return "LICENSES/%s-LICENSE" % row["upstream"]["repository"].replace("/", "-")
+
+
+def scan_third_party_text(root, where, row):
+    """The licence finding of the file at where, a row's file of THIRD_PARTY whose bytes are the ones its row pins and
+    so under the row's licence, when the text of that licence (third_party_text) is not a text of PINNED_VERBATIM, is
+    one of Anthropic's own (ANTHROPIC_TEXTS: an upstream anthropic/proofs names one), or the tree does not hold it.
+    scan_pinned holds the text itself to its pin."""
+    text = third_party_text(row)
+    if text not in PINNED_VERBATIM or text in ANTHROPIC_TEXTS:
+        missing = "lint pins no third-party licence text at that path (PINNED_VERBATIM in tools/oft/lint.py)"
+    elif not os.path.isfile(os.path.join(root, text)):
+        missing = "the tree holds no file there"
+    else:
+        return []
+    return [Finding("licence", where, "a third-party proof file under %s has that licence's text in the tree, at %s, "
+                                      "whose bytes lint pins: %s (docs/adding-a-proof.md, requirement 7)"
+                                      % (row["spdx"], text, missing))]
+
+
+def check_notice(tree):
+    """licence: while a harness.yaml publishes a classifier or an original (lists it and does not withhold it:
+    facts.Harness.classifier_builds, original_builds), NOTICE holds NOTICE_IMAGES, its sentence on them; else one
+    finding at NOTICE names the first such harness.  A NOTICE that is not read as text (none, a link, a file over its
+    cap) holds no sentence, and a tree that publishes neither has no finding, whatever NOTICE says.  The rule reads
+    the whole tree, so every lint runs it, one with --changed-only too: a change to NOTICE alone that drops the
+    sentence is refused."""
+    first = next((h for h in tree.harnesses() if h.classifier_builds() or h.original_builds()), None)
+    if first is None:
+        return []
+    text = read_text(tree.path(NOTICE), facts.file_cap(NOTICE))
+    if text is not None and NOTICE_IMAGES in " ".join(text.split()):
+        return []
+    return [Finding("licence", NOTICE, "%s publishes a classifier or an original, so NOTICE holds the sentence on them "
+                                       "(NOTICE_IMAGES in tools/oft/lint.py; docs/licensing.md), and it does not: %s"
+                                       % (os.path.join(first.dir, "harness.yaml"), NOTICE_IMAGES))]
+
+
+def _blank_lines(text, first, last):
+    """text with its lines first to last (from 1) blanked, each character a space: lines and offsets kept."""
+    lines = text.split("\n")
+    for i in range(first - 1, min(last, len(lines))):
+        lines[i] = " " * len(lines[i])
+    return "\n".join(lines)
+
+
+# the licence _row_licence gives a row's file that its row refuses: no licence applies to its licence lines, which
+# scan_licence does not read
+_REFUSED = object()
+
+
+def _row_licence(root, rel, path, text, blanked, row):
+    """The one step that decides whether the proof file rel, at path, is under the licence of row, its row of
+    THIRD_PARTY (None for none; text is the file's text, and blanked the same with its string literals blanked, or
+    None): (the licence findings of its row, the text the private-data shapes read, the text the e-mail check reads,
+    the licence scan_licence applies to its licence lines).  A file no row names is read whole, and its licence lines
+    are judged as any proof file's (licence None).  A row's file whose bytes are the ones its row pins is under the
+    row's licence (its spdx), whose text the tree must hold (scan_third_party_text), and the private-data shapes do
+    not read the lines of its upstream author's notice, which name the author's address; it is refused when it has
+    fewer lines than the row names as that notice.  One whose bytes are not the row's is refused, whatever its licence
+    lines say, and read whole.  A refused file has no licence (_REFUSED): its refusal is the last of its licence
+    findings, and scan_licence does not read it."""
+    if row is None:
+        return [], text, blanked, None
+    digest = file_sha256(path, facts.file_cap(rel))
+    if digest != row["sha256"]:
+        return [Finding("licence", rel, "a third-party proof file is the bytes its row of %s pins: this file's SHA-256 "
+                                        "is %s, the row's %s (docs/adding-a-proof.md, requirement 7)"
+                                        % (THIRD_PARTY, digest or "unread", row["sha256"]))], text, blanked, _REFUSED
+    first, last = row["notice"]["first"], row["notice"]["last"]
+    shapes_text = _blank_lines(text, first, last)
+    email_text = None if blanked is None else _blank_lines(blanked, first, last)
+    found = scan_third_party_text(root, rel, row)
+    count = text.count("\n") + (not text.endswith("\n"))
+    if last > count:
+        found.append(Finding("licence", rel, "its row of %s gives lines %d to %d as the upstream author's notice, and "
+                                             "the file has %d lines" % (THIRD_PARTY, first, last, count)))
+        return found, shapes_text, email_text, _REFUSED
+    return found, shapes_text, email_text, row["spdx"]
+
+
+def private_projects(tree):
+    """{project: whether PROJECT_NOTICE, its NOTICE, is a file} of each project whose project.yaml says
+    `release: private`.  A proof file of such a project with a NOTICE is under that NOTICE (PRIVATE_LINES) unless it is
+    made from Anthropic's proofs, opens with the comment of its kind or is a row's file of THIRD_PARTY, under its row's
+    licence (_row_licence), and the lines of PRIVATE_LINES are refused in any other project (scan_licence).  Read once
+    for each lint run, as anthropic_targets is; a change to a NOTICE has --changed-only read every file
+    (read_by_every_verdict)."""
+    return {name: os.path.isfile(tree.path(PROJECT_NOTICE.format(project=name)))
+            for name, p in tree.projects.items() if p.data.get("release") == "private"}
+
+
+def scan_licence(text, where, targets, licence=None, private=None):
     """The findings of the licence rule on the proof file `text` at `where`.  targets: anthropic_targets, or None for a
     contributor's pull request, whose build records the maintainer writes before it merges
-    (docs/adding-a-proof.md, requirement 7): then the licence lines are checked, and the record is not."""
+    (docs/adding-a-proof.md, requirement 7): then the licence lines are checked, and the record is not.  licence: the
+    licence of THIRD_PARTY_LICENCES that the file's row of THIRD_PARTY puts it under (_row_licence decides it), which
+    its licence line gives, or None for a file that no row puts under one: no such file is under a licence of
+    THIRD_PARTY_LICENCES.  private: private_projects, or None for a tree with no project that is `release: private`."""
     lines = text.split("\n", HEADER_LINES)
     head = "\n".join(lines[:HEADER_LINES])
     rest = lines[HEADER_LINES] if len(lines) > HEADER_LINES else ""
-    # a plain search first: most files have neither (lower: a changed copyright line may spell the name in any case)
-    if "SPDX-License-Identifier" in rest or "anthropic" in rest.lower():
+    # a plain search first: most files have none (lower: a changed copyright line may spell the name in any case)
+    low = rest.lower()
+    if "SPDX-License-Identifier" in rest or "anthropic" in low or _PRIVATE_MARK in low:
         late = _LICENCE_LINE.search(text, len(head) + 1)
         if late:
             return [Finding("licence", "%s:%d" % (where, text.count("\n", 0, late.start()) + 1),
@@ -962,9 +1353,11 @@ def scan_licence(text, where, targets):
                             "requirement 7)" % HEADER_LINES)]
     spdx_lines = list(_SPDX.finditer(head))
     anthropic = _ANTHROPIC_COPYRIGHT.search(head) is not None
+    notices = list(_PRIVATE_COPYRIGHT.finditer(head))
+    mentions = list(_PRIVATE_NAMED.finditer(head))   # notices' words, on those lines and on any other
     spdx = spdx_lines[0].group(1) if spdx_lines else None
     at = "%s:%d" % (where, head.count("\n", 0, spdx_lines[0].start()) + 1) if spdx_lines else where
-    if lines[0].startswith(PROGRAM_LINES) and (spdx_lines or anthropic):
+    if lines[0].startswith(PROGRAM_LINES) and (spdx_lines or anthropic or mentions):
         return [Finding("licence", at, "a file that restates a program's instruction words or holds data computed "
                                        "from one has no other licence lines: its code keeps the program's licences "
                                        "(docs/adding-a-proof.md, requirement 7)")]
@@ -972,10 +1365,39 @@ def scan_licence(text, where, targets):
     if other is not None:   # a second tag that names the same licence restates it (a doc comment, say)
         return [Finding("licence", "%s:%d" % (where, head.count("\n", 0, other.start()) + 1),
                         "a proof file has one licence: this tag says %r, the first one %r" % (other.group(1), spdx))]
-    if spdx is not None and spdx not in PROOF_LICENCES:
+    if licence is not None and spdx != licence:
+        return [Finding("licence", at, "its row of %s gives the licence %s, so its licence line, in its first %d "
+                                       "lines, is SPDX-License-Identifier: %s (docs/adding-a-proof.md, requirement 7)"
+                                       % (THIRD_PARTY, licence, HEADER_LINES, licence))]
+    unit = layout.unit_of(where)
+    project = unit.split("/")[0] if unit else None
+    # None: the file's project is not `release: private`; False: it is, and has no NOTICE; True: it is, with a NOTICE
+    held = (private or {}).get(project)
+    if spdx is not None and spdx not in PROOF_LICENCES and spdx != PRIVATE_LICENCE and licence is None:
+        if spdx in THIRD_PARTY_LICENCES:
+            return [Finding("licence", at, "%r is the licence of a third-party proof file, which a row of %s pins by "
+                                           "its path and the SHA-256 of its bytes, and no row names this file "
+                                           "(docs/adding-a-proof.md, requirement 7)" % (spdx, THIRD_PARTY))]
+        if held:
+            return [Finding("licence", at, "%r is neither licence a proof file of %s has: %s, with Anthropic's "
+                                           "copyright, for one made from Anthropic's proofs, or %s for one under %s"
+                                           % (spdx, project, ANTHROPIC_LICENCE, PRIVATE_LICENCE,
+                                              PROJECT_NOTICE.format(project=project)))]
         return [Finding("licence", at, "%r is neither licence a proof file has: %s, with Anthropic's copyright, for "
                                        "one made from Anthropic's proofs, or MIT for one written here (NOTICE)"
                                        % (spdx, ANTHROPIC_LICENCE))]
+    for copy in _PRIVATE_ANY_CASE.finditer(head):
+        if _PRIVATE_NAMED.match(head, copy.start()) is None:
+            return [Finding("licence", "%s:%d" % (where, head.count("\n", 0, copy.start()) + 1),
+                            "the copyright line of a project's NOTICE is `%s`, unchanged (docs/adding-a-proof.md, "
+                            "requirement 7)" % PRIVATE_LINES[0].format(project="<project>"))]
+    if spdx == PRIVATE_LICENCE and not held:
+        return [Finding("licence", at, "%s is the licence of a proof file under its project's NOTICE, in a project "
+                                       "whose project.yaml says `release: private` and whose folder holds a NOTICE "
+                                       "file (docs/adding-a-proof.md, requirement 7); %s"
+                                       % (PRIVATE_LICENCE, "there is no " + PROJECT_NOTICE.format(project=project)
+                                          if held is False else
+                                          "the project.yaml of this file's project does not say `release: private`"))]
     if anthropic and spdx != ANTHROPIC_LICENCE:
         return [Finding("licence", at, "a file with Anthropic's copyright line was made from Anthropic's proofs, so "
                                        "its licence line is SPDX-License-Identifier: %s (NOTICE)" % ANTHROPIC_LICENCE)]
@@ -989,15 +1411,89 @@ def scan_licence(text, where, targets):
             return [Finding("licence", "%s:%d" % (where, head.count("\n", 0, named.start()) + 1),
                             "Anthropic's copyright line is `(* Copyright <year> Anthropic PBC *)`, unchanged "
                             "(docs/adding-a-proof.md, requirement 7)")]
+    if spdx == PRIVATE_LICENCE and not any(m.group(1) == project and m.start() < spdx_lines[0].start()
+                                           for m in notices):
+        return [Finding("licence", at, "a file under %s has the line `%s` in its first %d lines, above its tag "
+                                       "(docs/adding-a-proof.md, requirement 7)"
+                                       % (PRIVATE_LICENCE, PRIVATE_LINES[0].format(project=project), HEADER_LINES))]
+    foreign = next((m for m in mentions if m.group(1) != project), None)
+    if foreign is not None:
+        return [Finding("licence", "%s:%d" % (where, head.count("\n", 0, foreign.start()) + 1),
+                        "this line names %s: a proof file of %s names no NOTICE but its own project's, %s "
+                        "(docs/adding-a-proof.md, requirement 7)"
+                        % (PROJECT_NOTICE.format(project=foreign.group(1)), project,
+                           PROJECT_NOTICE.format(project=project)))]
+    if mentions and spdx != PRIVATE_LICENCE:
+        return [Finding("licence", "%s:%d" % (where, head.count("\n", 0, mentions[0].start()) + 1),
+                        "this line goes with the tag `%s` under it and with no other licence lines: a proof file has "
+                        "one licence (docs/adding-a-proof.md, requirement 7)" % PRIVATE_LINES[1])]
+    if spdx is None and not lines[0].startswith(PROGRAM_LINES):
+        # no licence line is left in the head (a copyright of Anthropic's, or the words of the copyright line of a
+        # project's NOTICE, with no tag was refused above), so the file reads as one written here, under MIT or, in a
+        # project that is `release: private` with a NOTICE, under that NOTICE: a head that names another licence in
+        # words must say it with its tag.  So such a head of a private project gets this finding, not the one below.
+        worded = _licence_words(head)
+        if worded:
+            words = ", ".join(repr(w) for w in dict.fromkeys(re.sub(_WRAP, " ", m.group()) for m in worded))
+            under = (" under MIT" if not held else
+                     ", which in %s is under %s" % (project, PROJECT_NOTICE.format(project=project)))
+            return [Finding("licence", "%s:%d" % (where, head.count("\n", 0, worded[0].start()) + 1),
+                            "its first %d lines name a licence in words (%s) and hold no licence line, so it reads as "
+                            "a file written here%s: give it the SPDX-License-Identifier line of the licence they name "
+                            "(docs/adding-a-proof.md, requirement 7)" % (HEADER_LINES, words, under))]
+    if held and (spdx == "MIT" or (spdx is None and not lines[0].startswith(PROGRAM_LINES))):
+        return [Finding("licence", at, "no proof file of %s, whose project.yaml says `release: private` and whose "
+                                       "folder holds %s, is under MIT: one made from Anthropic's proofs has "
+                                       "Anthropic's two lines, one of a program's instruction words or data opens with "
+                                       "the comment of its kind, and any other has the lines `%s` and `%s` "
+                                       "(docs/adding-a-proof.md, requirement 7)"
+                                       % (project, PROJECT_NOTICE.format(project=project),
+                                          PRIVATE_LINES[0].format(project=project), PRIVATE_LINES[1]))]
     if spdx != ANTHROPIC_LICENCE or targets is None:
         return []
-    unit = layout.unit_of(where)
     if unit not in targets:
         return [Finding("licence", at, "a file under %s needs a build record, %s, that lists %s under proofs.texts "
                                        "(NOTICE)" % (ANTHROPIC_LICENCE,
                                                      layout.record_path(*unit.split("/"), layout.of_path(where)),
                                                      ", ".join(ANTHROPIC_TEXTS)))]
     return []
+
+
+def bare_licence(text):
+    """Whether a proof file carries no licence line at all: _LICENCE_LINE, this module's own test of one (a licence
+    tag, a copyright of Anthropic's, changed or not, or the words of the copyright line of a project's NOTICE, in any
+    case, so a changed copy of that line is no bare file but a finding of scan_licence), matches nothing where
+    scan_licence reads them (the first HEADER_LINES lines), the file does not open with the comment of its kind
+    (PROGRAM_LINES), which carries none because the program's code in it keeps the program's licences
+    (docs/adding-a-proof.md, requirement 7.1), and those lines name no licence in words (_licence_words).
+
+    No rule reads this.  Requirement 7 says a file with no licence lines was written here, under the MIT licence, so
+    scan_licence rightly finds nothing in one that names no other licence; but a file whose Anthropic header was
+    dropped is the same bytes, and a count of findings cannot see it.  A whole-tree lint counts these files and prints
+    the count (bare_report), which fails nothing: the count is what a later series writing the licence lines works
+    down.  A file whose licence line is wrong -- a changed copyright of Anthropic's, a tag naming a licence no proof
+    file has -- has a licence line and is no part of this count: it already fails the licence rule, and counting it
+    twice would read as more debt of this kind than there is.  Nor is a file whose head names a licence in words with
+    no licence line, for the same reason: the licence rule asks it for the tag of that licence.  For the same reason
+    too scan_file leaves out of the count a bare file of a project that is `release: private` with a NOTICE
+    (private_projects): no proof file there is under MIT, so scan_licence refuses it, and it is a finding, not debt."""
+    lines = text.split("\n", HEADER_LINES)
+    head = "\n".join(lines[:HEADER_LINES])
+    return (_LICENCE_LINE.search(head) is None and not lines[0].startswith(PROGRAM_LINES)
+            and not _licence_words(head))
+
+
+def bare_report(bare):
+    """The lines a whole-tree lint prints for the proof files that carry no licence line (bare_licence): the total,
+    then one line per fuzz target, the most first and ties by name, since a total alone names nothing to work on.
+    It is a count and not a finding, so it is printed where the sparse-checkout notice is, on stderr, and `oft lint`'s
+    own summary line on stdout is untouched."""
+    units = sorted(bare.items(), key=lambda kv: (-kv[1], kv[0] or ""))
+    return "\n".join(["oft lint: %d proof file(s) in %d fuzz target(s) carry no licence line (no SPDX tag, no "
+                      "copyright line of Anthropic's and no licence named in words in their first %d lines, and not "
+                      "a file that opens with the comment of its kind): a count, which fails nothing"
+                      % (sum(bare.values()), len(units), HEADER_LINES)]
+                     + ["oft lint:   %s: %d" % (u or "(no fuzz target)", n) for u, n in units])
 
 
 def _expression(tag):
@@ -1176,16 +1672,170 @@ def scan_contract(text, where, builds):
             for pos, msg in sorted(out)]
 
 
+# -------------------------------------------------------------- read-from
+
+# A generated or ported proof file names the binary its numerals were read from, in a comment of its own that the
+# start-up tools write (dev/stream/.../pins.py):
+#
+#     (* Read from: <file> (<project>/<harness> <build>) sha256 <hex>; unstripped twin sha256 <hex> *)
+#
+# and, where the generator wrote the pin inside the parenthesis,
+#
+#     (* Read from: <file> (<project>/<harness> <build>, pin <hex>); unstripped twin sha256 <hex> *)
+#
+# Until this rule nothing read those comments, so one that named another fuzz target's image passed every check.
+# <file> must be the `file` of a build its own fuzz target's harness.yaml records, and every digest the comment
+# holds must be that build's pinned SHA-256.  Three things are left alone, each because the facts cannot judge it or
+# it is not this fuzz target's claim: the unstripped twin, which is the same link without --strip-all, read for its
+# symbol names, and which no harness.yaml pins (tools/oft/symbols.py), so its clause is cut out before the digests
+# are read; a withheld build, which shows no digest at all (the `withheld` rule); and a build record's copy of
+# someone else's proof text, which scan_file does not pass here.
+#
+# A fourth: the donor's line in a relocated file.  A proof ported from another fuzz target keeps the line that says
+# which image the donor's numerals were read from, and gains a line of its own for this fuzz target's image; the
+# donor's line is never rewritten, because that would make the file say something false to satisfy a check.  Such a
+# line names another fuzz target's binary, and it passes ONLY when the same file also carries a `Read from:` that
+# names a build of its OWN fuzz target whose name and SHA-256 are the pin that unit's harness.yaml gives.  Three
+# things this deliberately does not do, each of which would make the rule weaker than no rule at all for the name it
+# cleared: a name that is no build of any fuzz target the tree records is still a finding (read_from_donor_names);
+# a donor line alone, with no line of this fuzz target's own, is still a finding; and a pin that cannot be read --
+# a withheld build, or a record with no sha256 -- is not a pin that matched, so it clears nothing.  The pins are the
+# ones the tree being linted holds: facts.load reads the checkout at the ref CI checked out and no other ref, and
+# never a local rebuild of a binary.
+# An exempt donor line does not fail, and it is not invisible either: it is counted and reported (READ_FROM_DONOR,
+# split_donors), as a pending licence finding is.
+# The comment's text runs to its `*)`, or to the end of the file when it has none: a `(.*?)\*\)` that can fail
+# backtracks over every start, which on a 5 MiB file with an unclosed `(* Read from:` takes hours rather than the
+# milliseconds this costs.
+READ_FROM = re.compile(r"\(\*\s*Read from:[ \t\r\n]*([^\s()]+)(.*?)(?:\*\)|\Z)", re.S)
+READ_FROM_TWIN = re.compile(r"unstripped twin[ \t\r\n]+sha256[ \t\r\n]+[0-9a-f]{64}")
+READ_FROM_DIGEST = re.compile(r"(?<![0-9A-Za-z])[0-9a-f]{64}(?![0-9A-Fa-f])")
+
+# the rule name of an exempt donor line: not a finding, and not silence either (split_donors, donors_by_unit)
+READ_FROM_DONOR = "read-from-donor"
+
+
+def read_from_builds(tree, rel):
+    """{the file name of a build of rel's fuzz target: (build, its harness.yaml record)}, or None when the tree holds
+    no harness.yaml for that fuzz target (facts.load reports that on its own)."""
+    project, _, harness = (layout.unit_of(rel) or "").partition("/")
+    p = tree.projects.get(project)
+    h = None if p is None else p.harnesses.get(harness)
+    if h is None:
+        return None
+    return {rec["file"]: (b, rec) for b, rec in h.builds(published_only=False)
+            if isinstance(rec, dict) and isinstance(rec.get("file"), str)}
+
+
+def read_from_donor_names(tree):
+    """The `file` of every build of every fuzz target the tree records: the names a `Read from:` line can carry that
+    are some fuzz target's binary.  A relocated file's donor line names one of these; a typo, a stale name or an
+    invented one names none, and is a finding whatever else the file carries.  One pass over the facts, kept on the
+    tree (each worker process of a run has its own copy of it, and reads every proof file through it)."""
+    found = getattr(tree, "_read_from_donor_names", None)
+    if found is None:
+        found = {rec["file"] for p in tree.projects.values() for h in p.harnesses.values()
+                 for _, rec in h.builds(published_only=False)
+                 if isinstance(rec, dict) and isinstance(rec.get("file"), str)}
+        tree._read_from_donor_names = found
+    return found
+
+
+def read_from_own_pin(comments, builds):
+    """True where one of the file's `Read from:` comments names a build of its own fuzz target and every SHA-256 it
+    holds is that build's pin: the line a relocated file gains for the image its own numerals were read from.  A
+    build whose record gives no pin (a withheld one, or one with no sha256 at all) cannot be matched, so it never
+    makes this true: a pin that cannot be read is not a pin that matched.  comments: [(name, the text after it)]."""
+    for name, rest in comments:
+        if name not in builds:
+            continue
+        pin = builds[name][1].get("sha256")
+        if not isinstance(pin, str):
+            continue
+        digests = READ_FROM_DIGEST.findall(rest)
+        if digests and all(d == pin for d in digests):
+            return True
+    return False
+
+
+def scan_read_from(text, where, tree):
+    """read-from.  The findings on the proof file `text` at `where`: each `(* Read from: ... *)` comment names a
+    binary its own fuzz target's harness.yaml records, and every SHA-256 it holds outside the unstripped twin's
+    clause is the size-and-SHA-256 pin harness.yaml gives that build.  A withheld build shows no digest at all (the
+    `withheld` rule says so), so a comment that names one is left alone: there is nothing to compare it with.  A
+    relocated file's donor line, which names another fuzz target's binary, is exempt only where the same file also
+    carries a line of its own fuzz target's that matches that unit's pin (read_from_own_pin); it comes back as a
+    READ_FROM_DONOR item, which split_donors counts and reports and never fails."""
+    if "Read from:" not in text:
+        return []
+    builds = read_from_builds(tree, where)
+    if builds is None:
+        return []
+    found = [(m.start(), m.group(1), READ_FROM_TWIN.sub("", m.group(2))) for m in READ_FROM.finditer(text)]
+    own_pin = read_from_own_pin([(name, rest) for _, name, rest in found], builds)
+    out = []
+    for start, name, rest in found:
+        at = "%s:%d" % (where, text.count("\n", 0, start) + 1)
+        if name not in builds:
+            if own_pin and name in read_from_donor_names(tree):
+                out.append(Finding(READ_FROM_DONOR, at,
+                                   "reads %s, which is another fuzz target's binary; this file also names the "
+                                   "pinned build of %s, so it is a relocated file keeping the donor's line"
+                                   % (name, layout.unit_of(where))))
+                continue
+            out.append(Finding("read-from", at, "reads %s, which is no build of %s: its builds are %s"
+                               % (name, layout.unit_of(where),
+                                  ", ".join(sorted(builds)) if builds else "none")))
+            continue
+        build, rec = builds[name]
+        pin = rec.get("sha256")
+        if not isinstance(pin, str):
+            continue   # a withheld build: harness.yaml gives no digest to compare with
+        digests = READ_FROM_DIGEST.findall(rest)
+        if not digests:
+            out.append(Finding("read-from", at, "reads %s and names no SHA-256 of it, so it pins no build: "
+                                                "harness.yaml pins the %s build at sha256 %s (%s bytes)"
+                               % (name, build, pin, rec.get("bytes"))))
+            continue
+        for d in digests:
+            if d != pin:
+                out.append(Finding("read-from", at,
+                                   "reads %s at sha256 %s, but harness.yaml pins the %s build of %s at sha256 %s "
+                                   "(%s bytes)" % (name, d, build, layout.unit_of(where), pin, rec.get("bytes"))))
+    return out
+
+
+def donors_by_unit(donors):
+    """[(fuzz target, how many exempt donor `Read from:` lines its files carry)], sorted by fuzz target: what
+    `oft lint` prints of them unless it is asked for each one (--list-donors)."""
+    return sorted(collections.Counter(finding_unit(f) for f in donors).items())
+
+
+def split_donors(found, donors=None):
+    """The exempt donor lines of found (READ_FROM_DONOR) go to donors, a list, when one is given, and never to the
+    result: a relocated file's donor line does not fail, and the population stays visible instead of becoming
+    invisible.  This is how a pending licence finding is reported (apply_pending), for the same reason."""
+    kept = []
+    for f in found:
+        if f.rule == READ_FROM_DONOR:
+            if donors is not None:
+                donors.append(f)
+        else:
+            kept.append(f)
+    return kept
+
+
 # --------------------------------------------------------- paths, withheld
 
 # What may hold binary bytes (a NUL byte): a counterexample's and a finding's runs, in either layout (layout.py), a
-# mutant run's input kept as evidence in a fuzz target's provenance (the same kind of file: a fuzz input), and the
-# tests' fixtures; and a classifier program that its proof.yaml pins (classifier_programs), which is proof data its
-# proof verifies on its own.  Binary data anywhere else is a release asset, not a file in git.
+# mutant run's input kept as evidence in a fuzz target's provenance and a statement's instance (the same kind of file:
+# a fuzz input), and the tests' fixtures; and a classifier program that its proof.yaml pins (classifier_programs),
+# which is proof data its proof verifies on its own.  Binary data anywhere else is a release asset, not a file in git.
 BINARY_OK = tuple("%s/%s" % (d, run) for lay in layout.LAYOUTS
                   for d in (layout.counterexample_dir("*", "*", "*", lay), layout.finding_dir("*", "*", "*", lay))
                   for run in ("input.bin", "control.bin")) + (
-    "projects/*/*/proofs/provenance/evidence/mutants/*/input.bin", "tools/oft/tests/**")
+    "projects/*/*/proofs/provenance/evidence/mutants/*/input.bin",
+    "projects/*/*/proofs/provenance/evidence/instances/*", "tools/oft/tests/**")
 NUL_BYTE = "a NUL byte: binary data is a release asset, not a file in git"
 
 
@@ -1195,12 +1845,16 @@ def classifier_programs(tree):
     return {pd.path + "/" + pd.data["classifier"]["elf"]: (pd.data["classifier"]["sha256"], pd.path)
             for pd in tree.proofs.values() if pd.data.get("classifier")}
 
-# the four ELF files the tests of oft symbols read (tests/test_symbols.py), small and built as their README.md says:
-# the only ELF files kept in git outside a classifier program its proof.yaml pins (their NUL bytes are under
-# tools/oft/tests/**, which BINARY_OK holds)
+# the ELF files the tests of oft symbols read (tests/test_symbols.py), small and built as their README.md says: the
+# only ELF files kept in git outside a classifier program its proof.yaml pins (their NUL bytes are under
+# tools/oft/tests/**, which BINARY_OK holds).  The four named ones are the fixtures of revision 3 of the symbol fact
+# (OSSV-591), listed here a pull request before the one that adds them, since pr.yml lints a change by its base's rules
 ELF_FIXTURES = ("tools/oft/tests/fixtures/elf/two.stripped", "tools/oft/tests/fixtures/elf/two.unstripped",
                 "tools/oft/tests/fixtures/elf/computed_goto_global.elf",
-                "tools/oft/tests/fixtures/elf/computed_goto_biased.elf")
+                "tools/oft/tests/fixtures/elf/computed_goto_biased.elf",
+                "tools/oft/tests/fixtures/elf/named.stripped", "tools/oft/tests/fixtures/elf/named.unstripped",
+                "tools/oft/tests/fixtures/elf/named-moved.stripped",
+                "tools/oft/tests/fixtures/elf/named-moved.unstripped")
 # Where a tracked symbolic link is allowed, and nowhere else: the lane tools of dev/stream/, which mirror
 # `cold/tools` on the lane VM path for path and hold links because that directory holds them (the drift check of
 # pull request 666 compares a live path with its lane path directly, so flattening a link breaks the mirror).  It is
@@ -1307,6 +1961,20 @@ def _link_refusal(full, rel, indexed):
 # restate a text without copying it; the commit that adds their files also adds both to release_tree.INTERNAL, which
 # cuts them from a release.  And toolchain/requirements.txt, the PyYAML pin the checker image installs
 # (toolchain/checker.Dockerfile), which the release that moves tools/oft/ to oft/ and oftdev/ gives a paths.TABLE row.
+# And toolchain/rocq-patches/*.patch, the kernel patches the checker image builds Rocq 9.2.0 with (OSSV-644; the
+# Dockerfile pins each by its SHA-256): here first, since pr.yml lints a change by its base's rules, and the change that
+# adds the patches can pass only a lint whose base admits them.
+# And dev/licence/, the shared licence-record generator (OSSV-400) and its tests, which every unit's made_from.py calls:
+# lint admits it, and pr.yml lints a change by its base's rules; it is outside tools/, so keys.checker, which lists
+# tools/ alone, holds none of it; and a release carries it, since release_tree.INTERNAL does not name it.
+# And the files of the three checks that each pull request of the public repository gets, which OSSV-553's change,
+# the one after this one, adds: here first, since pr.yml lints a change by its base's rules.  The held-content
+# workflow scans the text a pull request adds for keys and names that must stay private; its scanner, its pattern
+# table, the lines no pattern may match and the digest of its private patterns are under .github/held/, and
+# held-content-private.yml runs the private patterns.  The statement-freeze and pin-coherence workflows have their
+# scripts under .github/guards/.  Each is named by its exact path, so a new file in .github/held/ or .github/guards/
+# has no class until a change names it; and a release carries them, since release_tree.INTERNAL does not name them.
+# The tests of the three checks, which OSSV-553 adds under tools/oft/tests/, have the class of a paths.TABLE row.
 # And the files of the public repository's review that Dispatch issue OSSV-612 adds and that no paths.TABLE row
 # matches (a row of paths.TABLE matches its other new files, such as docs/review-answer.md).  Under .github/review/:
 # rules.py, the rules of the review that code applies, whatever the model wrote; trim.py, the fresh reader that trims
@@ -1315,10 +1983,37 @@ def _link_refusal(full, rel, indexed):
 # OSSV-612 makes the one workflow of the public repository that starts on pull_request_target.  Here first, since
 # pr.yml lints a change by its base's rules.  Each is named by its exact path, so a new file in .github/review/ has no
 # class until a change names it; and a release carries them, since release_tree.INTERNAL does not name them.
+# And .github/workflows/workflow-size.yml, which Dispatch issue OSSV-841 adds: a workflow of its own that fails a pull
+# request or a merge queue group in which any workflow file is over 490,000 bytes.  GitHub starts no run of a workflow
+# file over 500 KB, so pr.yml's own guard cannot run once pr.yml is past that, and this small file still starts.  Here
+# first, since pr.yml lints a change by its base's rules; a release carries it, as it carries pr.yml, which it guards.
+# And the scripts of pr.yml's steps under .github/scripts/pr/, which OSSV-841 moves there so that pr.yml stays well under
+# that limit: each holds one step's run text byte for byte, and the step's whole `run:` calls it from the commit the
+# workflow runs from.  Here first, since pr.yml lints a change by its base's rules.  Each is named by its exact path, so
+# a new file in .github/scripts/ has no class until a change names it; a release carries them, as it carries pr.yml.
+# And a project's NOTICE (PROJECT_NOTICE), which a maintainer writes for a project whose proof files are under it
+# (private_projects, scan_licence): here first, since pr.yml lints a change by its base's rules, and the change that
+# adds a NOTICE can pass only a lint whose base admits it.  No key reads it (keys.py reads a project's project.yaml
+# and harness.yaml files alone).  The release cut keeps nothing of a `release: private` project but its project.yaml
+# in the held form and its page (release_tree), so a NOTICE ships only with a project that is not private: check_paths
+# refuses one there.
 LINT_ONLY_HAND = (".claude/skills/porting-released-proofs/SKILL.md",
                   ".claude/skills/porting-released-proofs/references/*.md",
                   ".claude/skills/clean-room-restatement/SKILL.md",
                   ".claude/skills/clean-room-restatement/references/*.md",
+                  "toolchain/requirements.txt",
+                  "toolchain/rocq-patches/*.patch",
+                  "dev/licence/**",
+                  ".github/workflows/held-content.yml",
+                  ".github/workflows/held-content-private.yml",
+                  ".github/held/held_content_scan.py",
+                  ".github/held/detectors.tsv",
+                  ".github/held/must-pass-lines.txt",
+                  ".github/held/private-detectors.sha256",
+                  ".github/workflows/statement-freeze.yml",
+                  ".github/guards/statement_freeze.py",
+                  ".github/workflows/pin-coherence.yml",
+                  ".github/guards/pin_coherence.py",
                   ".github/review/rules.py",
                   ".github/review/trim.py",
                   ".github/review/skills/asd-ste100/LICENSE",
@@ -1333,18 +2028,66 @@ LINT_ONLY_HAND = (".claude/skills/porting-released-proofs/SKILL.md",
                   ".github/review/skills/write-to-maintainer/judge.md",
                   ".github/workflows/rescreen.yml",
                   ".github/workflows/screen-start.yml",
-                  "toolchain/requirements.txt")
+                  ".github/workflows/workflow-size.yml",
+                  ".github/scripts/pr/check-build-files.sh",
+                  ".github/scripts/pr/lint-left-out.sh",
+                  ".github/scripts/pr/lint-since.sh",
+                  ".github/scripts/pr/lint-strip.sh",
+                  ".github/scripts/pr/made-from-records.sh",
+                  ".github/scripts/pr/made-from-tests.sh",
+                  ".github/scripts/pr/plan-elsewhere.sh",
+                  ".github/scripts/pr/plan-lint-gate.sh",
+                  ".github/scripts/pr/stream-tools-base-tree.sh",
+                  ".github/scripts/pr/stream-tools-entry-points.sh",
+                  ".github/scripts/pr/stream-tools-history.sh",
+                  ".github/scripts/pr/stream-tools-pins.sh",
+                  PROJECT_NOTICE)
 # What only this repository has, as paths.TABLE's internal rows are, that only lint judges, here for the same reason:
 # a row of paths.TABLE is part of the checker, and the INTERNAL of paths.py is made of those rows.  dev/enroll/, the
 # place of the scripts that carry a merged theorem-labs/oss-verify enrollment into these facts, which enroll.yml and
 # enroll-build.yml run and no check opens: outside tools/, so keys.checker, which lists tools/ alone, holds none of
 # them (OSSV-276; they leave tools/enroll/, whose paths.TABLE row is internal, in the commit after this one, since
-# pr.yml lints a change by its base's rules).  release_tree.INTERNAL is each directory of this list, then the INTERNAL
-# of paths.py, then release_tree.SKILLS (test_release_tree.test_every_internal_path_is_one_the_cut_removes),
-# so the cut removes dev/enroll/ whole, and is_internal reads it for secrets alone, as it reads tools/enroll/.
-# paths.TABLE's tools/enroll/** row then matches nothing; when paths.py next changes, a dev/enroll/** row there
-# replaces it and this list.
-LINT_ONLY_INTERNAL = ("dev/enroll/**",)
+# pr.yml lints a change by its base's rules).  And .github/rekey-window, the file on main whose bytes say whether a
+# re-key window is open (pr.yml's rekey job reads it from the base's tree): only this repository opens such a window
+# (OSSV-413).  release_tree.INTERNAL is each entry of this list (a directory with its trailing /, a file as
+# it is), then the INTERNAL of paths.py, then release_tree.SKILLS
+# (test_release_tree.test_every_internal_path_is_one_the_cut_removes), so the cut removes dev/enroll/ whole and the
+# window file, and is_internal reads them for secrets alone, as it reads tools/enroll/.
+# paths.TABLE's tools/enroll/** row then matches nothing.  A dev/enroll/** row and a .github/rekey-window row of
+# paths.TABLE could take the place of the first two entries.  Dispatch issue OSSV-424 changed paths.py and kept them
+# here: its R5 names this list as the place of the scan workflow (.github/workflows/held-refscan.yml), and it moves
+# no other entry.
+# dev/gateway-model/, the model gateway's formal model (OSSV-498): Rocq definitions and an extracted checker that no
+# checker unit reads and its own build script builds, which no release carries, so the cut removes it whole and no
+# unit's key moves; and .github/workflows/gateway-model.yml, the workflow that builds and checks it.
+# dev/evals/, the tools that run this repository's evals (OSSV-643: dev/evals/paired-run/, the runner and the
+# sandbox of a paired run), which no check opens and no release carries, so the cut removes it whole and no unit's
+# key moves; and .github/workflows/paired-run.yml, the workflow that runs the paired run's tests.
+# The two files of OSSV-299, which moves the proof checks to the shared Rocq build service:
+# .github/workflows/rocq-release.yml, the release test on the service's test instance, the one workflow whose token the
+# service's release-test account accepts (INFRA-4207); and .github/theorem-rule-classes.tsv, the table of memory classes
+# that the service's client `theorem check` reads at the commit it checks (OSSV-654).  `oft check` opens neither, so no
+# release carries them.  No public check reads the table: the public checks run the public README's command with no
+# build service.  And a commit with no table gives every action `std`, which can make an action fail at its memory limit
+# but never make a check pass.
+# The two files of the CI reviewer, which the pull request of Dispatch issue OSSV-774 adds:
+# .github/workflows/ci-review.yaml, the caller that runs agent-infra's CI reviewer on each pull request that Legion does
+# not run, and .github/ci-review.md, the rules file that holds this repository's own check for that reviewer.
+# `oft check` opens neither.  No release carries them, because the public repository can use neither: the caller calls a
+# workflow of agent-infra, and the rules file holds this repository's own check for agent-infra's CI reviewer.
+# .github/workflows/held-refscan.yml, the daily scan of the public refs for held fuzz targets, which the pull request
+# of Dispatch issue OSSV-377 adds: the cut removes it too.
+# .github/workflows/verdicts.yml, the one writer of the store of build-cluster results (Dispatch issue OSSV-832), which
+# no check opens and no release carries: here first, since pr.yml lints a change by its base's rules, and the cut
+# removes it too.
+# .github/README.md, the page GitHub shows on this repository's front page in place of the root README.md, which
+# OSSV-668 stops committing: here first, since pr.yml lints a change by its base's rules.  It is internal, so the cut
+# removes it, and a release's front page is its own rendered README.md.  It is named by its exact path.
+LINT_ONLY_INTERNAL = ("dev/enroll/**", ".github/rekey-window", "dev/gateway-model/**",
+                      ".github/workflows/gateway-model.yml", "dev/evals/**", ".github/workflows/paired-run.yml",
+                      ".github/workflows/rocq-release.yml", ".github/theorem-rule-classes.tsv",
+                      ".github/workflows/ci-review.yaml", ".github/ci-review.md", ".github/workflows/held-refscan.yml",
+                      ".github/workflows/verdicts.yml", ".github/README.md")
 
 
 def classify_path(rel):
@@ -1367,8 +2110,9 @@ def check_paths(tree, files, unread=()):
     leaves off disk (left_out).  Their names are judged as every other file's (pattern, project, harness, statement,
     case, layout), so a stray path under a proof library still fails; their bytes are not read, and a symbolic link
     among them is a finding, since its target cannot be judged.  pr.yml's pull-request lint takes such a checkout
-    only when no left-out file differs from the commit it compares with (lint_files_left_out), so each left-out file
-    keeps the verdict its bytes had there, and the merge queue's lint reads the whole tree."""
+    (lint_files_left_out) only when it reads only the changed files, and the lint job then checks out each left-out
+    file that changed: a file still left out did not change, and keeps the verdict its bytes had there.  The merge
+    queue's lint reads the whole tree."""
     out, notes = [], []
     programs = classifier_programs(tree)
     indexed = index_files(tree.path(""))
@@ -1413,6 +2157,11 @@ def check_paths(tree, files, unread=()):
                                % (p, names.opam_package(tree.opam_stem, p))))
         if pat in PATCH_PATTERNS and rel not in entry_files[p]:
             out.append(Finding("paths", rel, "no patches entry of %s names it" % p))
+        if pat == PROJECT_NOTICE and tree.projects[p].data.get("release") != "private":
+            out.append(Finding("paths", rel, "a project's NOTICE is the licence of the proof files of a project whose "
+                                             "project.yaml says `release: private` (docs/adding-a-proof.md, "
+                                             "requirement 7): %s's does not, so a release would publish this file"
+                                             % p))
         if rel in unread:
             if rel in links:
                 out.append(Finding("paths", rel, "a symbolic link this sparse checkout leaves out: its target is not "
@@ -1512,6 +2261,99 @@ def check_symbols(tree, files):
             if sha256 != pin:
                 out.append(Finding("schema", rel, "of the binary with sha256 %s, but harness.yaml pins builds.%s.sha256"
                                    " %s: run oft symbols again for this build" % (sha256, build, pin)))
+    return out
+
+
+def check_deviation(tree):
+    """schema: a fuzz target of a project in shapes.REQUIRED carries `deviation`, and every `deviation` says what
+    its build record (deviation.from_recipe) and the TLS scans of its builds that are not withheld
+    (deviation.load_scans, deviation.compare) say.  A build record that from_recipe cannot read is a finding that names
+    the file and the line."""
+    out = []
+    for h in tree.harnesses():
+        rel = "%s/harness.yaml" % h.dir
+        record = h.data.get("deviation")
+        if record is None:
+            if h.project.name in shapes.REQUIRED:
+                out.append(Finding("schema", rel, "deviation: required for project %s" % h.project.name))
+            continue
+        builds = h.data.get("builds")
+        if not isinstance(record, dict) or not isinstance(builds, dict):
+            continue   # rules.check reports the shape
+        try:
+            derived = deviation.from_recipe(tree, h)
+        except ValueError as e:
+            out.append(Finding("schema", rel, "deviation: the build record cannot be read: %s" % e))
+            continue
+        out += [Finding("schema", rel, msg)
+                for msg in deviation.compare(record, derived, deviation.load_scans(tree, h), builds)]
+    return out
+
+
+def _instance(tree, h, name, inst):
+    """The messages of statement name's instance record inst: its file is a regular file of fewer than
+    facts.INSTANCE_MAX_BYTES bytes whose size and SHA-256 are the record's, and on which the driver does what `path`
+    says: it refuses a file of max_input_bytes or more (theories/Driver.v), and calls the harness only on a file of its
+    whole header (facts.driver_calls)."""
+    field = "statements.%s.instance." % name
+    if not isinstance(inst.get("file"), str) or not re.fullmatch(r"[A-Za-z0-9._-]+", inst["file"]):
+        return []   # rules.check reports the name
+    rel = layout.instance_path(h.project.name, h.name, tree.unit_layout("%s/%s" % (h.project.name, h.name)),
+                               inst["file"])
+    try:
+        listed = os.lstat(tree.path(rel))
+    except OSError:
+        return [field + "file: %s is not in the tree" % rel]
+    if stat.S_ISLNK(listed.st_mode):
+        return [field + "file: %s is a symbolic link, not a regular file" % rel]
+    if not stat.S_ISREG(listed.st_mode):
+        return [field + "file: %s is not a regular file" % rel]
+    if listed.st_size >= facts.INSTANCE_MAX_BYTES:
+        return [field + "bytes: %s has %d bytes, but the driver refuses a file of %d bytes or more "
+                "(theories/Driver.v, max_input_bytes)" % (rel, listed.st_size, facts.INSTANCE_MAX_BYTES)]
+    try:
+        f = facts.read_instance(tree.path(rel))
+    except facts.BoundedFileError as e:
+        return [field + "file: %s cannot be read: %s" % (rel, e)]
+    out = []
+    if inst.get("bytes") != f.bytes:
+        out.append(field + "bytes: is %s, but %s has %d bytes" % (inst.get("bytes"), rel, f.bytes))
+    if inst.get("sha256") != f.sha256:
+        out.append(field + "sha256: is %s, but %s has sha256 %s" % (inst.get("sha256"), rel, f.sha256))
+    if inst.get("path") == "reaches-harness" and facts.driver_calls(f.data) is None:
+        if f.bytes < facts.DRIVER_HEADER_MIN:
+            out.append(field + "path: reaches-harness, but %s has %d bytes, fewer than the driver's %d-byte header: "
+                       "the driver exits 2 without calling the harness (theories/Driver.v)"
+                       % (rel, f.bytes, facts.DRIVER_HEADER_MIN))
+        else:
+            need = facts.driver_header_bytes(f.data)
+            out.append(field + "path: reaches-harness, but %s has %d bytes, and its config word asks for %d "
+                       "config bytes after it, so %d bytes: the driver exits 2 without calling the harness "
+                       "(theories/Driver.v)" % (rel, f.bytes, need - facts.DRIVER_HEADER_MIN, need))
+    return out
+
+
+def check_instances(tree):
+    """schema: every statement of a project in shapes.REQUIRED carries `instance`, and each `instance` names a
+    regular file in evidence/instances/ of the build record's folder, of fewer than facts.INSTANCE_MAX_BYTES bytes,
+    with the record's size and SHA-256, on which the driver calls the harness when the record's path is
+    reaches-harness (at least the driver's header and the config bytes it asks for; refused-by-driver runs with no
+    input file argument, so any size is that path).  Each message names the field.  A classifier statement
+    (shapes.CLASSIFIER_KINDS) is left out: it has no instance form, so it takes none (rules._classifier_statement)."""
+    out = []
+    for h in tree.harnesses():
+        rel = "%s/harness.yaml" % h.dir
+        statements = h.data.get("statements")
+        for name, s in sorted(statements.items()) if isinstance(statements, dict) else ():
+            if isinstance(s, dict) and s.get("kind") in shapes.CLASSIFIER_KINDS:
+                continue
+            inst = s.get("instance") if isinstance(s, dict) else None
+            if inst is None:
+                if h.project.name in shapes.REQUIRED:
+                    out.append(Finding("schema", rel, "statements.%s.instance: required for project %s"
+                                       % (name, h.project.name)))
+            elif isinstance(inst, dict):
+                out += [Finding("schema", rel, msg) for msg in _instance(tree, h, name, inst)]
     return out
 
 
@@ -1634,8 +2476,41 @@ def _fixed_evidence(tree, base, ledger, held):
     return out
 
 
-SHARED_FILE = ("a shared generated file: no pull request changes it; the line's render after the merge writes it "
-               "(./oft generate --skip-shared renders every other generated file)")
+SHARED_FILE = ("a shared generated file: only a release pull request changes it, to the render; the line's render "
+               "after the merge writes it (./oft generate --skip-shared renders every other generated file)")
+SHARED_DIFFERS = ("a shared generated file that differs from the render: a release pull request carries one only as "
+                  "./oft generate renders it from this tree (run ./oft generate)")
+SHARED_UNRENDERED = ("a shared generated file, and ./oft generate renders nothing from this tree (%s): a release pull "
+                     "request carries one only as the render writes it")
+
+
+def _shared_render(tree):
+    """{path: bytes} of each shared generated file (paths.SHARED) as `oft generate` writes it for tree: the text that
+    generate.render_all gives, which generate.run writes and `generate --check` compares, in UTF-8 with no newline
+    translation.  Where generate.run renders nothing for tree, the reason in words instead: the facts have an error,
+    there is no release.yaml, a sparse checkout leaves out a proof library (layout.unwritten_libraries), or the
+    render stops (a symbol fact that does not load: rules.symbol_facts, which check_symbols reports)."""
+    if tree.errors:
+        return "the facts have %d error(s)" % len(tree.errors)
+    if tree.release is None:
+        return "there is no release.yaml"
+    missing = layout.unwritten_libraries(tree.root, sorted("%s/%s" % (h.project.name, h.name)
+                                                           for h in tree.harnesses()))
+    if missing:
+        return "this checkout leaves out the proof library %s" % missing[0][1]
+    try:
+        rendered = generate.render_all(tree)
+    except (ValueError, facts.BoundedFileError) as e:
+        return "the render stops: %s" % e
+    return {rel: text.encode("utf-8") for rel, text in rendered.items() if paths.is_shared(rel)}
+
+
+def _is_render(tree, rel, rendered):
+    """Whether the file at rel is a regular file whose bytes are its render, rendered[rel] (_shared_render)."""
+    try:
+        return rel in rendered and facts.read_bounded(tree.path(rel), facts.file_cap(rel)) == rendered[rel]
+    except facts.BoundedFileError:
+        return False
 
 
 def check_changes(tree, changed, kind, base=None):
@@ -1644,10 +2519,14 @@ def check_changes(tree, changed, kind, base=None):
     its project has a base finding, and what a base finding's runs are of stays as it is (_fixed_evidence).  The base
     is walked as well as changed read, since a diff that detects renames lists a moved file only where it went.  A
     file is the same in either layout (layout.canonical): a finding the pull request moves to the other layout is
-    neither deleted nor free to change."""
+    neither deleted nor free to change.  A pull request carries no shared generated file (paths.SHARED), except a
+    release, which carries each one byte for byte as `oft generate` renders it from the proposed tree
+    (_shared_render, made once, and only for a release that carries one): the public line has no render after the
+    merge, so the release commit is that render."""
     out = []
     ledger = _ledger(base) if base else {}
     held = _ledger(tree.root)
+    render = None   # _shared_render of the proposed tree, made at the first shared generated file a release carries
     with_finding = {key.split("/")[1] for key in ledger if _FINDING_FILE.match(key) and key.endswith("/finding.yaml")}
     gone = {rel for rel in list(changed) + [rel for rels in ledger.values() for rel in rels]
             if not os.path.lexists(tree.path(rel)) and layout.canonical(rel) not in held}
@@ -1669,10 +2548,20 @@ def check_changes(tree, changed, kind, base=None):
                                              "files"))
         if kind != "release" and (rel.startswith("theories/") or rel.startswith("toolchain/")):
             out.append(Finding("paths", rel, "changes every statement: only a release pull request changes it"))
-        # A shared generated file is the line's render's: no pull request of any kind carries one.  A deletion
-        # passes: the render puts it back on the line, and on main they go for good.
-        if paths.is_shared(rel) and os.path.lexists(tree.path(rel)):
+        # A shared generated file is the line's render's.  A deletion passes: the render puts it back on the line,
+        # and on main they go for good.  Any pull request but a release leaves the file to the line's render after
+        # the merge.  A release carries the file only as `oft generate` renders it from this tree: the public line
+        # has no render after the merge, so the release commit is that render.
+        if not (paths.is_shared(rel) and os.path.lexists(tree.path(rel))):
+            continue
+        if kind != "release":
             out.append(Finding("paths", rel, SHARED_FILE))
+            continue
+        render = _shared_render(tree) if render is None else render
+        if isinstance(render, str):
+            out.append(Finding("paths", rel, SHARED_UNRENDERED % render))
+        elif not _is_render(tree, rel, render):
+            out.append(Finding("paths", rel, SHARED_DIFFERS))
     return out
 
 
@@ -1701,6 +2590,11 @@ def check_disclosure(tree):
                     missing = [k for k in BUILD_DETAIL if k not in r]
                     if missing:
                         out.append(Finding("withheld", where, "builds.%s is published but has no %s" % (b, ", ".join(missing))))
+            # an image a project withholds (a classifier, an original) asks for the project's flag as a build does;
+            # rules._published_image checks that it shows no pin
+            images = ([rec for _role, _b, rec in h.classifier_builds(False)]
+                      + [rec for _b, rec in h.original_builds(False)])
+            reasons.update(rec["withheld"] for rec in images if rec.get("withheld"))
             for s in h.statements.values():
                 if s.data["status"] == "withheld":
                     reasons.add(s.data.get("withheld"))
@@ -1902,8 +2796,10 @@ def static_asan_commits(tree):
 def check_records(tree):
     """records (with --release): every fuzz target with a proof has a build record, and each record is complete and
     says what the facts say: no unfinished value; its binaries are the published builds of its harness.yaml, all four;
-    what built them (the builder image of release.yaml, the one static-asan commit every record of its kind names, a
-    port record's port and port archive those of its project.yaml, a fallback record's complete fallback block);
+    what built them (a builder image of release.yaml that its project.yaml's build.builder names, images.builder[0]
+    when a recipe built them, since both publish paths rebuild every recipe-built target in that image; the one
+    static-asan commit every record of its kind names; a port record's port and port archive those of its
+    project.yaml; a fallback record's complete fallback block);
     its binary and source archives those of its project.yaml, by file, bytes and sha256 (Contract C1: a record names
     no release, and one written before C1 names project.yaml's); LICENSES/ exactly the texts its components name; the
     upstream licence; for a GPL- or LGPL-licensed component, a source bundle (Contract C1's list of {file, sha256})
@@ -1913,7 +2809,7 @@ def check_records(tree):
     (rules._records).  A port-built project's binary archive also goes with its port archive (assets.port)."""
     out = []
     release = tree.release or {}
-    builder = ((release.get("images") or {}).get("builder") or [None])[0]
+    builders = (release.get("images") or {}).get("builder") or []
     for p, h in record_units(tree):
         where = record_path(tree, p, h)
         base = os.path.dirname(where)
@@ -1966,7 +2862,8 @@ def check_records(tree):
                 add("fallback: the rebuild gave identical x4, with its evidence: %s: %s"
                     % (rb.get("by"), rb.get("verdict")))
         else:
-            if r.get("port") is not None:
+            ported = r.get("port") is not None
+            if ported:
                 port = _mapping(r["port"])
                 if r.get("recipe") is not None:
                     add("the record names a port and a recipe: a port built the binaries, or a recipe did")
@@ -1977,8 +2874,15 @@ def check_records(tree):
                 want = (proj.data.get("assets") or {}).get("port") if proj else None
                 if error or not _is_pin(pin, want):
                     add("port.asset is not %s's assets.port%s" % (project_yaml, ": " + error if error else ""))
-            if tc.get("builder_image") != builder:
-                add("toolchain.builder_image is not release.yaml's images.builder[0]")
+            image = tc.get("builder_image")
+            own = ((proj.data.get("build") or {}).get("builder") if proj else None)
+            if image not in builders:
+                add("toolchain.builder_image %s is not one of release.yaml's images.builder" % str(image)[-20:])
+            elif not ported and image != builders[0]:
+                add("toolchain.builder_image %s is not release.yaml's images.builder[0]: both publish paths rebuild a "
+                    "recipe-built target in images.builder[0]" % str(image)[-20:])
+            elif image != own:
+                add("toolchain.builder_image %s is not %s's build.builder" % (str(image)[-20:], project_yaml))
             c = _mapping(tc.get("static_asan")).get("commit")
             if not (isinstance(c, str) and COMMIT.fullmatch(c)):
                 add("toolchain.static_asan.commit is %.50r, not a full commit id" % (c,))
@@ -2138,6 +3042,204 @@ def check_enrolled(tree):
                                % (min(copy), "a person as" if party else "no",
                                   "add `enrolled: true` after status" if party
                                   else "remove `enrolled`, which no seeded project has")))
+    return out
+
+
+# The form of a name in a project's private_harnesses: the harness half of HELD_ENTRY, the form of a held entry
+# `<project>/<harness>` that every reader of the held entries takes (tools/publish/release_pins.py,
+# dev/stream/bin/release_pins.py), each of which refuses the whole list for one entry outside it.  The schema's
+# harness-name is wider.  The scanners look for the bare name in every published file (disclosure.held_forms), so a
+# held name has HELD_NAME_MIN characters or more: a short name also matches text that does not name the harness.
+HELD_NAME = re.compile(r"[a-z0-9][a-z0-9_-]*")
+HELD_NAME_MIN = 8
+HOLD_WHOLE = "Hold a harness that this list cannot name with its whole project instead (`release: private`)."
+# The way out for a field that holds every fuzz target of its project that builds: the project publishes no binary
+# then, so a person holds the whole project.
+HOLD_PROJECT = "Hold the whole project with `release: private` instead."
+
+
+def _fuzz_targets_that_build(proj):
+    """The names of the fuzz targets of proj (a loaded facts.Project) that its private_harnesses may not all hold,
+    sorted: each one with a published build (facts.Harness.builds).  The cut removes the held fuzz targets and then
+    runs the rules of rules.py, and its refusal of "'assets' with every binary withheld" uses this same test."""
+    return sorted(h.name for h in proj.harnesses.values() if h.builds())
+
+
+def check_private_harnesses(tree):
+    """schema: each project's `private_harnesses` names harnesses that every reader of the held entries can hold, and
+    leaves its project a fuzz target that builds, unless the project is `release: private`.
+
+    The field names the fuzz targets of its project that no public repository may hold while the rest of the project
+    publishes, and `oft generate` writes them as `<project>/<harness>` lines to tools/publish/private-harnesses.txt.
+    This rule refuses a field that is not a list.  It refuses each name of the list that is one of these five:
+
+    1. A name outside HELD_NAME, or a name of fewer than HELD_NAME_MIN characters.
+    2. A name that is a harness of another project (a folder with a harness.yaml, or an entry of that project's
+       project.yaml).  The scanners match a held harness by its bare name, so they would also hold back the files of
+       the other harness.
+    3. A name that the bare form of the match rule (disclosure.held_match) finds, whole or in part, in the name of
+       another harness of any project or in the name of any project, its own project included in both.  The scanners
+       would also hold back the files of that name, and the cut stops on a kept file that names it ("nothing
+       changed").  The bare form matches only where no letter, digit or `_` is next to the name, so `held_target`
+       is found in `held_target-v2` and not in `held_target_v2`.
+    4. A name whose Rocq module (`<project>.<harness>`, each part by names.ident) is also the module of a kept harness
+       of its own project when case is ignored.  A kept harness is a harness of the project (a folder with a
+       harness.yaml, or an entry of its project.yaml) that the field does not name.  names.ident writes each
+       character outside [A-Za-z0-9_] as `_`, so zlib's held `url_fuzzer` has the module of a kept `URL_FUZZER`,
+       `url-fuzzer`, `url.fuzzer` or `url+fuzzer`.  The cut looks for the module of each held fuzz target in every
+       kept file (disclosure.needles) and ignores case, so it stops on the Statements.v of that kept harness
+       ("nothing changed").  The match rule of 3 does not find these names: it is case-sensitive, and `-`, `.` and
+       `+` are not `_` to it.
+    5. A name that the cut or a scanner finds in what the release keeps (disclosure.held_name_stops): in the name, the
+       entry form, the path or the rendered Rocq module of a fuzz target of any project that no field holds, or in the
+       name or the path of any project.  The cut reads them with its own needles of the held entry (its module, case
+       folded, and the entry by held_match), and both ossv-binscan --held read them in lower case.  So json keeping
+       url-fuzzer (module json.url_fuzzer) or PARSE_CBOR_X, or zlib keeping an entry zlib.Url_Fuzzer, is refused when
+       zlib holds url_fuzzer or parse_cbor_x: the cut or the gate would stop every publication on those files, and no
+       exceptions row clears a held hit.  Rule 4 is a case of this one.  Rules 2 and 3 also cover the harnesses that a
+       field holds.
+
+    A name has at most one of these findings: the first that applies.  The rule also refuses a name given more than
+    one time.  And it refuses a project that is not `release: private` and has a fuzz target that builds
+    (_fuzz_targets_that_build) when its field holds every such fuzz target, whatever the field does with a fuzz
+    target that does not build: the cut then keeps no published binary of the project, and rules.py refuses its
+    'assets' ("'assets' with every binary withheld").  The cut holds a `release: private` project back whole, so such
+    a project may hold every fuzz target in its field.  A name may come before its harness's files exist.  The
+    message of the refusal of a field that holds every fuzz target that builds tells a person to hold the whole
+    project (HOLD_PROJECT).  Each other message tells a person to hold such a harness with its whole project
+    (HOLD_WHOLE).
+
+    facts.load does not load a project.yaml that the schema refuses, so this rule reads the field of such a file
+    from the file itself: the schema finding says what the shape breaks, and this one gives the way out.  Such a
+    project has no loaded fuzz target, so the refusal of a field that holds every fuzz target that builds does not
+    judge it.  The field given two times makes the file unreadable (yamlio refuses a repeated key), so then the schema
+    finding alone speaks.
+
+    disclosure is imported in this function and not at load: disclosure imports this module at load, so an import at
+    load is a cycle."""
+    from . import disclosure
+
+    pdir = tree.path("projects")
+    folders = sorted(n for n in os.listdir(pdir) if os.path.isdir(os.path.join(pdir, n))) \
+        if os.path.isdir(pdir) else []
+    data = {}
+    for name in folders:
+        if name in tree.projects:
+            data[name] = tree.projects[name].data
+            continue
+        rel = os.path.join("projects", name, "project.yaml")
+        try:
+            raw = yamlio.load_file(tree.path(rel)) if os.path.isfile(tree.path(rel)) else None
+        except (OSError, yamlio.YamlError):
+            continue   # the schema rule names the file (facts.load)
+        if isinstance(raw, dict):
+            data[name] = raw
+    held = {name: d["private_harnesses"] for name, d in data.items() if "private_harnesses" in d}
+    if not held:
+        return []
+    harnesses = {}   # project -> the name of each folder with a harness.yaml and of each entry of its project.yaml
+    for name in folders:
+        d = os.path.join(pdir, name)
+        found = {h for h in os.listdir(d) if h != "bin" and os.path.isfile(os.path.join(d, h, "harness.yaml"))}
+        entries = data.get(name, {}).get("harnesses")
+        found |= {e["name"] for e in entries if isinstance(e, dict) and isinstance(e.get("name"), str)} \
+            if isinstance(entries, list) else set()
+        harnesses[name] = found
+    # each name in which the scanners could find a held name, as (label, name): the name of each project, and the
+    # name of each harness of it
+    every_name = [("project %s" % p, p) for p in folders] + \
+        [("harness %s/%s" % (p, x), x) for p in folders for x in sorted(harnesses[p])]
+    # what the release keeps of each project and of each fuzz target that no field holds, as (label, text): the
+    # project's name and path, and the fuzz target's name, entry, path and rendered Rocq module, which its files hold
+    held_all = {(p, h) for p, f in held.items() if isinstance(f, list) for h in f if isinstance(h, str)}
+    kept_texts = [("project %s" % p, t) for p in folders for t in (p, "projects/%s/" % p)] + \
+        [("harness %s/%s" % (p, k), t) for p in folders for k in sorted(harnesses[p]) if (p, k) not in held_all
+         for t in (k, "%s/%s" % (p, k), "projects/%s/%s/" % (p, k), names.rocq_harness(tree.namespace, p, k))]
+    out = []
+    for name, field in sorted(held.items()):
+        where = os.path.join("projects", name, "project.yaml")
+        if not isinstance(field, list):
+            out.append(Finding("schema", where, "private_harnesses is %.50r, not a list of harness names. %s"
+                               % (field, HOLD_WHOLE)))
+            continue
+        listed = []
+        for h in field:   # each name one time, in its order: a repeat has a finding of its own (below)
+            if not (isinstance(h, str) and h in listed):
+                listed.append(h)
+        # the Rocq module name (names.ident) in lower case of each harness of the project that the field does not name
+        kept = {k: names.ident(k).lower() for k in harnesses[name] if k not in listed}
+        for h in listed:
+            if not isinstance(h, str) or not HELD_NAME.fullmatch(h):
+                why = "which is not of the form %s that every reader of the held entries takes" % HELD_NAME.pattern
+            elif len(h) < HELD_NAME_MIN:
+                why = ("which has fewer than %d characters: the scanners look for the bare name in every published "
+                       "file, and a short name also matches text that does not name the harness" % HELD_NAME_MIN)
+            else:
+                others = sorted(p for p, hs in harnesses.items() if p != name and h in hs)
+                if others:
+                    why = ("which is also a harness of %s: the scanners match a held harness by its bare name, so "
+                           "they would also hold back the files of that harness" % ", ".join(others))
+                else:
+                    entry = "%s/%s" % (name, h)
+                    # the other two forms of entry match only where its bare name matches too: this is the bare form
+                    inside = sorted(label for label, text in every_name
+                                    if label != "harness " + entry and disclosure.held_match(text, [entry]))
+                    if inside:
+                        why = ("which the scanners also find in the name of %s: they match the bare name of a held "
+                               "harness wherever no letter, digit or `_` is next to it, so they would also hold back "
+                               "the files of that name" % ", ".join(inside))
+                    else:
+                        module = names.ident(h).lower()
+                        twins = sorted("harness %s/%s" % (name, k) for k, ident in kept.items() if ident == module)
+                        if twins:
+                            why = ("whose Rocq module %s.%s is also the module of %s when case is ignored: the cut "
+                                   "looks for the module of each held harness in every kept file and ignores case, so "
+                                   "it would stop on the files of that kept harness"
+                                   % (names.ident(name), names.ident(h), ", ".join(twins)))
+                        else:
+                            stops = disclosure.held_name_stops(entry, kept_texts)
+                            if not stops:
+                                continue
+                            why = ("which the cut or the scanners find in the name, the path or the Rocq module of %s: "
+                                   "the cut looks for the held entry and its module in every kept file, and the "
+                                   "scanners look for the held entry in lower case, so each would stop every "
+                                   "publication on the files of that name" % ", ".join(stops))
+            out.append(Finding("schema", where, "private_harnesses names %.50r, %s. %s" % (h, why, HOLD_WHOLE)))
+        for h in sorted({h for h in field if isinstance(h, str) and field.count(h) > 1}):
+            out.append(Finding("schema", where, "private_harnesses names %r more than one time: name each held "
+                               "harness one time. %s" % (h, HOLD_WHOLE)))
+        proj = tree.projects.get(name)
+        built = _fuzz_targets_that_build(proj) if proj and proj.data.get("release") != "private" else []
+        if built and all(h in listed for h in built):
+            out.append(Finding("schema", where, "private_harnesses holds every fuzz target of %s that publishes a "
+                               "build (%s), so the cut would keep no published binary of %s and would stop (\"'assets' "
+                               "with every binary withheld\"). %s" % (name, ", ".join(built), name, HOLD_PROJECT)))
+    return out
+
+
+# The directory that only the internal tree has: the cut removes it whole (release_tree.INTERNAL).
+PUBLISH_DIR = "tools/publish"
+NO_PORT = ("is %s, which only the cut writes: it stands for the port's internal copy of a project with a held fuzz "
+           "target. This tree has %s/, so it is not a cut. Name the repository of the port: %s or %s"
+           % (schema.NO_PORT_REPOSITORY, PUBLISH_DIR, schema.OSS_VERIFY_REPOSITORY, schema.INTERNAL_PORT_REPOSITORY))
+
+
+def check_port_none(tree):
+    """schema: in a tree that has tools/publish/ (the internal tree), no project.yaml's build.oss_verify.repository
+    and no build record's port.repository is `none` (schema.NO_PORT_REPOSITORY).  The cut writes `none` in place of
+    the port's internal copy for a project with a held fuzz target, so a tree without tools/publish/ (a release)
+    takes it.  In the internal tree these fields name the repository that holds the port.  This rule is in lint, not
+    in rules.py, because rules.check also runs inside `oft check`'s views."""
+    if not os.path.isdir(tree.path(PUBLISH_DIR)):
+        return []
+    out = []
+    for name, proj in sorted(tree.projects.items()):
+        if (facts.port(proj) or {}).get("repository") == schema.NO_PORT_REPOSITORY:
+            out.append(Finding("schema", "projects/%s/project.yaml" % name, "build.oss_verify.repository " + NO_PORT))
+    for _unit, rel in sorted(tree.records_at.items()):
+        r = _read_record(tree, rel)
+        if r is not None and _mapping(r.get("port")).get("repository") == schema.NO_PORT_REPOSITORY:
+            out.append(Finding("schema", rel, "port.repository " + NO_PORT))
     return out
 
 
@@ -2462,23 +3564,30 @@ def scan_namespace(text, rel, tree):
 
 # --------------------------------------------------------------------- run
 
-def scan_file(root, rel, tree, known, own, targets=None, contracts=None):
-    """(the findings of the per-file text rules on rel, whether it is a text file); a binary file, or one that is not
-    a regular file of at most its cap, is not read.  known: the links the facts record (fact_urls); own: the source
-    directories of the fuzz targets OSS Verify builds (oss_verify_sources); tree: the facts, which say which
-    project.yaml may name the port's internal copy (_internal_port_lines); targets: the fuzz targets whose build record
-    lists the texts of Anthropic's licence (anthropic_targets), or None to leave the records unchecked
-    (scan_licence); contracts: the symbol facts of the fuzz targets whose contract files are read
-    (contract_symbols), or None to leave the contract files unchecked (scan_contract)."""
-    text = read_text(os.path.join(root, rel), facts.file_cap(rel))
+def scan_file(root, rel, tree, known, own, targets=None, contracts=None, third_party=None, private=None):
+    """(the findings of the per-file text rules on rel, whether it is a text file, whether it is a proof file that
+    carries no licence line: bare_licence, which no rule reads and a whole-tree run counts).  A binary file, or one
+    that is not a regular file of at most its cap, is not read.  known: the links the facts record (fact_urls); own:
+    the source directories of the fuzz targets OSS Verify builds (oss_verify_sources); tree: the facts, which say
+    which project.yaml and build records may name the port's internal copy (_internal_port_lines) and which lines may
+    name a private project's own library (_own_library); targets: the fuzz targets whose build record lists every
+    licence text that a file made from the upstream proofs ships with (anthropic_targets), or None to leave the
+    records unchecked (scan_licence); contracts: the symbol facts of the fuzz targets whose contract files are read
+    (contract_symbols), or None to leave the contract files unchecked (scan_contract); third_party: the rows of the
+    table of third-party proof files (load_third_party), or None for none; private: the projects that are
+    `release: private`, each with whether it has a NOTICE (private_projects, scan_licence).  A text of PINNED_VERBATIM
+    is held to its pin whether it is read as text or not (scan_pinned)."""
+    path = os.path.join(root, rel)
+    pinned = scan_pinned(path, rel)
+    text = read_text(path, facts.file_cap(rel))
     if text is None:
         # Rocq compiles a file that holds a NUL byte (in a comment, say), so a Rocq file the proof rules cannot read is
         # refused, not skipped
         if proof_rocq(rel) or rel.endswith(".v") and rel.startswith("projects/"):
             return [Finding("proofs", rel, "a Rocq file that is not read as text (it holds a NUL byte, or it is not a "
-                                           "regular file of at most its cap) is not allowed")], False
-        return [], False
-    out = scan_namespace(text, rel, tree)
+                                           "regular file of at most its cap) is not allowed")], False, False
+        return pinned, False, False
+    out = pinned + scan_namespace(text, rel, tree)
     src = verbatim(rel, text)
     inside = internal_only(rel)
     own_source = oss_verify_source(own, rel)
@@ -2489,26 +3598,41 @@ def scan_file(root, rel, tree, known, own, targets=None, contracts=None):
     blanked = None
     if proof_v and (EMAIL.search(text) or URL.search(text) or GHCR.search(text)):
         blanked = rocq.strip(text, comments=False)
-    out += scan_shapes(text, rel, source=src and not own_source, internal=inside, email_text=blanked,
+    # A third-party proof file's row of THIRD_PARTY decides, in one step, whether the file is under the row's licence
+    # and which of its lines the private-data rule reads (_row_licence).  Every other rule reads it as any proof's.
+    row = third_party.get(layout.canonical(rel)) if third_party and proof_v else None
+    row_found, shapes_text, email_text, licence = _row_licence(root, rel, path, text, blanked, row)
+    library = _own_library(tree, rel, text)
+    out += scan_shapes(shapes_text, rel, source=src and not own_source, internal=inside, email_text=email_text,
                        internal_port_lines=_internal_port_lines(tree, rel, text),
-                       host_paths=not rel.startswith(CHANGE_LEDGERS))
+                       host_paths=not rel.startswith(CHANGE_LEDGERS), own_library=library)
     # the link rule judges a link by what a reader's browser would open; no reader opens this directory's text
     # (internal_only), and its lock file pins every package by its URL
     if (not src or own_source) and not inside:
         out += scan_links(text if blanked is None else blanked, rel, known,
-                          strict=link_strict(rel) and not port_text and not own_source)
+                          strict=link_strict(rel) and not port_text and not own_source, own_library=library)
     if PORT_MANIFEST.match(rel):
         out += scan_port_manifest(text, rel)
+    bare = False
     if proof_v:
-        out += scan_proof(text, rel) + scan_licence(text, rel, targets)
-        builds = None if contracts is None or not CONTRACT_FILE.match(rel) else contracts.get(layout.unit_of(rel))
+        out += scan_proof(text, rel) + row_found
+        if licence is not _REFUSED:
+            out += scan_licence(text, rel, targets, licence, private)
+        # a bare file of a private project with a NOTICE is a licence finding (scan_licence), not a count (bare_licence)
+        unit = layout.unit_of(rel)
+        bare = bare_licence(text) and not (private or {}).get(unit.split("/")[0] if unit else None)
+        # a build record's copy of someone else's text ships as it is and describes the donor's image, not this
+        # fuzz target's: the recipe slice and the licence texts (`src`), and the port's own files (`port_text`)
+        if not src and not port_text:
+            out += scan_read_from(text, rel, tree)
+        builds = None if contracts is None or not CONTRACT_FILE.match(rel) else contracts.get(unit)
         if builds:
             out += scan_contract(text, rel, builds)
     elif rel.startswith("projects/") and rel.endswith(".v"):
         out += scan_project_rocq(text, rel)
     if not proof_v and wall_clock_scanned(rel):
         out += scan_wall_clock(text, rel)
-    return out, True
+    return out, True, bare
 
 
 _FORKED = None  # the function of forked_map in one of its workers, set by _forked_init
@@ -2577,38 +3701,158 @@ def _forked_one(item):
     return _FORKED(item)
 
 
-def memory_available(proc="/proc", cgroup="/sys/fs/cgroup"):
-    """The memory, in bytes, that this process and its workers may take: MemAvailable of proc/meminfo, and less when a
-    cgroup (version 2) that holds this process limits it, at any level: its memory.max less its memory.current.  None
-    when proc/meminfo says nothing."""
+# A cgroup's memory.current counts the page cache, which the kernel hands back rather than failing an allocation,
+# so memory.max less memory.current is not what the processes in it may take: a pod that has just checked this
+# repository out holds nearly its whole limit in cache and so reads as having almost none left (OSSV-470: 0.68 GiB
+# of a 16 GiB pod, one process on 16 CPUs, 4,335 s against 758 s).  RECLAIMABLE is what counts as free again:
+# inactive_file, the term Kubernetes and cadvisor leave out of a cgroup's working set, so the figure here is the one
+# the platform itself judges the pod by; less the shmem in it (tmpfs, /dev/shm), which lies on the same lists but
+# which no swap can reclaim.  active_file and slab_reclaimable are reclaimable too and are deliberately left in:
+# they are the cache this lint is reading and the directory entries it is walking, and a pool sized over what its
+# cgroup holds is killed, which is worse than slow.
+#
+# memory.current and memory.stat are two files, so two moments, and nothing makes them agree.  Crediting cache the
+# cgroup took on after memory.current was read counts the same bytes twice: 8 GiB of anonymous memory that never
+# moves and 8 GiB of cache arriving between the two reads read as a whole 16 GiB limit free, twice the pool the
+# memory supports, which is the direction that ends in a killed worker (the first review of pull request 2579).
+# So memory.stat is read twice, on either side of memory.current, and the credit is the SMALLER of the two, cut
+# again to the chosen memory.current less the larger anon either reading saw.  Cache that moves once cannot then
+# be credited against a total read without it; cache that moves repeatedly can still leave the bounded excess
+# the paragraph below names.
+#
+# What this deliberately does not do is rebuild memory.current out of the fields of memory.stat.  Two reviews of
+# that pull request each found a field such a sum leaves out -- `kernel`, which no kernel printed before Linux
+# 5.19, and `sock`, which is not inside `kernel` at all -- and each omission reads as memory that is free when it
+# is held: 12 processes where 8 fit, both times.  A kernel may add another field tomorrow.  memory.current is the
+# one total the kernel itself keeps, so it is the only total used here.
+#
+# A reading that is not there subtracts nothing -- the low side, and never silently none at all: memory_reading
+# says which reading was missing and default_jobs prints it.
+# the fields a credit needs: the cache a cgroup can hand back by its own accounting, and the anonymous memory
+# that bounds it.  Every one is needed, since a field that is not there would otherwise be read as a zero.
+RECLAIMABLE = ("inactive_file", "shmem", "file", "anon")
+MemoryReading = collections.namedtuple("MemoryReading", "available why")
+
+
+def _gib(n):
+    return "%.2f GiB" % (n / 2 ** 30)
+
+
+def _reclaimable(stat):
+    """One reading of a cgroup's memory.stat (at path stat): (the cache the kernel can hand back -- inactive_file,
+    no more than the file total beside it, less the shmem no swap can reclaim -- the anonymous memory it says is
+    held, which no credit may be taken out of, and how both were read).  (None, None, why) where the file, or a
+    field the credit needs, is not there."""
+    held = {}
+    try:
+        with open(stat) as f:
+            for line in f:
+                field, _, value = line.partition(" ")
+                try:
+                    held[field] = int(value)
+                except ValueError:
+                    pass
+    except OSError:
+        return None, None, "no memory.stat beside it"
+    absent = [field for field in RECLAIMABLE if field not in held]
+    if absent:
+        return None, None, "its memory.stat has no " + " and no ".join(absent)
+    return (max(0, min(held["inactive_file"], held["file"]) - held["shmem"]), held["anon"],
+            "inactive_file %s of file %s, less shmem %s, beside anon %s"
+            % (_gib(held["inactive_file"]), _gib(held["file"]), _gib(held["shmem"]), _gib(held["anon"])))
+
+
+def memory_reading(proc="/proc", cgroup="/sys/fs/cgroup"):
+    """What this process and its workers may take, and where the figure came from: MemoryReading(available, why).
+    available is bytes: MemAvailable of proc/meminfo, and no more than the narrowest cgroup (version 2) that holds
+    this process allows, at any level -- its memory.max, less its memory.current, plus the cache the kernel can
+    hand back (RECLAIMABLE).  A level with a readable finite memory.max and a first memory.current is read five
+    times -- memory.stat, memory.max, memory.current, memory.stat, memory.current -- taking the total at the
+    larger of its two readings and the cache at the smaller of its two; a level without a usable finite limit or
+    first total is skipped before the second stat and current reads.
+    available is None when, and only when, proc/meminfo has no MemAvailable.  why is one line, naming MemAvailable
+    and the readings of the one cgroup that bound the answer -- not of every level looked at -- and naming a
+    reading that was not there in place of the figure it would have given."""
     try:
         with open(os.path.join(proc, "meminfo")) as f:
             avail = next(int(line.split()[1]) * 1024 for line in f if line.startswith("MemAvailable:"))
     except (OSError, StopIteration, ValueError):
-        return None
+        return MemoryReading(None, "%s has no MemAvailable, so how much memory there is is unknown"
+                                   % os.path.join(proc, "meminfo"))
+    host = "MemAvailable %s" % _gib(avail)
     try:
         with open(os.path.join(proc, "self", "cgroup")) as f:
             parts = [p for p in next(line for line in f if line.startswith("0::"))[3:].strip().split("/") if p]
     except (OSError, StopIteration):
-        return avail
+        return MemoryReading(avail, "%s; no cgroup v2 line in %s"
+                                    % (host, os.path.join(proc, "self", "cgroup")))
+    capped = []
     for i in range(len(parts), -1, -1):
+        where = os.path.join(cgroup, *parts[:i])
+        before, anon_before, how_before = _reclaimable(os.path.join(where, "memory.stat"))
         try:
-            with open(os.path.join(cgroup, *parts[:i], "memory.max")) as f:
-                limit = f.read().strip()
-            with open(os.path.join(cgroup, *parts[:i], "memory.current")) as f:
-                current = int(f.read())
+            with open(os.path.join(where, "memory.max")) as f:
+                text = f.read().strip()
+            with open(os.path.join(where, "memory.current")) as f:
+                first = int(f.read())
+            limit = None if text == "max" else int(text)
         except (OSError, ValueError):
             continue
-        if limit != "max":
-            avail = min(avail, max(0, int(limit) - current))
-    return avail
+        if limit is None:
+            continue
+        after, anon_after, how_after = _reclaimable(os.path.join(where, "memory.stat"))
+        try:
+            with open(os.path.join(where, "memory.current")) as f:
+                current, again = max(first, int(f.read())), True
+        except (OSError, ValueError):
+            current, again = first, False
+        # Each figure at its least favourable reading, because no two of these files can be read at one moment:
+        # the five readings of a level run memory.stat, memory.max, memory.current, memory.stat, memory.current,
+        # and the total is taken at the larger of its two and the cache at the smaller of its two.  A cgroup that
+        # moves once while they are made cannot then have cache credited against a total that was read without
+        # it, in either direction.  The credit is never more than the total, since nothing can be handed back
+        # that is not held, and never more than what is left of the total once the anonymous memory either
+        # reading saw is set aside, since none of that is cache whatever moved when.  A total that could not be
+        # read a second time credits nothing, rather than falling back to the one reading this was built to stop
+        # trusting alone.
+        #
+        # What this is not: a guarantee.  Measured over every interleaving of a family of readings, a cgroup
+        # that moves once or twice while the five are made never comes out above what it holds; one that moves
+        # three times or more can, by no more than the cache that moved (the fifth review of pull request 2579,
+        # 5.7 million readings, worst excess 7 GiB on a 16 GiB limit).  The alternative to a bounded credit is
+        # no credit, which is the 5.7x this exists to remove.  No clamp to the limit sits under any of it, and
+        # no sum of memory.stat's own fields stands in for memory.current (the comment above).
+        free = (None if before is None or after is None or not again else
+                max(0, min(before, after, current - max(anon_before, anon_after))))
+        # A cgroup over its limit may still have cache to hand back, so this floors the figure at none rather
+        # than reading a total above the limit as a debt: it is the arithmetic, not a claim that there is nothing.
+        here = max(0, limit - current + (free or 0))
+        capped.append((here, "cgroup /%s memory.max %s less memory.current %s plus reclaimable %s (%s) = %s"
+                             % ("/".join(parts[:i]), _gib(limit), _gib(current),
+                                "none" if free is None else _gib(free),
+                                "its memory.current could not be read a second time" if not again else
+                                how_before if how_before == how_after else
+                                "%s before memory.current and %s after it" % (how_before, how_after), _gib(here))))
+    if not capped:
+        return MemoryReading(avail, "%s; no cgroup memory limit on %s or above it"
+                                    % (host, os.path.join(cgroup, *parts)))
+    here, why = min(capped, key=lambda cap: cap[0])
+    return MemoryReading(min(avail, here), "%s; %s" % (why, host))
 
 
-def default_jobs():
+def default_jobs(explain=False, proc="/proc", cgroup="/sys/fs/cgroup"):
     """The default number of processes of forked_map: the CPUs this process may run on (facts.cpus),
-    but no more than the available memory (memory_available) holds at WORKER_GIB each, and at least 1."""
-    cpus, avail = facts.cpus(), memory_available()
-    return cpus if avail is None else max(1, min(cpus, avail // int(WORKER_GIB * 2 ** 30)))
+    but no more than the available memory (memory_reading) holds at WORKER_GIB each, and at least 1.
+    With explain, one line on stderr: the number, the CPUs, the memory it was sized from and memory_reading's
+    account of where that came from -- MemAvailable and the one cgroup that bound it -- so that a run on one
+    process says whether the machine is small or the reading of it was."""
+    cpus, reading = facts.cpus(), memory_reading(proc, cgroup)
+    avail = reading.available
+    jobs = cpus if avail is None else max(1, min(cpus, avail // int(WORKER_GIB * 2 ** 30)))
+    if explain:
+        print("oft lint: %d process(es) for the per-file rules: %d CPU(s), %s available at %g GiB each; %s"
+              % (jobs, cpus, "unknown" if avail is None else _gib(avail), WORKER_GIB, reading.why), file=sys.stderr)
+    return jobs
 
 
 def forked_map(fn, items, jobs, chunksize=16):
@@ -2629,10 +3873,11 @@ def forked_map(fn, items, jobs, chunksize=16):
                            "above, or ended by the system): the run stops") from e
 
 
-def scan_files(root, tree, known, own, files, jobs, targets=None, contracts=None):
+def scan_files(root, tree, known, own, files, jobs, targets=None, contracts=None, third_party=None, private=None):
     """scan_file for each of files, in their order, on up to jobs processes (forked_map), each starting with the tree
     loaded here."""
-    return forked_map(lambda rel: scan_file(root, rel, tree, known, own, targets, contracts), files, jobs)
+    return forked_map(lambda rel: scan_file(root, rel, tree, known, own, targets, contracts, third_party, private),
+                      files, jobs)
 
 
 class ChangedOnlyError(Exception):
@@ -2660,26 +3905,27 @@ def changed_since(root, base):
     return {p for p in diff + new if p}
 
 
-_BUILD_RECORD = re.compile(layout.PROOF_HARNESS_RE + r"/provenance/PROVENANCE\.yaml$")
-
-
 def read_by_every_verdict(rel):
     """Whether a change to rel can change the per-file rules' verdict on another file.  Four files are read by every
     verdict: a project's project.yaml and a harness's harness.yaml (facts), a finding's finding.yaml, whose links
-    fact_urls records and whose state decides which project.yaml may name the port's internal copy
-    (_internal_port_lines), and lint-exceptions.yaml, whose entries clear findings in other files (an entry removed
-    there leaves a finding in a file that did not change).  A build record decides the licence rule on its own fuzz
-    target's proof files (anthropic_targets), and a symbol fact (which paths.py classes as facts) the contract-literals
-    rule on its fuzz target's contract files (contract_symbols).  The set is wider on purpose, a margin, so that it
-    does not lose a file a later rule reads: every file paths.py classes as facts, every build record (which facts.load
-    reads too, and which re-reads the whole tree rather than only its fuzz target's files), and every .gitattributes,
-    which changes the bytes git checks out for a file whose blob did not change (line ends, encoding).  CHANGELOG.md is
-    the one fact left out: no rule reads it but as a file of its own (fact_urls reads projects, harnesses and findings,
-    and facts.load does not parse it), so a change to it alone has the per-file rules read that one file."""
-    return (rel == EXCEPTIONS or os.path.basename(rel) == ".gitattributes"
+    fact_urls records and whose state decides which project.yaml and build records may name the port's internal copy
+    (_internal_port_lines, as a project.yaml's private_harnesses and release do), and lint-exceptions.yaml, whose
+    entries clear findings in other files (an entry removed there leaves a finding in a file that did not change).  A
+    build record decides the licence rule on its own fuzz target's proof files (anthropic_targets), a project's NOTICE
+    (PROJECT_NOTICE) the licence rule on its project's proof files (private_projects), the table of third-party proof
+    files (THIRD_PARTY) the licence and private-data rules on each file a row names (load_third_party), a licence text
+    lint pins (PINNED_VERBATIM), added or removed, the licence rule on each row's file under that licence
+    (scan_third_party_text), and a symbol fact (which paths.py classes as facts) the contract-literals rule on its fuzz
+    target's contract files (contract_symbols).  The set is wider on purpose, a margin, so that it does not lose a file
+    a later rule reads: every file paths.py classes as facts, every build record (which facts.load reads too, and which
+    re-reads the whole tree rather than only its fuzz target's files), and every .gitattributes, which changes the
+    bytes git checks out for a file whose blob did not change (line ends, encoding).  CHANGELOG.md is the one fact left
+    out: no rule reads it but as a file of its own (fact_urls reads projects, harnesses and findings, and facts.load
+    does not parse it), so a change to it alone has the per-file rules read that one file."""
+    return (rel in (EXCEPTIONS, THIRD_PARTY) or rel in PINNED_VERBATIM or os.path.basename(rel) == ".gitattributes"
             or (rel != "CHANGELOG.md" and any(cls == "facts" for cls, _, _ in paths.classify(rel)))
             or (_FINDING_FILE.match(rel) is not None and rel.endswith("/finding.yaml"))
-            or _BUILD_RECORD.match(rel) is not None)
+            or _BUILD_RECORD.match(rel) is not None or paths.match(PROJECT_NOTICE, rel) is not None)
 
 
 def running_tools(root):
@@ -2690,7 +3936,8 @@ def running_tools(root):
 
 
 def run(root, changed=None, pr_kind=None, base=None, skeleton=False, release=False, changed_only=None, jobs=None,
-        public=None, pending=None, today=None, max_rss_gib=MAX_RSS_GIB, pending_base=None, expired=None):
+        public=None, pending=None, today=None, max_rss_gib=MAX_RSS_GIB, pending_base=None, expired=None,
+        donors=None):
     """All findings for the tree at root.  skeleton=True accepts a tree with
     no facts at all (no release.yaml, no projects/): the text rules still run
     over every file (unless changed_only narrows them), which is how the
@@ -2722,18 +3969,20 @@ def run(root, changed=None, pr_kind=None, base=None, skeleton=False, release=Fal
     entry that a change does not touch goes to expired (a list, when given);
     and a pull request's lint (changed and pending_base given: a git
     checkout of the base commit, which may be sparse) compares the entries
-    with the base commit's (base_pending_entries)."""
+    with the base commit's (base_pending_entries).  The exempt donor
+    `Read from:` lines of relocated proof files go to donors (a list, when
+    given), not to the result (split_donors)."""
     global _MAX_RSS
     previous, _MAX_RSS = _MAX_RSS, None if max_rss_gib is None else int(max_rss_gib * 2 ** 30)
     try:
         return _run(root, changed, pr_kind, base, skeleton, release, changed_only, jobs, public, pending, today,
-                    pending_base, expired)
+                    pending_base, expired, donors)
     finally:
         _MAX_RSS = previous
 
 
 def _run(root, changed, pr_kind, base, skeleton, release, changed_only, jobs, public, pending, today, pending_base,
-         expired):
+         expired, donors):
     root = os.path.abspath(root)
     since = None if changed_only is None else changed_since(root, changed_only)   # first: it may refuse the run
     tree = facts.load(root)
@@ -2764,9 +4013,16 @@ def _run(root, changed, pr_kind, base, skeleton, release, changed_only, jobs, pu
         return [Finding("paths", root, "no files: nothing examined")]
     found += check_paths(tree, files, unread)
     found += check_symbols(tree, files)
+    found += check_deviation(tree)
+    found += check_instances(tree)
     found += check_disclosure(tree)
     found += check_enrolled(tree)
+    found += check_private_harnesses(tree)
+    found += check_port_none(tree)
     found += check_free_text(tree)
+    third_party, table_found = load_third_party(root)
+    found += table_found
+    found += check_notice(tree)
     if release:
         found += check_placeholders(tree)
         found += check_project_pages(tree)
@@ -2783,7 +4039,7 @@ def _run(root, changed, pr_kind, base, skeleton, release, changed_only, jobs, pu
     known = fact_urls(tree)
     own = oss_verify_sources(tree)
     # the per-file text rules read an internal path for secrets alone (scan_internal_secrets, below): no release
-    # carries it, and tools/publish/ holds the publishing scanner's needles, host paths and addresses on purpose.  The
+    # carries it, and dev/stream/bin/ holds the publishing scanner's needles, host paths and addresses on purpose.  The
     # directories the cut removes whose files keep a row of their own (paths.INTERNAL_DIRS) are read as those rows
     # say: dev/stream/ by internal_only, docs/reference/ and changes/ by every rule.
     internal = [rel for rel in files if is_internal(rel) and not rel.startswith(paths.INTERNAL_DIRS)]
@@ -2808,12 +4064,22 @@ def _run(root, changed, pr_kind, base, skeleton, release, changed_only, jobs, pu
     contracts = contract_symbols(tree, scanned)
     check_rss()   # before the workers fork: each starts with what this process holds
     n_text = 0
-    if jobs is None:
-        jobs = default_jobs() if len(scanned) >= PARALLEL_FILES else 1
+    bare = collections.Counter()
+    if jobs is None:   # a run told --jobs knows its own number; one that chose it says so, on stderr (default_jobs)
+        jobs = default_jobs(explain=True) if len(scanned) >= PARALLEL_FILES else 1
     targets = None if pr_kind == "contributor" else anthropic_targets(root)
-    for file_found, is_text in scan_files(root, tree, known, own, scanned, jobs, targets, contracts):
+    private = private_projects(tree)
+    for rel, (file_found, is_text, is_bare) in zip(scanned, scan_files(root, tree, known, own, scanned, jobs, targets,
+                                                                       contracts, third_party, private)):
         found += file_found
         n_text += is_text
+        if is_bare:
+            bare[layout.unit_of(rel)] += 1
+    # The proof files that carry no licence line: a count, not a finding (bare_licence).  Only a whole-tree run says
+    # it, since over the changed files alone the number is of those files and not of the tree, which reads as a
+    # smaller debt than there is.
+    if bare and scope is None:
+        print(bare_report(bare), file=sys.stderr)
     found += scan_internal_secrets(root, internal)
     check_rss()
     # The canary: a whole tree always holds a text file, so none read back means the reading itself broke.  Under
@@ -2824,6 +4090,8 @@ def _run(root, changed, pr_kind, base, skeleton, release, changed_only, jobs, pu
     exceptions = load_exceptions(root)
     found = apply_exceptions(found, [e for e in exceptions if e.get("rule") != PENDING], own, scope, unread)
     present = {layout.unit_of(rel) for rel in files if _PROJECT_PROOF.match(rel)}   # the units with a Rocq file
-    return apply_pending(found, [e for e in exceptions if e.get("rule") == PENDING], scope, today, pending,
-                         base_pending_entries(pending_base) if changed is not None and pending_base else None, present,
-                         changed, expired, {layout.unit_of(rel) for rel in unread} - {None})
+    return split_donors(
+        apply_pending(found, [e for e in exceptions if e.get("rule") == PENDING], scope, today, pending,
+                      base_pending_entries(pending_base) if changed is not None and pending_base else None, present,
+                      changed, expired, {layout.unit_of(rel) for rel in unread} - {None}),
+        donors)

@@ -1,8 +1,11 @@
 """oft lps-impact: the consumer impact list of an LPS commit."""
 import argparse
+import contextlib
+import io
 import os
 import re
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -41,6 +44,11 @@ PASSES_EXTRA = "%s: proves b/h1/extra_halts; assumptions: 3 axioms, all allowed\
 FAILS_PLAIN = "FAIL %s: %s\n" % (PLAIN, WITNESS)
 FAILS_EXTRA = "FAIL %s: %s\n" % (EXTRA, WITNESS)
 ONE_OF_TWO = "b/h1: 2 statement(s) with a proof\n" + FAILS_PLAIN + PASSES_EXTRA
+# The line each log path the reader refuses prints on standard error: the arm (`b__h1` for b/h1's checker arm), then
+# the path.  It is written out here so that a change to it fails.
+REFUSED = ("lps-impact: %s: refused the log path a failure names, "
+           "it is not a file of this unit's harvested logs: %s")
+TOOLS = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # tools/oft/tests -> tools
 
 
 def tree(d):
@@ -49,6 +57,12 @@ def tree(d):
         with open(os.path.join(d, "index", name), "w", encoding="utf-8") as f:
             f.write(text)
     return d
+
+
+def write(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
 
 
 class Units(unittest.TestCase):
@@ -360,11 +374,15 @@ class Rows(unittest.TestCase):
 
     def test_a_statements_failure_is_every_statements_failure(self):
         err = "FAIL statements: dune build failed (see /tmp/dune.log)\n"
-        _, impact, _ = self.run_tree({"b/h1": (1, err)})
+        said = io.StringIO()
+        with contextlib.redirect_stderr(said):
+            _, impact, _ = self.run_tree({"b/h1": (1, err)})
         rows = self.impact_rows(impact)
         self.assertEqual(rows["b/h1/plain_halts"]["recheck"], "fail")
         self.assertEqual(rows["b/h1/ubsan_halts"]["recheck"], "fail")
         self.assertEqual(rows["b/h1/ubsan_halts"]["class"], "other")
+        # /tmp/dune.log is not under /oftwork/, so it is no log of b/h1: one line refuses it
+        self.assertEqual(said.getvalue().splitlines(), [REFUSED % ("b__h1", "/tmp/dune.log")])
 
     def test_units_tsv_says_what_the_control_image_did(self):
         err = "FAIL statements: %s\n" % WITNESS
@@ -400,6 +418,26 @@ class Diagnostic(unittest.TestCase):
     """Finding 6: the Rocq log a failure names is written under the container's TMPDIR, and the container is
     --rm.  Without the mount and the copy, every failure names a file that no longer exists."""
 
+    def read_back(self, text, dest):
+        """What _arm makes of the output `text` with the logs harvested into `dest`, a directory named
+        `<name>.d`: (the unit's error, {proof: its error}, the lines written on standard error).  docker_check is
+        stubbed to give exit 1 with `text`."""
+        logs, base = os.path.split(dest)
+        self.assertTrue(base.endswith(".d"), dest)
+        said = io.StringIO()
+        with mock.patch.object(lps_impact, "docker_check", lambda *a, **kw: (1, text, 0.0)), \
+             contextlib.redirect_stderr(said):
+            a = lps_impact._arm("img", "/w", "/t", "/p", logs, "b/h1", "statements,proofs", 10, 1, logs,
+                                base[:-len(".d")], None)
+        return a["error"], a["failed"], said.getvalue().splitlines()
+
+    def harvested(self, d):
+        """The harvested logs of b/h1 under d, logs/b__h1.d/, with one log, oft-check-a/x.log, that holds an
+        `Error:` line."""
+        dest = os.path.join(d, "logs", "b__h1.d")
+        write(os.path.join(dest, "oft-check-a", "x.log"), "Compiling Proof.v\nError: marker-x\n")
+        return dest
+
     def test_the_container_gets_a_work_directory_of_the_host_for_tmpdir(self):
         calls = []
         with mock.patch.object(lps_impact.subprocess, "run",
@@ -421,7 +459,7 @@ class Diagnostic(unittest.TestCase):
             self.assertEqual(lps_impact.harvest_logs(tmp, dest), 1)
             err = ("FAIL %s: the wrapper does not type-check: the proof is not of this statement "
                    "(see /oftwork/oft-check-x/proof-y/wrapper.log)" % PLAIN)
-            got = lps_impact.with_detail(err, dest)
+            got = lps_impact.with_detail(err, lps_impact.fail_details(err, dest, "b__h1"))
             self.assertIn("Error: The term f has type A", got)
             # without the diagnostic this reads `other`: the class is only as good as the log
             self.assertEqual(lps_impact.classify("fail", err, stage="proofs"), "other")
@@ -429,8 +467,8 @@ class Diagnostic(unittest.TestCase):
 
     def test_an_error_that_names_no_log_of_ours_is_left_alone(self):
         with tempfile.TemporaryDirectory() as d:
-            self.assertEqual(lps_impact.with_detail("FAIL statements: boom (see /tmp/dune.log)", d),
-                             "FAIL statements: boom (see /tmp/dune.log)")
+            line, dest = "FAIL statements: boom (see /tmp/dune.log)", os.path.join(d, "b__h1.d")
+            self.assertEqual(self.read_back(line, dest), (line, {}, [REFUSED % ("b__h1", "/tmp/dune.log")]))
 
     def test_a_link_the_container_left_is_not_copied_into_the_evidence(self):
         """The container is the thing being measured and it chose these paths: a link it leaves behind would
@@ -452,7 +490,7 @@ class Diagnostic(unittest.TestCase):
 
     def test_a_path_that_climbs_out_of_the_unit_directory_is_not_read(self):
         with tempfile.TemporaryDirectory() as d:
-            dest = os.path.join(d, "dest")
+            dest = os.path.join(d, "dest.d")
             os.makedirs(dest)
             with open(os.path.join(d, "outside.log"), "w", encoding="utf-8") as f:
                 f.write("Error: a file of this host\n")
@@ -460,8 +498,78 @@ class Diagnostic(unittest.TestCase):
             for named in ("/oftwork/../outside.log", "/oftwork/x/../../outside.log", "/oftwork/linked.log"):
                 with self.subTest(named=named):
                     err = "FAIL %s: the wrapper does not type-check (see %s)" % (PLAIN, named)
-                    self.assertEqual(lps_impact.log_detail(err, dest), "")
-                    self.assertEqual(lps_impact.with_detail(err, dest), err)
+                    self.assertEqual(lps_impact.log_detail(named, dest), ("", True))
+                    self.assertEqual(self.read_back(err, dest), (err, {PLAIN: err}, [REFUSED % ("dest", named)]))
+
+    def test_a_fail_line_that_names_a_file_of_this_host_is_refused(self):
+        """Neither path is under /oftwork/, so neither is a log of this unit: nothing is read, and each path is
+        one line on standard error."""
+        with tempfile.TemporaryDirectory() as d:
+            dest = self.harvested(d)
+            outside = os.path.join(d, "outside.log")
+            write(outside, "Error: marker-outside\n")
+            for named in ("/etc/passwd", outside):
+                with self.subTest(named=named):
+                    line = "FAIL %s: does not compile (see %s)" % (PLAIN, named)
+                    self.assertEqual(self.read_back(line, dest),
+                                     (line, {PLAIN: line}, [REFUSED % ("b__h1", named)]))
+
+    def test_a_relative_path_is_refused(self):
+        """From this unit's logs, `../other-run/log` is a file of another run."""
+        with tempfile.TemporaryDirectory() as d:
+            dest = self.harvested(d)
+            write(os.path.join(d, "logs", "other-run", "log"), "Error: marker-other\n")
+            line = "FAIL %s: does not compile (see ../other-run/log)" % PLAIN
+            self.assertEqual(self.read_back(line, dest),
+                             (line, {PLAIN: line}, [REFUSED % ("b__h1", "../other-run/log")]))
+
+    def test_a_path_with_dotdot_is_refused_where_it_resolves_to_a_log_of_the_unit(self):
+        """The `..` alone refuses it: the same log, named without one, is read."""
+        with tempfile.TemporaryDirectory() as d:
+            dest = self.harvested(d)
+            named = "/oftwork/oft-check-a/../oft-check-a/x.log"
+            line = "FAIL %s: does not compile (see %s)" % (PLAIN, named)
+            self.assertEqual(self.read_back(line, dest), (line, {PLAIN: line}, [REFUSED % ("b__h1", named)]))
+            unit, _, said = self.read_back(line.replace(named, "/oftwork/oft-check-a/x.log"), dest)
+            self.assertEqual((unit.endswith(" | Error: marker-x"), said), (True, []))
+
+    def test_a_path_that_holds_a_nul_is_refused_and_the_arm_goes_on(self):
+        """os.path.realpath raises on a NUL: without the refusal one forged line would end the unit's read."""
+        with tempfile.TemporaryDirectory() as d:
+            dest = self.harvested(d)
+            named = "/oftwork/oft-check-a/x.log\0"
+            line = "FAIL %s: does not compile (see %s)" % (PLAIN, named)
+            self.assertEqual(self.read_back(line, dest), (line, {PLAIN: line}, [REFUSED % ("b__h1", named)]))
+
+    def test_a_path_on_a_line_that_is_not_a_fail_line_is_never_read(self):
+        """first_error takes an `error: ` line as the unit's first error, but only a `FAIL ` line names a log."""
+        with tempfile.TemporaryDirectory() as d:
+            dest = self.harvested(d)
+            line = "error: the statements do not compile (see /oftwork/oft-check-a/x.log)"
+            self.assertEqual(self.read_back(line, dest), (line, {}, []))
+
+    def test_a_log_named_after_the_400_characters_a_row_keeps_is_still_read(self):
+        with tempfile.TemporaryDirectory() as d:
+            dest = self.harvested(d)
+            line = "FAIL %s: does not compile: %s (see /oftwork/oft-check-a/x.log)" % (PLAIN, "x" * 400)
+            self.assertGreater(line.index("(see "), 400)
+            unit, proofs, said = self.read_back(line, dest)
+            self.assertNotIn("(see ", unit)
+            self.assertTrue(unit.endswith(" | Error: marker-x"), unit)
+            self.assertEqual((proofs, said), ({PLAIN: unit}, []))
+
+    def test_a_log_of_the_unit_that_is_not_there_gives_no_detail_and_no_line(self):
+        with tempfile.TemporaryDirectory() as d:
+            dest = self.harvested(d)
+            line = "FAIL %s: does not compile (see /oftwork/oft-check-a/gone.log)" % PLAIN
+            self.assertEqual(self.read_back(line, dest), (line, {PLAIN: line}, []))
+
+    def test_a_forged_path_that_two_fail_lines_name_is_one_line(self):
+        with tempfile.TemporaryDirectory() as d:
+            dest = self.harvested(d)
+            lines = ["FAIL %s: does not compile (see /etc/passwd)" % p for p in (PLAIN, EXTRA)]
+            self.assertEqual(self.read_back("\n".join(lines) + "\n", dest),
+                             (lines[0], {PLAIN: lines[0], EXTRA: lines[1]}, [REFUSED % ("b__h1", "/etc/passwd")]))
 
     def test_check_one_copies_the_logs_out_and_removes_the_work_directory(self):
         with tempfile.TemporaryDirectory() as d:
@@ -489,6 +597,89 @@ class Diagnostic(unittest.TestCase):
             self.assertIn("Unable to unify", row["proofs_fail"][PLAIN])
             self.assertEqual(row["stage"], "proofs")
             self.assertEqual(row["exit"], 1)
+
+
+# A stand-in for docker, run as `python3 STAND_IN run ... -v <host>:/oftwork ... python3 -m oft.check --root /work
+# <unit> --parts <parts>`.  For a/h1 and b/h1 it plants logs under <host>, the container's TMPDIR, each with an
+# `Error:` line that holds a marker word of its own, prints lines that name them, and exits 1.  Every other unit
+# passes with no output.
+STAND_IN = r'''import os
+import sys
+
+args = sys.argv[1:]
+unit = args[args.index("--root") + 2]
+host = [a[:-len(":/oftwork")] for a in args if a.endswith(":/oftwork")][0]
+
+
+def plant(name, marker):
+    os.makedirs(os.path.join(host, "oft-check-a"), exist_ok=True)
+    with open(os.path.join(host, "oft-check-a", name), "w", encoding="utf-8") as f:
+        f.write("Compiling Proof.v\nError: " + marker + "\n")
+
+
+if unit == "a/h1":
+    plant("inrun.log", "marker-inrun")
+    print("error: the statements do not compile (see /oftwork/oft-check-a/inrun.log)")
+    sys.exit(1)
+if unit == "b/h1":
+    plant("dotdot.log", "marker-dotdot")
+    plant("real.log", "marker-real")
+    lib = "FAIL projects/b/h1/proofs/lib: the proof library does not build (see %s)"
+    print("FAIL projects/b/h1/proofs/plain_halts: does not compile "
+          "(see /oftwork/oft-check-a/../oft-check-a/dotdot.log)")
+    print(lib % "/etc/passwd")
+    print(lib % "../other-run/log")
+    print(lib % os.environ["STAND_IN_OUTSIDE"])
+    print("FAIL projects/b/h1/proofs/extra_halts: does not compile (see /oftwork/oft-check-a/real.log)")
+    sys.exit(1)
+'''
+
+
+class StandInDocker(unittest.TestCase):
+    """`python3 -m oft.lps_impact` itself, as a process, with OFT_DOCKER a stand-in for docker that prints lines
+    naming forged log paths.  `oft check` starts each line of a log it quotes with `  | ` (check.py QUOTE), so its
+    real output cannot start a line with a path a proof wrote: this is the reader's second barrier.  The class
+    reads only the command's output and the files it writes, and calls no function of lps_impact, so it runs the
+    same against any version of that module."""
+
+    MARKERS = ("marker-real", "marker-inrun", "marker-dotdot", "marker-outside", "marker-other")
+    maxDiff = None              # a failure shows each marker that reached a row, and each refusal line
+
+    def marked(self, path):
+        """(first column, marker) for each marker that a row of the TSV file `path` holds."""
+        with open(path, encoding="utf-8") as f:
+            return sorted((row.split("\t")[0], m) for row in f for m in self.MARKERS if m in row)
+
+    def test_only_a_fail_line_names_a_log_and_each_forged_path_is_refused_once(self):
+        with tempfile.TemporaryDirectory() as d:
+            root, out = tree(os.path.join(d, "tree")), os.path.join(d, "out")
+            outside = os.path.join(d, "outside.log")
+            write(outside, "Error: marker-outside\n")
+            # where `../other-run/log` resolves from b/h1's harvested logs, out/logs/b__h1.d/
+            write(os.path.join(out, "logs", "other-run", "log"), "Error: marker-other\n")
+            docker = os.path.join(d, "docker.py")
+            write(docker, STAND_IN)
+            env = dict(os.environ, OFT_DOCKER="%s %s" % (sys.executable, docker), STAND_IN_OUTSIDE=outside,
+                       PYTHONPATH=TOOLS, PYTHONDONTWRITEBYTECODE="1")
+            done = subprocess.run([sys.executable, "-m", "oft.lps_impact", "--root", root, "--commit", "c1",
+                                   "--checker-image", "stand-in", "--units", "all", "--jobs", "1",
+                                   "--work", os.path.join(d, "w"), "--out", out],
+                                  cwd=d, env=env, capture_output=True, text=True, timeout=300)
+            self.assertEqual(done.returncode, 1, done.stdout + done.stderr)
+            logs = ("a__h1.d/oft-check-a/inrun.log", "b__h1.d/oft-check-a/dotdot.log",
+                    "b__h1.d/oft-check-a/real.log")
+            got = {"harvested": [p for p in logs if os.path.isfile(os.path.join(out, "logs", p))],
+                   "units.tsv": self.marked(os.path.join(out, "units.tsv")),
+                   "impact.tsv": self.marked(os.path.join(out, "impact.tsv")),
+                   "refused": [l for l in done.stderr.splitlines() if l.startswith("lps-impact: ")]}
+        self.assertEqual(got, {
+            # the logs the forged paths resolve to inside the run were there to be read
+            "harvested": list(logs),
+            # a/h1's first error is its `error: ` line, and b/h1's is the refused plain_halts line
+            "units.tsv": [],
+            "impact.tsv": [("b/h1/extra_halts", "marker-real")],
+            "refused": [REFUSED % ("b__h1", p) for p in ("/oftwork/oft-check-a/../oft-check-a/dotdot.log",
+                                                         "/etc/passwd", "../other-run/log", outside)]})
 
 
 class Timeout(unittest.TestCase):

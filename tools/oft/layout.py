@@ -85,6 +85,12 @@ def record_path(project, harness, layout):
     return "%s/PROVENANCE.yaml" % provenance_dir(project, harness, layout)
 
 
+def instance_path(project, harness, layout, name):
+    """The instance file `name` of a statement (harness.yaml statements.<s>.instance): in evidence/instances/ of the
+    build record's folder."""
+    return "%s/evidence/instances/%s" % (provenance_dir(project, harness, layout), name)
+
+
 def counterexamples_dir(project, harness, layout):
     """The folder of the fuzz target's counterexample directories."""
     return ("counterexamples/%s/%s" % (project, harness) if layout == OLD
