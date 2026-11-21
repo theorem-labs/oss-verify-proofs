@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reserved ledger is init_reserved, the image's intervals and the vDSO/vvar pair: drv_heap_init takes the placement base's floor and splits the ledger for KL_init, and drv_bud_init counts the pair). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -85,11 +86,16 @@ Hypothesis Hlazy : m_vm_lazy md = [].
 Hypothesis Hmat : m_vm_materialized md = [].
 Hypothesis Hmaps : vm_maps (m_vmmaps md) = [].
 Hypothesis Hna : vm_noaccess (m_vmmaps md) = [].
-Hypothesis Hresv : vm_reserved (m_vmmaps md) = segments_reserved rsegs.
+(* LPS 727298f3: [State.init_model] reserves the image's intervals and then the vDSO/vvar pair. *)
+Hypothesis Hresv : vm_reserved (m_vmmaps md) =
+init_reserved (segments_reserved rsegs) (vm_mmap_base (m_vmmaps md)) (vm_init_sp (m_vmmaps md)) (m_kernel md).
 Hypothesis Hbrk : vm_brk (m_vmmaps md) = vm_start_brk (m_vmmaps md).
 Hypothesis Hvbrk : valid_brk rsegs (vm_start_brk (m_vmmaps md)).
 Hypothesis Hlim : 2^31 <= vm_limit (m_vmmaps md).
 Hypothesis Hceil : alloc_top (m_vmmaps md) = alloc_ceiling.
+(* the floor of the launch's placement base ([Run.valid_mmap_base]), which keeps the vDSO/vvar pair far
+   above the brk window *)
+Hypothesis Hmb : mmap_base_min <= bv_unsigned (vm_mmap_base (m_vmmaps md)).
 
 #[using="Type"] Lemma reservedZ_eq : map wwZ (segments_reserved rsegs) = reservedZ rsegs.
 Proof. vm_compute. reflexivity. Qed.
@@ -110,17 +116,17 @@ split; [exact CAN|]. unfold RHEX_GOT, RHEX_PTR, RHEX_STR in *.
 split; (apply bytes_at_img; [ rewrite length_le8; intros i Hi; apply HEX0; lia | lia | rewrite length_le8; lia | vm_compute; reflexivity ]).
 Qed.
 
-#[using="CTX NL PS GOT GUARD MI AUX CAN HEX0 Hh Hlazy Hmaps Hna Hresv Hbrk Hvbrk Hceil"] Theorem drv_heap_init : HEAPc B A0 [] m md.
+#[using="CTX NL PS GOT GUARD MI AUX CAN HEX0 Hh Hlazy Hmaps Hna Hresv Hbrk Hvbrk Hceil Hmb"] Theorem drv_heap_init : HEAPc B A0 [] m md.
 Proof.
 pose proof Hvbrk as (R1 & R2 & R3).
 assert (RT : reserved_top (segments_reserved rsegs) = 0x97000) by (vm_compute; reflexivity).
 unfold A0. apply (heapc_init B m md 0).
 - apply RHEAP_at_main; assumption.
 - exact MI.
-- rewrite <- reservedZ_eq, <- Hresv. rewrite RT in R1, R2. unfold brk_aslr_max in R2. unfold page_size in R3.
-apply KL_init; try assumption.
-all: try (rewrite Hresv, RT; lia).
-all: pose proof alloc_ceiling_ge; unfold PGSZ; lia.
+- rewrite <- reservedZ_eq.
+apply (KL_init md _ (segments_reserved rsegs) Hh Hlazy Hmaps Hna Hbrk); [| exact R1 | exact Hmb | | | | | exact Hceil].
+1: rewrite Hresv; unfold init_reserved, vdso_top, mmap_top, alloc_top; rewrite page_round_down_Z_min_r; reflexivity.
+all: rewrite RT in R1, R2; unfold brk_aslr_max in R2; unfold page_size in R3; pose proof alloc_ceiling_ge; unfold PGSZ; lia.
 - reflexivity.
 - exact AUX.
 - exact hcells0.
@@ -130,9 +136,13 @@ Qed.
 Proof.
 intros W D HW HD. apply BUD_init; try assumption.
 - lia.
-- rewrite Hresv. unfold MAXINT. replace (Z.of_nat (length (segments_reserved rsegs))) with 4 by (vm_compute; reflexivity). lia.
-- rewrite Hresv. replace (segments_reserved rsegs) with [(Z_to_bv 64 65536, Z_to_bv 64 65536); (Z_to_bv 64 131072, Z_to_bv 64 262144); (Z_to_bv 64 393216, Z_to_bv 64 16384); (Z_to_bv 64 409600, Z_to_bv 64 208896)] by (vm_compute; reflexivity).
+- rewrite Hresv. unfold init_reserved, MAXINT. rewrite length_app, Nat2Z.inj_add.
+replace (Z.of_nat (length (segments_reserved rsegs))) with 4 by (vm_compute; reflexivity).
+match goal with |- context [vdso_reserved ?k ?t] => pose proof (proj1 (vdso_reserved_small k t)) end. lia.
+- rewrite Hresv. unfold init_reserved. apply Forall_app. split.
++ replace (segments_reserved rsegs) with [(Z_to_bv 64 65536, Z_to_bv 64 65536); (Z_to_bv 64 131072, Z_to_bv 64 262144); (Z_to_bv 64 393216, Z_to_bv 64 16384); (Z_to_bv 64 409600, Z_to_bv 64 208896)] by (vm_compute; reflexivity).
 repeat apply Forall_cons; try apply Forall_nil; cbn [snd]; rewrite unsigned_lit by lia; lia.
++ exact (proj2 (vdso_reserved_small _ _)).
 Qed.
 End Init.
 End Amb.

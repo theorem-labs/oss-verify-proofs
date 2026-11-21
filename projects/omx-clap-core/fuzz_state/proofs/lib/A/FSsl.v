@@ -1,4 +1,4 @@
-(* Ported from: a working branch 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Prog/wrap_kit.v:39-68
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/wrap_kit.v:39-68
    (bz_mem_inv_same, sl_proof, mch_proof) and lib/A/Prog/asan_memcpy.v:42-50 (msteps_to_bz, evt_to_bz, mem_inv_of_bz).
    Changes (a Theorem Labs lane, 2026-10-28): restated without AsanRT / AsanRTFacts / BzBridge; the module aliases BzE / BzM / BzI
    (a Theorem Labs lane's BzBridge.v:15-17) and BzU / SLc / SLp / MHc / MHp (wrap_kit.v:22-27) are local; proofs unchanged.
@@ -10,7 +10,7 @@
    byte-identical in this tree; no AsanRT, asan_cells, Admitted or Axiom).
    What it gives: the plain strlen at 0x99070 and the plain memchr at 0x98924, in the words of the Bz tree
    (I_musl.v strlen_stmt / memchr_stmt), which the interceptor walks take as their section hypotheses SL
-   (Bz/A/I_strlen.v:96) and MCH (Bz/A/I_memchrw.v:77). *)
+   (Bz/A/I_strlen.v:97) and MCH (Bz/A/I_memchrw.v:78). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Lib Require Import PropExec MState Mem Exec Frame.

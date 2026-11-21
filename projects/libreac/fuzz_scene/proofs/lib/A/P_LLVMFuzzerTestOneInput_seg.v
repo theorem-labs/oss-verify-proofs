@@ -6,6 +6,7 @@
    of the walk, the predicate that holds there on every live path, one `seg_Sx_stmt : Prop` per segment, and the
    composition `llvmf_compose_stmt`, so the seven segments are proved in parallel lanes, each lane taking the other
    lanes' STATED predicates as hypotheses. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 
 (*   HOW THE CUTS ARE STATED, AND WHY NOT IN THE DONOR'S SYMBOLIC FORM.  cgif_file_fuzzer's harness stations
    (A/ACf5.v:70-80 rt_from with A/ACf7.v:27-180 ss_A2 .. INV_F) pair a CONCRETE SYMBOLIC STATE `ss` -- the
@@ -17,7 +18,7 @@
    The frame regions follow one rule (decided in a review with two Theorem Labs lanes): a Theorem Labs lane's proved
    `frame_setup` (lib/A/P_check_step_frame.v) applies ONLY in S0, right after the class-8 stack malloc, because its
    premise `zero_shadow` of the frame start is made false by S0's own f1 stores.  Every later lane re-adds the
-   frame and frame-shadow regions with `st_ok_pi_add_region` (A/Prog/ScenePaLib.v:105) from what the cut CARRIES:
+   frame and frame-shadow regions with `st_ok_pi_add_region` (A/Prog/ScenePaLib.v:106) from what the cut CARRIES:
    the presence of both windows and every shadow cell's value (`sc_frame`, `sc_shbg`, the object cells), the flag
    word, and `In (8, fpos) (frames S)` with own = [(8, fpos)] for write permission; presence and not-aowned also
    follow from AR's al_frames and FFL, as cgif's exitN (A/ACk2.v:319-344) uses them.  The cost is one entry block

@@ -5,7 +5,7 @@
    libreac/fuzz_knock's ASan harness walk of LLVMFuzzerTestOneInput in fuzz_knock.asan-ubsan (sha256
    f834165f5002e65398e68d514ab2a5a5b10e53144f0b41b93ebbc6f895290e82), pc 0x7f154-0x7f1e8, from the loop head ss_L
    (INV_L (S fuel)) to ss_T (INV_T fuel) at 0x7f1ec (lib/AU/APgStates.v, lib/AU/APgLoop0.v).
-   The proof is lib/A/APgMain3.v's (donor model proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v at c8557374ad2e: rt_B_aux
+   The proof is lib/A/APgMain3.v's (donor model proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v at theorem-labs/oss-verify-proofs@6b32741d849a: rt_B_aux
    :410-497 and pin_reg :268-280), with the module paths of the lib/AU twins and the asan-ubsan pcs.  The asan-ubsan
    code differs from the asan code in three ways, none of which adds a step to the proof
    (internal path, sections 2 and 4):
@@ -32,6 +32,7 @@
                                                    rem >= 3: rem' = rem - 3, cur' = cur + 3
 
    rule 24: no function proved. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -90,7 +91,7 @@ first [ eassumption
 | lazymatch goal with |- inv_cursor _ _ _ _ =>
   unfold inv_cursor; cbn [c_p c_n]; repeat match goal with |- _ /\ _ => split end; lia end
 | lia ].
-(* in_region of lib/A/APgLoop0.v:211-225, except that each all_disjoint goal first runs zone_lia's second arm
+(* in_region of lib/A/APgLoop0.v:212-226, except that each all_disjoint goal first runs zone_lia's second arm
    `zones; req_lits; lia` after `keep`, a `clear -` that leaves only the bounds the goal uses, and runs zone_lia
    itself only if that fails.  zone_lia's lia reads the whole walk context, 0.2-3 s per goal, which made the
    three in_region calls 110 s of this file's 192 s; after the cut a goal takes ~0.02 s.  APgMain0.v and

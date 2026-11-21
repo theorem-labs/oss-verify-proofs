@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HC and the MR, HID and args_block notations are stated over AsanInitL's SINV0L and argH0 of the run's input; the entry-block layout lemmas launch_layA, W_factsA and layA restated for the revised block, with the strings at its top; auxv_keys generated from Lib/AuxvTable and auxv_key_main checked over 26 pairs, the slot lemmas hid_auxv and auxv_slot_main widened to those 26 pairs, and the pre-revision ten-pair value mirror and auxv_val_main dropped; auxv_ok_main proves the auxv claim, AT_SYSINFO_EHDR tied to hvdso, from the words of the vector's first pair at main entry, all of the vector the claim holds at LPS c0dd863a, and the vDSO text base, which it takes as premises, and ehdr_check, auxv_ehdr_main and auxv_pair0_vec read that pair from the main-entry states; u_auxb reads the linear sums of e_auxb and e_auxv by conversion); and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
 From OSSVerify.openssl.echconfiglist_parser.images Require Import AsanUbsan.
-From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Step Frame Arr CellsX TacX.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Step Frame Arr CellsX TacX AuxvTable.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import HeapCeil.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import ASegs AsShadow AsConst AsIface AsStack0 AsPrintfFirst AsDrvDefs AsMainPre AsAuxv.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import CatExec RefLayout ArgvEnv FileSim MuslStrlen.
-From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanHexScan AsHSTab AsMainVM. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both Require Import AsMainState AsMainFacts AsMainLazyChk AsMainLazy AsMainCells AsMainIface AsMainIfacePre. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import LazyRestrict LazySR.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanInitL AsanHexScan AsHSTab AsMainVM. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both Require Import AsMainState AsMainFacts AsMainLazyChk AsMainLazy AsMainCells AsMainIface AsMainIfacePre. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import LazyRestrict LazySR.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import AsMainSyms.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsCert Require Import AsImages AsPlanImages.
 Import ListNotations. Import AX2. Import AX2S. Import AX2B. Import APC. Import AP. Import APS. Import APSX.
@@ -25,8 +26,8 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH AsanUbsan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).
@@ -176,18 +177,25 @@ Section AT_MAIN.
   #[local] Notation hid_sh := (AsMainCells.hid_sh sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
   #[local] Notation hid_stack := (AsMainCells.hid_stack sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
   #[local] Notation visibleZ_hid := (AsMainCells.visibleZ_hid sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
-  #[local] Notation args_block := (AsMainCells.args_block sp0 brk0 rdraw inp ch E R FULL model Vsp Vav Vev Vfit HC) (only parsing).
+  #[local] Notation args_block := (AsMainCells.args_block sp0 brk0 rdraw inp ch E R FULL model Vsp Vav Vev HC) (only parsing).
   #[local] Notation Mr_some := (AsMainCells.Mr_some sp0 rdraw inp ch E FULL model) (only parsing).
   #[local] Notation Mr_vis_none := (AsMainCells.Mr_vis_none sp0 rdraw inp ch E FULL model) (only parsing).
   #[local] Notation rdn_Mr_full := (AsMainCells.rdn_Mr_full sp0 brk0 rdraw inp ch E FULL model) (only parsing).
 
   (* [comment removed for export] *)
-  #[local] Notation MR := (Mr ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model FULL).
-  #[local] Notation HID := (hid ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model).
+  #[local] Notation MR := (Mr ASAN_H (argH0 sp0 rdraw inp) E ch model FULL).
+  #[local] Notation HID := (hid ASAN_H (argH0 sp0 rdraw inp) E ch model).
   #[local] Notation argv := (in_argv inp).
   #[local] Notation envp := (in_envp inp).
   #[local] Notation envc := (Z.of_nat (length (in_envp inp))).
-  #[local] Notation BSB := (build_stack_bytes APH sp0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw).
+  (* LPS 727298f3: the entry block as AsMainIfaceArgs.v names it, laid at the launch base [SINV0L] binds:
+     its top [UTOP] (the stack VMA's end), its head [CHD] (sp0 to the top of the AT_RANDOM bytes), the
+     string bytes [LSTR] and argv[0]'s address [STRB] (StackLayout.block_head_size,
+     StackLayout.launch_string_bytes, CatExec.cat_string_off) *)
+  #[local] Notation UTOP := (bv_unsigned (ed_top rdraw)).
+  #[local] Notation CHD := (Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  #[local] Notation LSTR := (Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+  #[local] Notation STRB := (sp0z + Z.of_nat (cat_string_off (kb_rseq (in_kernel inp)) sp0 (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp))).
   Let KNF := co_know _ _ _ _ _ _ _ _ _ _ _ HC.
   #[local] Notation kword_main := (AsMainIfacePre.kword_main sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
 
@@ -199,36 +207,73 @@ Section AT_MAIN.
     rewrite lin_ofxB_eqf in L. pose proof (lin_ofx_sound _ _ _ _ KNF _ _ L) as S.
     unfold lin_ofx in L. destruct (lin_nowrapR (kn ch) e); [|discriminate]. injection L as <-. exact S.
   Qed.
-  Lemma W_factsA : 0 <= vE E 4 /\ 8 * vE E 4 = Z.of_nat (length BSB) - 16 - (8 * argc + 8 * envc + 184) /\ vE E 4 <= 280000.
+  (* The block's arithmetic at a launch base [mb] (AsMainIfaceArgs.launch_lay's text): [Run.valid_launch_sp]
+     bounds the [arch_align_stack] pad, argv[0] sits [LSTR + 8] below the stack VMA's end, and that end is at
+     or below STACK_TOP ([PropExec.entry_page_top_within_window]) *)
+  Lemma launch_layA : forall mb, entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mb rdraw) inp ->
+    0 <= Z.of_nat (block_pad_len (kb_rseq (in_kernel inp)) sp0 (ed_top rdraw) argv envp (in_execfn inp)) <= 4110
+    /\ STRB + LSTR + 8 = UTOP /\ UTOP <= 0x800000000000.
   Proof.
-    pose proof (AsanInit.W_range APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp) Vav Vev) as (W1 & W2 & W3).
-    destruct (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as [HE _]. unfold vE. rewrite (HE 4%nat) by (unfold NX0; lia).
-    cbn [ev E0 vals0 nth]. rewrite u_of_Z by lia. repeat split; lia.
+    intros mb Hlau.
+    pose proof (entry_page_top_within_window Sv48 inp mb sp0 brk0 rdraw Hlau) as HT.
+    unfold entry_page_top, va_stack_top, sp_window_hi in HT.
+    cbn [entry_launch_ok_va] in Hlau. destruct Hlau as (_ & (_ & Hslo & Hshi) & _).
+    unfold launch_sp_lo, launch_sp_hi, align_down16 in Hslo, Hshi.
+    pose proof (Z.mod_pos_bound (UTOP - 8 - LSTR) 16 ltac:(lia)).
+    pose proof (Z.mod_pos_bound (UTOP - 8 - LSTR - 4095) 16 ltac:(lia)).
+    assert (HPD : Z.of_nat (block_pad_len (kb_rseq (in_kernel inp)) sp0 (ed_top rdraw) argv envp (in_execfn inp))
+                  = UTOP - 8 - LSTR - sp0z - CHD).
+    { unfold block_pad_len. rewrite Z2Nat.id by lia. lia. }
+    assert (HSO : STRB = sp0z + CHD + Z.of_nat (block_pad_len (kb_rseq (in_kernel inp)) sp0 (ed_top rdraw) argv envp (in_execfn inp))).
+    { unfold cat_string_off. lia. }
+    split; [lia|]. split; lia.
   Qed.
-  Lemma layA :
-    8 * argc + 8 * envc + 200 <= Z.of_nat (length BSB) /\ sp0z + Z.of_nat (length BSB) <= 2 ^ 47 /\ 1 <= argc <= 1024 /\ 0 <= envc <= 256
-    /\ 0x7fff80000000 <= sp0z <= 0x800000000000.
+  (* V_W (vals0 index 4) is the [arch_align_stack] pad between the AT_RANDOM bytes and argv[0] *)
+  Lemma W_factsA : 0 <= vE E 4 <= 4110 /\ STRB = sp0z + CHD + vE E 4.
   Proof.
-    pose proof (AsanInit.bsb_ge APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp)) as [G _].
-    pose proof (AsanInit.usp_fit APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp) Vfit) as UF.
-    pose proof (AsanInit.len_av APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp) Vav) as LA.
-    pose proof (AsanInit.len_ev APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp) Vev) as LE.
-    pose proof Vsp as [V1 [V2 _]]. unfold sp_window_lo, sp_window_hi in V1, V2. repeat split; lia.
+    pose proof (SINV0L_ev _ _ _ _ _ _ _ _ (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC)) as HE.
+    destruct args_block as (mb & (_ & Hlau) & _). pose proof (launch_layA mb Hlau) as (HP & _).
+    unfold vE. rewrite (HE 4%nat) by (unfold NX0; lia).
+    cbn [ev E0 vals0 nth]. rewrite u_of_Z by lia.
+    unfold cat_string_off. split; lia.
+  Qed.
+  (* The block runs from sp0 to the stack VMA's end [UTOP] (PropExec.length_entry_stack_image_launch) *)
+  Lemma layA :
+    8 * argc + 8 * envc + 200 <= UTOP - sp0z /\ UTOP <= 2 ^ 47 /\ 1 <= argc <= 1024 /\ 0 <= envc <= 256
+    /\ 0x7fff80000000 <= sp0z <= 0x800000000000.
+  Proof using sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC.   (* keeps auxv_ok_main's argument list, Both/As/AS_InstanceKit.v:184 *)
+    destruct args_block as (mb & (_ & Hlau) & _). pose proof (launch_layA mb Hlau) as (HP & HS & HT).
+    pose proof Vav as [[LA1 LA2] _]. pose proof Vev as [LE _]. pose proof Vsp as [V1 [V2 _]].
+    unfold sp_window_lo, sp_window_hi in V1, V2.
+    assert (HCH : 8 * argc + 8 * envc + 472 <= CHD).
+    { pose proof (auxv_size_rseq (kb_rseq (in_kernel inp))) as HA. pose proof (rseq_z_range (kb_rseq (in_kernel inp))).
+      unfold block_head_size, block_items. cbv zeta. lia. }
+    assert (HSO : STRB = sp0z + CHD + Z.of_nat (block_pad_len (kb_rseq (in_kernel inp)) sp0 (ed_top rdraw) argv envp (in_execfn inp)))
+      by (unfold cat_string_off; lia).
+    pose proof (Nat2Z.is_nonneg (launch_string_bytes argv envp (in_execfn inp))).
+    repeat split; lia.
   Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Definition ALIBC_AUXV : Z := 0xc01f28.
-  Definition auxv_keys : list Z := [3; 4; 5; 16; 6; 11; 12; 23; 25; 0].
-  Definition auxv_vals : list expr :=
-    [ELit (ph_addr_z ASAN_H); ELit (ph_ent_z ASAN_H); ELit (ph_num_z ASAN_H); EVar V_HW; ELit 4096; EVar V_UID; EVar V_UID; ELit 0; e_atrandom; ELit 0].
-  Definition ten : list Z := [0; 1; 2; 3; 4; 5; 6; 7; 8; 9].
+  (* LPS 727298f3: the vector at [e_auxb] is the revision's (Lib/AuxvTable): 26 claimed pairs, then
+     the CONFIG_RSEQ tail and AT_NULL.  [auxv_check] reads the 26 keys the main-entry states hold
+     (the plan's [init_kn_with] claims every key word) and the vector's base; the values are not
+     mirrored here: [auxv_ok_main] takes the vector's words as its premise. *)
+  (* KEY MIRROR: GENERATED, never hand-written.  [auxv_keys_gen] is the even positions of
+     Lib/AuxvTable's [auxv_words_Z] -- the same list the Ref/Ub/As claims use -- so this
+     mirror and the claim list cannot drift apart by hand.  27 entries: the 26 claimed pairs
+     then AT_NULL; consumers are bounded by [i < 26] and never reach it. *)
+  Definition auxv_keys : list Z := auxv_keys_gen false.
+  Definition auxv_pairs : list Z := map Z.of_nat (seq 0 26).
+  (* LPS 727298f3: the old ten-pair value mirror ([auxv_vals], [ten]) and [auxv_val_main] are
+     gone: they read the pre-revision compacted auxv, which no state at the revision holds. *)
   (* [comment removed for export] *)
   Definition auxv_check : bool :=
     all_holes (fun g cls ch =>
-      forallb (fun i => has_fact (kn ch) (KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit (nth (Z.to_nat i) auxv_keys 0)))
-                        && has_fact (kn ch) (KWord (SA (fst e_auxb) (snd e_auxb + (16 * i + 8))) 8 (nth (Z.to_nat i) auxv_vals (ELit 0)))) ten
+      forallb (fun i => has_fact (kn ch) (KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit (nth (Z.to_nat i) auxv_keys 0)))) auxv_pairs
       && isSomeA (lin_ofxB (mkbc (kn ch)) (fst e_auxb)) && isSomeA (lin_ofxB (mkbc (kn ch)) e_auxv)).
   Lemma auxv_check_ok : auxv_check = true.
   Proof. vm_compute. reflexivity. Qed.
@@ -246,8 +291,13 @@ Section AT_MAIN.
     pose proof auxv_check_ok as H0. unfold auxv_check in H0. pose proof (all_holes_here _ H0) as H. cbv beta in H. clear H0.
     apply andb_prop in H as [H N2]. apply andb_prop in H as [_ N1].
     pose proof (facts sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as (_ & _ & _ & _ & _ & _ & _ & _ & SP & _ & _ & V1 & V2 & _).
-    rewrite (no_wrapA _ N1), (no_wrapA _ N2). pose proof lin_e_auxb as [LA SA]. rewrite LA, SA, lin_e_auxv.
-    unfold lden. cbn [fst snd tden]. rewrite !uE_var. rewrite V1, V2. repeat split; lia.
+    rewrite (no_wrapA _ N1), (no_wrapA _ N2). pose proof lin_e_auxb as [LA SA].
+    (* [lden] of a literal [lin] is, by conversion, the sum its [tden] spells out over [vE] *)
+    assert (DA : lden E (lin_of (fst e_auxb)) = 0 + (32768 * vE E 0 + (8 * vE E 1 + (8 * vE E 2 + (4096 * vE E 6 + (16 * vE E 10 + 0))))))
+      by (rewrite LA; reflexivity).
+    assert (DV : lden E (lin_of e_auxv) = 24 + (32768 * vE E 0 + (8 * vE E 1 + (8 * vE E 2 + (4096 * vE E 6 + (16 * vE E 10 + 0))))))
+      by (rewrite lin_e_auxv; reflexivity).
+    rewrite DA, DV, SA, V1, V2. repeat split; lia.
   Qed.
 
   Lemma auxv_lay : sp0z + 32 <= av /\ av + 176 <= 2 ^ 47 /\ av mod 8 = 0 /\ 0x7fff80000000 <= sp0z.
@@ -257,13 +307,15 @@ Section AT_MAIN.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma hid_auxv : forall z, av <= z < av + 160 -> HID (Z_to_bv 64 z) = false.
+  Lemma hid_auxv : forall z, av <= z < av + 416 -> HID (Z_to_bv 64 z) = false.
   Proof.
     intros z Hz. pose proof layA as (G & UF & LA & LE & VS). pose proof Vsp as Vsp'. destruct Vsp' as [Vlo [Vhi _]]. unfold sp_window_lo, sp_window_hi in Vlo, Vhi.
     pose proof (facts sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & TOPm & _).
-    pose proof W_factsA as (W1 & W2 & W3).
+    assert (HCH : 8 * argc + 8 * envc + 472 <= CHD).
+    { pose proof (auxv_size_rseq (kb_rseq (in_kernel inp))) as HA. pose proof (rseq_z_range (kb_rseq (in_kernel inp))).
+      unfold block_head_size, block_items. cbv zeta. lia. }
     unfold hid. apply orb_false_iff. split.
-    - unfold argH0. apply andb_false_iff. left. unfold argB0. rewrite u_of_Z by lia.
+    - unfold argH0. apply andb_false_iff. left. unfold argB0. cbv beta zeta. rewrite u_of_Z by lia.
       apply orb_false_iff. split; apply andb_false_iff; [right; apply Z.ltb_ge; lia | left; apply Z.leb_gt; lia].
     - apply negb_false_iff. unfold vis. rewrite u_of_Z by lia.
       replace (TOP model <=? z) with true by (symmetry; apply Z.leb_le; lia). destruct (in_hull ASAN_H z); reflexivity.
@@ -273,7 +325,7 @@ Section AT_MAIN.
   Proof. intros x. unfold wa. apply bv_eq. rewrite Z_to_bv_unsigned. apply bv_wrap_small. apply bv_unsigned_in_range. Qed.
 
   Lemma auxv_slot_main : forall (off : Z) (v : expr),
-    has_fact (kn ch) (KWord (SA (fst e_auxb) (snd e_auxb + off)) 8 v) = true -> 0 <= off -> off + 8 <= 160 ->
+    has_fact (kn ch) (KWord (SA (fst e_auxb) (snd e_auxb + off)) 8 v) = true -> 0 <= off -> off + 8 <= 416 ->
     rdn ASEGS VM (Z_to_bv 64 (av + off)) 8 = Some (word_to_le_bytes 8 (edenot E v)).
   Proof.
     intros off v HF Ho1 Ho2. pose proof layA as (G & UF & LA & LE & VS). pose proof pd_facts as PD.
@@ -299,30 +351,22 @@ Section AT_MAIN.
     change (bv_unsigned (edenot E e_auxv)) with (uE E e_auxv). rewrite UV, u_of_Z; [reflexivity | lia].
   Qed.
   (* [comment removed for export] *)
-  Theorem auxv_key_main : forall i, 0 <= i < 10 ->
+  Theorem auxv_key_main : forall i, 0 <= i < 26 ->
     rdn ASEGS VM (Z_to_bv 64 (av + 16 * i)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (nth (Z.to_nat i) auxv_keys 0))).
   Proof.
     intros i Hi. pose proof auxv_check_ok as H0. unfold auxv_check in H0. pose proof (all_holes_here _ H0) as H. cbv beta in H. clear H0.
     apply andb_prop in H as [H _]. apply andb_prop in H as [H _]. rewrite forallb_forall in H.
-    assert (Hin : In i ten) by (unfold ten; cbn [In]; lia).
-    specialize (H i Hin). apply andb_prop in H as [HK _].
+    assert (Hin : In i auxv_pairs).
+    { unfold auxv_pairs. apply in_map_iff. exists (Z.to_nat i). split; [lia|]. apply in_seq. lia. }
+    specialize (H i Hin).
     assert (Hk : 0 <= nth (Z.to_nat i) auxv_keys 0 < 2 ^ 64).
-    { unfold auxv_keys. destruct (Z.to_nat i) as [|[|[|[|[|[|[|[|[|[|n]]]]]]]]]]; cbn [nth]; try lia. destruct n; cbn; lia. }
-    rewrite (auxv_slot_main (16 * i) _ HK) by lia.
-    do 2 f_equal.   (* [comment removed for export] *)
+    { unfold auxv_keys.
+      destruct (Nat.lt_ge_cases (Z.to_nat i) (length (auxv_keys_gen false))) as [Hlt|Hge].
+      - exact (proj1 (Forall_forall _ _) (auxv_keys_gen_range false) _ (nth_In _ 0 Hlt)).
+      - rewrite nth_overflow by exact Hge. lia. }
+    rewrite (auxv_slot_main (16 * i) _ H) by lia.
+    do 2 f_equal.
     all: apply bv_eq; cbn [edenot]; rewrite u_lit64a, u_of_Z by lia; apply Z.mod_small; exact Hk.
-  Qed.
-  (* [comment removed for export] *)
-  Theorem auxv_val_main : forall i, 0 <= i < 10 ->
-    exists w : word, rdn ASEGS VM (Z_to_bv 64 (av + 16 * i + 8)) 8 = Some (word_to_le_bytes 8 w).
-  Proof.
-    intros i Hi. pose proof auxv_check_ok as H0. unfold auxv_check in H0. pose proof (all_holes_here _ H0) as H. cbv beta in H. clear H0.
-    apply andb_prop in H as [H _]. apply andb_prop in H as [H _]. rewrite forallb_forall in H.
-    assert (Hin : In i ten) by (unfold ten; cbn [In]; lia).
-    specialize (H i Hin). apply andb_prop in H as [_ HV].
-    exists (edenot E (nth (Z.to_nat i) auxv_vals (ELit 0))).
-    replace (av + 16 * i + 8) with (av + (16 * i + 8)) by lia.
-    exact (auxv_slot_main (16 * i + 8) _ HV ltac:(lia) ltac:(lia)).
   Qed.
   (* [comment removed for export] *)
   Theorem auxv_lay_main : sp0z + 32 <= av /\ av + 176 <= 2 ^ 47 /\ av mod 8 = 0 /\ 0x7fff80000000 <= sp0z.
@@ -367,40 +411,78 @@ Section AT_MAIN.
         intros i w' Hi. replace (a + Z.of_nat 8 + 8 * Z.of_nat i) with (a + 8 * Z.of_nat (S i)) by lia. apply HR. exact Hi.
   Qed.
 
-  Theorem auxv_ok_main : forall (HCEIL : HeapCeil), @hceil HCEIL = sp0z - 8388608 -> @aauxv_ok HCEIL VM sp0z.
+  (* a value record carrying AT_SYSINFO_EHDR [z] and 0 in every slot the claim does not hold *)
+  Definition auxv_sys (z : Z) : auxv_vals := mkAuxv z 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.
+  Lemma auxv_sys_ok : forall z, 0 <= z < 2 ^ 64 -> auxv_vals_ok (auxv_sys z).
   Proof.
-    intros HCEIL HHC. pose proof auxv_lay_main as (L1 & L2 & L3 & L4). pose proof (@aceil_le_hceil HCEIL) as ACH.
-    destruct (auxv_val_main 0 ltac:(lia)) as [w0 W0]. destruct (auxv_val_main 1 ltac:(lia)) as [w1 W1].
-    destruct (auxv_val_main 2 ltac:(lia)) as [w2 W2]. destruct (auxv_val_main 3 ltac:(lia)) as [w3 W3].
-    destruct (auxv_val_main 4 ltac:(lia)) as [w4 W4]. destruct (auxv_val_main 5 ltac:(lia)) as [w5 W5].
-    destruct (auxv_val_main 6 ltac:(lia)) as [w6 W6]. destruct (auxv_val_main 7 ltac:(lia)) as [w7 W7].
-    destruct (auxv_val_main 8 ltac:(lia)) as [w8 W8]. destruct (auxv_val_main 9 ltac:(lia)) as [w9 W9].
-    exists av, (bv_unsigned w0), (bv_unsigned w1), (bv_unsigned w2), (bv_unsigned w3), (bv_unsigned w4),
-           (bv_unsigned w5), (bv_unsigned w6), (bv_unsigned w7), (bv_unsigned w8), (bv_unsigned w9).
-    pose proof (u64_range w0). pose proof (u64_range w1). pose proof (u64_range w2). pose proof (u64_range w3). pose proof (u64_range w4).
-    pose proof (u64_range w5). pose proof (u64_range w6). pose proof (u64_range w7). pose proof (u64_range w8). pose proof (u64_range w9).
-    split; [| split; [| unfold AAUXV_CELL; lia]].
+    intros z Hz. unfold auxv_vals_ok, auxv_sys.
+    cbn [ax_sysinfo ax_l1i ax_l1ig ax_l1d ax_l1dg ax_l2 ax_l2g ax_l3 ax_l3g ax_minsig ax_hwcap ax_pagesz ax_clktck
+         ax_phdr ax_phent ax_phnum ax_base ax_flags ax_entry ax_uid ax_euid ax_gid ax_egid ax_secure].
+    repeat split; lia.
+  Qed.
+  (* LPS c0dd863a: pair 0's value word, AT_SYSINFO_EHDR, is the launch variable [V_EHDR] in every
+     main-entry state ([AsanPlanCore.auxv_ehdr_kn] in the start state, carried to the end states),
+     read by computation over the six holes as [auxv_check] reads the keys *)
+  Definition ehdr_check : bool :=
+    all_holes (fun g cls ch => has_fact (kn ch) (KWord (SA (fst e_auxb) (snd e_auxb + 8)) 8 (EVar V_EHDR))).
+  Lemma ehdr_check_ok : ehdr_check = true.
+  Proof. vm_compute. reflexivity. Qed.
+  Theorem auxv_ehdr_main : rdn ASEGS VM (Z_to_bv 64 (av + 8)) 8 = Some (word_to_le_bytes 8 (ev E V_EHDR)).
+  Proof using sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC.
+    pose proof ehdr_check_ok as H0. unfold ehdr_check in H0. pose proof (all_holes_here _ H0) as H. cbv beta in H. clear H0.
+    exact (auxv_slot_main 8 (EVar V_EHDR) H ltac:(lia) ltac:(lia)).
+  Qed.
+  (* the claim's words ([AsAuxv.aauxv_ok] holds the vector's first pair, [firstn 2] of it) at main
+     entry: the key 33 and AT_SYSINFO_EHDR, whichever value record [v] carries that word *)
+  Theorem auxv_pair0_vec : forall v rnd execfn r, Z_to_bv 64 (ax_sysinfo v) = ev E V_EHDR ->
+    forall i w, nth_error (firstn 2 (aauxv_list v rnd execfn r)) i = Some w ->
+      rdn ASEGS VM (Z_to_bv 64 (av + 8 * Z.of_nat i)) 8 = Some (word_to_le_bytes 8 w).
+  Proof using sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC.
+    intros v rnd execfn r HE i w Hn.
+    assert (EL : firstn 2 (aauxv_list v rnd execfn r) = [wz 33; wz (ax_sysinfo v)]) by (destruct r; reflexivity).
+    rewrite EL in Hn. destruct i as [|[|i]].
+    - cbn [nth_error] in Hn. injection Hn as <-.
+      replace (av + 8 * Z.of_nat 0) with (av + 16 * 0) by lia.
+      rewrite (auxv_key_main 0 ltac:(lia)). reflexivity.
+    - cbn [nth_error] in Hn. injection Hn as <-.
+      replace (av + 8 * Z.of_nat 1) with (av + 8) by lia.
+      rewrite auxv_ehdr_main, <- HE. reflexivity.
+    - destruct i; cbn in Hn; discriminate Hn.
+  Qed.
+
+  (* LPS 727298f3: the main-entry auxv claim ([aauxv_ok]), its AT_SYSINFO_EHDR tied to [hvdso];
+     LPS c0dd863a: the claim holds the vector's first pair only ([firstn 2] of Lib/AuxvTable's
+     vector, 27 or 29 pairs by [r]), the one part of it the code after main entry reads (time()'s
+     [__vdsosym], Both/As/F_timeI.v [ati_auxv_pair]).  The pair's two words in [VM] and the
+     AT_SYSINFO_EHDR value are premises, given at the kit by [auxv_pair0_vec] and the run's vDSO
+     text base at the base [mb] the heap-ceiling record is built at ([AsInstanceMain.main_ceil]).
+     The libc auxv cell, the bounds and the pair's bytes from its words are proved here. *)
+  Theorem auxv_ok_main : forall (HCEIL : HeapCeil) (mb : word) v (rnd execfn : Z) (r : bool),
+    @hceil HCEIL = sp0z - 8388608 ->
+    @hvdso HCEIL = bv_unsigned (vdso_text_base (in_kernel inp) sp0 mb) + 1460 ->
+    ax_sysinfo v = bv_unsigned (vdso_text_base (in_kernel inp) sp0 mb) ->
+    auxv_vals_ok v -> 0 <= rnd < 2 ^ 64 -> 0 <= execfn < 2 ^ 64 ->
+    (forall i w, nth_error (firstn 2 (aauxv_list v rnd execfn r)) i = Some w ->
+       rdn ASEGS VM (Z_to_bv 64 (av + 8 * Z.of_nat i)) 8 = Some (word_to_le_bytes 8 w)) ->
+    @aauxv_ok HCEIL VM sp0z.
+  Proof.
+    intros HCEIL mb v rnd execfn r HHC HVD HSY HV HRN HEX HVEC.
+    pose proof auxv_lay_main as (L1 & L2 & L3 & L4). pose proof (@aceil_le_hceil HCEIL) as ACH.
+    pose proof (auxv_vec_bytes_range r) as AVR.
+    exists av, v, rnd, execfn, r.
+    split; [|split].
     - (* [comment removed for export] *)
       unfold AAUXV_CELL. apply rw_cells_img; [cbn; tauto | lia | cbn; lia |].
       cbn [cells_bytes cbytes app]. rewrite app_nil_r.
       apply rdnA_bytes_at; [| lia | rewrite length_le8; lia]. rewrite length_le8. unfold le8, TacX.wz.
       exact auxv_cell_main.
-    - (* [comment removed for export] *)
-      replace (av + 16 * 0 + 8) with (av + (16 * 0 + 8)) in W0 by lia. replace (av + 16 * 1 + 8) with (av + (16 * 1 + 8)) in W1 by lia.
-      replace (av + 16 * 2 + 8) with (av + (16 * 2 + 8)) in W2 by lia. replace (av + 16 * 3 + 8) with (av + (16 * 3 + 8)) in W3 by lia.
-      replace (av + 16 * 4 + 8) with (av + (16 * 4 + 8)) in W4 by lia. replace (av + 16 * 5 + 8) with (av + (16 * 5 + 8)) in W5 by lia.
-      replace (av + 16 * 6 + 8) with (av + (16 * 6 + 8)) in W6 by lia. replace (av + 16 * 7 + 8) with (av + (16 * 7 + 8)) in W7 by lia.
-      replace (av + 16 * 8 + 8) with (av + (16 * 8 + 8)) in W8 by lia. replace (av + 16 * 9 + 8) with (av + (16 * 9 + 8)) in W9 by lia.
-      pose proof (fun i (Hi : 0 <= i < 10) => auxv_key_main i Hi) as KEY.
-      apply bytes_at_words; [| lia | rewrite aauxv_list_length; cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia].
-      intros i w Hi. unfold aauxv_list in Hi.
-      do 20 (destruct i as [|i];
-        [ cbn [nth_error map] in Hi; injection Hi as <-;
-          first [ exact (KEY 0 ltac:(lia)) | exact (KEY 1 ltac:(lia)) | exact (KEY 2 ltac:(lia)) | exact (KEY 3 ltac:(lia)) | exact (KEY 4 ltac:(lia))
-                | exact (KEY 5 ltac:(lia)) | exact (KEY 6 ltac:(lia)) | exact (KEY 7 ltac:(lia)) | exact (KEY 8 ltac:(lia)) | exact (KEY 9 ltac:(lia))
-                | (unfold TacX.wz; rewrite Z_to_bv_bv_unsigned;
-                   first [exact W0 | exact W1 | exact W2 | exact W3 | exact W4 | exact W5 | exact W6 | exact W7 | exact W8 | exact W9]) ]
-        |]).
-      destruct i; cbn [nth_error map] in Hi; discriminate Hi.
+    - (* the vector's first pair, word by word *)
+      apply bytes_at_words; [exact HVEC | lia |].
+      assert (LEN2 : length (firstn 2 (aauxv_list v rnd execfn r)) = 2%nat) by (destruct r; reflexivity).
+      rewrite LEN2. change (Z.of_nat 2) with 2. lia.
+    - split; [lia|]. split; [lia|]. split; [lia|].
+      split; [exact HV|]. split; [exact HRN|]. split; [exact HEX|].
+      (* AT_SYSINFO_EHDR + 1460 = hvdso *)
+      lia.
   Qed.
 End AT_MAIN.

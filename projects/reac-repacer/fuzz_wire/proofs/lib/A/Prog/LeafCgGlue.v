@@ -7,8 +7,8 @@
      cfg_at (YK11.mkst): they are register-equivalent (Regs6ss.ms_eqv), and a footprint run moves across ms_eqv with
      the same accesses (mstepsF_eqv, the footprint form of decode's RegisterBridge.msteps_register_transport).
    * The run then enters the world walk through the kit's bridge_evtF_stmt (cgif YA0nR.v SRr_fevt) at RNG_W W, and
-     returns through SRr_ret_stmt (cgif YA0n.v:39 SRr_ret).
-   * Post: AR by AR_frame_stmt (YG0d.v:448) + AR_stack_stmt + AR_sbm_stmt (A/AD1y.v:145); the bytes the leaf may
+     returns through SRr_ret_stmt (cgif YA0n.v:40 SRr_ret).
+   * Post: AR by AR_frame_stmt (YG0d.v:449) + AR_stack_stmt + AR_sbm_stmt (A/AD1y.v:145); the bytes the leaf may
      write are visible (stack window: ecall_pre's apresent; WR: the premise) and present after the run (stack
      window: every run grows memory, YI04.v step_mem_grows; WR: mrd outside the image is the overlay byte);
      aview through aview_ext_stmt / aview_some_stmt; the return pc through ret_ok_stmt.
@@ -165,11 +165,11 @@ Qed.
 
 Section LeafCgGlue.
 Context {fx : YK11.FPState}.
-Variable world : Type.                                                (* YA0n.v:19 *)
-Variable w_H : world -> word -> bool.                                 (* YA0n.v:20 *)
-Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:36 *)
-Variable alayout : Type.                                              (* YG0f.v:45 *)
-Variable astate : Type.                                               (* YG00.v:158 *)
+Variable world : Type.                                                (* YA0n.v:20 *)
+Variable w_H : world -> word -> bool.                                 (* YA0n.v:21 *)
+Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:37 *)
+Variable alayout : Type.                                              (* YG0f.v:46 *)
+Variable astate : Type.                                               (* YG00.v:159 *)
 Variable AR : alayout -> astate -> world -> (word -> option byte) -> Model -> Prop.  (* YG0n.v:795 *)
 Variable aview : (word -> bool) -> (word -> option byte) -> Z -> option Z.          (* YG0n.v:20 *)
 Variable same_but_materialized : Model -> Model -> Prop.              (* YK04.v:540 *)

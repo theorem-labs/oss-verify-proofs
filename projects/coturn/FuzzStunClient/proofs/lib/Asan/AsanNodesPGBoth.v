@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the statements carry the flag of the flagged relation SpinAlg.srealizesM and use the shadow table of the launch's rseq layout (BOTH_at (rseq_z rsb)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -53,14 +54,14 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
-Lemma both_rdn1_mem : forall mem (a : Z) (b : byte),
-  img_hi BOTH <= a < 2 ^ 64 -> rdn BSEGS mem (Z_to_bv 64 a) 1 = Some [b] -> mem (Z_to_bv 64 a) = Some b.
+Lemma both_rdn1_mem {rsb : bool} : forall mem (a : Z) (b : byte),
+  img_hi (BOTH_at (rseq_z rsb)) <= a < 2 ^ 64 -> rdn BSEGS mem (Z_to_bv 64 a) 1 = Some [b] -> mem (Z_to_bv 64 a) = Some b.
 Proof.
-  intros mem a b Ha H. cbn [rdn] in H. cbn [img_hi BOTH] in Ha.
+  intros mem a b Ha H. cbn [rdn] in H. cbn [img_hi BOTH_at] in Ha.
   destruct (mem (Z_to_bv 64 a)) as [b0|] eqn:Hm.
   - cbn in H. injection H as ->. reflexivity.
-  - exfalso. rewrite (seg_rom_off_hull BSEGS BOTH both_in_hull (Z_to_bv 64 a)) in H; [discriminate|].
-    unfold in_hull. rewrite zbv_u by lia. cbn [img_lo img_hi BOTH].
+  - exfalso. rewrite (seg_rom_off_hull BSEGS (BOTH_at (rseq_z rsb)) both_in_hull (Z_to_bv 64 a)) in H; [discriminate|].
+    unfold in_hull. rewrite zbv_u by lia. cbn [img_lo img_hi BOTH_at].
     apply Bool.andb_false_iff. right. apply Z.ltb_ge. lia.
 Qed.
 
@@ -83,7 +84,8 @@ Proof.
     - destruct (Hl R1) as [Hrd Hv]. exists b1. constructor; try assumption; try lia.
       + intros g Hg. replace (SB + g) with (RPN.SB + beg / 8 + (g - beg / 8)) by (unfold RPN.SB, SB; lia). apply Hz. lia.
       + replace (SB + (beg + n - 1) / 8) with (RPN.SB + beg / 8 + n / 8) by (unfold RPN.SB, SB; lia).
-        apply both_rdn1_mem; [|exact Hrd]. cbn [img_hi BOTH]. unfold RPN.SB.
+        (* img_hi does not read a_rseq: any rsb gives the same bound, so the r-free fact is instantiated at one *)
+        apply (both_rdn1_mem (rsb := false)); [|exact Hrd]. cbn [img_hi BOTH_at]. unfold RPN.SB.
         assert (Hb8 : 0 <= beg / 8 <= 140737488355327 / 8) by (split; [apply Z.div_pos | apply Z.div_le_mono]; lia).
         change (140737488355327 / 8) with 17592186044415 in Hb8.
         assert (Hn8 : n / 8 <= 2 ^ 40 / 8) by (apply Z.div_le_mono; lia). change (2 ^ 40 / 8) with 137438953472 in Hn8. lia.
@@ -155,6 +157,8 @@ Qed.
 (* [comment removed for export] *)
 
 Section AsanNode.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
+  Context {rsb : bool}.   (* the launch's kb_rseq; the table is ASAN_at/BOTH_at (rseq_z rsb) *)
 Variable nx0 : N.
 Variable LIMIT : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
@@ -166,9 +170,9 @@ Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E'
 Hypothesis nx0_ge7 : APS.nx0_ok nx0.   (* [comment removed for export] *)
 Variable FS0 : Fs.Fs.
 
-Theorem both_pg_ext_sound : ext_stmt BSEGS BOTH nx0 LIMIT (PGN.xn BSEGS nx0 RPN.RP_BOTH) SINV argH FS0.
+Theorem both_pg_ext_sound : ext_stmt BSEGS (BOTH_at (rseq_z rsb)) nx0 LIMIT (PGN.xn BSEGS nx0 RPN.RP_BOTH) SINV argH FS0 sfl.
 Proof.
-  eapply (pg_xn_sound BSEGS BOTH nx0 LIMIT); try eassumption;
+  eapply (pg_xn_sound BSEGS (BOTH_at (rseq_z rsb)) nx0 LIMIT); try eassumption;
     first [ exact both_wx | exact both_in_hull | exact both_hull_ok | exact both_segs_wr | exact both_rp_img | exact both_isrc_spec | exact both_idst_spec | exact both_pg_spec | exact both_rpp_spec | exact both_rpin_spec | exact both_img_gfl | idtac ].
 Qed.
 End AsanNode.

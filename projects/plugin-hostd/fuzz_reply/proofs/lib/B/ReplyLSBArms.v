@@ -5,22 +5,23 @@
    cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites) and lib/A/ACf5.v (a segment between cut
    points). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_event.v, with its module paths and module names changed; 441 of its 545 lines of code are new or changed and 2738 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves no function (kind: invariant lemma): the image-B texts of ten LS premises of the entry walk of
    fuzz_reply's LLVMFuzzerTestOneInput, and their proofs at LS := ReplyLSB.fr_LS B CR where the twin gives them *)
-(* The B twin of LS is lib/B/ReplyLSB.v fr_LS (fdb3ee1c6ff, sha256
-   5320df77a474 (internal record); the same blob on the B driver branch at 61e610e6176): fr_LS v2's
+(* The B twin of LS is lib/B/ReplyLSB.v fr_LS (sha256
+   5320df77a474 (internal record); the same blob on the B driver branch): fr_LS v2's
    text over lib/B's records, with ACfn_cf.CALL_ROOM replaced by the Section variable CALL_ROOM_B (here CR).  The B
-   driver fixes it: lib/B/YCfn_cf.v CALL_ROOM_B = 2 ^ 33 (61e610e6176).
+   driver fixes it: lib/B/YCfn_cf.v CALL_ROOM_B = 2 ^ 33.
 
    THE TEXTS.  Each premise is a Definition `<name>_T` over the arm's Section variables (B, MT, MMAX, LSx, RINV, in
    that order of declaration; a text names only the ones it uses), so the B arm / top can state it verbatim as a
    Hypothesis with LS -> LSx, and the top closes it by the lemma below at its instance.  The consumer sites:
-     B top lib/B/W_LLVMFuzzerTestOneInput_top_x.v (61e610e6176): the arms are still Section hypotheses there
+     B top lib/B/W_LLVMFuzzerTestOneInput_top_x.v: the arms are still Section hypotheses there
        (:155 SEG_PRO, :157 ARM_write, :160 ARM_remove, :161 ARM_gone, :163 ARM_event, :168 SEG_EXIT); each B arm
-       that replaces one takes its LS premises, as A's top_x does (a working branch e7f37cec90b
+       that replaces one takes its LS premises, as A's top_x does (a working branch
        lib/A/W_LLVMFuzzerTestOneInput_top_x.v :245 LS_write_room, :289 LS_event_malloc, :338 LS_pro_oa, :454
        LS_rf_room, :491 LS_rm_rr_pre, :573 LS_gone_rig); lib/B/YCfn_cf.v :52-58 names the six;
-     B ARM_event (a working branch 556f92b5b9f lib/B/W_LLVMFuzzerTestOneInput_event_x.v :211,
+     B ARM_event (a working branch lib/B/W_LLVMFuzzerTestOneInput_event_x.v :211,
        :214, :220, :225; used at :1761, :2138, :2509, :2767).
    THE ROOM.  fr_LS gives, at every cut point, blocks_bytes S + CR <= LIVE_MAX + LS_OVER (LS_OVER = 66 * 2 ^ 26 +
    23935: the potential's bound 65 * kk + 6000 * 4 + 2 ^ 26 with kk < 2 ^ 26), so a premise asking for R bytes
@@ -31,13 +32,13 @@
    Notations below the Requires (the same bodies; lib/B/ReplyLSBI.v's header lists the cutover): wr_k1 .. wr_pick
    (lib/B/W_LLVMFuzzerTestOneInput_write.v :205-222), rm_kb / rm_ent / rm_at / rm_rr_tr / rm_rr_cost (_remove.v
    :122-146), gn_more / gn_id / gn_pair_ok / gn_pairs (_gone_base.v :361-439) and op_add's charge oa_cost (W_op_add.v
-   :147).  Still copied: the event arm's ev_cons2 .. ev_step (B lib/B/W_LLVMFuzzerTestOneInput_arm_event.v 556f92b5b9f :497-505, :1453-1470, the
+   :147).  Still copied: the event arm's ev_cons2 .. ev_step (B lib/B/W_LLVMFuzzerTestOneInput_arm_event.v :497-505, :1453-1470, the
    same bodies as this tree's _arm_event.v), until a Theorem Labs lane's re-fit of B's _arm_event.v lands (a Theorem Labs lane's ruling,
    2026-10-30); and what has no lib/B definition: the measure helpers fr_LS needs that ReplyLSB.v did not port (A
-   lib/A/ReplyLS.v f57b3e2d0ca :106-116, :172-177, :186-217, :429-433), C3's peak measures
-   (a working branch 0ca4481bf91 lib/A/W_contract.v :58-71 tr_peak / tr_net, :370 lp_tr,
-   :1525-1526 ge_room, :1586-1592 gse_room) and the exit's relay_finish room over them (A _exit.v e7f37cec90b
-   :201-207): B's W_contract.v and W_bx_defs.v state ge_room, gse_room and lx_rf_room in the sum form (tr_alloc) and
+   lib/A/ReplyLS.v :106-116, :172-177, :186-217, :429-433), C3's peak measures
+   (a working branch lib/A/W_contract.v :58-71 tr_peak / tr_net, :370 lp_tr,
+   :1525-1526 ge_room, :1586-1592 gse_room) and the exit's relay_finish room over them (A _exit.v:
+   201-207): B's W_contract.v and W_bx_defs.v state ge_room, gse_room and lx_rf_room in the sum form (tr_alloc) and
    have no tr_peak, tr_net or lp_tr. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -104,7 +105,7 @@ Local Notation gn_pairs := W_LLVMFuzzerTestOneInput_gone_base.gn_pairs.
 Local Notation oa_cost := W_op_add.oa_cost.
 
 (* ================================================================== C3's peak measures (copies, see the header) *)
-(* copied from a working branch 0ca4481bf91 lib/A/W_contract.v:58-64 *)
+(* copied from a working branch lib/A/W_contract.v:59-65 *)
 Definition tr_peak {P : Type} (tr : list (RelayRunT.rev P)) : Z :=
 fold_right (fun ev acc =>
   match ev with
@@ -112,7 +113,7 @@ fold_right (fun ev acc =>
   | RelayRunT.RFree k _ => Z.max 0 (acc - k)
   | RelayRunT.RRealloc k n _ => Z.max 0 (Z.max n (n - k + acc))
   end) 0 tr.
-(* copied from 0ca4481bf91 lib/A/W_contract.v:66-71 *)
+(* copied from lib/A/W_contract.v:67-72 *)
 Definition tr_net {P : Type} (tr : list (RelayRunT.rev P)) : Z :=
 fold_right (fun ev acc =>
   match ev with
@@ -120,12 +121,12 @@ fold_right (fun ev acc =>
   | RelayRunT.RFree k _ => - k
   | RelayRunT.RRealloc k n _ => n - k
   end + acc) 0 tr.
-(* copied from 0ca4481bf91 lib/A/W_contract.v:370 *)
+(* copied from lib/A/W_contract.v:371 *)
 Definition lp_tr (l : hlist) (n : Z) := ListTr.list_push_tra RelayRunF.adr0 (hl_n l) (hl_cap l) n.
-(* copied from 0ca4481bf91 lib/A/W_contract.v:1525-1526 (ge_room, C3 text) over B's ge_tr *)
+(* copied from lib/A/W_contract.v:1526-1527 (ge_room, C3 text) over B's ge_tr *)
 Definition ge_room_c3 (MMAX bb : Z) (c : ctl) (mx no cap XL : Z) : Prop :=
   tr_max (ge_tr c mx no cap XL) < MMAX /\ bb + tr_peak (ge_tr c mx no cap XL) <= LIVE_MAX.
-(* copied from 0ca4481bf91 lib/A/W_contract.v:1586-1592 (gse_room, C3 text) over B's ge_* *)
+(* copied from lib/A/W_contract.v:1587-1593 (gse_room, C3 text) over B's ge_* *)
 Fixpoint gse_room_c3 (MMAX bb : Z) (c : ctl) (mx no cap : Z) (xs : list (list byte)) : Prop :=
   match xs with
   | [] => True
@@ -136,7 +137,7 @@ Fixpoint gse_room_c3 (MMAX bb : Z) (c : ctl) (mx no cap : Z) (xs : list (list by
   end.
 
 (* ================================================================== the exit's relay_finish room, C3 form (a copy) *)
-(* copied from e7f37cec90b lib/A/W_LLVMFuzzerTestOneInput_exit.v :201-207 with gse_room read in C3's peak form
+(* copied from lib/A/W_LLVMFuzzerTestOneInput_exit.v :201-207 with gse_room read in C3's peak form
    (gse_room_c3 above), the arm's Section MMAX the first argument; lib/B/W_bx_defs.v :167 lx_rf_room is the sum form *)
 Fixpoint lx_rf_room_c3 (MMAX bb : Z) (c : ctl) (O : list byte) (mx no cap : Z) (es : list rentry) : Prop :=
   match es with
@@ -149,7 +150,7 @@ Fixpoint lx_rf_room_c3 (MMAX bb : Z) (c : ctl) (O : list byte) (mx no cap : Z) (
 (* ================================================================== the event arm's model (a copy) *)
 Section copies.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-(* the event arm: copied from a working branch 556f92b5b9f
+(* the event arm: copied from a working branch
    lib/B/W_LLVMFuzzerTestOneInput_arm_event.v :497-505 and :1453-1470 (a Theorem Labs lane's B ARM_event); kept until
    a Theorem Labs lane's re-fit of B's _arm_event.v (see the header) *)
 Definition ev_cons2 (cx : lfcx) (m : lmod) : Z := Z.min (c_n cx - lm_k m - 1) 2.
@@ -189,27 +190,27 @@ Variable MMAX : Z.
 Variable LSx : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
 
-(* (1) LS_write_room, C3 PEAK form: list_push's own room premise (0ca4481bf91 W_contract.v:397 lp_spec, `blocks_bytes
+(* (1) LS_write_room, C3 PEAK form: list_push's own room premise (W_contract.v:398 lp_spec, `blocks_bytes
    S + tr_peak (lp_tr l (Z.of_nat (length x))) <= LIVE_MAX`) at l := hs_pending h, |x| = wr_n; the request bound and
-   the meter conjunct are A's (e7f37cec90b top_x.v :245-248, with WR_MMAX := MMAX: A's WR_MMAX is fr_MMAX) *)
+   the meter conjunct are A's (top_x.v :245-248, with WR_MMAX := MMAX: A's WR_MMAX is fr_MMAX) *)
 Definition LS_write_room_T : Prop := forall cx t m si h ly S,
   LSx cx t m ly S -> wr_pick cx m si h -> 0 < wr_n cx m ->
   (lp_grow (hs_pending h) = true -> lp_vbytes (hs_pending h) < MMAX) /\
   blocks_bytes S + tr_peak (lp_tr (hs_pending h) (wr_n cx m)) <= LIVE_MAX.
-(* (1') LS_write_room in A's SUM form (e7f37cec90b top_x.v :245-248, verbatim but WR_MMAX := MMAX): what A's write
+(* (1') LS_write_room in A's SUM form (top_x.v :245-248, verbatim but WR_MMAX := MMAX): what A's write
    arm keeps (C3 draft: it converts to lp_spec's peak premise by lp_tr_peak_le); it implies (1), bt_write_room_peak *)
 Definition LS_write_room_sum_T : Prop := forall cx t m si h ly S,
   LSx cx t m ly S -> wr_pick cx m si h -> 0 < wr_n cx m ->
   (lp_grow (hs_pending h) = true -> lp_vbytes (hs_pending h) < MMAX) /\
   blocks_bytes S + (if lp_grow (hs_pending h) then lp_vbytes (hs_pending h) else 0) + (wr_n cx m + 1) <= LIVE_MAX.
 
-(* (2) LS_event_malloc: a Theorem Labs lane's text (556f92b5b9f _event_x.v :211-213), verbatim *)
+(* (2) LS_event_malloc: a Theorem Labs lane's text (_event_x.v :211-213), verbatim *)
 Definition LS_event_malloc_T : Prop := forall cx t m ly S e,
   LSx cx t m ly S -> RINV cx t m -> ev_evt cx m e ->
   re_len e < MMAX /\ blocks_bytes S + re_len e <= LIVE_MAX.
 
-(* (3) LS_rm_rr_pre, C3 PEAK form (the C3 draft's edit of e7f37cec90b top_x.v :491-499: tr_alloc -> tr_peak, the
-   `lm_cap m < MMAX` and `4 * Z.max` conjuncts dropped, as rr_spec loses them at 0ca4481bf91 W_contract.v:1356) *)
+(* (3) LS_rm_rr_pre, C3 PEAK form (the C3 draft's edit of top_x.v :491-499: tr_alloc -> tr_peak, the
+   `lm_cap m < MMAX` and `4 * Z.max` conjuncts dropped, as rr_spec loses them at W_contract.v:1356) *)
 Definition LS_rm_rr_pre_T : Prop := forall cx t m ly S si h j0,
   LSx cx t m ly S -> RINV cx t m -> rm_at cx m si h j0 ->
   (re_eof (rm_ent m j0) = 0 ->
@@ -228,8 +229,8 @@ Definition LS_rm_rr_pre_p_T : Prop := forall cx t m ly S si h j0,
      re_nheld (rm_ent m j0) + Z.of_nat (length (pending_stream h)) < 2 ^ 26) /\
   tr_max (rm_rr_tr m h) < MMAX /\ blocks_bytes S + tr_peak (rm_rr_tr m h) <= LIVE_MAX.
 
-(* (4) HLSRIG = GN_LS_rig, C3 PEAK form (e7f37cec90b _gone_base.v :616-622 with the C3 draft's rig edit, as rig_spec
-   at 0ca4481bf91 W_contract.v:1479) *)
+(* (4) HLSRIG = GN_LS_rig, C3 PEAK form (_gone_base.v :616-622 with the C3 draft's rig edit, as rig_spec
+   at W_contract.v:1479) *)
 Definition GN_LS_rig_T : Prop := forall cx t m ly S hs,
   LSx cx t m ly S -> RINV cx t m -> gn_pairs m hs ->
   let tr := rig_tr (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (gn_id cx m) (lm_es m) hs in
@@ -244,22 +245,22 @@ Definition GN_LS_rig_p_T : Prop := forall cx t m ly S hs,
   let tr := rig_tr (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (gn_id cx m) (lm_es m) hs in
   tr_max tr < MMAX /\ blocks_bytes S + tr_peak tr <= LIVE_MAX.
 
-(* (5) LS_rf_room, C3 form (e7f37cec90b top_x.v :454-455 with gse_room in C3's peak form) *)
+(* (5) LS_rf_room, C3 form (top_x.v :454-455 with gse_room in C3's peak form) *)
 Definition LS_rf_room_T : Prop := forall cx t m ly S,
   LSx cx t m ly S -> lx_rf_room_c3 MMAX (blocks_bytes S) (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m).
 
-(* (7) LS_event_free: a Theorem Labs lane's text (556f92b5b9f _event_x.v :220-224), verbatim *)
+(* (7) LS_event_free: a Theorem Labs lane's text (_event_x.v :220-224), verbatim *)
 Definition LS_event_free_T : Prop := forall cx t m ly S (S1 S2 : astate) e,
   LSx cx t m ly S -> RINV cx t m -> ev_evt cx m e ->
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->
   mo_le MT S1 S2 (sl_cost MT (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (re_len e)) ->
   mo_ok MT S2 (mo_free MT).
 
-(* (8) LS_event_relay, RELAXED form: A's text (e7f37cec90b top_x.v :265-273 = lib/A/ReplyLSEvent3.v
+(* (8) LS_event_relay, RELAXED form: A's text (top_x.v :265-273 = lib/A/ReplyLSEvent3.v
    fr_LS_event_relay_r, the C3 / C2 relaxation): send_line's own room premises (sl_maxr, sl_alloc) in place of
    k4's capacity form (sl_cap < MMAX, 2 * sl_cap), plus the two facts the arm holds at its call (the cut's
-   `lm_O m = []`, malloc's block).  It needs B's re_spec relaxed the same way (A W_contract.v re_spec :1036-1037
-   at 88557c15170) *)
+   `lm_O m = []`, malloc's block).  It needs B's re_spec relaxed the same way (A W_contract.v re_spec :1036-1037)
+   *)
 Definition LS_event_relay_T : Prop := forall cx t m ly S (S1 : astate) e (ly1 : alayout) q,
   LSx cx t m ly S -> RINV cx t m -> ev_evt cx m e ->
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->
@@ -286,7 +287,7 @@ Definition LS_event_step_T : Prop :=
   LSx cx (t + 1) (ev_step cx m e v out') ly3 S3.
 End texts.
 
-(* (6) LS_pro_oa: A's ARx text (e7f37cec90b top_x.v :338-342) over B's lf_base_x (61e610e6176 cut_x.v :179) and the
+(* (6) LS_pro_oa: A's ARx text (top_x.v :338-342) over B's lf_base_x (cut_x.v :179) and the
    top's Section variables, with op_add's charge W_op_add.oa_cost *)
 Section pro_text.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
@@ -306,7 +307,7 @@ Definition LS_pro_oa_T : Prop := forall cx Hp (S2 : astate) pos,
   blocks_bytes S2 + APARTIAL + ATABLE <= LIVE_MAX.
 End pro_text.
 
-(* ================================================================== the measure helpers (A ReplyLS.v, f57b3e2d0ca) *)
+(* ================================================================== the measure helpers (A ReplyLS.v) *)
 Section helpers.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Lemma bt_zsum_map_nonneg : forall {X} (g : X -> Z) l, (forall x, 0 <= g x) -> 0 <= zsum (map g l).
@@ -396,7 +397,7 @@ Qed.
 End room.
 
 (* ================================================================== (1) LS_write_room *)
-(* list_push's peak is within A's summed room (0ca4481bf91 lib/A/W_tr_peak.v lp_tr_peak_le, without its
+(* list_push's peak is within A's summed room (lib/A/W_tr_peak.v lp_tr_peak_le, without its
    0 <= hl_cap premise: a growth happens only at hl_cap = hl_n >= 0) *)
 Lemma bt_lp_tr_peak_le : forall l n, 0 <= n ->
   tr_peak (lp_tr l n) <= (if lp_grow l then lp_vbytes l else 0) + (n + 1).

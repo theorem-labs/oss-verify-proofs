@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require As0Gc.
@@ -134,7 +135,7 @@ Section Sound.
   Qed.
 
   Ltac hf_sound pcA rA cA srA knA sc rC cC srF knF ITIN COVA COVC MSG_IMG MSG_LEN msg :=
-    intros vals R M msF mo K HL P0 HR HK Hfd2 OK RS HKnil HCONT;
+    intros vals R M msF mo K HL P0 HR HK Hfd2 Hrd2 OK RS HKnil HCONT;
     pose proof (know_nth RSEGS _ _ h_kn 1%nat _ HK eq_refl) as Hrg; cbn [kentry_ok edenot ev ENV] in Hrg; rewrite P0 in Hrg;
     unfold ASP_LO, ASP_HI in Hrg;
     pose proof (h_regions_flat vals P0 ltac:(unfold ASP_LO; lia) ltac:(unfold ASP_HI; lia)) as RF;
@@ -169,6 +170,7 @@ Section Sound.
                    _ _ a 31 HK eq_refl) by (cbn; lia) end;
       apply MSG_IMG
     | rewrite (same_but_materialized_fds _ _ SBA); exact Hfd2
+    | rewrite (same_but_materialized_reader _ _ SBA); exact Hrd2
     | exact OKA
     | exact RSA
     | exact HKnil
@@ -202,6 +204,7 @@ Section Sound.
     length vals = 34%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV vals) h_sr R -> know_ok RSEGS (ENV vals) M h_kn ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst R (Z_to_bv 64 0xe8964) M (seg_rom RSEGS) ->
     K [] ->
     (forall Rj R' M' msF' mo',
@@ -222,6 +225,7 @@ Section Sound.
     length vals = 34%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV vals) h_sr R -> know_ok RSEGS (ENV vals) M h_kn ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst R (Z_to_bv 64 0xe8980) M (seg_rom RSEGS) ->
     K [] ->
     (forall Rj R' M' msF' mo',
@@ -320,12 +324,12 @@ Section Plain.
   Qed.
 
   Ltac hf_plain SOUND :=
-    intros regs mem msF mo sp can K PH OK RS Hfd2 HKnil HCONT;
+    intros regs mem msF mo sp can K PH OK RS Hfd2 Hrd2 HKnil HCONT;
     pose proof (h_regs_ok regs mem sp can PH) as HR; pose proof (h_know_ok regs mem sp can PH) as HK;
     destruct PH; pose proof (u64_range sp) as Hsp; unfold ASP_LO, ASP_HI in *;
     apply (SOUND sp L S Zr (h_vals regs sp can) regs mem msF mo K);
       [ unfold h_vals; rewrite length_app, junk_vals_length; reflexivity | reflexivity | exact HR | exact HK
-      | exact Hfd2 | exact OK | exact RS | exact HKnil |];
+      | exact Hfd2 | exact Hrd2 | exact OK | exact RS | exact HKnil |];
     clear HR HK; intros Rj R' M' msF' mo' HR HK FM OK' SB' HS' RS';
     set (vals' := h_vals regs sp can ++ junk_vals Rj) in *;
     assert (P0 : vals_ev vals' 0 = sp) by reflexivity;
@@ -359,6 +363,7 @@ Section Plain.
     hfH regs mem sp can ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst regs (Z_to_bv 64 0xe8964) mem (seg_rom RSEGS) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
        lzok RSEGS L S Zr (mkCfg msF' mo') -> same_but_materialized mo mo' -> hid_same L S msF msF' ->
@@ -371,6 +376,7 @@ Section Plain.
     hfH regs mem sp can ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst regs (Z_to_bv 64 0xe8980) mem (seg_rom RSEGS) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
        lzok RSEGS L S Zr (mkCfg msF' mo') -> same_but_materialized mo mo' -> hid_same L S msF msF' ->

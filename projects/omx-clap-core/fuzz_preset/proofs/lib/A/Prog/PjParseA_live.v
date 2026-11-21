@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_parse_live.v, with only its comments or blank lines changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: pj_parse's live room at each event of its all-granted reading (image A' port of pj_parse,
-   RELOCATED unchanged from a Theorem Labs lane's image-B' batch-kit rebind 5134b312d551 lib/B/Prog/pj_parse_live.v; image-free; lane
+   RELOCATED unchanged from a Theorem Labs lane's image-B' batch-kit rebind lib/B/Prog/pj_parse_live.v; image-free; lane
    pj_parse, a Theorem Labs lane): from blocks_bytes S + PRH_FnPj.LIVE_pj_parse tl <= LIVE_MAX at cf_head =
    PresetReqAt.HEAD, PRH_Base.prh_live_evs S holds of the heap events of parse_value 0's all-granted trace
    (PRH_Charge.prhPv_gtrace 0 tl, = PRH_FnPj.prhPj_ptrace tl by PjGrammar.jr_run_eq).

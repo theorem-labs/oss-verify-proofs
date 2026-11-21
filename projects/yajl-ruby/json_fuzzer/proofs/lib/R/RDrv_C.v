@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launchT context; argv pointers from ed_top and the exec name, with argv_cstring's new bounds; the stack window from usp0 - 6,144,513 in place of the 8 MiB below sp for malloc, free and read). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -93,6 +94,7 @@ Qed.
 
 Section C.
   Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
+  Context {LT : launchT}.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
             (PAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
@@ -110,7 +112,6 @@ Section C.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid hw rnd TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
@@ -195,7 +196,7 @@ Section C.
     zstep. zstep. zstep. apply evt_done.
     replace (Z.shiftl LEN 1) with (cap * 2) by (rewrite Z.shiftl_mul_pow2 by lia; lia).
     (* [comment removed for export] *)
-    eapply (di_mallocX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 8388608) (B := usp0) (s := s) (LB := [(bufp, A, cap)]) (n := cap * 2);
+    eapply (di_mallocX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 6144513) (B := usp0) (s := s) (LB := [(bufp, A, cap)]) (n := cap * 2);
       try reflexivity.
     all: unfold RATP; rewrite ?(unsigned_lit 0x34d40) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia.
     - apply TFIN_nil.
@@ -259,7 +260,7 @@ Section C.
       pose proof BA3 as (ST & MI & RS & AUX & IMG & SE & SOF & YSx & TRx). unfold LO in ST.
       (* [comment removed for export] *)
       zstep. zstep. apply evt_done.
-      eapply (di_freeX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := cap);
+      eapply (di_freeX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 6144513) (B := usp0) (p := bufp) (A := A) (n := cap);
         try reflexivity.
       all: unfold RATP; rewrite ?(unsigned_lit 0x34d40) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia.
       + apply TFIN_nil.
@@ -312,7 +313,7 @@ Section C.
       (mkCfg (GST 0x135b0 x1 t0 t1 t2 (Z_to_bv 64 A) a0 a1 (Z_to_bv 64 CNT) a3 a4 a5 a6 a7 (Z_to_bv 64 P1v) (Z_to_bv 64 (Z.of_nat (length DATA))) (Z_to_bv 64 3) (Z_to_bv 64 cap) (Z_to_bv 64 RSTAGE) x23 t3 t4 t5 t6 F fc mm) mo)
       TFIN.
   Proof.
-    intros until CNT. intros RC FSL PRE LT CNTR CNTC IH.
+    intros until CNT. intros RC FSL PRE HLTc CNTR CNTC IH.
     pose proof (sp_facts sp0 VSP RCSP) as SF. unfold LO in SF. pose proof STAGE_val as SV.
     pose proof RC as RC0.
     destruct RC as (junk & stg & errv & bufp & BU & HKx & FD & FS & FR & BA & ERR & RSG & FRM).
@@ -329,7 +330,7 @@ Section C.
     pose proof (read_spec (Z_to_bv 64 0x135bc) (Z_to_bv 64 (usp0 + -128)) gpv tpv t0 t1 t2 (Z_to_bv 64 2) (Z_to_bv 64 A)
                   (Z_to_bv 64 3) (Z_to_bv 64 RSTAGE) (Z_to_bv 64 CNT) a3 a4 a5 a6 a7
                   (Z_to_bv 64 P1v) (Z_to_bv 64 LEN) (Z_to_bv 64 3) (Z_to_bv 64 cap) (Z_to_bv 64 RSTAGE) x23 S8 S9 S10 S11 t3 t4 t5 t6 F fc mm
-                  3 CNT (firstn (Z.to_nat CNT) stg) errv (usp0 - 8388608)) as IMR.
+                  3 CNT (firstn (Z.to_nat CNT) stg) errv (usp0 - 6144513)) as IMR.
     rewrite !(unsigned_lit RSTAGE) in IMR by (unfold RSTAGE; lia).
     specialize (IMR ltac:(rewrite (unsigned_lit (usp0 + -128)) by lia; exact ST) DST
                     ltac:(unfold RATP; rewrite (unsigned_lit 0x34d40) by lia; exact ERR) MI eq_refl eq_refl ltac:(lia) ltac:(lia)
@@ -407,7 +408,7 @@ Section C.
       assert (HK3 : HK s [(bufp, A, cap)] m3 mo2).
       { eapply (di_frame HKG DI); [exact HK2| exact MUc| exact WMc|].
         constructor; [| constructor]. right; right. exists (bufp, A, cap). split; [left; reflexivity|]. cbn [fst snd blk_addr blk_size]. lia. }
-      assert (ST3 : stk rsegs m3 (usp0 - 8388608) (usp0 + -128)).
+      assert (ST3 : stk rsegs m3 (usp0 - 6144513) (usp0 + -128)).
       { eapply stk_transport_disjoint; [exact ST | exact MUc | exact WMc | cbn [disjoint_from]; lia]. }
       assert (BA3 : BASE' m3) by (eapply (BASE_munch sp0 argv envp uid hw rnd TID VSP RCSP VARGV VENVP); [exact BA2| exact WOKW| exact MUc| exact WMc| exact MI3| unfold LO; exact ST3]).
       pose proof (agree_on_of_munch _ _ _ MUc WMc) as AG3.
@@ -488,7 +489,7 @@ Section C.
     realizes_cfg acfg rsegs (mkCfg ms mo) TFIN.
   Proof.
     intros cap DATA s mo ms RI FSL PRE IH.
-    destruct RI as (x1 & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & x23 & t3 & t4 & t5 & t6 & F & fc & mm & A & -> & RC & LT).
+    destruct RI as (x1 & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & x23 & t3 & t4 & t5 & t6 & F & fc & mm & A & -> & RC & HLTc).
     pose proof RC as RC0.
     destruct RC as (junk & stg & errv & bufp & BU & HKx & FD & FS & FR & BA & ERR & RSG & FRM).
     destruct BU as (BLK & [CAPR CAPK] & LENR & BR). unfold MAX_INPUT in CAPR.
@@ -512,7 +513,7 @@ Section C.
     realizes_cfg acfg rsegs (mkCfg ms mo) TFIN.
   Proof.
     induction fuel as [|fuel IH]; intros cap DATA s mo ms HM RI FSL PRE.
-    - exfalso. destruct RI as (x1 & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & x23 & t3 & t4 & t5 & t6 & F & fc & mm & A & _ & RC & LT).
+    - exfalso. destruct RI as (x1 & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & x23 & t3 & t4 & t5 & t6 & F & fc & mm & A & _ & RC & HLTc).
       destruct RC as (junk & stg & errv & bufp & BU & _). destruct BU as (_ & [CAPR _] & LENR & _). unfold rmeas, MAX_INPUT in *. cbn in HM. lia.
     - eapply rz_round; [exact RI | exact FSL | exact PRE |].
       intros cap' DATA' s' mo' ms' HM' FSL' PRE' RI'. apply (IH cap' DATA' s' mo' ms'); [lia | exact RI' | exact FSL' | exact PRE'].
@@ -532,6 +533,7 @@ End C.
 (* [comment removed for export] *)
 Section CDir.
   Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
+  Context {LT : launchT}.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
             (PAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
@@ -549,7 +551,6 @@ Section CDir.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid hw rnd TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
@@ -558,7 +559,7 @@ Section CDir.
   Let DIR := di_run HKG DI.
 
   Variables (P1v : Z).
-  Hypothesis HP1 : nth_error (argv_ptrs sp0 argv envp) 1 = Some (Z_to_bv 64 P1v).
+  Hypothesis HP1 : nth_error (argv_ptrs (ed_top rnd) argv envp L_EXECFN) 1 = Some (Z_to_bv 64 P1v).
   Hypothesis P1R : 0 <= P1v < 2^64.
 
   Lemma rz_loop_dir : forall (s : PState) mo ms,
@@ -584,7 +585,7 @@ Section CDir.
     pose proof (read_spec (Z_to_bv 64 0x135bc) (Z_to_bv 64 (usp0 + -128)) gpv tpv t0 t1 t2 (Z_to_bv 64 2) (Z_to_bv 64 A)
                   (Z_to_bv 64 3) (Z_to_bv 64 RSTAGE) (Z_to_bv 64 65536) a3 a4 a5 a6 a7
                   (Z_to_bv 64 P1v) (Z_to_bv 64 0) (Z_to_bv 64 3) (Z_to_bv 64 65536) (Z_to_bv 64 RSTAGE) x23 S8 S9 S10 S11 t3 t4 t5 t6 F fc mm
-                  3 65536 (firstn (Z.to_nat 65536) stg) errv (usp0 - 8388608)) as IMR.
+                  3 65536 (firstn (Z.to_nat 65536) stg) errv (usp0 - 6144513)) as IMR.
     rewrite !(unsigned_lit RSTAGE) in IMR by (unfold RSTAGE; lia).
     specialize (IMR ltac:(rewrite (unsigned_lit (usp0 + -128)) by lia; exact ST) DST
                     ltac:(unfold RATP; rewrite (unsigned_lit 0x34d40) by lia; exact ERR) MI eq_refl eq_refl ltac:(lia) ltac:(lia)
@@ -613,8 +614,8 @@ Section CDir.
     (* [comment removed for export] *)
     pose proof VARGV as (_ & _ & ARGLEN & NONUL & _).
     destruct (argv_cstring sp0 argv envp uid hw rnd m2 IMG 1 arg1 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
-      as (p1 & slack1 & HP1' & P1LO & P1HI & STR1 & SLK1). unfold str_base, struct_size, argc, envc in P1LO.
-    pose proof (bytes_at_bound _ _ _ _ IMG) as IMGBD.
+      as (p1 & slack1 & HP1' & P1LO & P1HI & STR1 & SLK1 & TOP1).
+    pose proof (bytes_at_bound _ _ _ _ (proj1 IMG)) as IMGBD.
     assert (EP : p1 = P1v).
     { rewrite HP1 in HP1'. assert (E : bv_unsigned (Z_to_bv 64 P1v) = bv_unsigned (Z_to_bv 64 p1)) by congruence.
       rewrite !unsigned_lit in E by lia. lia. }

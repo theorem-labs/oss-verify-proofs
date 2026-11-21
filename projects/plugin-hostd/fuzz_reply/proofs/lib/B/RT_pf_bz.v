@@ -1,4 +1,4 @@
-(* Image B twin of lib/A/RT_pf_bz.v at d49bd1db505: module paths lib.A -> lib.B; 4 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The Bz-vocabulary pieces of fuzz_reply.asan-ubsan's snprintf interceptor chain (RT_pf_stmt.v): the runtime cells the
+(* Image B twin of lib/A/RT_pf_bz.v: module paths lib.A -> lib.B; 4 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The Bz-vocabulary pieces of fuzz_reply.asan-ubsan's snprintf interceptor chain (RT_pf_stmt.v): the runtime cells the
    interceptors read, printf_common's start premise, and printf_common's call contract at any stack floor.
 
    This file proves no new function.  `pcom_call` is a Theorem Labs lane's printf_common walk (lib/A/Bz/A/I_pcxlist.v

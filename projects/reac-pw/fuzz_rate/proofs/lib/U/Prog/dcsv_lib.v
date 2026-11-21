@@ -12,7 +12,7 @@ Open Scope Z_scope.
 (** General lemmas for the walk of reac_rate_drivable_csv in the UBSan image (dcsv_*.v). The ones marked "from"
     are copies of released lemmas with this tree's module paths. *)
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/disco_table.v:112-118 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/disco_table.v:112-118 *)
 Lemma ltu_lit : forall a b, 0 <= a < 2^64 -> 0 <= b < 2^64 ->
   bv_ltu (Z_to_bv 64 a) (Z_to_bv 64 b) = (a <? b).
 Proof. intros a b Ha Hb. unfold bv_ltu. rewrite !unsigned_lit by assumption. reflexivity. Qed.
@@ -24,7 +24,7 @@ Proof. intros a b Ha Hb. unfold bv_eqb. rewrite !unsigned_lit by assumption. ref
 Lemma ltz_lit : forall a, 0 <= a < 2^63 -> bv_lts (Z_to_bv 64 a) (Z_to_bv 64 0) = false.
 Proof. intros a Ha. rewrite bv_lts_zero_r, unsigned_lit by lia. apply Z.leb_gt. lia. Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:221-229 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:221-229 *)
 Lemma task_mem_munch : forall W m m', MemNorm.task_mem rsegs m -> munch W m m' ->
   (forall a : word, ~ outside W (bv_unsigned a) -> wview rsegs m a <> None) -> MemNorm.task_mem rsegs m'.
 Proof.
@@ -35,7 +35,7 @@ Proof.
   exfalso. apply W0. reflexivity.
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:147-171 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:147-171 *)
 Lemma bytes_at_mrd : forall m A bs x, bytes_at rsegs m A bs -> A <= x < A + Z.of_nat (length bs) ->
   exists b, mrd rsegs m (wa x) = Some b.
 Proof.
@@ -62,7 +62,7 @@ Proof.
   exists j. replace (A + Z.of_nat n - Z.of_nat n) with A in J by lia. exact J.
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:269-290 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:269-290 *)
 Lemma rwc_stk : forall m A n j, rw_cells rsegs m A [CB n j] -> stk rsegs m A (A + Z.of_nat n).
 Proof.
   intros m A n j [[[Lj _] B] (H1 & H2 & HW)]. cbn [cells_size csize cells_bytes cbytes] in *.
@@ -100,7 +100,7 @@ Proof.
   intros m lo hi a (_ & _ & H) Ha. destruct (H _ Ha) as [W _]. unfold wa in W. rewrite Z_to_bv_lit_self in W. exact W.
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:126-145 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:126-145 *)
 Lemma rw_cells_app : forall m A c1 c2,
   rw_cells rsegs m A (c1 ++ c2) <-> rw_cells rsegs m A c1 /\ rw_cells rsegs m (A + Z.of_nat (cells_size c1)) c2.
 Proof.
@@ -122,7 +122,7 @@ Proof.
     + replace (A + i) with (A + Z.of_nat (cells_size c1) + (i - Z.of_nat (cells_size c1))) by lia. apply Hw2. lia.
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:173-177 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:173-177 *)
 Lemma pf_bytes_app : forall a b, pf_bytes (a ++ b) = pf_bytes a ++ pf_bytes b.
 Proof. intros. unfold pf_bytes. apply map_app. Qed.
 
@@ -135,7 +135,7 @@ Proof.
   intros m MI. apply ro_bytes_at; [exact MI | lia | cbn; lia | apply ro_bytes_b_sound; vm_compute; reflexivity].
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:673-685, with the bounds as parameters *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:673-685, with the bounds as parameters *)
 Lemma dcsv_str : forall m S lo D n (A : Z) (s sl : list Z),
   mem_inv rsegs m -> ro_bytes_b rsegs A (pf_bytes (s ++ [0] ++ sl)) = true ->
   Forall (fun c => 0 < c < 256) s ->
@@ -317,14 +317,14 @@ Proof.
   - exact GD.
 Qed.
 
-(** The `sb zero` store as one byte (from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/slot_R0_R3.v:77-82). *)
+(** The `sb zero` store as one byte (proofs/libreac/fuzz_disco/lib/Prog/slot_R0_R3.v:77-82). *)
 Ltac fix_zero_store :=
   lazymatch goal with
   | |- evt _ _ (MS _ _ _ _ _ (write_to_mem _ _ (le1 (Z_to_bv 64 0))) _) =>
       change (le1 (Z_to_bv 64 0)) with [Z_to_bv 8 0]; mem_after_store
   end.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:719-724 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:719-724 *)
 Ltac run_to pc :=
   repeat lazymatch goal with
   | |- evt _ _ (MS _ _ (Z_to_bv 64 pc) _ _ _ _) => fail

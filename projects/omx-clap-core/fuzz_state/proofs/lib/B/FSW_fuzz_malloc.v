@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v, with its module paths and module names changed; 639 of its 687 lines of code are new or changed and 451 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_fuzz_free.v, with its module paths changed; 469 of its 535 lines of code are new or changed and 621 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs ASan, group ALLOC, image B (fs.asan-ubsan): the walk of fuzz_malloc (A_fuzz_malloc = 0x82a58, alloc.c:61-66),
-   proving fuzz_malloc_spec of lib/B/FSH_Fn_alloc.v (statement a working branch 338b0dd7601, no CTX).
+   proving fuzz_malloc_spec of lib/B/FSH_Fn_alloc.v (statement a working branch, no CTX).
 
-   proves function fuzz_malloc (B 0x82a58) (reuse search: proof-index on main@c4c03c57ba1 / ossv/recipes@e5e7eba2cc0 /
-   ossv/candidates@ee89628c997 / release/pau-projects-recipes@b6a0088adcb + lemma index over 11131 working branches + live
+   proves function fuzz_malloc (B 0x82a58) (reuse search: proof-index on main / ossv/recipes /
+   ossv/candidates / release/pau-projects-recipes + lemma index over 11131 working branches + live
    working heads; a Theorem Labs lane, brief-B-walks.md). Result: the released fuzz_malloc proofs are plain / ubsan / cut-free
    only (lib/Prog, lib/U/Prog), no ASan B proof; written new, porting ALLOC's A proof (lib/A/FSW_fuzz_malloc.v,
    a working branch) to B's shape.

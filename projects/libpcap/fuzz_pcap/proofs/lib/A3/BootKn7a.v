@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the boot chain's ledger, EVar and fresh-variable literals move by +16, the KWSTK stack window spans 6144512 bytes below sp (was 0x800000), and run21c, which walks the auxiliary vector, is made once per CONFIG_RSEQ value with the launch's facts for the vector's tail (KXr) and joined in KN_E14 and SR21c_join, in both copies. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -29,11 +30,11 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 Definition DS_E13 : list (saddr * expr) :=
   [(SA (EVar 0) (- 0x800000), ELit 0x1800000); (SA (ELit 0) A_img_lo, ELit (A_img_hi - A_img_lo));
-   (SA (ELit 0) SHB_LO, ELit (SHB_HI - SHB_LO)); (SA (EVar 38) 0, ELit 65536)] ++ List.skipn 3 DS_E12.
+   (SA (ELit 0) SHB_LO, ELit (SHB_HI - SHB_LO)); (SA (EVar 54) 0, ELit 65536)] ++ List.skipn 3 DS_E12.
 Definition STOPS7 : list Z := [A_internal_mmap_ecall; A_musl_memset; A_mem_is_zero; A_spin_mmapordie; A_spin_noreserve].
 
 (* [comment removed for export] *)
-Definition SR21 : list expr := sr_upd SR_E13 10 (EVar 46).
+Definition SR21 : list expr := sr_upd SR_E13 10 (EVar 62).
 Definition KCa7a_1 : list kentry := Eval vm_compute in (NFC.d_kl "$011%>00'%,061%>00'%,041%>'%,051%>'%,0',%###-#/,#&&%$%&,071%>00'%,010,+,.@#?0$.+/'.&071%>00'%,000,$-.00'.$,#&071%>00'%,000$%.+.%#.'00--.,,-&&%./.071%>00'%,01%600,$-.071%>00'%,01%500'%,071%>00'%,01%400,+,.@$071%>00'%,01$<00-&$,,+.+/.071%>00'%,01$;00%//#,'071%>00'%,01$:00,$-.071%>00'%,00@,-.#/,/@&,000,.%#$&@'+@&,071%>00'%,00$'++$##$&000@,,&,'+/@%&071%>00'%,00$%.+.%#.'000$-@&.@&@0").
 Definition KCa7a_2 : list kentry := Eval vm_compute in (NFC.d_kl "$071%>00'%,01700'%,051%6'%,0+,-%./%..,',-0010,,?802010,+?800010,'?80$#$&.&0010,&?80'%,0010,%?80$#...6010,$?800010,#?80&-,/+8010+@740'4010+/?800010+.?80$#$&.&0010+-?80'%,0010+,?80,$++-0010++?80&/,@%0010+'?81%5").
 Definition KCa7a_3 : list kentry := Eval vm_compute in (NFC.d_kl "$0010+&?80&@@###,%$+&#-$&%+/>010+%?80,$+'/0010+$?80&/&,+0010'/?81%6000,$+&@080001%6080+.+$%001%6$.080001%6$-820$#-001%6$-040001%6&040001%6%080001%6$040001%6,010001%6+080001%6'080001%6$,0800").
@@ -85,8 +86,8 @@ Definition KCa7a_48 : list kentry := Eval vm_compute in (NFC.d_kl "$03,#//%2,#//
 Definition KCa7a_49 : list kentry := Eval vm_compute in (NFC.d_kl "$03$#$.#$>$#$.#%03$#%$%->$#%$&/03$#%$&/8$#%$&@03$#%$-%0$#%$/+03$#%$/,0$#%$@%03$#%$@+0$#%%%@03$#%%%@2'.#,@#03'.#,@#2'.#,@#83'.#,@%>'.#,@&03'.#,@&8'.#,@'03'.#,@+8'.#-,%03'.#-,%4'.#-,&03'.#-,'4'.-#,%03'.-#,&0'.-#,+03'.-#,@0'.-#@.03'.-#@/0'.-$##0").
 Definition KCa7a_50 : list kentry := Eval vm_compute in (NFC.d_kl "$03'.-$##8'.-$#$03'.-$#%0'.-$#&03'.-$#'0'.-$&%03'.-$&&0'.-$,&03'.-$,+2'.-$,,03'.-$-$0'.-$--03'.-$-.0'.-'@/03'.-'@@0'.-,#+03'.-,#+8'.-,#,03'.-,#,8'.--.#0600+.#@+00'%@,.,0417'%,0517'%,0+,-%./%./$%#/071700'%,000,$-.00'.$,#&071700'%,010,+,.@#?0/.'-/-0117'808").
 Definition KCa7a_51 : list kentry := Eval vm_compute in (NFC.d_kl "7117+80.8117$+00&0117$/00&0117%&00&&0117+.00&-/061700'%,05182&%./@+>").
-Definition KN21 : list kentry := ltac:(nf_rope (KCa7a_1 ++ KCa7a_2 ++ KCa7a_3 ++ KCa7a_4 ++ KCa7a_5 ++ KCa7a_6 ++ KCa7a_7 ++ KCa7a_8 ++ KCa7a_9 ++ KCa7a_10 ++ KCa7a_11 ++ KCa7a_12 ++ KCa7a_13 ++ KCa7a_14 ++ KCa7a_15 ++ KCa7a_16 ++ KCa7a_17 ++ KCa7a_18 ++ KCa7a_19 ++ KCa7a_20 ++ KCa7a_21 ++ KCa7a_22 ++ KCa7a_23 ++ KCa7a_24 ++ KCa7a_25 ++ KCa7a_26 ++ KCa7a_27 ++ KCa7a_28 ++ KCa7a_29 ++ KCa7a_30 ++ KCa7a_31 ++ KCa7a_32 ++ KCa7a_33 ++ KCa7a_34 ++ KCa7a_35 ++ KCa7a_36 ++ KCa7a_37 ++ KCa7a_38 ++ KCa7a_39 ++ KCa7a_40 ++ KCa7a_41 ++ KCa7a_42 ++ KCa7a_43 ++ KCa7a_44 ++ KCa7a_45 ++ KCa7a_46 ++ KCa7a_47 ++ KCa7a_48 ++ KCa7a_49 ++ KCa7a_50 ++ KCa7a_51) ((kn_grant_d DS_E13 46 4096 KN_E13))).
-Lemma KN21_eq : kn_grant_d DS_E13 46 4096 KN_E13 = KN21. Proof. kn_fast. Qed.
+Definition KN21 : list kentry := ltac:(nf_rope (KCa7a_1 ++ KCa7a_2 ++ KCa7a_3 ++ KCa7a_4 ++ KCa7a_5 ++ KCa7a_6 ++ KCa7a_7 ++ KCa7a_8 ++ KCa7a_9 ++ KCa7a_10 ++ KCa7a_11 ++ KCa7a_12 ++ KCa7a_13 ++ KCa7a_14 ++ KCa7a_15 ++ KCa7a_16 ++ KCa7a_17 ++ KCa7a_18 ++ KCa7a_19 ++ KCa7a_20 ++ KCa7a_21 ++ KCa7a_22 ++ KCa7a_23 ++ KCa7a_24 ++ KCa7a_25 ++ KCa7a_26 ++ KCa7a_27 ++ KCa7a_28 ++ KCa7a_29 ++ KCa7a_30 ++ KCa7a_31 ++ KCa7a_32 ++ KCa7a_33 ++ KCa7a_34 ++ KCa7a_35 ++ KCa7a_36 ++ KCa7a_37 ++ KCa7a_38 ++ KCa7a_39 ++ KCa7a_40 ++ KCa7a_41 ++ KCa7a_42 ++ KCa7a_43 ++ KCa7a_44 ++ KCa7a_45 ++ KCa7a_46 ++ KCa7a_47 ++ KCa7a_48 ++ KCa7a_49 ++ KCa7a_50 ++ KCa7a_51) ((kn_grant_d DS_E13 62 4096 KN_E13))).
+Lemma KN21_eq : kn_grant_d DS_E13 62 4096 KN_E13 = KN21. Proof. kn_fast. Qed.
 
 (* [comment removed for export] *)
 Definition ESB (c : Z) : expr := EAlu ALU_SRL (EAlu ALU_ADD (EVar 0) (ELit c)) (ELit 3).
@@ -103,7 +104,7 @@ Definition KN21y : list kentry := KZ21e :: KN21x.
 
 
 (* [comment removed for export] *)
-Definition run21a := ltac:(nf_run KN21y ((AX2L.sym_execFS6 SEGS IT_Kn7a KN21y F8 true STOPS7 noscr (SS A_internal_mmap_ret SR21 [] KN21y 47) []))).
+Definition run21a := ltac:(nf_run KN21y ((AX2L.sym_execFS6 SEGS IT_Kn7a KN21y F8 true STOPS7 noscr (SS A_internal_mmap_ret SR21 [] KN21y 63) []))).
 Definition PC21a : Z := Eval lazy in (s_pc (fst (fst run21a))).
 Definition SR21a : list expr := Eval lazy in (s_regs (fst (fst run21a))).
 Definition LG21a : list sentry := s_log (fst (fst run21a)).
@@ -111,7 +112,7 @@ Definition SK21a : list kentry := s_know (fst (fst run21a)).
 Definition NX21a : nat := Eval lazy in (s_next (fst (fst run21a))).
 Definition SC21a : list sidecond := Eval lazy in (snd (fst run21a)).
 Definition SP21a : scripts := Eval lazy in (snd run21a).
-Lemma run21a_eq : sym_exec SEGS F8 true STOPS7 noscr (SS A_internal_mmap_ret SR21 [] KN21y 47) [] = (SSR PC21a SR21a LG21a SK21a NX21a None, SC21a, SP21a).
+Lemma run21a_eq : sym_exec SEGS F8 true STOPS7 noscr (SS A_internal_mmap_ret SR21 [] KN21y 63) [] = (SSR PC21a SR21a LG21a SK21a NX21a None, SC21a, SP21a).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn7a KN21y); [exact IT_Kn7a_ok | reflexivity | vm_cast_no_check (eq_refl run21a)]. Qed.
 Definition KCa7a_54 : list kentry := Eval vm_compute in (NFC.d_kl "$0010&$@?820100&$%?010&$/?802010&$.?820100/#?010&$-?80&+0010&$,?820100/#?010&$+?820100/@?010&$'?80%@.%&8010@-?800010@,?800010@+?802010@'?820100/#?010@&?80'.-#@.0010@%?820100+#?010@$?80&@+-$0010@#?80+%%&%0010+,?819").
 Definition KCa7a_55 : list kentry := Eval vm_compute in (NFC.d_kl "$0010++?8201%50%0010+'?8201%50-0010+&?820100'%?010+%?820100'&?010+$?80&@%-'8010'/?800010'@?800010+#?800010'.?8201%50,0010'-?8201%50$0010',?80&@&.#8010'&?800010'%?800010'$?800010'#?80,$'%.0010&@?8201%50$0").
@@ -187,18 +188,18 @@ Definition KCa7a_107 : list kentry := Eval vm_compute in (NFC.d_kl "$0610,+,.@#?
 Definition KN21w : list kentry := ltac:(nf_rope (KCa7a_54 ++ KCa7a_55 ++ KCa7a_56 ++ KCa7a_57 ++ KCa7a_58 ++ KCa7a_59 ++ KCa7a_60 ++ KCa7a_61 ++ KCa7a_62 ++ KCa7a_63 ++ KCa7a_64 ++ KCa7a_65 ++ KCa7a_66 ++ KCa7a_67 ++ KCa7a_68 ++ KCa7a_69 ++ KCa7a_70 ++ KCa7a_71 ++ KCa7a_72 ++ KCa7a_73 ++ KCa7a_74 ++ KCa7a_75 ++ KCa7a_76 ++ KCa7a_77 ++ KCa7a_78 ++ KCa7a_79 ++ KCa7a_80 ++ KCa7a_81 ++ KCa7a_82 ++ KCa7a_83 ++ KCa7a_84 ++ KCa7a_85 ++ KCa7a_86 ++ KCa7a_87 ++ KCa7a_88 ++ KCa7a_89 ++ KCa7a_90 ++ KCa7a_91 ++ KCa7a_92 ++ KCa7a_93 ++ KCa7a_94 ++ KCa7a_95 ++ KCa7a_96 ++ KCa7a_97 ++ KCa7a_98 ++ KCa7a_99 ++ KCa7a_107 ++ KCa7a_101 ++ KCa7a_102 ++ KCa7a_103 ++ KCa7a_104 ++ KCa7a_105 ++ KCa7a_106) ((kz_deep KN21a))).
 Lemma KN21w_eq : kz_deep KN21a = KN21w. Proof. vmeq_cast. Qed.
 Definition miz21 (kn : list kentry) : list kentry := kn_keep MGrow kn kn ES21 (SO21 - 8) (ELit 8).
-Definition SR21m : list expr := Eval vm_compute in (sr_upd (sr_after_call_c SR21a memisz_clob 47) (ridx 10%bv) (ELit 1)).
-Lemma SR21m_eq : sr_upd (sr_after_call_c SR21a memisz_clob 47) (ridx 10%bv) (ELit 1) = SR21m. Proof. vmeq_cast. Qed.
+Definition SR21m : list expr := Eval vm_compute in (sr_upd (sr_after_call_c SR21a memisz_clob 63) (ridx 10%bv) (ELit 1)).
+Lemma SR21m_eq : sr_upd (sr_after_call_c SR21a memisz_clob 63) (ridx 10%bv) (ELit 1) = SR21m. Proof. vmeq_cast. Qed.
 Definition KN21m : list kentry := ltac:(nf_rope (KCa7a_54 ++ KCa7a_55 ++ KCa7a_56 ++ KCa7a_57 ++ KCa7a_58 ++ KCa7a_59 ++ KCa7a_60 ++ KCa7a_61 ++ KCa7a_62 ++ KCa7a_63 ++ KCa7a_64 ++ KCa7a_65 ++ KCa7a_66 ++ KCa7a_67 ++ KCa7a_68 ++ KCa7a_69 ++ KCa7a_70 ++ KCa7a_71 ++ KCa7a_72 ++ KCa7a_73 ++ KCa7a_74 ++ KCa7a_75 ++ KCa7a_76 ++ KCa7a_77 ++ KCa7a_78 ++ KCa7a_79 ++ KCa7a_80 ++ KCa7a_81 ++ KCa7a_82 ++ KCa7a_83 ++ KCa7a_84 ++ KCa7a_85 ++ KCa7a_86 ++ KCa7a_87 ++ KCa7a_88 ++ KCa7a_89 ++ KCa7a_90 ++ KCa7a_91 ++ KCa7a_92 ++ KCa7a_93 ++ KCa7a_94 ++ KCa7a_95 ++ KCa7a_96 ++ KCa7a_97 ++ KCa7a_98 ++ KCa7a_99 ++ KCa7a_107 ++ KCa7a_101 ++ KCa7a_102 ++ KCa7a_103 ++ KCa7a_104 ++ KCa7a_105 ++ KCa7a_106) ((miz21 KN21w))).
 Lemma KN21m_eq : miz21 KN21w = KN21m. Proof. kn_fast. Qed.
-Definition KWSTK : kentry := KWr (SA (EVar 0) (- 0x800000)) (ELit 0x800000).   (* [comment removed for export] *)
+Definition KWSTK : kentry := KWr (SA (EVar 0) (- 6144512)) (ELit 6144512).   (* [comment removed for export] *)
 Definition IZ21a : nat := Eval vm_compute in (findk0 (KZero (SA EBK EOK) (ELit 39)) KN21w).
 Definition IW21a : nat := Eval vm_compute in (findk0 KWSTK KN21w).
 Lemma KN21a_iZ : nth_error KN21w IZ21a = Some (KZero (SA EBK EOK) (ELit 39)). Proof. vmeq_cast. Qed.
 Lemma KN21a_iW : nth_error KN21w IW21a = Some KWSTK. Proof. vmeq_cast. Qed.
 
 (* [comment removed for export] *)
-Definition run21b := ltac:(nf_run KN21m ((AX2L.sym_execFS6 SEGS IT_Kn7a KN21m F8 true STOPS7 noscr (SS RET21 SR21m [] KN21m 54) []))).
+Definition run21b := ltac:(nf_run KN21m ((AX2L.sym_execFS6 SEGS IT_Kn7a KN21m F8 true STOPS7 noscr (SS RET21 SR21m [] KN21m 70) []))).
 Definition PC21b : Z := Eval lazy in (s_pc (fst (fst run21b))).
 Definition SR21b : list expr := Eval lazy in (s_regs (fst (fst run21b))).
 Definition LG21b : list sentry := s_log (fst (fst run21b)).
@@ -206,7 +207,7 @@ Definition SK21b : list kentry := s_know (fst (fst run21b)).
 Definition NX21b : nat := Eval lazy in (s_next (fst (fst run21b))).
 Definition SC21b : list sidecond := Eval lazy in (snd (fst run21b)).
 Definition SP21b : scripts := Eval lazy in (snd run21b).
-Lemma run21b_eq : sym_exec SEGS F8 true STOPS7 noscr (SS RET21 SR21m [] KN21m 54) [] = (SSR PC21b SR21b LG21b SK21b NX21b None, SC21b, SP21b).
+Lemma run21b_eq : sym_exec SEGS F8 true STOPS7 noscr (SS RET21 SR21m [] KN21m 70) [] = (SSR PC21b SR21b LG21b SK21b NX21b None, SC21b, SP21b).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn7a KN21m); [exact IT_Kn7a_ok | reflexivity | vm_cast_no_check (eq_refl run21b)]. Qed.
 Definition car21b := ltac:(nf_car (KCa7a_54 ++ KCa7a_55 ++ KCa7a_56 ++ KCa7a_57 ++ KCa7a_58 ++ KCa7a_59 ++ KCa7a_60 ++ KCa7a_61 ++ KCa7a_62 ++ KCa7a_63 ++ KCa7a_64 ++ KCa7a_65 ++ KCa7a_66 ++ KCa7a_67 ++ KCa7a_68 ++ KCa7a_69 ++ KCa7a_70 ++ KCa7a_71 ++ KCa7a_72 ++ KCa7a_73 ++ KCa7a_74 ++ KCa7a_75 ++ KCa7a_76 ++ KCa7a_77 ++ KCa7a_78 ++ KCa7a_79 ++ KCa7a_80 ++ KCa7a_81 ++ KCa7a_82 ++ KCa7a_83 ++ KCa7a_84 ++ KCa7a_85 ++ KCa7a_86 ++ KCa7a_87 ++ KCa7a_88 ++ KCa7a_89 ++ KCa7a_90 ++ KCa7a_91 ++ KCa7a_92 ++ KCa7a_93 ++ KCa7a_94 ++ KCa7a_95 ++ KCa7a_96 ++ KCa7a_97 ++ KCa7a_98 ++ KCa7a_99 ++ KCa7a_107 ++ KCa7a_101 ++ KCa7a_102 ++ KCa7a_103 ++ KCa7a_104 ++ KCa7a_105 ++ KCa7a_106) ((AX2L.carryF3 LG21b KN21m []))).
 Definition KN21b : list kentry := fst (fst car21b).
@@ -222,8 +223,8 @@ Definition EO21c : Z := Eval vm_compute in (snd (split_lit (sr_get SR21b 10%bv))
 Lemma E21c_split : split_lit (sr_get SR21b 10%bv) = (EB21c, EO21c). Proof. vmeq_cast. Qed.
 Definition RET21c : Z := Eval vm_compute in (match sr_get SR21b 1%bv with ELit z => z | _ => (-1) end).
 Definition mset21 (kn : list kentry) : list kentry := KFill (SA EB21c EO21c) (ELit 304) 0 :: kn_keep MGrow kn kn EB21c EO21c (ELit 304).
-Definition SR21n : list expr := Eval vm_compute in (sr_after_call_c SR21b memset_clob 54).
-Lemma SR21n_eq : sr_after_call_c SR21b memset_clob 54 = SR21n. Proof. vmeq_cast. Qed.
+Definition SR21n : list expr := Eval vm_compute in (sr_after_call_c SR21b memset_clob 70).
+Lemma SR21n_eq : sr_after_call_c SR21b memset_clob 70 = SR21n. Proof. vmeq_cast. Qed.
 Definition KCa7a_108 : list kentry := Eval vm_compute in (NFC.d_kl "1810/#?0&+00").
 Definition KCa7a_109 : list kentry := Eval vm_compute in (NFC.d_kl "$001%>0160011%6000,$++/0802000,$++.080'%,0000,$++-081%>12620100+-106$%.+.%'@@00212620100/#?06$%.+.%'@@00'>62620100/#?06$%.+.%'@@00'>11%>$00'%+061%>00'%,041%>'%,051%>'%,0',%###-#/,#&&%$%&,071%>00'%,010,+,.@#?0$.+/'.&071%>00'%,000,$-.00'.$,#&071%>00'%,000$%.+.%#.'00--.,,-&&%./.071%>00'%,01%600,$-.071%>00'%,01%500'%,0").
 Definition KCa7a_110 : list kentry := Eval vm_compute in (NFC.d_kl "$071%>00'%,01%400,+,.@$071%>00'%,01$<00-&$,,+.+/.071%>00'%,01$;00%//#,'071%>00'%,01$:00,$-.071%>00'%,00@,-.#/,/@&,000,.%#$&@'+@&,071%>00'%,00$'++$##$&000@,,&,'+/@%&071%>00'%,00$%.+.%#.'000$-@&.@&@071%>00'%,01700'%,051%6'%,0+,-%./%..,',-0000,$+&@080001%6080+.+$%001%6$-820$#-001%6$-040001%6&040001%6$040001%6,0100").
@@ -236,28 +237,60 @@ Definition IW21b : nat := Eval vm_compute in (findk0 KWSTK KN21b).
 Lemma KN21b_iW : nth_error KN21b IW21b = Some KWSTK. Proof. vmeq_cast. Qed.
 
 (* [comment removed for export] *)
-Definition run21c := ltac:(nf_run KN21n ((AX2L.sym_execFS6 SEGS IT_Kn7a KN21n F8 true STOPS7 noscr (SS RET21c SR21n [] KN21n 60) []))).
-Definition PC_E14 : Z := Eval lazy in (s_pc (fst (fst run21c))).
-Definition SR_E14 : list expr := Eval lazy in (s_regs (fst (fst run21c))).
-Definition LG21c : list sentry := s_log (fst (fst run21c)).
-Definition SK21c : list kentry := s_know (fst (fst run21c)).
-Definition NX21c : nat := Eval lazy in (s_next (fst (fst run21c))).
-Definition SC21c : list sidecond := Eval lazy in (snd (fst run21c)).
-Definition SP21c : scripts := Eval lazy in (snd run21c).
-Lemma run21c_eq : sym_exec SEGS F8 true STOPS7 noscr (SS RET21c SR21n [] KN21n 60) [] = (SSR PC_E14 SR_E14 LG21c SK21c NX21c None, SC21c, SP21c).
-Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn7a KN21n); [exact IT_Kn7a_ok | reflexivity | vm_cast_no_check (eq_refl run21c)]. Qed.
+(* run21c holds the walk over the auxiliary vector at 0x94bbc: it reads the vector past pair 25,
+   which the two CONFIG_RSEQ chains joined at the end of run6 no longer describe.  It is run once per
+   value [rs], from KN21n plus the launch's own facts for the vector's tail ([EntryKn.kn_rseq_b rs ++
+   kn_null_b rs]; they still hold here, memory above sp being the launch image), and the two end
+   states meet in the facts common to both: their registers and counters are equal, their knowledge
+   apart only in the aux[] words on the stack and the vector's tail. *)
+Definition KXr (rs : bool) : list kentry := kn_rseq_b rs ++ kn_null_b rs.
+Definition KN21nr (rs : bool) : list kentry := KN21n ++ KXr rs.
+Definition run21c_t := Eval vm_compute in (AX2L.sym_execFS6 SEGS IT_Kn7a (KN21nr true) F8 true STOPS7 noscr (SS RET21c SR21n [] (KN21nr true) 76) []).
+Definition PC21c_t : Z := Eval lazy in (s_pc (fst (fst run21c_t))).
+Definition SR21c_t : list expr := Eval lazy in (s_regs (fst (fst run21c_t))).
+Definition LG21c_t : list sentry := s_log (fst (fst run21c_t)).
+Definition SK21c_t : list kentry := s_know (fst (fst run21c_t)).
+Definition NX21c_t : nat := Eval lazy in (s_next (fst (fst run21c_t))).
+Definition SC21c_t : list sidecond := Eval lazy in (snd (fst run21c_t)).
+Definition SP21c_t : scripts := Eval lazy in (snd run21c_t).
+Lemma run21c_t_eq : sym_exec SEGS F8 true STOPS7 noscr (SS RET21c SR21n [] (KN21nr true) 76) [] = (SSR PC21c_t SR21c_t LG21c_t SK21c_t NX21c_t None, SC21c_t, SP21c_t).
+Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn7a (KN21nr true)); [exact IT_Kn7a_ok | reflexivity | vm_cast_no_check (eq_refl run21c_t)]. Qed.
+Definition run21c_f := Eval vm_compute in (AX2L.sym_execFS6 SEGS IT_Kn7a (KN21nr false) F8 true STOPS7 noscr (SS RET21c SR21n [] (KN21nr false) 76) []).
+Definition PC21c_f : Z := Eval lazy in (s_pc (fst (fst run21c_f))).
+Definition SR21c_f : list expr := Eval lazy in (s_regs (fst (fst run21c_f))).
+Definition LG21c_f : list sentry := s_log (fst (fst run21c_f)).
+Definition SK21c_f : list kentry := s_know (fst (fst run21c_f)).
+Definition NX21c_f : nat := Eval lazy in (s_next (fst (fst run21c_f))).
+Definition SC21c_f : list sidecond := Eval lazy in (snd (fst run21c_f)).
+Definition SP21c_f : scripts := Eval lazy in (snd run21c_f).
+Lemma run21c_f_eq : sym_exec SEGS F8 true STOPS7 noscr (SS RET21c SR21n [] (KN21nr false) 76) [] = (SSR PC21c_f SR21c_f LG21c_f SK21c_f NX21c_f None, SC21c_f, SP21c_f).
+Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn7a (KN21nr false)); [exact IT_Kn7a_ok | reflexivity | vm_cast_no_check (eq_refl run21c_f)]. Qed.
 Definition KCa7a_114 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$%$?820170%'0010$%#?802010$$@?80$#$&.&0010$$/?80'%,0010$$.?80-,+@>010$$-?800010$$,?80&-,/+8010$$+740'4010$$'?820100/%?010$$&?820170%&,0010$$%?800010$$$?820100/%?010$$#?80&/#@@8010$#+?800010$#'?800010$#&?800").
 Definition KCa7a_115 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$#%?800010$#$?800010$##?800010@@?800010@/?802010@.?820100/#?010@-?802010@,?820170%&,0010@+?820100/%?010@'?80%,%+/0010@&?80'.-#@.0010@%?820100+#?010@$?80&@+-$0010@#?80+%%+@8010/$?800010/%?802").
 Definition KCa7a_116 : list kentry := Eval vm_compute in (NFC.d_kl "$0010/'?802010/+?800010/,?800010/-?20$6010/.?80,$.+0010//?80,@/&6010/@?800010,.?820201020400$01120400$012400$0140%$0010,@?800010-@?815010.#?815010.+?80'%,0010-,?816010.,?80$6010.-?80-0010..?80,$.+0").
 Definition KCa7a_117 : list kentry := Eval vm_compute in (NFC.d_kl ">810/#?0&00810.'?0'00810-/?0&00810-+?0,00810,/?0$00810,-?0$$00010&$@?820100&$%?010&$/?802010&$.?820100/#?010&$-?80&+0010&$,?820100/#?010&$+?820100/@?010&$'?80%@.%&8010+,?819").
 Definition KCa7a_118 : list kentry := Eval vm_compute in (NFC.d_kl "$0610,+,.@#?0,+,.@$0110,+,.@#?0,+,#+#0110&$&?0$@%0110$$+?080100811010$0820201020400$011400$0120%$0010%084024021120201020400$01120400$012130%$20201020400$011400$012&08060201020400$011400$012'080,$.+00201020400$011400$012+08080201020400$011400$012,080-00201020400$011400$012-080:0201020400$011400$012.080$60201020400$011400$012/080%00201020400$011400$012@08160201020400$011400$012$#080<").
 Definition KCa7a_119 : list kentry := Eval vm_compute in (NFC.d_kl "10201020400$011400$012$$080'%,0").
-Definition car21c := ltac:(nf_car (KCa7a_114 ++ KCa7a_115 ++ KCa7a_116 ++ KCa7a_117 ++ KCa7a_55 ++ KCa7a_56 ++ KCa7a_57 ++ KCa7a_109 ++ KCa7a_110 ++ KCa7a_111 ++ KCa7a_112 ++ KCa7a_113 ++ KCa7a_64 ++ KCa7a_65 ++ KCa7a_66 ++ KCa7a_67 ++ KCa7a_68 ++ KCa7a_69 ++ KCa7a_70 ++ KCa7a_71 ++ KCa7a_72 ++ KCa7a_73 ++ KCa7a_74 ++ KCa7a_75 ++ KCa7a_76 ++ KCa7a_77 ++ KCa7a_78 ++ KCa7a_79 ++ KCa7a_80 ++ KCa7a_81 ++ KCa7a_82 ++ KCa7a_83 ++ KCa7a_84 ++ KCa7a_85 ++ KCa7a_86 ++ KCa7a_87 ++ KCa7a_88 ++ KCa7a_89 ++ KCa7a_90 ++ KCa7a_91 ++ KCa7a_92 ++ KCa7a_93 ++ KCa7a_94 ++ KCa7a_95 ++ KCa7a_96 ++ KCa7a_97 ++ KCa7a_98 ++ KCa7a_99 ++ KCa7a_118 ++ KCa7a_119 ++ KCa7a_101 ++ KCa7a_102 ++ KCa7a_103 ++ KCa7a_104 ++ KCa7a_105 ++ KCa7a_106) ((AX2L.carryF3 LG21c KN21n []))).
-Definition KN_E14 : list kentry := fst (fst car21c).
-Definition CS21c : list sidecond := Eval lazy in (snd (fst car21c)).
-Definition HS21c : list bool := Eval lazy in (snd car21c).
-Lemma car21c_eq : carry LG21c KN21n [] = (KN_E14, CS21c, HS21c).
-Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car21c). Qed.
+Definition car21c_t := Eval vm_compute in (AX2L.carryF3 LG21c_t (KN21nr true) []).
+Definition KN_E14_t : list kentry := fst (fst car21c_t).
+Definition CS21c_t : list sidecond := Eval lazy in (snd (fst car21c_t)).
+Definition HS21c_t : list bool := Eval lazy in (snd car21c_t).
+Lemma car21c_t_eq : carry LG21c_t (KN21nr true) [] = (KN_E14_t, CS21c_t, HS21c_t).
+Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car21c_t). Qed.
+Definition car21c_f := Eval vm_compute in (AX2L.carryF3 LG21c_f (KN21nr false) []).
+Definition KN_E14_f : list kentry := fst (fst car21c_f).
+Definition CS21c_f : list sidecond := Eval lazy in (snd (fst car21c_f)).
+Definition HS21c_f : list bool := Eval lazy in (snd car21c_f).
+Lemma car21c_f_eq : carry LG21c_f (KN21nr false) [] = (KN_E14_f, CS21c_f, HS21c_f).
+Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car21c_f). Qed.
+
+(* the meeting point *)
+Definition PC_E14 : Z := PC21c_t.
+Definition SR_E14 : list expr := SR21c_t.
+Definition KN_E14 : list kentry := Eval vm_compute in (List.filter (fun K => kn_sub [K] KN_E14_f) KN_E14_t).
+Lemma KN_E14_sub_t : kn_sub KN_E14 KN_E14_t = true. Proof. vmeq_refl. Qed.
+Lemma KN_E14_sub_f : kn_sub KN_E14 KN_E14_f = true. Proof. vmeq_refl. Qed.
+Lemma SR21c_join : SR21c_f = SR21c_t. Proof. vmeq_cast. Qed.
 
 
 Lemma itinerary7a_ok :
@@ -269,7 +302,8 @@ Lemma itinerary7a_ok :
   /\ map (fun r => sr_get SR21b (Z_to_bv 5 r)) [1; 10; 11; 12] = [ELit RET21c; EAlu ALU_ADD (EVar 0) (ELit (-800)); ELit 0; ELit 304]
   /\ (EB21c, EO21c) = (EVar 0, -800)
   /\ existsb (APC.kentry_eqb KZDEEP) KN_E14 = true
-  /\ (PC_E14, SC21c, CS21c) = (A_internal_mmap_ecall, [], [])
+  /\ (PC21c_t, SC21c_t, CS21c_t, NX21c_t) = (A_internal_mmap_ecall, [], [], 76%nat)
+  /\ (PC21c_f, SC21c_f, CS21c_f, NX21c_f) = (A_internal_mmap_ecall, [], [], 76%nat)
   /\ map (fun r => sr_get SR_E14 (Z_to_bv 5 r)) [10; 11; 12; 13; 14; 15; 17]
      = [ELit 0; ELit 4096; ELit 3; ELit 34; ELit (2 ^ 64 - 1); ELit 0; ELit 222].
 Proof. vmeq_conj. Qed.
@@ -306,11 +340,11 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 Definition DS_E13 : list (saddr * expr) :=
   [(SA (EVar 0) (- 0x800000), ELit 0x1800000); (SA (ELit 0) A_img_lo, ELit (A_img_hi - A_img_lo));
-   (SA (ELit 0) SHB_LO, ELit (SHB_HI - SHB_LO)); (SA (EVar 38) 0, ELit 65536)] ++ List.skipn 3 DS_E12.
+   (SA (ELit 0) SHB_LO, ELit (SHB_HI - SHB_LO)); (SA (EVar 54) 0, ELit 65536)] ++ List.skipn 3 DS_E12.
 Definition STOPS7 : list Z := [A_internal_mmap_ecall; A_musl_memset; A_mem_is_zero; A_spin_mmapordie; A_spin_noreserve].
 
 (* [comment removed for export] *)
-Definition SR21 : list expr := sr_upd SR_E13 10 (EVar 46).
+Definition SR21 : list expr := sr_upd SR_E13 10 (EVar 62).
 Definition KCb7a_120 : list kentry := Eval vm_compute in (NFC.d_kl "$011%>00'%,061%>00'%,041%>'%,051%>'%,0',%###-#/,#&&%$%&,071%>00'%,010,+,.@#?0$.+/'.&071%>00'%,000,$-.00'.$@%/071%>00'%,000$%.+.%#.'00--.,,-&&%./.071%>00'%,01%600,$-.071%>00'%,01%500'%,071%>00'%,01%400,+,.@$071%>00'%,01$<00-&$,,+.+/.071%>00'%,01$;00%//#,'071%>00'%,01$:00,$-.071%>00'%,00@,-.#/,/@&,000,.%#$&@'+@&,071%>00'%,00$'++$##$&000@,,&,'+/@%&071%>00'%,00$%.+.%#.'000$-@&.@&@0").
 Definition KCb7a_121 : list kentry := Eval vm_compute in (NFC.d_kl "$071%>00'%,01700'%,051%6'%,0+,-%./%..,',-0010,,?802010,+?800010,'?80$#$'.@0010,&?80'%,0010,%?80$#...6010,$?800010,#?80&--#$8010+@740'4010+/?800010+.?80$#$'.@0010+-?80'%,0010+,?80,$,,&0010++?80&/-#/0010+'?81%5").
 Definition KCb7a_122 : list kentry := Eval vm_compute in (NFC.d_kl "$0010+&?80&@@###,%$+&#-$&%+/>010+%?80,$,++0010+$?80&/&.$0010'/?81%6000,$,',080001%6080+.,$@001%6$.080001%6$-820$#-001%6$-040001%6&040001%6%080001%6$040001%6,010001%6+080001%6'080001%6$,0800").
@@ -362,8 +396,8 @@ Definition KCb7a_167 : list kentry := Eval vm_compute in (NFC.d_kl "$03,#@//2,#@
 Definition KCb7a_168 : list kentry := Eval vm_compute in (NFC.d_kl "$03$#$/#.>$#$/#/03$#%%&&>$#%%'+03$#%%'+8$#%%',03$#%%-/0$#%%@$03$#%%@%0$#%%@/03$#%&#$0$#%&&,03$#%&&,2'.#-@-03'.#-@-2'.#-@-83'.#-@/>'.#-@@03'.#-@@8'.#.##03'.#.#$8'.#.,/03'.#.,/4'.#.,@03'.#.-#4'.-$,/03'.-$,@0'.-$-$03'.-$-,0'.-%#'03'.-%#+0'.-%#-0").
 Definition KCb7a_169 : list kentry := Eval vm_compute in (NFC.d_kl "$03'.-%#-8'.-%#.03'.-%#/0'.-%#@03'.-%$#0'.-%&/03'.-%&@0'.-%,@03'.-%-$2'.-%-%03'.-%-.0'.-%.&03'.-%.'0'.-,#+03'.-,#,0'.--$$03'.--$$8'.--$%03'.--$%8'..#@,0600+.+%#00'%@,.,0417'%,0517'%,0+,-%./%./$%#/071700'%,000,$-.00'.$@%/071700'%,010,+,.@#?0/.'-/-0117'808").
 Definition KCb7a_170 : list kentry := Eval vm_compute in (NFC.d_kl "7117+80.8117$+00&0117$/00&0117%&00&&0117+.00&-/061700'%,05182&%./@+>").
-Definition KN21 : list kentry := ltac:(nf_rope (KCb7a_120 ++ KCb7a_121 ++ KCb7a_122 ++ KCb7a_123 ++ KCb7a_124 ++ KCb7a_125 ++ KCb7a_126 ++ KCb7a_127 ++ KCb7a_128 ++ KCb7a_129 ++ KCb7a_130 ++ KCb7a_131 ++ KCb7a_132 ++ KCb7a_133 ++ KCb7a_134 ++ KCb7a_135 ++ KCb7a_136 ++ KCb7a_137 ++ KCb7a_138 ++ KCb7a_139 ++ KCb7a_140 ++ KCb7a_141 ++ KCb7a_142 ++ KCb7a_143 ++ KCb7a_144 ++ KCb7a_145 ++ KCb7a_146 ++ KCb7a_147 ++ KCb7a_148 ++ KCb7a_149 ++ KCb7a_150 ++ KCb7a_151 ++ KCb7a_152 ++ KCb7a_153 ++ KCb7a_154 ++ KCb7a_155 ++ KCb7a_156 ++ KCb7a_157 ++ KCb7a_158 ++ KCb7a_159 ++ KCb7a_160 ++ KCb7a_161 ++ KCb7a_162 ++ KCb7a_163 ++ KCb7a_164 ++ KCb7a_165 ++ KCb7a_166 ++ KCb7a_167 ++ KCb7a_168 ++ KCb7a_169 ++ KCb7a_170) ((kn_grant_d DS_E13 46 4096 KN_E13))).
-Lemma KN21_eq : kn_grant_d DS_E13 46 4096 KN_E13 = KN21. Proof. kn_fast. Qed.
+Definition KN21 : list kentry := ltac:(nf_rope (KCb7a_120 ++ KCb7a_121 ++ KCb7a_122 ++ KCb7a_123 ++ KCb7a_124 ++ KCb7a_125 ++ KCb7a_126 ++ KCb7a_127 ++ KCb7a_128 ++ KCb7a_129 ++ KCb7a_130 ++ KCb7a_131 ++ KCb7a_132 ++ KCb7a_133 ++ KCb7a_134 ++ KCb7a_135 ++ KCb7a_136 ++ KCb7a_137 ++ KCb7a_138 ++ KCb7a_139 ++ KCb7a_140 ++ KCb7a_141 ++ KCb7a_142 ++ KCb7a_143 ++ KCb7a_144 ++ KCb7a_145 ++ KCb7a_146 ++ KCb7a_147 ++ KCb7a_148 ++ KCb7a_149 ++ KCb7a_150 ++ KCb7a_151 ++ KCb7a_152 ++ KCb7a_153 ++ KCb7a_154 ++ KCb7a_155 ++ KCb7a_156 ++ KCb7a_157 ++ KCb7a_158 ++ KCb7a_159 ++ KCb7a_160 ++ KCb7a_161 ++ KCb7a_162 ++ KCb7a_163 ++ KCb7a_164 ++ KCb7a_165 ++ KCb7a_166 ++ KCb7a_167 ++ KCb7a_168 ++ KCb7a_169 ++ KCb7a_170) ((kn_grant_d DS_E13 62 4096 KN_E13))).
+Lemma KN21_eq : kn_grant_d DS_E13 62 4096 KN_E13 = KN21. Proof. kn_fast. Qed.
 
 (* [comment removed for export] *)
 Definition ESB (c : Z) : expr := EAlu ALU_SRL (EAlu ALU_ADD (EVar 0) (ELit c)) (ELit 3).
@@ -380,7 +414,7 @@ Definition KN21y : list kentry := KZ21e :: KN21x.
 
 
 (* [comment removed for export] *)
-Definition run21a := ltac:(nf_run KN21y ((AX2L.sym_execFS6 SEGS IT_Kn7a KN21y F8 true STOPS7 noscr (SS A_internal_mmap_ret SR21 [] KN21y 47) []))).
+Definition run21a := ltac:(nf_run KN21y ((AX2L.sym_execFS6 SEGS IT_Kn7a KN21y F8 true STOPS7 noscr (SS A_internal_mmap_ret SR21 [] KN21y 63) []))).
 Definition PC21a : Z := Eval lazy in (s_pc (fst (fst run21a))).
 Definition SR21a : list expr := Eval lazy in (s_regs (fst (fst run21a))).
 Definition LG21a : list sentry := s_log (fst (fst run21a)).
@@ -388,7 +422,7 @@ Definition SK21a : list kentry := s_know (fst (fst run21a)).
 Definition NX21a : nat := Eval lazy in (s_next (fst (fst run21a))).
 Definition SC21a : list sidecond := Eval lazy in (snd (fst run21a)).
 Definition SP21a : scripts := Eval lazy in (snd run21a).
-Lemma run21a_eq : sym_exec SEGS F8 true STOPS7 noscr (SS A_internal_mmap_ret SR21 [] KN21y 47) [] = (SSR PC21a SR21a LG21a SK21a NX21a None, SC21a, SP21a).
+Lemma run21a_eq : sym_exec SEGS F8 true STOPS7 noscr (SS A_internal_mmap_ret SR21 [] KN21y 63) [] = (SSR PC21a SR21a LG21a SK21a NX21a None, SC21a, SP21a).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn7a KN21y); [exact IT_Kn7a_ok | reflexivity | vm_cast_no_check (eq_refl run21a)]. Qed.
 Definition KCb7a_173 : list kentry := Eval vm_compute in (NFC.d_kl "$0010&$@?820100&$%?010&$/?802010&$.?820100/#?010&$-?80&+0010&$,?820100/#?010&$+?820100/@?010&$'?80%@.&@8010@-?800010@,?800010@+?802010@'?820100/#?010@&?80'.-%#'0010@%?820100+#?010@$?80&@+..0010@#?80+%&&@8010+,?819").
 Definition KCb7a_174 : list kentry := Eval vm_compute in (NFC.d_kl "$0010++?8201%50%0010+'?8201%50-0010+&?820100'%?010+%?820100'&?010+$?80&@%/#8010'/?800010'@?800010+#?800010'.?8201%50,0010'-?8201%50$0010',?80&@&/-8010'&?800010'%?800010'$?800010'#?80,$+&'0010&@?8201%50$0").
@@ -464,18 +498,18 @@ Definition KCb7a_226 : list kentry := Eval vm_compute in (NFC.d_kl "$0610,+,.@#?
 Definition KN21w : list kentry := ltac:(nf_rope (KCb7a_173 ++ KCb7a_174 ++ KCb7a_175 ++ KCb7a_176 ++ KCb7a_177 ++ KCb7a_178 ++ KCb7a_179 ++ KCb7a_180 ++ KCb7a_181 ++ KCb7a_182 ++ KCb7a_183 ++ KCb7a_184 ++ KCb7a_185 ++ KCb7a_186 ++ KCb7a_187 ++ KCb7a_188 ++ KCb7a_189 ++ KCb7a_190 ++ KCb7a_191 ++ KCb7a_192 ++ KCb7a_193 ++ KCb7a_194 ++ KCb7a_195 ++ KCb7a_196 ++ KCb7a_197 ++ KCb7a_198 ++ KCb7a_199 ++ KCb7a_200 ++ KCb7a_201 ++ KCb7a_202 ++ KCb7a_203 ++ KCb7a_204 ++ KCb7a_205 ++ KCb7a_206 ++ KCb7a_207 ++ KCb7a_208 ++ KCb7a_209 ++ KCb7a_210 ++ KCb7a_211 ++ KCb7a_212 ++ KCb7a_213 ++ KCb7a_214 ++ KCb7a_215 ++ KCb7a_216 ++ KCb7a_217 ++ KCb7a_218 ++ KCb7a_226 ++ KCb7a_220 ++ KCb7a_221 ++ KCb7a_222 ++ KCb7a_223 ++ KCb7a_224 ++ KCb7a_225) ((kz_deep KN21a))).
 Lemma KN21w_eq : kz_deep KN21a = KN21w. Proof. vmeq_cast. Qed.
 Definition miz21 (kn : list kentry) : list kentry := kn_keep MGrow kn kn ES21 (SO21 - 8) (ELit 8).
-Definition SR21m : list expr := Eval vm_compute in (sr_upd (sr_after_call_c SR21a memisz_clob 47) (ridx 10%bv) (ELit 1)).
-Lemma SR21m_eq : sr_upd (sr_after_call_c SR21a memisz_clob 47) (ridx 10%bv) (ELit 1) = SR21m. Proof. vmeq_cast. Qed.
+Definition SR21m : list expr := Eval vm_compute in (sr_upd (sr_after_call_c SR21a memisz_clob 63) (ridx 10%bv) (ELit 1)).
+Lemma SR21m_eq : sr_upd (sr_after_call_c SR21a memisz_clob 63) (ridx 10%bv) (ELit 1) = SR21m. Proof. vmeq_cast. Qed.
 Definition KN21m : list kentry := ltac:(nf_rope (KCb7a_173 ++ KCb7a_174 ++ KCb7a_175 ++ KCb7a_176 ++ KCb7a_177 ++ KCb7a_178 ++ KCb7a_179 ++ KCb7a_180 ++ KCb7a_181 ++ KCb7a_182 ++ KCb7a_183 ++ KCb7a_184 ++ KCb7a_185 ++ KCb7a_186 ++ KCb7a_187 ++ KCb7a_188 ++ KCb7a_189 ++ KCb7a_190 ++ KCb7a_191 ++ KCb7a_192 ++ KCb7a_193 ++ KCb7a_194 ++ KCb7a_195 ++ KCb7a_196 ++ KCb7a_197 ++ KCb7a_198 ++ KCb7a_199 ++ KCb7a_200 ++ KCb7a_201 ++ KCb7a_202 ++ KCb7a_203 ++ KCb7a_204 ++ KCb7a_205 ++ KCb7a_206 ++ KCb7a_207 ++ KCb7a_208 ++ KCb7a_209 ++ KCb7a_210 ++ KCb7a_211 ++ KCb7a_212 ++ KCb7a_213 ++ KCb7a_214 ++ KCb7a_215 ++ KCb7a_216 ++ KCb7a_217 ++ KCb7a_218 ++ KCb7a_226 ++ KCb7a_220 ++ KCb7a_221 ++ KCb7a_222 ++ KCb7a_223 ++ KCb7a_224 ++ KCb7a_225) ((miz21 KN21w))).
 Lemma KN21m_eq : miz21 KN21w = KN21m. Proof. kn_fast. Qed.
-Definition KWSTK : kentry := KWr (SA (EVar 0) (- 0x800000)) (ELit 0x800000).   (* [comment removed for export] *)
+Definition KWSTK : kentry := KWr (SA (EVar 0) (- 6144512)) (ELit 6144512).   (* [comment removed for export] *)
 Definition IZ21a : nat := Eval vm_compute in (findk0 (KZero (SA EBK EOK) (ELit 39)) KN21w).
 Definition IW21a : nat := Eval vm_compute in (findk0 KWSTK KN21w).
 Lemma KN21a_iZ : nth_error KN21w IZ21a = Some (KZero (SA EBK EOK) (ELit 39)). Proof. vmeq_cast. Qed.
 Lemma KN21a_iW : nth_error KN21w IW21a = Some KWSTK. Proof. vmeq_cast. Qed.
 
 (* [comment removed for export] *)
-Definition run21b := ltac:(nf_run KN21m ((AX2L.sym_execFS6 SEGS IT_Kn7a KN21m F8 true STOPS7 noscr (SS RET21 SR21m [] KN21m 54) []))).
+Definition run21b := ltac:(nf_run KN21m ((AX2L.sym_execFS6 SEGS IT_Kn7a KN21m F8 true STOPS7 noscr (SS RET21 SR21m [] KN21m 70) []))).
 Definition PC21b : Z := Eval lazy in (s_pc (fst (fst run21b))).
 Definition SR21b : list expr := Eval lazy in (s_regs (fst (fst run21b))).
 Definition LG21b : list sentry := s_log (fst (fst run21b)).
@@ -483,7 +517,7 @@ Definition SK21b : list kentry := s_know (fst (fst run21b)).
 Definition NX21b : nat := Eval lazy in (s_next (fst (fst run21b))).
 Definition SC21b : list sidecond := Eval lazy in (snd (fst run21b)).
 Definition SP21b : scripts := Eval lazy in (snd run21b).
-Lemma run21b_eq : sym_exec SEGS F8 true STOPS7 noscr (SS RET21 SR21m [] KN21m 54) [] = (SSR PC21b SR21b LG21b SK21b NX21b None, SC21b, SP21b).
+Lemma run21b_eq : sym_exec SEGS F8 true STOPS7 noscr (SS RET21 SR21m [] KN21m 70) [] = (SSR PC21b SR21b LG21b SK21b NX21b None, SC21b, SP21b).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn7a KN21m); [exact IT_Kn7a_ok | reflexivity | vm_cast_no_check (eq_refl run21b)]. Qed.
 Definition car21b := ltac:(nf_car (KCb7a_173 ++ KCb7a_174 ++ KCb7a_175 ++ KCb7a_176 ++ KCb7a_177 ++ KCb7a_178 ++ KCb7a_179 ++ KCb7a_180 ++ KCb7a_181 ++ KCb7a_182 ++ KCb7a_183 ++ KCb7a_184 ++ KCb7a_185 ++ KCb7a_186 ++ KCb7a_187 ++ KCb7a_188 ++ KCb7a_189 ++ KCb7a_190 ++ KCb7a_191 ++ KCb7a_192 ++ KCb7a_193 ++ KCb7a_194 ++ KCb7a_195 ++ KCb7a_196 ++ KCb7a_197 ++ KCb7a_198 ++ KCb7a_199 ++ KCb7a_200 ++ KCb7a_201 ++ KCb7a_202 ++ KCb7a_203 ++ KCb7a_204 ++ KCb7a_205 ++ KCb7a_206 ++ KCb7a_207 ++ KCb7a_208 ++ KCb7a_209 ++ KCb7a_210 ++ KCb7a_211 ++ KCb7a_212 ++ KCb7a_213 ++ KCb7a_214 ++ KCb7a_215 ++ KCb7a_216 ++ KCb7a_217 ++ KCb7a_218 ++ KCb7a_226 ++ KCb7a_220 ++ KCb7a_221 ++ KCb7a_222 ++ KCb7a_223 ++ KCb7a_224 ++ KCb7a_225) ((AX2L.carryF3 LG21b KN21m []))).
 Definition KN21b : list kentry := fst (fst car21b).
@@ -499,8 +533,8 @@ Definition EO21c : Z := Eval vm_compute in (snd (split_lit (sr_get SR21b 10%bv))
 Lemma E21c_split : split_lit (sr_get SR21b 10%bv) = (EB21c, EO21c). Proof. vmeq_cast. Qed.
 Definition RET21c : Z := Eval vm_compute in (match sr_get SR21b 1%bv with ELit z => z | _ => (-1) end).
 Definition mset21 (kn : list kentry) : list kentry := KFill (SA EB21c EO21c) (ELit 304) 0 :: kn_keep MGrow kn kn EB21c EO21c (ELit 304).
-Definition SR21n : list expr := Eval vm_compute in (sr_after_call_c SR21b memset_clob 54).
-Lemma SR21n_eq : sr_after_call_c SR21b memset_clob 54 = SR21n. Proof. vmeq_cast. Qed.
+Definition SR21n : list expr := Eval vm_compute in (sr_after_call_c SR21b memset_clob 70).
+Lemma SR21n_eq : sr_after_call_c SR21b memset_clob 70 = SR21n. Proof. vmeq_cast. Qed.
 Definition KCb7a_227 : list kentry := Eval vm_compute in (NFC.d_kl "1810/#?0&+00").
 Definition KCb7a_228 : list kentry := Eval vm_compute in (NFC.d_kl "$001%>0160011%6000,$,,+0802000,$,,'080'%,0000,$,,&081%>12620100+-106$%.+.%'@@00212620100/#?06$%.+.%'@@00'>62620100/#?06$%.+.%'@@00'>11%>$00'%+061%>00'%,041%>'%,051%>'%,0',%###-#/,#&&%$%&,071%>00'%,010,+,.@#?0$.+/'.&071%>00'%,000,$-.00'.$@%/071%>00'%,000$%.+.%#.'00--.,,-&&%./.071%>00'%,01%600,$-.071%>00'%,01%500'%,0").
 Definition KCb7a_229 : list kentry := Eval vm_compute in (NFC.d_kl "$071%>00'%,01%400,+,.@$071%>00'%,01$<00-&$,,+.+/.071%>00'%,01$;00%//#,'071%>00'%,01$:00,$-.071%>00'%,00@,-.#/,/@&,000,.%#$&@'+@&,071%>00'%,00$'++$##$&000@,,&,'+/@%&071%>00'%,00$%.+.%#.'000$-@&.@&@071%>00'%,01700'%,051%6'%,0+,-%./%..,',-0000,$,',080001%6080+.,$@001%6$-820$#-001%6$-040001%6&040001%6$040001%6,0100").
@@ -513,28 +547,60 @@ Definition IW21b : nat := Eval vm_compute in (findk0 KWSTK KN21b).
 Lemma KN21b_iW : nth_error KN21b IW21b = Some KWSTK. Proof. vmeq_cast. Qed.
 
 (* [comment removed for export] *)
-Definition run21c := ltac:(nf_run KN21n ((AX2L.sym_execFS6 SEGS IT_Kn7a KN21n F8 true STOPS7 noscr (SS RET21c SR21n [] KN21n 60) []))).
-Definition PC_E14 : Z := Eval lazy in (s_pc (fst (fst run21c))).
-Definition SR_E14 : list expr := Eval lazy in (s_regs (fst (fst run21c))).
-Definition LG21c : list sentry := s_log (fst (fst run21c)).
-Definition SK21c : list kentry := s_know (fst (fst run21c)).
-Definition NX21c : nat := Eval lazy in (s_next (fst (fst run21c))).
-Definition SC21c : list sidecond := Eval lazy in (snd (fst run21c)).
-Definition SP21c : scripts := Eval lazy in (snd run21c).
-Lemma run21c_eq : sym_exec SEGS F8 true STOPS7 noscr (SS RET21c SR21n [] KN21n 60) [] = (SSR PC_E14 SR_E14 LG21c SK21c NX21c None, SC21c, SP21c).
-Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn7a KN21n); [exact IT_Kn7a_ok | reflexivity | vm_cast_no_check (eq_refl run21c)]. Qed.
+(* run21c holds the walk over the auxiliary vector at 0x94bbc: it reads the vector past pair 25,
+   which the two CONFIG_RSEQ chains joined at the end of run6 no longer describe.  It is run once per
+   value [rs], from KN21n plus the launch's own facts for the vector's tail ([EntryKn.kn_rseq_b rs ++
+   kn_null_b rs]; they still hold here, memory above sp being the launch image), and the two end
+   states meet in the facts common to both: their registers and counters are equal, their knowledge
+   apart only in the aux[] words on the stack and the vector's tail. *)
+Definition KXr (rs : bool) : list kentry := kn_rseq_b rs ++ kn_null_b rs.
+Definition KN21nr (rs : bool) : list kentry := KN21n ++ KXr rs.
+Definition run21c_t := Eval vm_compute in (AX2L.sym_execFS6 SEGS IT_Kn7a (KN21nr true) F8 true STOPS7 noscr (SS RET21c SR21n [] (KN21nr true) 76) []).
+Definition PC21c_t : Z := Eval lazy in (s_pc (fst (fst run21c_t))).
+Definition SR21c_t : list expr := Eval lazy in (s_regs (fst (fst run21c_t))).
+Definition LG21c_t : list sentry := s_log (fst (fst run21c_t)).
+Definition SK21c_t : list kentry := s_know (fst (fst run21c_t)).
+Definition NX21c_t : nat := Eval lazy in (s_next (fst (fst run21c_t))).
+Definition SC21c_t : list sidecond := Eval lazy in (snd (fst run21c_t)).
+Definition SP21c_t : scripts := Eval lazy in (snd run21c_t).
+Lemma run21c_t_eq : sym_exec SEGS F8 true STOPS7 noscr (SS RET21c SR21n [] (KN21nr true) 76) [] = (SSR PC21c_t SR21c_t LG21c_t SK21c_t NX21c_t None, SC21c_t, SP21c_t).
+Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn7a (KN21nr true)); [exact IT_Kn7a_ok | reflexivity | vm_cast_no_check (eq_refl run21c_t)]. Qed.
+Definition run21c_f := Eval vm_compute in (AX2L.sym_execFS6 SEGS IT_Kn7a (KN21nr false) F8 true STOPS7 noscr (SS RET21c SR21n [] (KN21nr false) 76) []).
+Definition PC21c_f : Z := Eval lazy in (s_pc (fst (fst run21c_f))).
+Definition SR21c_f : list expr := Eval lazy in (s_regs (fst (fst run21c_f))).
+Definition LG21c_f : list sentry := s_log (fst (fst run21c_f)).
+Definition SK21c_f : list kentry := s_know (fst (fst run21c_f)).
+Definition NX21c_f : nat := Eval lazy in (s_next (fst (fst run21c_f))).
+Definition SC21c_f : list sidecond := Eval lazy in (snd (fst run21c_f)).
+Definition SP21c_f : scripts := Eval lazy in (snd run21c_f).
+Lemma run21c_f_eq : sym_exec SEGS F8 true STOPS7 noscr (SS RET21c SR21n [] (KN21nr false) 76) [] = (SSR PC21c_f SR21c_f LG21c_f SK21c_f NX21c_f None, SC21c_f, SP21c_f).
+Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn7a (KN21nr false)); [exact IT_Kn7a_ok | reflexivity | vm_cast_no_check (eq_refl run21c_f)]. Qed.
 Definition KCb7a_233 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$%$?820170%'0010$%#?802010$$@?80$#$'.@0010$$/?80'%,0010$$.?80-,+@>010$$-?800010$$,?80&--#$8010$$+740'4010$$'?820100/%?010$$&?820170%&,0010$$%?800010$$$?820100/%?010$$#?80&/$$,8010$#+?800010$#'?800010$#&?800").
 Definition KCb7a_234 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$#%?800010$#$?800010$##?800010@@?800010@/?802010@.?820100/#?010@-?802010@,?820170%&,0010@+?820100/%?010@'?80%,%-+0010@&?80'.-%#'0010@%?820100+#?010@$?80&@+..0010@#?80+%&,.0010/$?800010/%?802").
 Definition KCb7a_235 : list kentry := Eval vm_compute in (NFC.d_kl "$0010/'?802010/+?800010/,?800010/-?20$6010/.?80,$.+0010//?80,@/&6010/@?800010,.?820201020400$01120400$012400$0140%$0010,@?800010-@?815010.#?815010.+?80'%,0010-,?816010.,?80$6010.-?80-0010..?80,$.+0").
 Definition KCb7a_236 : list kentry := Eval vm_compute in (NFC.d_kl ">810/#?0&00810.'?0'00810-/?0&00810-+?0,00810,/?0$00810,-?0$$00010&$@?820100&$%?010&$/?802010&$.?820100/#?010&$-?80&+0010&$,?820100/#?010&$+?820100/@?010&$'?80%@.&@8010+,?819").
 Definition KCb7a_237 : list kentry := Eval vm_compute in (NFC.d_kl "$0610,+,.@#?0,+,.@$0110,+,.@#?0,+,#+#0110&$&?0$@%0110$$+?080100811010$0820201020400$011400$0120%$0010%084024021120201020400$01120400$012130%$20201020400$011400$012&08060201020400$011400$012'080,$.+00201020400$011400$012+08080201020400$011400$012,080-00201020400$011400$012-080:0201020400$011400$012.080$60201020400$011400$012/080%00201020400$011400$012@08160201020400$011400$012$#080<").
 Definition KCb7a_238 : list kentry := Eval vm_compute in (NFC.d_kl "10201020400$011400$012$$080'%,0").
-Definition car21c := ltac:(nf_car (KCb7a_233 ++ KCb7a_234 ++ KCb7a_235 ++ KCb7a_236 ++ KCb7a_174 ++ KCb7a_175 ++ KCb7a_176 ++ KCb7a_228 ++ KCb7a_229 ++ KCb7a_230 ++ KCb7a_231 ++ KCb7a_232 ++ KCb7a_183 ++ KCb7a_184 ++ KCb7a_185 ++ KCb7a_186 ++ KCb7a_187 ++ KCb7a_188 ++ KCb7a_189 ++ KCb7a_190 ++ KCb7a_191 ++ KCb7a_192 ++ KCb7a_193 ++ KCb7a_194 ++ KCb7a_195 ++ KCb7a_196 ++ KCb7a_197 ++ KCb7a_198 ++ KCb7a_199 ++ KCb7a_200 ++ KCb7a_201 ++ KCb7a_202 ++ KCb7a_203 ++ KCb7a_204 ++ KCb7a_205 ++ KCb7a_206 ++ KCb7a_207 ++ KCb7a_208 ++ KCb7a_209 ++ KCb7a_210 ++ KCb7a_211 ++ KCb7a_212 ++ KCb7a_213 ++ KCb7a_214 ++ KCb7a_215 ++ KCb7a_216 ++ KCb7a_217 ++ KCb7a_218 ++ KCb7a_237 ++ KCb7a_238 ++ KCb7a_220 ++ KCb7a_221 ++ KCb7a_222 ++ KCb7a_223 ++ KCb7a_224 ++ KCb7a_225) ((AX2L.carryF3 LG21c KN21n []))).
-Definition KN_E14 : list kentry := fst (fst car21c).
-Definition CS21c : list sidecond := Eval lazy in (snd (fst car21c)).
-Definition HS21c : list bool := Eval lazy in (snd car21c).
-Lemma car21c_eq : carry LG21c KN21n [] = (KN_E14, CS21c, HS21c).
-Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car21c). Qed.
+Definition car21c_t := Eval vm_compute in (AX2L.carryF3 LG21c_t (KN21nr true) []).
+Definition KN_E14_t : list kentry := fst (fst car21c_t).
+Definition CS21c_t : list sidecond := Eval lazy in (snd (fst car21c_t)).
+Definition HS21c_t : list bool := Eval lazy in (snd car21c_t).
+Lemma car21c_t_eq : carry LG21c_t (KN21nr true) [] = (KN_E14_t, CS21c_t, HS21c_t).
+Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car21c_t). Qed.
+Definition car21c_f := Eval vm_compute in (AX2L.carryF3 LG21c_f (KN21nr false) []).
+Definition KN_E14_f : list kentry := fst (fst car21c_f).
+Definition CS21c_f : list sidecond := Eval lazy in (snd (fst car21c_f)).
+Definition HS21c_f : list bool := Eval lazy in (snd car21c_f).
+Lemma car21c_f_eq : carry LG21c_f (KN21nr false) [] = (KN_E14_f, CS21c_f, HS21c_f).
+Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car21c_f). Qed.
+
+(* the meeting point *)
+Definition PC_E14 : Z := PC21c_t.
+Definition SR_E14 : list expr := SR21c_t.
+Definition KN_E14 : list kentry := Eval vm_compute in (List.filter (fun K => kn_sub [K] KN_E14_f) KN_E14_t).
+Lemma KN_E14_sub_t : kn_sub KN_E14 KN_E14_t = true. Proof. vmeq_refl. Qed.
+Lemma KN_E14_sub_f : kn_sub KN_E14 KN_E14_f = true. Proof. vmeq_refl. Qed.
+Lemma SR21c_join : SR21c_f = SR21c_t. Proof. vmeq_cast. Qed.
 
 
 Lemma itinerary7a_ok :
@@ -546,7 +612,8 @@ Lemma itinerary7a_ok :
   /\ map (fun r => sr_get SR21b (Z_to_bv 5 r)) [1; 10; 11; 12] = [ELit RET21c; EAlu ALU_ADD (EVar 0) (ELit (-800)); ELit 0; ELit 304]
   /\ (EB21c, EO21c) = (EVar 0, -800)
   /\ existsb (APC.kentry_eqb KZDEEP) KN_E14 = true
-  /\ (PC_E14, SC21c, CS21c) = (A_internal_mmap_ecall, [], [])
+  /\ (PC21c_t, SC21c_t, CS21c_t, NX21c_t) = (A_internal_mmap_ecall, [], [], 76%nat)
+  /\ (PC21c_f, SC21c_f, CS21c_f, NX21c_f) = (A_internal_mmap_ecall, [], [], 76%nat)
   /\ map (fun r => sr_get SR_E14 (Z_to_bv 5 r)) [10; 11; 12; 13; 14; 15; 17]
      = [ELit 0; ELit 4096; ELit 3; ELit 34; ELit (2 ^ 64 - 1); ELit 0; ELit 222].
 Proof. vmeq_conj. Qed.

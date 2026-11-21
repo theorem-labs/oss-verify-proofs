@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (writev reads its iovecs through the read-only backing; the output channel keeps a reader). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -17,6 +18,7 @@ From OSSVerify.Proofs.openssl.hashtable.lib Require Import
   AsanAcct LazyFrame NoReserve Hoare LibWritev CxNodesBase CxNodesFs.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import CxRel CxAcctShape CxNodesLibE.
+From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import RomBase RomWritev.
 Import ListNotations.
 Open Scope Z_scope.
 
@@ -36,6 +38,20 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+Lemma iovec_entry_accesses_sub : forall mp (a : word),
+  (bv_unsigned a + 16 < 2 ^ 64)%Z ->
+  forall x, In x (iovec_entry_accesses mp a) ->
+  (bv_unsigned a <= bv_unsigned (fst x))%Z /\ (bv_unsigned (fst x) + Z.of_nat (snd x) <= bv_unsigned a + 16)%Z.
+Proof.
+  intros mp a Hnw x Hin. unfold iovec_entry_accesses in Hin.
+  destruct (read_u64 mp (a + 8)%bv); [|destruct Hin].
+  destruct (read_u64 mp a); destruct Hin as [<- | []]; cbn [fst snd]; [lia|].
+  assert (Ha8 : bv_unsigned (a + 8)%bv = (bv_unsigned a + 8)%Z).
+  { rewrite bv_add_Zform. pose proof (u64_range a).
+    replace (bv_unsigned (Z_to_bv 64 8)) with 8%Z by reflexivity. apply u64_lit. lia. }
+  rewrite Ha8. lia.
+Qed.
+
 Lemma copy_iovecs_accesses_sub : forall mp k (a : word),
   (bv_unsigned a + 16 * Z.of_nat k < 2 ^ 64)%Z ->
   forall x, In x (copy_iovecs_accesses mp a k) ->
@@ -43,8 +59,8 @@ Lemma copy_iovecs_accesses_sub : forall mp k (a : word),
 Proof.
   intros mp k. induction k as [|k IH]; intros a Hnw x Hin; cbn [copy_iovecs_accesses] in Hin.
   - destruct Hin.
-  - destruct Hin as [<- | Hin].
-    + cbn [fst snd]. lia.
+  - apply in_app_iff in Hin as [Hin | Hin].
+    + destruct (iovec_entry_accesses_sub mp a ltac:(lia) x Hin) as [H1 H2]. lia.
     + destruct (read_iovec_entry mp a) as [eb el| |]; [ | destruct Hin | destruct Hin].
       assert (Ha16 : bv_unsigned (a + Z_to_bv 64 16)%bv = (bv_unsigned a + 16)%Z).
       { rewrite bv_add_Zform. pose proof (u64_range a).
@@ -60,7 +76,8 @@ Proof.
   intros mp a n Hnw x Hin. pose proof (u64_range n) as Hn. unfold import_iovecs_accesses in Hin.
   destruct (bv_eqb n (Z_to_bv 64 1)) eqn:E1.
   - apply bv_eqb_eq in E1. subst n.
-    destruct (negb (access_okb a 16)); [destruct Hin|]. destruct Hin as [<-|[]]. cbn [fst snd].
+    destruct (negb (access_okb a 16)); [destruct Hin|].
+    destruct (iovec_entry_accesses_sub mp a ltac:(rewrite u64_lit in Hnw by lia; lia) x Hin) as [H1 H2].
     rewrite u64_lit by lia. lia.
   - destruct (bv_eqb n (Z_to_bv 64 0)); [destruct Hin|].
     destruct (IOV_MAX <? bv_unsigned n)%Z; [destruct Hin|].
@@ -139,6 +156,7 @@ Lemma srz_writev_pending_mi : forall ms x8 model (fd : Z) (iov : word) iovs bss 
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   bv_unsigned x8 = 66%Z ->
   ms_gpr ms 0 = Z_to_bv 64 fd ->
@@ -159,9 +177,9 @@ Lemma srz_writev_pending_mi : forall ms x8 model (fd : Z) (iov : word) iovs bss 
   crz segs (mkCfg ms model)
     (t_alt (fun i : wr_index bs => t_emit (map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs)) (T (proj1_sig i)))).
 Proof.
-  intros ms x8 model fd iov iovs bss T Hrom Hh Hsvc Hfd Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs bs
+  intros ms x8 model fd iov iovs bss T Hrom Hh Hsvc Hfd Hrdr Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs bs
          Ht1 Ht30 Hmi Hk.
-  destruct (writev_check segs ms x8 model fd iov iovs bss Hrom Hfd Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs
+  destruct (writev_check segs ms x8 model fd iov iovs bss Hrom Hfd Hrdr Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs
               Ht1 Ht30)
     as [Hlen Hchk]. fold bs in Hlen, Hchk.
   set (tot := iovs_total iovs) in *.
@@ -185,6 +203,7 @@ Proof.
            (fun i => mkCfg (advance_past_svc (set_gpr0 ms (Z_to_bv 64 (Z.of_nat (proj1_sig i))))) model)
            (fun i => T (proj1_sig i)) (wr_full bs Hnb)).
   2:{ apply (fam_on_sysno (mkCfg ms model) x8 Hsvc); rewrite Hno; lia. }
+  2:{ eapply writev_rob; eassumption. }
   2:{ intros [k [Hk1 Hk2]]. cbn [proj1_sig]. apply Hk; assumption. }
   assert (Hku : forall k, (k <= length bs)%nat -> bv_unsigned (Z_to_bv 64 (Z.of_nat k)) = Z.of_nat k).
   { intros k Hk2. apply u64_lit. lia. }
@@ -232,6 +251,7 @@ Lemma srz_writev_pending_lt : forall ms x8 model (fd : Z) (iov : word) iovs bss 
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   bv_unsigned x8 = 66%Z ->
   ms_gpr ms 0 = Z_to_bv 64 fd ->
@@ -253,7 +273,7 @@ Lemma srz_writev_pending_lt : forall ms x8 model (fd : Z) (iov : word) iovs bss 
   crz segs (mkCfg ms model)
     (t_alt (fun i : wr_index bs => t_emit (map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs)) (T (proj1_sig i)))).
 Proof.
-  intros ms x8 model fd iov iovs bss T Hrom Hh Hsvc Hfd Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs bs
+  intros ms x8 model fd iov iovs bss T Hrom Hh Hsvc Hfd Hrdr Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs bs
          Ht1 Ht30 Hol Hk.
   eapply srz_writev_pending_mi; try eassumption. intros k. apply mat_id_of_outside. exact (Hol k).
 Qed.
@@ -286,6 +306,7 @@ Lemma srz_writev2_lt : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 b
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -312,14 +333,14 @@ Lemma srz_writev2_lt : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 b
     (t_alt (fun i : wr_index (bs1 ++ bs2) =>
        t_emit (map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) (bs1 ++ bs2))) (T (proj1_sig i)))).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE Hh Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE Hh Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rb2 Rn2 Rs1 Rs2 Hiok Hb1 Hb2 Ht1 Ht30 Hoa Ho1 Ho2 Hk.
   eapply crz_sys_lazy; [exact Hh | exact HF | exact HE |].
   pose proof (u64_range n1). pose proof (u64_range n2).
   replace (bs1 ++ bs2) with (concat [bs1; bs2]) in * by (cbn; rewrite app_nil_r; reflexivity).
   eapply (srz_writev_pending_lt (epend regs pc mem (seg_rom segs) (getr regs 17)) (getr regs 17) model fd iov
             [(b1, n1); (b2, n2)] [bs1; bs2] T);
-    [reflexivity | exact Hh | reflexivity | exact Hfd | exact Hfdr
+    [reflexivity | exact Hh | reflexivity | exact Hfd | exact Hrdr | exact Hfdr
     | rewrite H17; apply u64_lit; lia
     | rewrite ms_gpr_epend0; exact H10 | rewrite ms_gpr_epend1; exact H11 | rewrite ms_gpr_epend2; exact H12
     | cbn; lia | change (Z.of_nat (length [(b1, n1); (b2, n2)])) with 2%Z; lia
@@ -339,6 +360,7 @@ Lemma srz_writev1_lt : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 :
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -360,7 +382,7 @@ Lemma srz_writev1_lt : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 :
     (t_alt (fun i : wr_index bs1 =>
        t_emit (map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs1)) (T (proj1_sig i)))).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 bs1 T HF HE Hh Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 bs1 T HF HE Hh Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rs1 Hiok Hb1 Ht1 Ht30 Hoa Ho1 Hk.
   eapply crz_sys_lazy; [exact Hh | exact HF | exact HE |].
   pose proof (u64_range n1).
@@ -368,7 +390,7 @@ Proof.
   replace bs1 with (concat [bs1]) by (cbn; rewrite app_nil_r; reflexivity).
   eapply (srz_writev_pending_lt (epend regs pc mem (seg_rom segs) (getr regs 17)) (getr regs 17) model fd iov
             [(b1, n1)] [bs1] T);
-    [reflexivity | exact Hh | reflexivity | exact Hfd | exact Hfdr
+    [reflexivity | exact Hh | reflexivity | exact Hfd | exact Hrdr | exact Hfdr
     | rewrite H17; apply u64_lit; lia
     | rewrite ms_gpr_epend0; exact H10 | rewrite ms_gpr_epend1; exact H11 | rewrite ms_gpr_epend2; exact H12
     | cbn; lia | change (Z.of_nat (length [(b1, n1)])) with 1%Z; lia
@@ -384,6 +406,7 @@ Lemma srz_writev2_wall_lt : forall regs (pc : word) mem model w (fd : Z) (iov b1
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -410,7 +433,7 @@ Lemma srz_writev2_wall_lt : forall regs (pc : word) mem model w (fd : Z) (iov b1
   crz segs (mkCfg (mkst regs pc mem (seg_rom segs)) model)
             (t_emit (map (WriteEv (Z_to_bv 64 fd)) (bs1 ++ bs2)) K).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 K HF HE Hh Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 K HF HE Hh Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rb2 Rn2 Rs1 Rs2 Hiok Hb1 Hb2 Ht1 Ht30 Hoa Ho1 Ho2 HK Hk.
   pose proof (rdn_length segs mem _ _ _ Rs1) as L1. pose proof (rdn_length segs mem _ _ _ Rs2) as L2.
   pose proof (u64_range n1). pose proof (u64_range n2).
@@ -423,6 +446,7 @@ Lemma srz_writev1_wall_lt : forall regs (pc : word) mem model w (fd : Z) (iov b1
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -444,7 +468,7 @@ Lemma srz_writev1_wall_lt : forall regs (pc : word) mem model w (fd : Z) (iov b1
   crz segs (mkCfg (mkst regs pc mem (seg_rom segs)) model)
             (t_emit (map (WriteEv (Z_to_bv 64 fd)) bs1) K).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 bs1 K HF HE Hh Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 bs1 K HF HE Hh Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rs1 Hiok Hb1 Ht1 Ht30 Hoa Ho1 HK Hk.
   pose proof (rdn_length segs mem _ _ _ Rs1) as L1. pose proof (u64_range n1).
   apply crz_wall; [unfold word_to_nat in L1; lia | exact HK |].
@@ -484,25 +508,37 @@ Proof.
     rewrite (access_okb_of_le b1 0) by lia. reflexivity. }
   assert (Hacc : import_iovecs_accesses (ms_read_byte ms) iov (Z_to_bv 64 1) = [(iov, 16%nat)]).
   { unfold import_iovecs_accesses. rewrite (proj2 (bv_eqb_eq _ _) eq_refl).
-    rewrite (access_okb_of_le iov 16) by lia. reflexivity. }
-  eapply (srz_ret_only_copyins_silent_lt segs ms model (getr regs 17) [(iov, 16%nat)] (Z_to_bv 64 0) model);
-    [exact Hh | reflexivity | | exact Hh | exact Hoa | unfold ms; rewrite adv_set_epend; exact Hc].
-  intros eff.
-  rewrite (check_syscall_writev (sys_input segs ms (getr regs 17)) eff model) by (rewrite in_sysno_si; exact Hno).
-  rewrite in_arg0_si, in_arg1_si, in_arg2_si.
+    rewrite (access_okb_of_le iov 16) by lia.
+    exact (iovec_entry_accesses_of_array segs ms b1 (Z_to_bv 64 0) [] iov eq_refl Harr). }
+  assert (CK : forall ms', ms_gpr ms' 0 = Z_to_bv 64 fd -> ms_gpr ms' 1 = iov -> ms_gpr ms' 2 = Z_to_bv 64 1 ->
+            import_iovecs (ms_read_byte ms') iov (Z_to_bv 64 1) = ImpOk [(b1, Z_to_bv 64 0)] ->
+            import_iovecs_accesses (ms_read_byte ms') iov (Z_to_bv 64 1) = [(iov, 16%nat)] ->
+            forall eff, check_syscall (sys_input segs ms' (getr regs 17)) eff model
+                        = check_ret_only_copyins [(iov, 16%nat)] eff (Z_to_bv 64 0) model []).
+  { intros ms' G0 G1 G2 Himp' Hacc' eff.
+    rewrite (check_syscall_writev (sys_input segs ms' (getr regs 17)) eff model) by (rewrite in_sysno_si; exact Hno).
+    rewrite in_arg0_si, in_arg1_si, in_arg2_si.
+    rewrite G0, G1, G2.
+    rewrite fd32_id by (rewrite u64_lit; lia).
+    unfold check_writev. rewrite Hfd.
+    replace (w_is0 (Z_to_bv 64 fd)) with false by (symmetry; apply w_is0_pos; rewrite u64_lit; lia).
+    change (iovcnt32 (Z_to_bv 64 1)) with (Z_to_bv 64 1).
+    rewrite in_mem_si, Himp', Hacc'.
+    unfold cap_iovecs. cbn [cap_iovecs_aux iovs_total].
+    change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. rewrite Z.min_r by (unfold MAX_RW_COUNT; lia).
+    change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. cbv beta iota zeta.
+    change ((0 + 0 =? 0)%Z) with true. cbv beta iota. reflexivity. }
   assert (G0 : ms_gpr ms 0 = Z_to_bv 64 fd) by (unfold ms; rewrite ms_gpr_epend0; exact H10).
   assert (G1 : ms_gpr ms 1 = iov) by (unfold ms; rewrite ms_gpr_epend1; exact H11).
   assert (G2 : ms_gpr ms 2 = Z_to_bv 64 1) by (unfold ms; rewrite ms_gpr_epend2; exact H12).
-  rewrite G0, G1, G2.
-  rewrite fd32_id by (rewrite u64_lit; lia).
-  unfold check_writev. rewrite Hfd.
-  replace (w_is0 (Z_to_bv 64 fd)) with false by (symmetry; apply w_is0_pos; rewrite u64_lit; lia).
-  change (iovcnt32 (Z_to_bv 64 1)) with (Z_to_bv 64 1).
-  rewrite in_mem_si, Himp, Hacc.
-  unfold cap_iovecs. cbn [cap_iovecs_aux iovs_total].
-  change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. rewrite Z.min_r by (unfold MAX_RW_COUNT; lia).
-  change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. cbv beta iota zeta.
-  change ((0 + 0 =? 0)%Z) with true. cbv beta iota. reflexivity.
+  assert (Hrob : sys_rob segs (mkCfg ms model)).
+  { apply sys_rob_of_check. intros r x8' Hr Hs eff. unfold ms in Hs. cbn [ms_svc_pending epend] in Hs. injection Hs as <-.
+    rewrite (CK (wrom ms r) G0 G1 G2 (import_iovecs_wrom ms r _ _ _ Hr Himp)
+               ltac:(rewrite (import_iovecs_accesses_wrom ms r _ _ _ Hr Himp); exact Hacc)).
+    rewrite (CK ms G0 G1 G2 Himp Hacc). reflexivity. }
+  eapply (srz_ret_only_copyins_silent_lt segs ms model (getr regs 17) [(iov, 16%nat)] (Z_to_bv 64 0) model);
+    [exact Hh | reflexivity | | exact Hh | exact Hoa | exact Hrob | unfold ms; rewrite adv_set_epend; exact Hc].
+  exact (CK ms G0 G1 G2 Himp Hacc).
 Qed.
 
 
@@ -514,6 +550,7 @@ Lemma srz_writev2_mi : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 b
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -538,14 +575,14 @@ Lemma srz_writev2_mi : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 b
     (t_alt (fun i : wr_index (bs1 ++ bs2) =>
        t_emit (map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) (bs1 ++ bs2))) (T (proj1_sig i)))).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE Hh Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE Hh Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rb2 Rn2 Rs1 Rs2 Hiok Hb1 Hb2 Ht1 Ht30 Hmi Hk.
   eapply crz_sys_lazy; [exact Hh | exact HF | exact HE |].
   pose proof (u64_range n1). pose proof (u64_range n2).
   replace (bs1 ++ bs2) with (concat [bs1; bs2]) in * by (cbn; rewrite app_nil_r; reflexivity).
   eapply (srz_writev_pending_mi (epend regs pc mem (seg_rom segs) (getr regs 17)) (getr regs 17) model fd iov
             [(b1, n1); (b2, n2)] [bs1; bs2] T);
-    [reflexivity | exact Hh | reflexivity | exact Hfd | exact Hfdr
+    [reflexivity | exact Hh | reflexivity | exact Hfd | exact Hrdr | exact Hfdr
     | rewrite H17; apply u64_lit; lia
     | rewrite ms_gpr_epend0; exact H10 | rewrite ms_gpr_epend1; exact H11 | rewrite ms_gpr_epend2; exact H12
     | cbn; lia | change (Z.of_nat (length [(b1, n1); (b2, n2)])) with 2%Z; lia
@@ -564,6 +601,7 @@ Lemma srz_writev1_mi : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 :
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -584,7 +622,7 @@ Lemma srz_writev1_mi : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 :
     (t_alt (fun i : wr_index bs1 =>
        t_emit (map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs1)) (T (proj1_sig i)))).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 bs1 T HF HE Hh Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 bs1 T HF HE Hh Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rs1 Hiok Hb1 Ht1 Ht30 Hmi Hk.
   eapply crz_sys_lazy; [exact Hh | exact HF | exact HE |].
   pose proof (u64_range n1).
@@ -592,7 +630,7 @@ Proof.
   replace bs1 with (concat [bs1]) by (cbn; rewrite app_nil_r; reflexivity).
   eapply (srz_writev_pending_mi (epend regs pc mem (seg_rom segs) (getr regs 17)) (getr regs 17) model fd iov
             [(b1, n1)] [bs1] T);
-    [reflexivity | exact Hh | reflexivity | exact Hfd | exact Hfdr
+    [reflexivity | exact Hh | reflexivity | exact Hfd | exact Hrdr | exact Hfdr
     | rewrite H17; apply u64_lit; lia
     | rewrite ms_gpr_epend0; exact H10 | rewrite ms_gpr_epend1; exact H11 | rewrite ms_gpr_epend2; exact H12
     | cbn; lia | change (Z.of_nat (length [(b1, n1)])) with 1%Z; lia
@@ -607,6 +645,7 @@ Lemma srz_writev2_wall_mi : forall regs (pc : word) mem model w (fd : Z) (iov b1
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -631,7 +670,7 @@ Lemma srz_writev2_wall_mi : forall regs (pc : word) mem model w (fd : Z) (iov b1
   crz segs (mkCfg (mkst regs pc mem (seg_rom segs)) model)
             (t_emit (map (WriteEv (Z_to_bv 64 fd)) (bs1 ++ bs2)) K).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 K HF HE Hh Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 K HF HE Hh Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rb2 Rn2 Rs1 Rs2 Hiok Hb1 Hb2 Ht1 Ht30 Hmi HK Hk.
   pose proof (rdn_length segs mem _ _ _ Rs1) as L1. pose proof (rdn_length segs mem _ _ _ Rs2) as L2.
   pose proof (u64_range n1). pose proof (u64_range n2).
@@ -644,6 +683,7 @@ Lemma srz_writev1_wall_mi : forall regs (pc : word) mem model w (fd : Z) (iov b1
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -664,7 +704,7 @@ Lemma srz_writev1_wall_mi : forall regs (pc : word) mem model w (fd : Z) (iov b1
   crz segs (mkCfg (mkst regs pc mem (seg_rom segs)) model)
             (t_emit (map (WriteEv (Z_to_bv 64 fd)) bs1) K).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 bs1 K HF HE Hh Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 bs1 K HF HE Hh Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rs1 Hiok Hb1 Ht1 Ht30 Hmi HK Hk.
   pose proof (rdn_length segs mem _ _ _ Rs1) as L1. pose proof (u64_range n1).
   apply crz_wall; [unfold word_to_nat in L1; lia | exact HK |].
@@ -703,25 +743,37 @@ Proof.
     rewrite (access_okb_of_le b1 0) by lia. reflexivity. }
   assert (Hacc : import_iovecs_accesses (ms_read_byte ms) iov (Z_to_bv 64 1) = [(iov, 16%nat)]).
   { unfold import_iovecs_accesses. rewrite (proj2 (bv_eqb_eq _ _) eq_refl).
-    rewrite (access_okb_of_le iov 16) by lia. reflexivity. }
-  eapply (srz_ret_only_copyins_silent_mi segs ms model (getr regs 17) [(iov, 16%nat)] (Z_to_bv 64 0) model);
-    [exact Hh | reflexivity | | exact Hh | exact Hmi | unfold ms; rewrite adv_set_epend; exact Hc].
-  intros eff.
-  rewrite (check_syscall_writev (sys_input segs ms (getr regs 17)) eff model) by (rewrite in_sysno_si; exact Hno).
-  rewrite in_arg0_si, in_arg1_si, in_arg2_si.
+    rewrite (access_okb_of_le iov 16) by lia.
+    exact (iovec_entry_accesses_of_array segs ms b1 (Z_to_bv 64 0) [] iov eq_refl Harr). }
+  assert (CK : forall ms', ms_gpr ms' 0 = Z_to_bv 64 fd -> ms_gpr ms' 1 = iov -> ms_gpr ms' 2 = Z_to_bv 64 1 ->
+            import_iovecs (ms_read_byte ms') iov (Z_to_bv 64 1) = ImpOk [(b1, Z_to_bv 64 0)] ->
+            import_iovecs_accesses (ms_read_byte ms') iov (Z_to_bv 64 1) = [(iov, 16%nat)] ->
+            forall eff, check_syscall (sys_input segs ms' (getr regs 17)) eff model
+                        = check_ret_only_copyins [(iov, 16%nat)] eff (Z_to_bv 64 0) model []).
+  { intros ms' G0 G1 G2 Himp' Hacc' eff.
+    rewrite (check_syscall_writev (sys_input segs ms' (getr regs 17)) eff model) by (rewrite in_sysno_si; exact Hno).
+    rewrite in_arg0_si, in_arg1_si, in_arg2_si.
+    rewrite G0, G1, G2.
+    rewrite fd32_id by (rewrite u64_lit; lia).
+    unfold check_writev. rewrite Hfd.
+    replace (w_is0 (Z_to_bv 64 fd)) with false by (symmetry; apply w_is0_pos; rewrite u64_lit; lia).
+    change (iovcnt32 (Z_to_bv 64 1)) with (Z_to_bv 64 1).
+    rewrite in_mem_si, Himp', Hacc'.
+    unfold cap_iovecs. cbn [cap_iovecs_aux iovs_total].
+    change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. rewrite Z.min_r by (unfold MAX_RW_COUNT; lia).
+    change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. cbv beta iota zeta.
+    change ((0 + 0 =? 0)%Z) with true. cbv beta iota. reflexivity. }
   assert (G0 : ms_gpr ms 0 = Z_to_bv 64 fd) by (unfold ms; rewrite ms_gpr_epend0; exact H10).
   assert (G1 : ms_gpr ms 1 = iov) by (unfold ms; rewrite ms_gpr_epend1; exact H11).
   assert (G2 : ms_gpr ms 2 = Z_to_bv 64 1) by (unfold ms; rewrite ms_gpr_epend2; exact H12).
-  rewrite G0, G1, G2.
-  rewrite fd32_id by (rewrite u64_lit; lia).
-  unfold check_writev. rewrite Hfd.
-  replace (w_is0 (Z_to_bv 64 fd)) with false by (symmetry; apply w_is0_pos; rewrite u64_lit; lia).
-  change (iovcnt32 (Z_to_bv 64 1)) with (Z_to_bv 64 1).
-  rewrite in_mem_si, Himp, Hacc.
-  unfold cap_iovecs. cbn [cap_iovecs_aux iovs_total].
-  change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. rewrite Z.min_r by (unfold MAX_RW_COUNT; lia).
-  change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. cbv beta iota zeta.
-  change ((0 + 0 =? 0)%Z) with true. cbv beta iota. reflexivity.
+  assert (Hrob : sys_rob segs (mkCfg ms model)).
+  { apply sys_rob_of_check. intros r x8' Hr Hs eff. unfold ms in Hs. cbn [ms_svc_pending epend] in Hs. injection Hs as <-.
+    rewrite (CK (wrom ms r) G0 G1 G2 (import_iovecs_wrom ms r _ _ _ Hr Himp)
+               ltac:(rewrite (import_iovecs_accesses_wrom ms r _ _ _ Hr Himp); exact Hacc)).
+    rewrite (CK ms G0 G1 G2 Himp Hacc). reflexivity. }
+  eapply (srz_ret_only_copyins_silent_mi segs ms model (getr regs 17) [(iov, 16%nat)] (Z_to_bv 64 0) model);
+    [exact Hh | reflexivity | | exact Hh | exact Hmi | exact Hrob | unfold ms; rewrite adv_set_epend; exact Hc].
+  exact (CK ms G0 G1 G2 Himp Hacc).
 Qed.
 
 End WithSegs.

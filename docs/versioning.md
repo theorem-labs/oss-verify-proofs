@@ -42,7 +42,11 @@ A statement's identifier `project/harness/statement` is never reused. Its
 identifier, the statement's definition, the SHA-256 of each binary it names, the
 SHA-256 of the code of `theories/Shapes.v` and `theories/Images.v`, the LPS
 version string (`semantics.version` in release.yaml) and, for a bound, the
-distribution's definitions. The code of a Rocq file is its text with each
+distribution's definitions. A classifier statement's fingerprint also hashes
+the code of `theories/ClassifierShapes.v` and the SHA-256 of the classifier and
+of each original it names; no other fingerprint hashes that file, so an edit to
+it moves the classifier statements' fingerprints alone. The code of a Rocq file
+is its text with each
 comment, and each run of white space outside a string literal, taken as one
 space. So a docstring edit in a statement file does not change a fingerprint,
 and neither does an edit to a comment or to the layout of `Shapes.v` or

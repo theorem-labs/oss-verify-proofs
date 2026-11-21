@@ -1,21 +1,22 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane), for libreac/fuzz_pcap v1.9.0 (ASan build).
 
-   WHAT THIS FILE PROVES. a Theorem Labs lane's afmemopen_spec (lib/A/Stdio/PFmemopenISpec.v, a working branch
-   8fe833c8d36; Definition byte-identical to bd307b59958), statement UNCHANGED, for pcap's ASan fmemopen wrapper:
+   WHAT THIS FILE PROVES. a Theorem Labs lane's afmemopen_spec (lib/A/Stdio/PFmemopenISpec.v, a working branch;
+   Definition byte-identical to), statement UNCHANGED, for pcap's ASan fmemopen wrapper:
    theorem pcap_afmemopen_spec below is
    afmemopen_spec SK tfibsegs B K MT CTX 0x415c4 ra 0x10350 0x10370. The C library's fmemopen enters only as a
    Section hypothesis at the REAL call: a Theorem Labs lane's rfmemopen_contract (lib/A/Stdio/PFmemopenM.v,
-   a working branch 7504d592f23, Definitions byte-identical to c53fee70393: rfmemopen_post carries md
+   a working branch, Definitions byte-identical to: rfmemopen_post carries md
    and ends with
    m_fds md' = m_fds md /\ m_fs md' = m_fs md - this lane asked for that clause, because the sink token alone
    lets aos_step change the sink fd and path and the tail call takes md' from this post alone), instantiated at
    (PFMEMOPEN 0x8e870, ra, 0x10350, 0x10370) with the same K and CTX. rfmemopen_contract takes amalloc04_rule
    (YC5d.v:56) as a premise, so that rule is a Section hypothesis too. The only other hypotheses are the image's
    own laws: AR_laws, PcapSyms (A/AF0m.v) and a Theorem Labs lane's asource_img_laws (A/Stdio/PSourceMeta.v), the last
-   carried as PFclose.v:107 (a working branch 3fc82453590) carries it, discharged once at
+   carried as PFclose.v:108 (a working branch) carries it, discharged once at
    instantiation.
    THE CONSTANT WINDOW [0x10350, 0x10370) (__strchrnul's two 8-byte constants, read by fmemopen's strchr calls;
    cgif's MC_LO / MC_HI, A/AE39.v:26-31; the same window on both pcap pins, auditor 00:27Z). Both statements
@@ -44,22 +45,22 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    law (fm_const, through PcapSyms' Tfib_const) as 1, so the branch is decided not-taken inside the run:
    escape_operands states the two operands at 0x598b4 (a1 = 1, a0 = 1), and r_M ends RS_running AT 0x8e870, which
    a run through 0x598c8 cannot do (AsanInitInternal is outside tbl_fm, so such a run stops at its first word).
-   E-PEND: that value is AF0m.v:83 `z1 (ANum 0xa2598) 0x1 (* E-PEND pcrel/RT *)` on a working branch
-   3820d10f234 (WIP, pending af0m.py); the auditor measured the same cell independently at 22:52Z. The store
+   E-PEND: that value is AF0m.v:84 `z1 (ANum 0xa2598) 0x1 (* E-PEND pcrel/RT *)` on a working branch
+   (WIP, pending af0m.py); the auditor measured the same cell independently at 22:52Z. The store
    that sets it is AsanInitInternal's `sb a0,0(s3)` at 0x597b8, with s3 = 0xa2598 from 0x595f8 / 0x595fc
    (objdump.txt:43184-43185, :43296; s3 is reloaded only on the early-return path at 0x59620). NOT the `sw` at
    0x5971c, which stores through the GOT cell 0x99888, a different runtime cell. No step of this proof reads
    either store: the walk takes asan_inited = 1 from the AR const law (fm_const). If af0m.py changes that cell,
    fm_const_chk fails and this file must be re-checked.
-   THE REAL CELL: 0x9b5e8 -> 0x8e870 is AF0m.v:244 Tfib_const_abs `z8 (ANum 0x9b5e8) 0x8e870` (M-IMG, added by
-   a Theorem Labs lane at bd2fdd5e81f on this lane's request; this lane measured the same value in the pin's PT_LOAD).
+   THE REAL CELL: 0x9b5e8 -> 0x8e870 is AF0m.v:245 Tfib_const_abs `z8 (ANum 0x9b5e8) 0x8e870` (M-IMG, added by
+   a Theorem Labs lane on this lane's request; this lane measured the same value in the pin's PT_LOAD).
 
    NO META-REGION PREMISE (class R2). afmemopen_spec has no (M : Z) and no asrc_meta_inv, and needs none: the
    20 wrapper instructions and TryAsanInitFromRtl's taken path (objdump.txt:23464-23484, 43352-43365) touch no
    AddrHashMap / FileMetadata cell and have no path to CheckFailed at 0x6b918 (ruling relayed by a Theorem Labs lane).
 
    THE IMAGE. segs := tfibsegs (the pin image) and pc := 0x415c4; B, K, MT, CTX, ra and SK stay general. The
-   stdio cells K names cannot collide with the 48 stack bytes the wrapper writes: asil_env (PSourceMeta.v:80)
+   stdio cells K names cannot collide with the 48 stack bytes the wrapper writes: asil_env (PSourceMeta.v:81)
    puts every address of asrc_env_addr K inside the image, and fm_segs_low puts the image below kLowMemEnd,
    which is below alloc_ceiling and so below the stack floor.
 
@@ -70,9 +71,9 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 
    SOURCES. The run, its shape check and the frame / AR transfer follow cgif's iopen_front (lib/A/AE2g.v:93); the
    overall shape (front run, callee hypotheses, journal composition) follows cgif's tfib_afopen_spec
-   (lib/A/AE25.v:195). Both are read from the DONOR ref origin/ossv/recipes c8557374ad2e,
+   (lib/A/AE25.v:195). Both are read from the DONOR ref,
    proofs/cgif/cgif_file_fuzzer, because the relocated AE2g / AE25 are held out of a working branch. The relocated layer
-   used here (AB1v, AE34, AF0l, AF0m, AF0x, AE2y) is a working branch 3820d10f234.
+   used here (AB1v, AE34, AF0l, AF0m, AF0x, AE2y) is a working branch.
    rule 24: pcapmemopeni-fmemopen-icpt.txt (sha256 8c3dffd65a3d; internal record) (the proof index exit 1, index built 2026-10-28T21:58:24Z),
    pcapmemopeni-gitgrep.txt (sha256 75264fbb8006; internal record) (git grep of the names on the four released refs, exit 1) and a fresh
    read-only scout's CONFIRM (a Theorem Labs lane): no released proof of this function. *)
@@ -144,8 +145,8 @@ intros ms1 mat1 HS1 HF HFr. apply SRr_ret. split; [reflexivity|]. exists ms1, ma
 split; [exact HS1|]. split; [exact HF | exact HFr].
 Qed.
 
-(* The two runtime cells the run reads, from the AR const law (PcapSyms' Tfib_const, AF0m.v at a working branch
-   3820d10f234): asan_inited = 1 (E-PEND, AF0m.v:83) and the REAL(fmemopen) slot 0x9b5e8 = 0x8e870 (M-IMG, :244). *)
+(* The two runtime cells the run reads, from the AR const law (PcapSyms' Tfib_const, AF0m.v at a working branch):
+   asan_inited = 1 (E-PEND, AF0m.v:84) and the REAL(fmemopen) slot 0x9b5e8 = 0x8e870 (M-IMG, :244). *)
 Definition fm_const : list (Z * Z * list (Z * N * Z)) :=
 [ ((symaddr Symbols.Asan.s__ZN6__asanL11asan_initedE), 1, [(0, 1%N, 1)]); ((symaddr Symbols.Asan.s__ZN14__interception13real_fmemopenE), 8, [(0, 8%N, PFMEMOPEN)]) ].
 Lemma fm_const_chk : forall ly, rodata_chk ly fm_const = true.

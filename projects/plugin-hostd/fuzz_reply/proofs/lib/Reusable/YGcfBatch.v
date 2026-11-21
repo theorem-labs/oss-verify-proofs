@@ -1,9 +1,10 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfBatch.v, sha256 2ef825b791be5437b281e02ce7a9eab3987c5c9f8cb5444385bcd3b1c7b314dd.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the QUARANTINE BATCH BOUND.
    Every quarantine batch is a chunk of class kBatchClass (its b_self), so the batch count is bounded by that
    class's region: Compl0 ties the class's records to rg_alloc_user, and cls_ok_cf's re-based mapped bound caps

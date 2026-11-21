@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it; the plans are renumbered to the new numbering). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -23,20 +24,21 @@ Section UsageA0.
   Variables argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Let c := content_of argv fs.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation LIM := AsanInit.LIMIT.
   #[local] Notation PIECE := (piece SV argH ISP fs).
   #[local] Notation FXHOLE := (fx_hole SV argH ISP fs).
-  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw c.
-  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c.
-  #[local] Notation CHK1 := (ha1_check_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SV (SVm_to1 sp rdraw brk0 argv envp uid hw c) SVF SVA).
+  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw L c.
+  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c.
+  #[local] Notation CHK1 := (ha1_check_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SV (SVm_to1 sp rdraw brk0 argv envp uid hw L c) SVF SVA).
 
   Variable T98 : env -> Fs.Fs -> TSet.
   Hypothesis T98_agree : t_agree T98.
@@ -64,7 +66,7 @@ Section UsageA0.
   Proof.
     intros E R FULL m HC. unfold T_main. rewrite <- c3a0_shape_eq.
     exact (CHK1 C3A0_HS (HOLES3 T98) (HOLES3_agree T98 T98_agree) (HOLES3_nil T98 T98_nil) (HOLES3_mod T98) c3_holes_a0 c3a0_IT c3a0_IT_ok 0%nat true 3000%nat 400000%nat
-             c3_top s6enda0 c3a0_shape c3a0_cert E R FULL m HC).
+             (HAReg.mplan c3_top) s6enda0 c3a0_shape c3a0_cert E R FULL m HC).
   Qed.
   Lemma s6_piece_a0 : PIECE c2a0_hs10 (T_main T98).
   Proof. apply (hole_compose SV argH ISP fs c2a0_hs10 s6enda0 (T_main T98)); [vm_compute; lia | exact (T_main_agree T98 T98_agree) | exact H_S6 | exact c3_piece_a0]. Qed.
@@ -78,7 +80,7 @@ Section UsageA0.
   Proof.
     intros E R FULL m HC.
     pose proof (CHK1 C2A0_HS (HOLES2 T98) (HOLES2_agree T98 T98_agree) (HOLES2_nil T98 T98_nil) (HOLES2_mod T98) c2_holes_a0 c2a0_IT c2a0_IT_ok 0%nat true 3000%nat 400000%nat
-             st3a_plan c2a0_start c2a0_shape c2a0_cert E R FULL m HC) as RZ.
+             (HAReg.mplan st3a_plan) c2a0_start c2a0_shape c2a0_cert E R FULL m HC) as RZ.
     rewrite c2a0_shape_eq in RZ. exact RZ.
   Qed.
 End UsageA0.

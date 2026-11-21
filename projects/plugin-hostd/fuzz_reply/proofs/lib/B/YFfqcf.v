@@ -1,9 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10-30: copied from proofs/cgif/cgif_file_fuzzer/lib/YFfq.v at commit 30a1993588f
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFfqcf.v (commit 1223f55a2a51, CfF1 round-2 re-fit; file sha256 214b7858de28) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YFfqcf.v at commit f303438be5b, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10-30: copied from proofs/cgif/cgif_file_fuzzer/lib/YFfq.v at commit theorem-labs/oss-verify-proofs@6b32741d849a
    (the memory facts Enqueue's walk hypotheses read at entry, over cgif's ARm) and ported to the event-free
    instance's ARmcf (YG0ncf.v), as YFf1cf.v / YFf2cf.v ported YFf1.v / YFf2.v.  The changes, and nothing else:
    the Context gains {ci : CfImg} {cp : CfParams}; the Section takes the ghost set Hp and M : ARmcf B ly X Hp rd0;
@@ -17,6 +15,9 @@
    so hit_facts_cf states `coff + kBatchBytes <= kFreeArrayOffset`.
    IMAGE-SPECIFIC (cgif_file's image, TfibSyms): each unit relocates this file to its own image, with YFf1cf.v.
    rule 24: no function proved (kind: memory facts of the allocator relation at Enqueue's entry). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFfqcf.v (CfF1 round-2 re-fit; file sha256 214b7858de28) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YFfqcf.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

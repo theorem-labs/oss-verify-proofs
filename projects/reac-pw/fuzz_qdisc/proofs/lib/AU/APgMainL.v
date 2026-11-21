@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements
    are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc image A from
-   proofs/libreac/fuzz_knock/lib/A/APgMainL.v (the loop closure) at origin/ossv/recipes 6ebe35ba632, with
+   proofs/libreac/fuzz_knock/lib/A/APgMainL.v (the loop closure), with
    its module paths changed. rule 24 (reuse): no function is proved here; this file is the
    loop's induction and nothing else -- it adds no walk and no arithmetic.
 
@@ -30,6 +30,7 @@
      S3 (the two calls, the decrement and the back edge, 0x7e7a0-0x7e7c0, lib/AU/APgMain3.v),
    with the decrement `addiw s4,s4,-1` at 0x7e7b8, the back edge `bnez s4` at 0x7e7bc and the exit
    `j 0x7e848` at 0x7e7c0. S1, S2, S3 and the exit S7 are the Section hypotheses below. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

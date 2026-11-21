@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO pair; the restricted step's silent node is an instruction node, for RomBase.sys_rob, after cjson/cjson_read_fuzzer's AS/AsanAcct.v). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -10,19 +10,15 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import CatSim PropExec.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import Cfg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-
 Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
 Import ListNotations.
 Open Scope bv_scope.
-
 Definition mrestrict (H : word -> bool) (m : word -> option byte)
     : word -> option byte :=
   fun a => if H a then None else m a.
-
 Definition munrestrict (H : word -> bool) (full m' : word -> option byte)
     : word -> option byte :=
   fun a => if H a then full a else m' a.
-
 Definition restrict (H : word -> bool) (ms : machine_state) : machine_state :=
   {| ms_regs := ms_regs ms; ms_fregs := ms_fregs ms;
      ms_pc_val := ms_pc_val ms;
@@ -30,7 +26,6 @@ Definition restrict (H : word -> bool) (ms : machine_state) : machine_state :=
      ms_resv := ms_resv ms; ms_fcsr := ms_fcsr ms;
      ms_mem := mrestrict H (ms_mem ms);
      ms_rom := ms_rom ms |}.
-
 Definition unrestrict (H : word -> bool) (full : word -> option byte)
     (ms' : machine_state) : machine_state :=
   {| ms_regs := ms_regs ms'; ms_fregs := ms_fregs ms';
@@ -39,49 +34,39 @@ Definition unrestrict (H : word -> bool) (full : word -> option byte)
      ms_resv := ms_resv ms'; ms_fcsr := ms_fcsr ms';
      ms_mem := munrestrict H full (ms_mem ms');
      ms_rom := ms_rom ms' |}.
-
 Definition H_off_segments (segs : list Segment) (H : word -> bool) : Prop :=
   forall a, H a = true -> find_segment segs (bv_unsigned a) 1 = None.
-
 Definition wx_segs_nowrap (segs : list Segment) : Prop :=
   forall seg, In seg segs ->
     seg_executable seg && seg_writable seg = true ->
     (Z.of_N (seg_base seg) + Z.of_N (seg_size seg) <= 2 ^ 64)%Z.
-
 Definition woff (a : word) (k : nat) : word :=
   Z_to_bv 64 (bv_unsigned a + Z.of_nat k).
-
 Definition range_avoids (H : word -> bool) (a : word) (n : nat) : Prop :=
   forall k, (k < n)%nat -> H (woff a k) = false.
-
 Definition ranges_avoid (H : word -> bool) (l : list (word * nat)) : Prop :=
   forall a n, In (a, n) l -> range_avoids H a n.
-
 Lemma woff_0 : forall a, woff a 0 = a.
 Proof.
   intros a. unfold woff. apply bv_eq. rewrite Z_to_bv_unsigned.
   rewrite Z.add_0_r. apply bv_wrap_small. apply bv_unsigned_in_range.
 Qed.
-
 Lemma woff_succ : forall a k, woff (a + 1) k = woff a (S k).
 Proof.
   intros a k. unfold woff. apply bv_eq. rewrite !Z_to_bv_unsigned, bv_add_unsigned.
   assert (H1 : bv_unsigned (1 : word) = 1%Z) by reflexivity. rewrite H1.
   unfold bv_wrap. rewrite Zplus_mod_idemp_l. f_equal. lia.
 Qed.
-
 Lemma range_avoids_hd : forall H a n,
   range_avoids H a (S n) -> H a = false.
 Proof.
   intros H a n Hr. rewrite <- (woff_0 a). apply Hr. lia.
 Qed.
-
 Lemma range_avoids_tl : forall H a n,
   range_avoids H a (S n) -> range_avoids H (a + 1) n.
 Proof.
   intros H a n Hr k Hk. rewrite woff_succ. apply Hr. lia.
 Qed.
-
 Lemma range_avoids_cons : forall H a n,
   H a = false -> range_avoids H (a + 1) n -> range_avoids H a (S n).
 Proof.
@@ -89,10 +74,8 @@ Proof.
   - rewrite woff_0. exact H0.
   - rewrite <- woff_succ. apply Hr. lia.
 Qed.
-
 Lemma ranges_avoid_nil : forall H, ranges_avoid H [].
 Proof. intros H a n Hin. destruct Hin. Qed.
-
 Lemma ranges_avoid_cons : forall H a n l,
   range_avoids H a n -> ranges_avoid H l -> ranges_avoid H ((a, n) :: l).
 Proof.
@@ -100,14 +83,12 @@ Proof.
   - injection Heq as <- <-. exact Ha.
   - exact (Hl a' n' Hin).
 Qed.
-
 Lemma ranges_avoid_app : forall H l1 l2,
   ranges_avoid H l1 -> ranges_avoid H l2 -> ranges_avoid H (l1 ++ l2).
 Proof.
   intros H l1 l2 H1 H2 a n Hin. apply in_app_or in Hin as [Hin | Hin];
     [exact (H1 a n Hin) | exact (H2 a n Hin)].
 Qed.
-
 Lemma restrict_svc_pending : forall H ms,
   ms_svc_pending (restrict H ms) = ms_svc_pending ms.
 Proof. reflexivity. Qed.
@@ -127,77 +108,64 @@ Proof. reflexivity. Qed.
 Lemma unrestrict_mem : forall H full ms,
   ms_mem (unrestrict H full ms) = munrestrict H full (ms_mem ms).
 Proof. reflexivity. Qed.
-
 Lemma restrict_mkst : forall H regs pc mem rom,
   restrict H (mkst regs pc mem rom) = mkst regs pc (mrestrict H mem) rom.
 Proof. reflexivity. Qed.
-
 Lemma mrestrict_idem : forall H m, mrestrict H (mrestrict H m) = mrestrict H m.
 Proof.
   intros H m. apply functional_extensionality. intro a. unfold mrestrict.
   destruct (H a); reflexivity.
 Qed.
-
 Lemma munrestrict_mrestrict : forall H m,
   munrestrict H m (mrestrict H m) = m.
 Proof.
   intros H m. apply functional_extensionality. intro a.
   unfold munrestrict, mrestrict. destruct (H a); reflexivity.
 Qed.
-
 Lemma mrestrict_munrestrict : forall H full m,
   mrestrict H (munrestrict H full m) = mrestrict H m.
 Proof.
   intros H full m. apply functional_extensionality. intro a.
   unfold munrestrict, mrestrict. destruct (H a); reflexivity.
 Qed.
-
 Lemma unrestrict_restrict : forall H ms,
   unrestrict H (ms_mem ms) (restrict H ms) = ms.
 Proof.
   intros H ms. destruct ms. unfold unrestrict, restrict. cbn.
   rewrite munrestrict_mrestrict. reflexivity.
 Qed.
-
 Lemma restrict_unrestrict : forall H full ms,
   restrict H (unrestrict H full ms) = restrict H ms.
 Proof.
   intros H full ms. destruct ms. unfold unrestrict, restrict. cbn.
   rewrite mrestrict_munrestrict. reflexivity.
 Qed.
-
 Definition hclean (H : word -> bool) (ms : machine_state) : Prop :=
   forall a, H a = true -> ms_mem ms a = None.
-
 Lemma restrict_hclean : forall H ms, hclean H (restrict H ms).
 Proof.
   intros H ms a Ha. cbn. unfold mrestrict. rewrite Ha. reflexivity.
 Qed.
-
 Lemma hclean_restrict_id : forall H ms, hclean H ms -> restrict H ms = ms.
 Proof.
   intros H ms Hc. destruct ms. unfold restrict. cbn. f_equal.
   apply functional_extensionality. intro a. unfold mrestrict.
   destruct (H a) eqn:E; [symmetry; exact (Hc a E) | reflexivity].
 Qed.
-
 Lemma restrict_unrestrict_clean : forall H full ms,
   hclean H ms -> restrict H (unrestrict H full ms) = ms.
 Proof.
   intros H full ms Hc. rewrite restrict_unrestrict. apply hclean_restrict_id. exact Hc.
 Qed.
-
 Section ISA.
 Variable segs : list Segment.
 Variable H : word -> bool.
 Hypothesis HH : H_off_segments segs H.
 Hypothesis Hwx : wx_segs_nowrap segs.
-
 #[using="HH"] Lemma memory_read1_hidden : forall a, H a = true -> memory_read segs a 1 = None.
 Proof.
   intros a Ha. unfold memory_read. cbn [Z.of_N]. rewrite (HH a Ha). reflexivity.
 Qed.
-
 #[using="HH"] Lemma ov_read_bytes_restrict : forall n m a bs,
   ov_read_bytes segs (mrestrict H m) a n = Some bs ->
   ov_read_bytes segs m a n = Some bs /\ range_avoids H a n.
@@ -219,7 +187,6 @@ Proof.
       rewrite Hfull. split; [exact Hr|].
       apply range_avoids_cons; assumption.
 Qed.
-
 #[using="HH"] Lemma wview_restrict : forall m a,
   wview segs (mrestrict H m) a =
     if H a then None else wview segs m a.
@@ -227,7 +194,6 @@ Proof.
   intros m a. unfold wview, mrestrict. destruct (H a) eqn:Ha; [|reflexivity].
   rewrite (HH a Ha). reflexivity.
 Qed.
-
 #[using="HH"] Lemma store_ok_restrict : forall n m a,
   store_ok segs (mrestrict H m) a n = true ->
   store_ok segs m a n = true /\ range_avoids H a n.
@@ -240,7 +206,6 @@ Proof.
     destruct (IH m (a + 1) Hs) as [Hfull Hav].
     split; [exact Hfull | apply range_avoids_cons; assumption].
 Qed.
-
 #[using="Type"] Lemma write_to_mem_restrict : forall bs m a,
   range_avoids H a (length bs) ->
   write_to_mem (mrestrict H m) a bs = mrestrict H (write_to_mem m a bs).
@@ -255,7 +220,6 @@ Proof.
   unfold bv_eqb in Ex. apply Z.eqb_eq in Ex. apply bv_eq in Ex. subst x.
   rewrite Ha. reflexivity.
 Qed.
-
 #[using="Type"] Lemma write_to_mem_hidden : forall bs m a x,
   range_avoids H a (length bs) -> H x = true ->
   write_to_mem m a bs x = m x.
@@ -269,11 +233,9 @@ Proof.
   unfold bv_eqb in Ex. apply Z.eqb_eq in Ex. apply bv_eq in Ex. subst x.
   rewrite Ha in Hx. discriminate.
 Qed.
-
 #[using="Type"] Lemma mrestrict_visible : forall (H0 : word -> bool) m a,
   H0 a = false -> mrestrict H0 m a = m a.
 Proof. intros H0 m a Ha. unfold mrestrict. rewrite Ha. reflexivity. Qed.
-
 #[using="Type"] Lemma ov_read_bytes_mrestrict_eq : forall (H0 : word -> bool) n m a,
   range_avoids H0 a n ->
   ov_read_bytes segs (mrestrict H0 m) a n = ov_read_bytes segs m a n.
@@ -282,18 +244,15 @@ Proof.
   cbn [ov_read_bytes]. unfold mrestrict at 1. rewrite (range_avoids_hd H0 a n Hav).
   rewrite (IH m (a + 1) (range_avoids_tl H0 a n Hav)). reflexivity.
 Qed.
-
 #[using="Type"] Lemma rdn_mrestrict_eq : forall (H0 : word -> bool) n m a,
   range_avoids H0 a n ->
   rdn segs (mrestrict H0 m) a n = rdn segs m a n.
 Proof.
   intros H0 n m a Hav. rewrite <- !ov_rdn. apply ov_read_bytes_mrestrict_eq. exact Hav.
 Qed.
-
 #[using="Type"] Lemma wview_mrestrict_eq : forall (H0 : word -> bool) m a,
   H0 a = false -> wview segs (mrestrict H0 m) a = wview segs m a.
 Proof. intros H0 m a Ha. unfold wview, mrestrict. rewrite Ha. reflexivity. Qed.
-
 #[using="Type"] Lemma store_ok_mrestrict_eq : forall (H0 : word -> bool) n m a,
   range_avoids H0 a n ->
   store_ok segs (mrestrict H0 m) a n = store_ok segs m a n.
@@ -303,7 +262,6 @@ Proof.
   destruct (wview segs m a); [|reflexivity].
   exact (IH m (a + 1) (range_avoids_tl H0 a n Hav)).
 Qed.
-
 #[using="Type"] Lemma find_segment_some_spec : forall l addr n seg,
   find_segment l addr n = Some seg ->
   In seg l /\ (Z.of_N (seg_base seg) <= addr)%Z
@@ -318,7 +276,6 @@ Proof.
   - destruct (IH addr n seg Hf) as (Hin & H1 & H2).
     split; [right; exact Hin | split; assumption].
 Qed.
-
 #[using="Type"] Lemma find_segment_none_spec : forall l addr n,
   find_segment l addr n = None ->
   forall seg, In seg l ->
@@ -335,7 +292,6 @@ Proof.
     + apply Z.leb_gt in E. lia.
   - exact (IH addr n Hf seg Hin).
 Qed.
-
 #[using="HH"] Lemma in_segment_not_hidden : forall (x : word) seg,
   In seg segs ->
   (Z.of_N (seg_base seg) <= bv_unsigned x)%Z ->
@@ -345,7 +301,6 @@ Proof.
   intros x seg Hin H1 H2. destruct (H x) eqn:Hx; [|reflexivity].
   exfalso. exact (find_segment_none_spec segs (bv_unsigned x) 1 (HH x Hx) seg Hin (conj H1 H2)).
 Qed.
-
 #[using="HH"] Lemma seg_ov_read_bytes_restrict : forall n m seg a,
   In seg segs ->
   (Z.of_N (seg_base seg) <= bv_unsigned a)%Z ->
@@ -366,7 +321,6 @@ Proof.
       pose proof (bv_unsigned_in_range 64 a). lia. }
     rewrite (IH m seg (a + 1) Hin) by lia. reflexivity.
 Qed.
-
 #[using="HH Hwx"] Lemma code_read_ov_restrict : forall m a n,
   code_read_ov segs (mrestrict H m) a n = code_read_ov segs m a n.
 Proof.
@@ -377,27 +331,21 @@ Proof.
   apply seg_ov_read_bytes_restrict; [exact Hin | exact H1 | | exact (Hwx seg Hin Ewx)].
   rewrite N_nat_Z. exact H2.
 Qed.
-
 #[using="HH Hwx"] Lemma fetch_word_ov_restrict : forall m a,
   fetch_word_ov segs (mrestrict H m) a = fetch_word_ov segs m a.
 Proof. intros m a. unfold fetch_word_ov. rewrite code_read_ov_restrict. reflexivity. Qed.
-
 #[using="HH Hwx"] Lemma fetch_half_ov_restrict : forall m a,
   fetch_half_ov segs (mrestrict H m) a = fetch_half_ov segs m a.
 Proof. intros m a. unfold fetch_half_ov. rewrite code_read_ov_restrict. reflexivity. Qed.
-
 #[using="HH Hwx"] Lemma fetch_half_any_restrict : forall m a,
   fetch_half_any segs (mrestrict H m) a = fetch_half_any segs m a.
 Proof. intros m a. unfold fetch_half_any. rewrite fetch_half_ov_restrict. reflexivity. Qed.
-
 #[using="HH Hwx"] Lemma fetch_tail_any_restrict : forall m a,
   fetch_tail_any segs (mrestrict H m) a = fetch_tail_any segs m a.
 Proof. intros m a. unfold fetch_tail_any. rewrite !fetch_half_any_restrict. reflexivity. Qed.
-
 #[using="HH Hwx"] Lemma fetch_failure_restrict : forall m a,
   fetch_failure segs (mrestrict H m) a = fetch_failure segs m a.
 Proof. intros m a. unfold fetch_failure. rewrite fetch_half_any_restrict. reflexivity. Qed.
-
 #[using="HH"] Lemma interp_eff_accesses_restrict : forall t m c mr' rs,
   interp_eff_accesses segs t (mrestrict H m)
     = MachineOk (@mkAccessReport _ (c, mr') rs) ->
@@ -416,7 +364,7 @@ Proof.
     apply ranges_avoid_nil.
   -
     destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-      [|discriminate].
+      [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
     rewrite Hfull.
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
@@ -444,7 +392,6 @@ Proof.
       apply (write_to_mem_hidden _ m a x); [rewrite Hlen; exact Hav | exact Hx].
     + apply ranges_avoid_cons; assumption.
 Qed.
-
 #[using="HH"] Lemma decode_exec_accesses_restrict : forall ms w msr' rs',
   decode_exec_accesses segs (restrict H ms) w
     = MachineOk (@mkAccessReport _ msr' rs') ->
@@ -479,7 +426,6 @@ Proof.
       destruct (H x) eqn:Hx; [exact (Hhid x Hx) | reflexivity].
     + intros x Hx. cbn. unfold mrestrict. rewrite Hx. reflexivity.
 Qed.
-
 #[using="HH Hwx"] Theorem step_accesses_restrict : forall ms msr' rs',
   step_accesses segs (restrict H ms) = MachineOk (@mkAccessReport _ msr' rs') ->
   step_accesses segs ms
@@ -497,13 +443,13 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
   exfalso. unfold fetch_failure in Hs.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
                | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
                | None => false end); discriminate.
 Qed.
-
 #[using="HH Hwx"] Theorem step_restrict_sound : forall ms msr',
   RiscvSemantics.step segs (restrict H ms) = MachineOk msr' ->
   exists rep,
@@ -521,7 +467,6 @@ Proof.
   split; [exact Hfull|]. split; [reflexivity|]. split; [exact Hrs|]. split; [exact Hcl|].
   apply restrict_unrestrict_clean. exact Hcl.
 Qed.
-
 #[using="HH Hwx"] Corollary step_restrict_step : forall ms msr',
   RiscvSemantics.step segs (restrict H ms) = MachineOk msr' ->
   RiscvSemantics.step segs ms = MachineOk (unrestrict H (ms_mem ms) msr').
@@ -530,7 +475,6 @@ Proof.
   destruct (step_restrict_sound ms msr' Hs) as (rep & Hsa & Hv & _).
   unfold RiscvSemantics.step, drop_access_report. rewrite Hsa, Hv. reflexivity.
 Qed.
-
 #[using="Type"] Lemma step_accesses_ecall_shape : forall ms msr' rs',
   step_accesses segs ms = MachineOk (@mkAccessReport _ msr' rs') ->
   ms_svc_pending msr' <> None ->
@@ -554,43 +498,36 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
   exfalso. destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) eqn:Hf; try discriminate.
   unfold fetch_failure in Hf.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
                | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
                | None => false end); discriminate.
 Qed.
-
 End ISA.
-
 Definition page_allowedb (A : list (Z * Z)) (p : word) : bool :=
   existsb (fun iv => (fst iv <=? bv_unsigned p)%Z
                      && (bv_unsigned p + page_size <=? snd iv)%Z) A.
-
 Definition A_wf (A : list (Z * Z)) : Prop :=
   Forall (fun iv => (fst iv <= snd iv)%Z /\ (fst iv) mod page_size = 0
                     /\ (snd iv) mod page_size = 0)%Z A.
-
 Fixpoint A_bytes (A : list (Z * Z)) : Z :=
   match A with
   | [] => 0
   | iv :: r => (snd iv - fst iv) + A_bytes r
   end%Z.
-
 Definition lazy_cover (H : word -> bool) (lazy : list (word * word))
     (A : list (Z * Z)) : Prop :=
   forall w : word,
     page_in_ranges (page_base w) lazy = true -> H w = false ->
     page_allowedb A (page_base w) = true.
-
 Definition eager_used (m : Model) : Z :=
   live_bytes (maps_subtract_all (vm_backed_maps (m_vmmaps m)) (m_vm_lazy m)).
-
 Lemma vm_backing_used_split : forall m,
   vm_backing_used m
   = (eager_used m + Z.of_nat (length (m_vm_materialized m)) * page_size)%Z.
 Proof. reflexivity. Qed.
-
 Record MInv (A : list (Z * Z)) (m : Model) : Prop := mkMInv {
   minv_nodup    : List.NoDup (m_vm_materialized m);
   minv_aligned  : forall p, In p (m_vm_materialized m) ->
@@ -600,13 +537,10 @@ Record MInv (A : list (Z * Z)) (m : Model) : Prop := mkMInv {
                     page_in_ranges p (m_vm_lazy m) = true;
   minv_budget   : (eager_used m + A_bytes A <= vm_limit (m_vmmaps m))%Z
 }.
-
 Definition same_but_materialized (m m' : Model) : Prop :=
   m' = with_vm_backing (m_vm_lazy m) (m_vm_materialized m') m.
-
 Lemma same_but_materialized_refl : forall m, same_but_materialized m m.
 Proof. intros [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
-
 Lemma same_but_materialized_trans : forall m1 m2 m3,
   same_but_materialized m1 m2 -> same_but_materialized m2 m3 ->
   same_but_materialized m1 m3.
@@ -614,13 +548,11 @@ Proof.
   unfold same_but_materialized. intros m1 m2 m3 -> ->.
   destruct m1 as [fd [maps lazy mat] io fs proc lim tm]. reflexivity.
 Qed.
-
 Lemma with_vm_backing_same : forall m mat',
   same_but_materialized m (with_vm_backing (m_vm_lazy m) mat' m).
 Proof.
   intros [fd [maps lazy mat] io fs proc lim tm] mat'. reflexivity.
 Qed.
-
 Lemma same_but_materialized_frame : forall m m',
   same_but_materialized m m' ->
   m_fd m' = m_fd m /\ m_vmmaps m' = m_vmmaps m /\ m_vm_lazy m' = m_vm_lazy m
@@ -634,7 +566,6 @@ Proof.
   intros m m' ->. destruct m as [fd [maps lazy mat] io fs proc lim tm].
   repeat split; reflexivity.
 Qed.
-
 Fixpoint A_pages (A : list (Z * Z)) : list Z :=
   match A with
   | [] => []
@@ -643,14 +574,12 @@ Fixpoint A_pages (A : list (Z * Z)) : list Z :=
           (seq 0 (Z.to_nat ((snd iv - fst iv) / page_size)))
       ++ A_pages r
   end.
-
 Lemma Zmod0_multiple : forall a, (a mod page_size = 0)%Z -> exists q, a = (page_size * q)%Z.
 Proof.
   intros a Ha. exists (a / page_size)%Z.
   pose proof (Z.div_mod a page_size ltac:(unfold page_size; lia)) as Hdm.
   rewrite Ha, Z.add_0_r in Hdm. exact Hdm.
 Qed.
-
 Lemma A_pages_length : forall A,
   A_wf A -> (Z.of_nat (length (A_pages A)) * page_size = A_bytes A)%Z.
 Proof.
@@ -666,7 +595,6 @@ Proof.
   rewrite Z2Nat.id by (unfold page_size in Hle; lia).
   reflexivity.
 Qed.
-
 Lemma A_pages_in : forall A p,
   A_wf A ->
   (bv_unsigned p mod page_size = 0)%Z ->
@@ -693,7 +621,6 @@ Proof.
     + apply in_seq. lia.
   - right. apply IH; [exact Hwf' | exact Hal | exact Hpa].
 Qed.
-
 Lemma NoDup_map_bv_unsigned : forall (l : list word),
   List.NoDup l -> List.NoDup (map bv_unsigned l).
 Proof.
@@ -701,7 +628,6 @@ Proof.
   intros Hin. apply in_map_iff in Hin as (y & Hy & Hiny).
   apply bv_eq in Hy. subst y. exact (Hx Hiny).
 Qed.
-
 Theorem allowed_pages_bound : forall A (pages : list word),
   A_wf A ->
   List.NoDup pages ->
@@ -719,10 +645,8 @@ Proof.
       apply A_pages_in; [exact Hwf | exact (Hal p Hp) | exact (Hpa p Hp)]. }
   unfold page_size. lia.
 Qed.
-
 Lemma two64_as_pages : (2 ^ 64 = page_size * 2 ^ 52)%Z.
 Proof. reflexivity. Qed.
-
 Lemma page_base_woff : forall a k,
   page_base (woff a k) = page_base_of (bv_unsigned a + Z.of_nat k).
 Proof.
@@ -735,7 +659,6 @@ Proof.
   rewrite !two64_as_pages.
   set (r := (z mod (page_size * 2 ^ 52))%Z).
   assert (Hps : (0 < page_size)%Z) by (unfold page_size; lia).
-
   pose proof (Z.div_mod z (page_size * 2 ^ 52) ltac:(lia)) as Hdm.
   fold r in Hdm.
   set (q := (z / (page_size * 2 ^ 52))%Z) in Hdm.
@@ -748,7 +671,6 @@ Proof.
     with (r / page_size * page_size + q * (page_size * 2 ^ 52))%Z by lia.
   rewrite Z_mod_plus_full. reflexivity.
 Qed.
-
 Lemma page_base_of_aligned : forall z,
   (bv_unsigned (page_base_of z) mod page_size = 0)%Z.
 Proof.
@@ -758,7 +680,6 @@ Proof.
   rewrite Zmult_mod_distr_l.
   rewrite Z.mul_comm. apply Z_mod_mult.
 Qed.
-
 Lemma page_insert_nodup : forall p pages,
   List.NoDup pages -> List.NoDup (page_insert p pages).
 Proof.
@@ -770,7 +691,6 @@ Proof.
   { apply existsb_exists. exists p. split; [exact Hin|]. unfold bv_eqb. apply Z.eqb_refl. }
   rewrite Ht in Hm. discriminate.
 Qed.
-
 Lemma page_mem_false_not_in : forall p pages,
   page_mem p pages = false -> ~ In p pages.
 Proof.
@@ -779,21 +699,18 @@ Proof.
   { apply existsb_exists. exists p. split; [exact Hin|]. unfold bv_eqb. apply Z.eqb_refl. }
   rewrite Ht in Hm. discriminate.
 Qed.
-
 Lemma access_pages_acc_nodup : forall n base pages,
   List.NoDup pages -> List.NoDup (access_pages_acc base n pages).
 Proof.
   induction n as [|n IH]; intros base pages Hnd; cbn [access_pages_acc]; [exact Hnd|].
   apply IH. apply page_insert_nodup. exact Hnd.
 Qed.
-
 Lemma accesses_pages_nodup : forall accs pages,
   List.NoDup pages -> List.NoDup (accesses_pages accs pages).
 Proof.
   induction accs as [|[a n] accs IH]; intros pages Hnd; cbn [accesses_pages]; [exact Hnd|].
   apply IH. apply access_pages_acc_nodup. exact Hnd.
 Qed.
-
 Lemma page_insert_in : forall p q pages,
   In p (page_insert q pages) -> p = q \/ In p pages.
 Proof.
@@ -801,7 +718,6 @@ Proof.
   destruct (page_mem q pages); [right; exact Hin|].
   destruct Hin as [Hqp | Hin]; [left; symmetry; exact Hqp | right; exact Hin].
 Qed.
-
 Lemma access_pages_acc_in : forall n base pages p,
   In p (access_pages_acc base n pages) ->
   In p pages
@@ -815,7 +731,6 @@ Proof.
       * left; exact Hin''.
     + right. exists (S k). split; [lia|]. f_equal. lia.
 Qed.
-
 Lemma accesses_pages_in : forall accs pages p,
   In p (accesses_pages accs pages) ->
   In p pages
@@ -830,7 +745,6 @@ Proof.
       * right. exists a, n, k. split; [left; reflexivity | split; assumption].
     + right. exists a', n', k. split; [right; exact Hin' | split; assumption].
 Qed.
-
 Lemma new_pages_props : forall H A lazy mat ranges,
   lazy_cover H lazy A ->
   ranges_avoid H ranges ->
@@ -862,7 +776,6 @@ Proof.
     rewrite <- page_base_woff in Ep. rewrite Ep in Hl |- *.
     exact (Hcov (woff a k) Hl Hw).
 Qed.
-
 Lemma m_vm_materialized_wvb : forall l X m,
   m_vm_materialized (with_vm_backing l X m) = X.
 Proof. reflexivity. Qed.
@@ -875,11 +788,9 @@ Proof. reflexivity. Qed.
 Lemma eager_used_wvb : forall X m,
   eager_used (with_vm_backing (m_vm_lazy m) X m) = eager_used m.
 Proof. reflexivity. Qed.
-
 Lemma with_vm_backing_id : forall m,
   with_vm_backing (m_vm_lazy m) (m_vm_materialized m) m = m.
 Proof. intros [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
-
 Lemma MInv_wvb : forall A m X,
   List.NoDup X ->
   (forall p, In p X -> (bv_unsigned p mod page_size = 0)%Z) ->
@@ -892,7 +803,6 @@ Proof.
     rewrite ?m_vm_materialized_wvb, ?m_vm_lazy_wvb, ?m_vmmaps_wvb, ?eager_used_wvb;
     assumption.
 Qed.
-
 Theorem materialize_restricted : forall H A m ranges,
   lazy_cover H (m_vm_lazy m) A ->
   A_wf A ->
@@ -932,18 +842,15 @@ Proof.
     exists ((p0 :: new') ++ m_vm_materialized m). split; [reflexivity|].
     apply MInv_wvb; assumption.
 Qed.
-
 Section Nodes.
 Variable segs : list Segment.
 Variable H : word -> bool.
 Hypothesis HH : H_off_segments segs H.
 Hypothesis Hwx : wx_segs_nowrap segs.
-
 Definition node_ok (c : config) (I : Type)
     (evs : I -> list event) (nx : I -> config) : Prop :=
   (forall i, sstep_cfg segs ACFG c (evs i) (SNext (nx i)))
   /\ (forall e st, sstep_cfg segs ACFG c e st -> exists i, e = evs i /\ st = SNext (nx i)).
-
 #[using="HH Hwx"] Theorem mi_account_step_restricted : forall A ms msr' model,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
   RiscvSemantics.step segs (restrict H ms) = MachineOk msr' ->
@@ -961,7 +868,6 @@ Proof.
   exists mat'. unfold mi_account_step. rewrite Hsa, Hmat, Hv.
   split; [reflexivity | split; [exact Hinv' | exact Hcl]].
 Qed.
-
 #[using="Type"] Lemma sstep_instr_det : forall ms model ms1 model1 e st,
   ms_svc_pending ms = None ->
   mi_account_step segs ms model = MachineOk (ms1, model1) ->
@@ -976,7 +882,6 @@ Proof.
         rewrite Hacc in Ha; try discriminate; injection Ha as <- <-; split; reflexivity
     end.
 Qed.
-
 #[using="HH Hwx"] Theorem node_instr_restricted : forall A ms msr' model,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
   m_halted model = None ->
@@ -1001,7 +906,6 @@ Proof.
   - intros e st Hss. exists tt.
     exact (sstep_instr_det ms model _ _ e st Hsvc Hacc (sstep_cfg_sub _ _ _ _ _ Hss)).
 Qed.
-
 #[using="HH Hwx"] Lemma step_hclean : forall ms ms',
   hclean H ms ->
   RiscvSemantics.step segs ms = MachineOk ms' ->
@@ -1011,7 +915,6 @@ Proof.
   destruct (step_restrict_sound segs H HH Hwx ms ms' Hs) as (rep & _ & _ & _ & Hcl & _).
   exact Hcl.
 Qed.
-
 #[using="HH Hwx"] Lemma msteps_hclean : forall ms ms',
   msteps segs ms ms' -> hclean H ms -> hclean H ms'.
 Proof.
@@ -1019,7 +922,6 @@ Proof.
   - exact Hc.
   - apply IH. exact (step_hclean ms ms1 Hc Hstep).
 Qed.
-
 #[using="Type"] Lemma unrestrict_munrestrict : forall f g ms',
   unrestrict H (munrestrict H f g) ms' = unrestrict H f ms'.
 Proof.
@@ -1027,11 +929,11 @@ Proof.
   apply functional_extensionality. intro x. unfold munrestrict.
   destruct (H x); reflexivity.
 Qed.
-
 Variable P : config -> Prop.
 Hypothesis P_silent1 : forall c c',
-  node_ok c unit (fun _ => []) (fun _ => c') -> P c' -> P c.
-
+  node_ok c unit (fun _ => []) (fun _ => c') ->
+  ms_svc_pending (cfg_ms c) = None ->   (* LPS 727298f3: instruction nodes only ([RomBase.sys_rob_instr]) *)
+  P c' -> P c.
 #[using="HH Hwx P_silent1"] Theorem rz_step_restricted : forall A ms msr' model,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
   m_halted model = None ->
@@ -1044,9 +946,8 @@ Proof.
   intros A ms msr' model Hcov Hwf Hinv Hh Hsvc Hs Hk.
   destruct (node_instr_restricted A ms msr' model Hcov Hwf Hinv Hh Hsvc Hs)
     as (model' & Hinv' & Hsame & _ & _ & Hnode).
-  exact (P_silent1 _ _ Hnode (Hk model' Hinv' Hsame)).
+  exact (P_silent1 _ _ Hnode Hsvc (Hk model' Hinv' Hsame)).
 Qed.
-
 #[using="HH Hwx P_silent1"] Theorem rz_msteps_restricted : forall A msr0 msr',
   msteps segs msr0 msr' ->
   forall ms model,
@@ -1065,7 +966,7 @@ Proof.
   - rewrite restrict_svc_pending in Hsvc.
     destruct (node_instr_restricted A ms msr1 model Hcov Hwf Hinv Hh Hsvc Hstep)
       as (model1 & Hinv1 & Hsame1 & Hcl1 & _ & Hnode).
-    apply (P_silent1 _ _ Hnode).
+    apply (P_silent1 _ _ Hnode Hsvc).
     pose proof (same_but_materialized_frame model model1 Hsame1) as Hfr.
     apply (IH (unrestrict H (ms_mem ms) msr1) model1).
     + symmetry. apply restrict_unrestrict_clean. exact Hcl1.
@@ -1077,7 +978,6 @@ Proof.
       rewrite unrestrict_mem, unrestrict_munrestrict.
       apply Hk; [exact Hinv' | exact (same_but_materialized_trans _ _ _ Hsame1 Hsame')].
 Qed.
-
 #[using="HH Hwx P_silent1"] Theorem rz_msteps_restricted' : forall A ms msr' model,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
   m_halted model = None ->
@@ -1093,9 +993,7 @@ Proof.
   apply (rz_msteps_restricted A (restrict H ms) msr' Hms ms model eq_refl Hcov Hwf Hinv Hh).
   intros model' Hinv' Hsame'. exact (Hk model' Hinv' Hsame' Hcl).
 Qed.
-
 End Nodes.
-
 Lemma materialize_model_accesses_nil : forall m,
   materialize_model_accesses m [] = Some m.
 Proof.
@@ -1103,17 +1001,14 @@ Proof.
   unfold newly_materialized_pages. cbn [accesses_pages List.filter].
   rewrite with_vm_backing_id. reflexivity.
 Qed.
-
 Definition materialized_succ (m : Model) (accs : list (word * nat)) : Model :=
   match materialize_model_accesses m accs with
   | Some m' => m'
   | None => m
   end.
-
 Section SyscallNode.
 Variable segs : list Segment.
 Variable H : word -> bool.
-
 #[using="Type"] Theorem node_syscall_restricted :
   forall A ms model x8 (I : Type)
          (eff : I -> SyscallEffect) (mdl : I -> Model) (evs : I -> list event),
@@ -1161,10 +1056,8 @@ Proof.
         rewrite (m_killed_of_m_halted_none _ (Hnh i)) in Hk; discriminate Hk.
 Qed.
 End SyscallNode.
-
 Definition mkH (L : list (word * word)) (A : list (Z * Z)) : word -> bool :=
   fun a => page_in_ranges (page_base a) L && negb (page_allowedb A (page_base a)).
-
 Lemma page_in_ranges_incl : forall p l L,
   incl l L -> page_in_ranges p l = true -> page_in_ranges p L = true.
 Proof.
@@ -1172,7 +1065,6 @@ Proof.
   apply existsb_exists in Hp as (r & Hin & Hr).
   apply existsb_exists. exists r. split; [exact (Hincl r Hin) | exact Hr].
 Qed.
-
 Lemma lazy_cover_mkH : forall L A lazy,
   incl lazy L -> lazy_cover (mkH L A) lazy A.
 Proof.
@@ -1180,14 +1072,11 @@ Proof.
   rewrite (page_in_ranges_incl _ _ _ Hincl Hl) in Hw. cbn in Hw.
   destruct (page_allowedb A (page_base w)); [reflexivity | discriminate].
 Qed.
-
 Definition seg_top (seg : Segment) : Z :=
   (Z.of_N (seg_base seg) + Z.of_N (seg_size seg))%Z.
-
 Definition wx_segs_nowrap_b (segs : list Segment) : bool :=
   forallb (fun seg => negb (seg_executable seg && seg_writable seg)
                       || (seg_top seg <=? 2 ^ 64)%Z) segs.
-
 Lemma wx_segs_nowrap_of_b : forall segs,
   wx_segs_nowrap_b segs = true -> wx_segs_nowrap segs.
 Proof.
@@ -1195,10 +1084,8 @@ Proof.
   rewrite forallb_forall in Hb. specialize (Hb seg Hin). rewrite Hwx in Hb. cbn in Hb.
   apply Z.leb_le in Hb. exact Hb.
 Qed.
-
 Definition segs_below_b (segs : list Segment) (top : Z) : bool :=
   forallb (fun seg => (seg_top seg <=? top)%Z) segs.
-
 Lemma find_segment1_none_above : forall segs top x,
   segs_below_b segs top = true -> (top <= x)%Z -> find_segment segs x 1 = None.
 Proof.
@@ -1211,7 +1098,6 @@ Proof.
   - exact (IH top x Hl Hx).
   - symmetry. apply andb_false_iff. right. apply Z.leb_gt. lia.
 Qed.
-
 Lemma H_off_segments_above : forall segs (H : word -> bool) top,
   segs_below_b segs top = true ->
   (forall a, H a = true -> (top <= bv_unsigned a)%Z) ->
@@ -1219,10 +1105,8 @@ Lemma H_off_segments_above : forall segs (H : word -> bool) top,
 Proof.
   intros segs H top Hb Ha a HHa. exact (find_segment1_none_above segs top _ Hb (Ha a HHa)).
 Qed.
-
 Definition ranges_from_b (L : list (word * word)) (top : Z) : bool :=
   forallb (fun r => (top <=? bv_unsigned (fst r))%Z) L.
-
 Lemma page_base_le : forall a, (bv_unsigned (page_base a) <= bv_unsigned a)%Z.
 Proof.
   intros a. unfold page_base, page_base_of. rewrite Z_to_bv_unsigned.
@@ -1236,7 +1120,6 @@ Proof.
   rewrite bv_wrap_small; [lia|].
   change (bv_modulus 64) with (2 ^ 64)%Z. lia.
 Qed.
-
 Lemma mkH_above : forall L A top a,
   ranges_from_b L top = true -> mkH L A a = true -> (top <= bv_unsigned a)%Z.
 Proof.
@@ -1247,7 +1130,6 @@ Proof.
   cbn [fst] in Hb. apply Z.leb_le in Hb.
   pose proof (page_base_le a). lia.
 Qed.
-
 Corollary H_off_segments_mkH : forall segs L A top,
   segs_below_b segs top = true -> ranges_from_b L top = true ->
   H_off_segments segs (mkH L A).
@@ -1256,7 +1138,6 @@ Proof.
   apply (H_off_segments_above segs (mkH L A) top Hs).
   intros a Ha. exact (mkH_above L A top a HL Ha).
 Qed.
-
 Lemma MInv_intro_empty : forall A m,
   m_vm_materialized m = [] ->
   (eager_used m + A_bytes A <= vm_limit (m_vmmaps m))%Z ->
@@ -1266,7 +1147,6 @@ Proof.
     [constructor | intros p Hp; destruct Hp | intros p Hp; destruct Hp
     | intros p Hp; destruct Hp | exact Hb].
 Qed.
-
 Lemma MInv_transport : forall A m m',
   MInv A m ->
   m_vm_materialized m' = m_vm_materialized m ->
@@ -1276,4 +1156,3 @@ Lemma MInv_transport : forall A m m',
 Proof.
   intros A m m' [H1 H2 H3 H4 H5] Hm Hl Hb. constructor; rewrite ?Hm, ?Hl; assumption.
 Qed.
-

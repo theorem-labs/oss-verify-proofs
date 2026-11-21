@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv entries the launch writes, in rauxv_list and rauxv_ok: StackLayout.auxv_entries' 24 pairs from AT_SYSINFO_EHDR, AT_RANDOM, AT_EXECFN, the two CONFIG_RSEQ pairs when the kernel has CONFIG_RSEQ, and AT_NULL). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -1855,23 +1856,37 @@ eapply HQ; [gw_exact H1| |].
 - intros b Hb. destruct c as [c|]; [|discriminate]. inversion Hb; subst. reflexivity.
 Qed.
 
-Definition rauxv_list (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) : list word :=
-map wz [3; x3; 4; x4; 5; x5; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* LPS 727298f3: the auxv the launch writes is [StackLayout.auxv_entries]: 24 pairs before AT_RANDOM
+   (AT_SYSINFO_EHDR first, the cache words, AT_MINSIGSTKSZ, then the ELF and credential words), AT_RANDOM,
+   AT_EXECFN, the two CONFIG_RSEQ pairs when the kernel has CONFIG_RSEQ, and AT_NULL.  The keys are the
+   model's constants; every value is a variable but AT_RANDOM's ([rnd]), which the libc reads. *)
+Definition rauxv_keys0 : list Z := [33; 40; 41; 42; 43; 44; 45; 46; 47; 51; 16; 6; 17; 3; 4; 5; 7; 8; 9; 11; 12; 13; 14; 23].
+
+Fixpoint rauxv_kvw (ks vs : list Z) (i : nat) : list Z :=
+match ks with
+| [] => []
+| k :: ks' => k :: nth i vs 0 :: rauxv_kvw ks' vs (S i)
+end.
+
+Definition rauxv_list (vs : list Z) (rnd ex : Z) (rs : list Z) : list word :=
+map wz (rauxv_kvw rauxv_keys0 vs 0 ++ [25; rnd; 31; ex] ++ rs ++ [0; 0]).
 
 Definition rauxv_ok (m : mem) (B : Z) : Prop :=
-exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
+exists av vs rnd ex rs,
 rw_cells segs m (RATP + 131736) [C8 (wz av)]
-/\ bytes_at segs m av (u64s (rauxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
+/\ bytes_at segs m av (u64s (rauxv_list vs rnd ex rs))
 /\ bytes_at segs m (rnd + 8) (le8 (wz rc_secret))
-/\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-/\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
-/\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64
+/\ alloc_ceiling <= B /\ B <= av /\ av + 8 * Z.of_nat (length (rauxv_list vs rnd ex rs)) <= 2^64
+/\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+/\ length vs = 24%nat /\ Forall (fun v => 0 <= v < 2^64) vs /\ 0 <= ex < 2^64 /\ (rs = [] \/ rs = [27; 28; 28; 32])
+/\ 0 <= rnd < 2^64
 /\ av mod 8 = 0.
 
 #[using="RNG_RATP"] Lemma rauxv_ok_weaken : forall m B B', rauxv_ok m B -> alloc_ceiling <= B' <= B -> rauxv_ok m B'.
 Proof. clear - RNG_RATP RATP. gw_expose_fam RATP.
-intros m B B' (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H) HB.
-exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). lia.
+intros m B B' (av & vs & rnd & ex & rs & C & A1 & A2 & H1 & H2 & H3 & H4 & H5 & HR) HB.
+exists av, vs, rnd, ex, rs.
+refine (conj C (conj A1 (conj A2 (conj _ (conj _ (conj H3 (conj _ (conj H5 HR)))))))); lia.
 Qed.
 
 #[using="Type"] Lemma rauxv_ok_frame : forall m m' B W,
@@ -1879,8 +1894,8 @@ rauxv_ok m B -> munch W m m' -> wmono segs m m' ->
 Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= (RATP + 131736) \/ (RATP + 131736) + 8 <= fst iv)) W ->
 rauxv_ok m' B.
 Proof. clear - segs RATP. gw_expose_fam RATP.
-intros m m' B W (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) MU WM FW.
-exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|gw_exact H]]].
+intros m m' B W (av & vs & rnd & ex & rs & C & A1 & A2 & H) MU WM FW.
+exists av, vs, rnd, ex, rs. split; [|split; [|split; [|gw_exact H]]].
 - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [gw_exact FW|]. cbn. intros lo hi [_ ?]. lia.
 - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [gw_exact FW|]. cbn. intros lo hi [? _]. lia.
 - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [gw_exact FW|]. cbn. intros lo hi [? _]. lia.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -36,6 +37,8 @@ Definition ref_stdio_write_stmt : Prop :=
   ssp_cells mem can ->
   (0 < fd < 2147483648)%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (* #38's SIGPIPE guard; same slot as RefStdioWrite's loop1/loop2. *)
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   (0 <= wb <= wp)%Z -> (wp <= 0x800000000000)%Z ->   (* [comment removed for export] *)
   (wp - wb = Z.of_nat (length pending))%Z ->
@@ -296,6 +299,7 @@ Proof.
   - split; [rewrite Rcg, Hcgv; reflexivity | exact Rcan].
   - lia.
   - apply fd_lookup_std1. exact (co_fds _ _ _ _ _ HC).
+  - exact (co_rdr _ _ _ _ _ HC).
   - exact (co_halt _ _ _ _ _ HC).
   - exact (co_lazy _ _ _ _ _ HC).
   - lia.

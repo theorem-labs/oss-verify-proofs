@@ -5,7 +5,7 @@
    THE PREMISE (lib/A/Prog/Cno102A_R5.v and lib/A/Prog/Cno102A_R.v, their Section hypothesis MEMSET, generic over
    {PA : PAImg A_prog_listing}, with SEGS := @pa_segs _ A_prog_listing PA, SIGMA := @pa_sigma _ A_prog_listing PA):
      Hypothesis MEMSET : forall fz : YK11.FPState, aintrin_realizes_xm (fx := fz) SEGS B ARx OSet (SIGMA AS___asan_memset).
-   THE CITATION: a working branch 599a4cefc740, lib/A/PRowSet.v (blob 4eac5264e9e8) :4373
+   THE CITATION: a working branch, lib/A/PRowSet.v (blob 4eac5264e9e8) :4373
      prow_asan_memset_xm_A : forall B ARx hl, YCbqG.AR_laws_x tfibsegs B ARx hl -> TfibSyms B ->
                              aintrin_realizes_xm tfibsegs B ARx OSet (pc_asan_memset (as_code B))
    (Section rows, Context {fx} {rc}: generic in the float state), taken by path with lib/A/PRowKitA.v a85a761d555d,

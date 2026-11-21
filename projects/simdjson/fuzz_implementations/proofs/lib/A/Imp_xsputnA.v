@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -50,7 +51,7 @@ Definition xsp_kont (K : config -> Prop) (L : list (Z * Z)) (FR0 : list (Z * nat
 Lemma xsputn_exitA : forall (Σ : rts RT) (K : config -> Prop) (L : list (Z * Z)) (st : ossA) (c0 len lo O q w0 N fO : Z) (kO : nat) (m0 m : mem)
     (cra gp cs0 cs1 cs2 cs3 cs4 cs5 s6 s7 s8 s9 s10 s11 : word) (fc : bv 32) (j8 : list byte)
     (xra xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xs2 xs4 xt3 xt4 xt5 xt6 : word) (F : bvmap 5 word),
-  rt_live RT Σ = oachunk st ++ L -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo ->
+  rt_live RT Σ = oachunk st ++ L -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo ->
   ART RT Σ m -> mem_inv asegs m -> stk asegs m lo (q + -64) -> lo + 64 <= q -> q + 16 <= USTACK_TOP ->
   SBINVA' m O len st -> oa_w st = w0 + N -> OSHADOWA m O -> c0 + os_psi len st <= rt_credit RT Σ ->
   rw_cells asegs m (q + -64) (xsp_frameA j8 cra cs0 cs1 cs2 cs3 cs4 cs5) ->
@@ -77,7 +78,7 @@ Lemma xsputn_loopA : forall (k : nat) (Σ : rts RT) (K : config -> Prop) (L : li
     (xra xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xs4 xt3 xt4 xt5 xt6 : word) (F : bvmap 5 word),
   N - i <= Z.of_nat k ->
   rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   SBINVA' m O len st -> OSHADOWA m O -> 0 <= len <= SJ_PADMAX -> oa_w st = w0 + i -> 0 <= i < N -> N < 2^40 ->
   rw_cells asegs m S [CB (Z.to_nat CAP) bs] -> N <= CAP -> 0 < S -> S + CAP <= lo -> acc asegs m S N ->
   ((exists p n, In (p, n) L /\ p <= S /\ S + CAP <= p + n) \/ (fO <= S /\ S + CAP <= fO + fs_size kO - 8)) -> (S + CAP <= O \/ O + 264 <= S) ->

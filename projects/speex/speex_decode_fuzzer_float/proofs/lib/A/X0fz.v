@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fixed_commit_ok and fixed_commit_pab_ok keep the reservation ledger through artm_res_free and artm_res_step). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1d7 X1cx X1cy X1cm X1cq X1d0 X1da X1d1 X1d3 X1cs.
@@ -170,13 +171,15 @@ assert (Hov : overlap_sum (vm_maps (m_vmmaps mo)) addr (addr + len) <= len).
 unfold B, S in Hov. cbn [fst snd] in Hov. rewrite E7a, E7n in Hov. specialize (Hov ltac:(lia) ltac:(lia) ltac:(lia)). lia. }
 split; [exact Hwf|].
 split; [unfold alloc_top, stack_max_size; rewrite Hisp; lia|].
-split; [rewrite Eres; apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia|].
+    split; [apply (artm_res_free mo _ _ _ Eres (reserved_free_above _ _ ltac:(rewrite Eua; unfold SEGTOP_A; lia))
+                (in_vpos _ _ Hin7 ltac:(cbn [snd]; rewrite E7n; lia))); cbn [fst snd]; rewrite ?Eua, ?Eul, ?E7a, ?E7n; lia|].
 split; [apply (map_contains_intro _ _ _ _ Hin7); cbn [fst snd]; rewrite ?Eua, ?Eul, ?E7a, ?E7n; lia|].
 split; [rewrite Elim; unfold E0_MAX, VMLIMIT in *; lia|].
 split.
 +
 split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_maps]; rewrite EM; exact Hperm|].
-split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved]; exact Eres|].
+      split; [apply (artm_res_step mo _ Eres); [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved]; reflexivity
+                | intros e He; left; rewrite mdl_fixed_vmmaps in He; unfold mmap_fixed_rw_next in He; cbn [vm_maps] in He; exact He]|].
 split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_limit]; exact Elim|].
 split.
 { pose proof (eager_used_fixed50_le mo (Z_to_bv 64 addr) (Z_to_bv 64 len) Hwf) as Hle. rewrite Eua, Eul in Hle. lia. }
@@ -243,12 +246,14 @@ assert (Hov : overlap_sum (vm_maps (m_vmmaps mo)) addr (addr + len) <= len).
 unfold B, S in Hov. cbn [fst snd] in Hov. rewrite E9a, E9n in Hov. specialize (Hov ltac:(lia) ltac:(lia) ltac:(lia)). lia. }
 split; [exact Hwf|].
 split; [unfold alloc_top, stack_max_size; rewrite Hisp; lia|].
-split; [rewrite Eres; apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia|].
+    split; [apply (artm_res_free mo _ _ _ Eres (reserved_free_above _ _ ltac:(rewrite Eua; unfold SEGTOP_A; lia))
+                (in_vpos _ _ Hin9 ltac:(cbn [snd]; rewrite E9n; lia))); cbn [fst snd]; rewrite ?Eua, ?Eul, ?E9a, ?E9n; lia|].
 split; [apply (map_contains_intro _ _ _ _ Hin9); cbn [fst snd]; rewrite ?Eua, ?Eul, ?E9a, ?E9n; lia|].
 split; [rewrite Elim; unfold E0_MAX, VMLIMIT in *; lia|].
 split.
 + split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_maps]; rewrite EM; exact Hperm|].
-split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved]; exact Eres|].
+      split; [apply (artm_res_step mo _ Eres); [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved]; reflexivity
+                | intros e He; left; rewrite mdl_fixed_vmmaps in He; unfold mmap_fixed_rw_next in He; cbn [vm_maps] in He; exact He]|].
 split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_limit]; exact Elim|].
 split.
 { pose proof (eager_used_fixed50_le mo (Z_to_bv 64 addr) (Z_to_bv 64 len) Hwf) as Hle. rewrite Eua, Eul in Hle. lia. }
@@ -431,13 +436,15 @@ assert (Hov : overlap_sum (vm_maps (m_vmmaps mo)) addr (addr + len) <= len).
 unfold B, S in Hov. cbn [fst snd] in Hov. rewrite E7a, E7n in Hov. specialize (Hov ltac:(lia) ltac:(lia) ltac:(lia)). lia. }
 split; [exact Hwf|].
 split; [unfold alloc_top, stack_max_size; rewrite Hisp; lia|].
-split; [rewrite Eres; apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia|].
+    split; [apply (artm_res_free mo _ _ _ Eres (reserved_free_above _ _ ltac:(rewrite Eua; unfold SEGTOP_A; lia))
+                (in_vpos _ _ Hin7 ltac:(cbn [snd]; rewrite E7n; lia))); cbn [fst snd]; rewrite ?Eua, ?Eul, ?E7a, ?E7n; lia|].
 split; [apply (map_contains_intro _ _ _ _ Hin7); cbn [fst snd]; rewrite ?Eua, ?Eul, ?E7a, ?E7n; lia|].
 split; [rewrite Elim; unfold E0_MAX, VMLIMIT in *; lia|].
 split.
 +
 split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_maps]; rewrite EM; exact Hperm|].
-split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved]; exact Eres|].
+      split; [apply (artm_res_step mo _ Eres); [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved]; reflexivity
+                | intros e He; left; rewrite mdl_fixed_vmmaps in He; unfold mmap_fixed_rw_next in He; cbn [vm_maps] in He; exact He]|].
 split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_limit]; exact Elim|].
 split.
 { pose proof (eager_used_fixed50_le mo (Z_to_bv 64 addr) (Z_to_bv 64 len) Hwf) as Hle. rewrite Eua, Eul in Hle. lia. }
@@ -504,12 +511,14 @@ assert (Hov : overlap_sum (vm_maps (m_vmmaps mo)) addr (addr + len) <= len).
 unfold B, S in Hov. cbn [fst snd] in Hov. rewrite E9a, E9n in Hov. specialize (Hov ltac:(lia) ltac:(lia) ltac:(lia)). lia. }
 split; [exact Hwf|].
 split; [unfold alloc_top, stack_max_size; rewrite Hisp; lia|].
-split; [rewrite Eres; apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia|].
+    split; [apply (artm_res_free mo _ _ _ Eres (reserved_free_above _ _ ltac:(rewrite Eua; unfold SEGTOP_A; lia))
+                (in_vpos _ _ Hin9 ltac:(cbn [snd]; rewrite E9n; lia))); cbn [fst snd]; rewrite ?Eua, ?Eul, ?E9a, ?E9n; lia|].
 split; [apply (map_contains_intro _ _ _ _ Hin9); cbn [fst snd]; rewrite ?Eua, ?Eul, ?E9a, ?E9n; lia|].
 split; [rewrite Elim; unfold E0_MAX, VMLIMIT in *; lia|].
 split.
 + split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_maps]; rewrite EM; exact Hperm|].
-split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved]; exact Eres|].
+      split; [apply (artm_res_step mo _ Eres); [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved]; reflexivity
+                | intros e He; left; rewrite mdl_fixed_vmmaps in He; unfold mmap_fixed_rw_next in He; cbn [vm_maps] in He; exact He]|].
 split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_limit]; exact Elim|].
 split.
 { pose proof (eager_used_fixed50_le mo (Z_to_bv 64 addr) (Z_to_bv 64 len) Hwf) as Hle. rewrite Eua, Eul in Hle. lia. }

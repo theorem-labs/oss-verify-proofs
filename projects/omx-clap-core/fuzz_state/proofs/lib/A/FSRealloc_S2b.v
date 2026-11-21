@@ -1,9 +1,9 @@
 (* fuzz_state image A, realloc thin segment S2b: the copy routine's return -> Reallocate's `jal Deallocate`.
    The RGtop hypothesis is [seg_mid_b K2_fs K3_fs] at fs's instance (lib/A/FSRealloc_inst.v); this file proves it,
-   [fs_seg_mid_b : FS_seg_mid_b B Up], against a Theorem Labs lane's c5 statement (RGtop.v @ 2bd8ae006ef).
+   [fs_seg_mid_b : FS_seg_mid_b B Up], against a Theorem Labs lane's c5 statement (RGtop.v).
 
    Rule 24 (released-proof lookup): CONFIRM, no released ASan-image proof of any fuzz_state function
-   (internal path, ossv proof index v5 @ ossv/recipes 566eb6ffa5df, the
+   (internal path, ossv proof index v5, the
    `realloc` row).  The released DONOR of the same machine code is cgif_rgb_fuzzer's released realloc family,
    proofs/cgif/cgif_rgb_fuzzer/lib/YF78.v:553 (tfx_arealloc) with YF67 / YF6p; S2b is the donor's step from
    REAL(memcpy)'s return 0x32584 to `jal Deallocate` 0x3259c, i.e. YF67.v:126 (c1_postM, the register list at the
@@ -30,13 +30,13 @@
    The two premises this segment needs beyond the pre-c5 statement are c5's own (a Theorem Labs lane reported both; a Theorem Labs lane's c5
    added them):
    1. the RAW copy frame `forall x : word, ~ (q <= bv_unsigned x < q + min(req_size n_old, n)) -> mem3 x = memM x`,
-      c5's seg_mid_b premise (RGtop.v:290, from amemcpy_realizes, ReallocG.v:250).  The aview clause alone cannot
+      c5's seg_mid_b premise (RGtop.v:291, from amemcpy_realizes, ReallocG.v:251).  The aview clause alone cannot
       give it: ARU's [ahs] part (YG0n.v:441-449) reads RAW memory at HIDDEN in-band bytes, and aview hides exactly
       those, so AR_frame_law's last premise (YG0d.v:444) is unreachable from an aview frame;
-   2. the stack margin `ly_bot ly + FS_RFRAME < spZ regs`, c5's realloc_pre (ReallocG.v:121, RSTACK := FS_RFRAME):
-      Deallocate's pre-state asks `ly_bot ly2 < spZ regsD` with spZ regsD = spZ regs - FS_RFRAME (DeallocG.v:83),
+   2. the stack margin `ly_bot ly + FS_RFRAME < spZ regs`, c5's realloc_pre (ReallocG.v:122, RSTACK := FS_RFRAME):
+      Deallocate's pre-state asks `ly_bot ly2 < spZ regsD` with spZ regsD = spZ regs - FS_RFRAME (DeallocG.v:84),
       and layout_ok only bounds ly_stk_lo <= ly_bot (YG0f.v:321).
-   Deallocate's trace premise [U (call_trace ..) S2] is c5's seg_mid_b premise (RGtop.v:286).
+   Deallocate's trace premise [U (call_trace ..) S2] is c5's seg_mid_b premise (RGtop.v:287).
 
    No Axiom, no Admitted. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

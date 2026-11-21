@@ -9,12 +9,13 @@
    window, so the memory below the frame stays the entry's (kept_out) and the read-only bytes strcmp reads
    (rt_rom_view) follow from the statement's arodata_okP. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 890 of its 1010 lines of code are new or changed and 1371 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan+UBSan walk of m_find on image B of reac-pw/fuzz_segconf (fuzz_segconf.asan-ubsan, pin sha256
    c3796c0b38f3; entry BASE + AF_m_find = 0x874f4, 63 instructions, 64-byte frame, no side-stack frame, one
    instrumented check, three UBSan trap edges), against m_find_contract (lib/B/Prog/m_find_c.v) at
    A_m_find := BASE + AF_m_find, STK_m_find := SegInstB.STK_m_find (64 + 2 * ESTACK: the frame and the bcmp
    wrapper's window, the deeper of the two callees), RLO / RHI := SegInstB.RLO_A / RHI_A.
-   ADAPTATION of the image-A m_file-family lane's image-A walk lib/A/Prog/m_findA.v (commit 4a8c7695a78a) at image
+   ADAPTATION of the image-A m_file-family lane's image-A walk lib/A/Prog/m_findA.v at image
    B's numbers, with the UBSan trap edges added; the trap facts are the segconf porter's UBSan walk lib/U/Prog/m_find.v.
 
    Code (the neutral listing of m_find in image B; listing offsets from BASE, AF_m_find = 0x2734):

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the IMAGE-FREE pieces of pj_free's walks (fuzz_preset), ONE copy for image A (lib/A/Prog,
    slice S6) and image B (lib/B/Prog/pj_free_*.v): what a call keeps of the harness blocks. Generic over the program
    listing {L} and its image facts {PA : PAImg L}, the image's ledger parameters {PI : PrhImg} and the allocator
    parameters {cp : CfParams}; no lib/B import. proves no function (kind: walk glue).
    MOVED, statements and proofs unchanged, from h-rw-man-5's image-B lane, lib/B/Prog/pj_free_keep.v (blob
-   02337852b3d6 at origin/cold/h-rw-man-5-b-pjfree-rb 85f034f446fd; byte-identical, for these two lemmas, to blob
-   7011cf3f2c68 at b8478281ae9):
+   02337852b3d6; byte-identical, for these two lemmas, to blob
+   7011cf3f2c68):
      pfk_hblk     pj_free_keep.v:81-103 (with its comment line)
      pfk_nohead   pj_free_keep.v:105-138 (with its comment lines)
    The only change for the generic form: image B's `PA := PI_prog_B`, `SEGS := @pa_segs _ B_prog_listing PA` and
@@ -15,11 +16,11 @@
    pfk_hblk is its instance at wle.
    Section hypothesis: AR_laws_x pa_segs B ARx cf_head (the kit's laws). No ADDRESS.
    ALSO MOVED, statements and proofs unchanged, from h-rw-man-5's image-B lane (h-rw-man-5's YES 2026-10-29, relayed by
-   h-rw-pre-5): lib/B/Prog/pj_free_defs.v blob bd4c58302fde at origin/cold/h-rw-man-5-b-pjfree-rb ab365ca51d3, lines
+   h-rw-pre-5): lib/B/Prog/pj_free_defs.v blob bd4c58302fde, lines
    76-190, byte-identical: the observer (pf_obs, pf_reach, pf_safe), Section t (tfuzz_free_specO, pf_K0post,
    tpj_free_specO: the instrumented texts, generic over {L} {PA} {PI} {cp}). The image-B cuts of pj_free_defs.v (its
    Section d) stay in lib/B. Its Section ord (pf_oitemsR, pj_oshapeR, pj_foR) was here too until the kit took it
-   (lib/A/PRH_PjOrder.v e5917626b82b, kit-oldpin bd0d3c3a486b, announced 17:42Z); it is cited from there. *)
+   (lib/A/PRH_PjOrder.v e5917626b82b, kit-oldpin, announced 17:42Z); it is cited from there. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -144,8 +145,8 @@ Qed.
 End k.
 
 (* ================================================================ moved from lib/B/Prog/pj_free_defs.v :76-190 *)
-(* Section ord (pf_oitemsR, pj_oshapeR, pj_foR) is the KIT's now: lib/A/PRH_PjOrder.v e5917626b82b (kit-oldpin
-   bd0d3c3a486b, h-hpreset-7 took it from h-rw-man-5's ab365ca51d33 unchanged); it is cited, not copied. *)
+(* Section ord (pf_oitemsR, pj_oshapeR, pj_foR) is the KIT's now: lib/A/PRH_PjOrder.v e5917626b82b (kit-oldpin,
+   h-hpreset-7 took it from h-rw-man-5's unchanged); it is cited, not copied. *)
 
 (* ================================================================ the observer *)
 (* one fuzz_free call's allocator step: from (ly, S) to (ly', S'), freeing Some (p, n) (user address, user size) or
@@ -176,7 +177,7 @@ Variable SK : YI16.sink_head.
 (* the fixed re-hideable zone of the cf layer (YGcfRehidePost.v) at this section's run ceiling *)
 #[local] Notation RZ_cf := (@YGcfRehidePost.RZ_cf rc).
 
-(* The kit's tfuzz_free_specX (PRH_FnAlloc.v, the kit's tip d607d12e4b0f) with its live-set premise abstracted to PB S and the
+(* The kit's tfuzz_free_specX (PRH_FnAlloc.v, the kit's tip) with its live-set premise abstracted to PB S and the
    call's FX added to the post. Its trace premise is the FIXED form `In (call_trace ..) (u_fix (as_universe B))`, the
    fact pj_free's four fuzz_free calls have (prh_univ_closure's clauses 1-2, PRH_Base.prh_univ_closure_lit); the kit's
    `admits (as_universe B) (call_trace ..) S` follows from it (YCbqG.admits_ct_fix), and with it the kit's BUDGETED post
@@ -251,7 +252,7 @@ End t.
 
 (* ================================================================ THE BULK FORM OF THE FUZZ_FREE CALLS (shared) *)
 (* One copy for images A and B. The list facts and the observer glue were moved from a Theorem Labs image-B lane
-   (lib/B/Prog/pj_free_top.v blob 9ff6ee23b621 at commit ec90d1af41fe) and stated generic
+   (lib/B/Prog/pj_free_top.v blob 9ff6ee23b621) and stated generic
    over {L} {PA}. REBOUND to the #102 kit (owner 18:5xZ): the kit's tfuzz_free_specX
    (PRH_FnAlloc.v 740f4d11d144) is in the POST-IMPLICATION form - no position at entry, and its post moves a bulk
    sub-position for every model run - so the old FIX text (an entry widened to a bulk sub-position, the open text
@@ -259,14 +260,14 @@ End t.
    pf_FXe / pf_PBe / pf_ff_of_fix) are GONE: pf_ff_of_kit derives the walk's fuzz_free text from the kit's text itself, and
    pf_specX_of_walk derives the post-implication tpj_free_specX from any image's walk.
    RESTATED to the batch tree recorded as preset-tree-at-2026-10-29T23-27-23Z.tsv (sha256 1f0ae5f9ecde; internal record): tpj_free_specX CTX0 n (no run words DW) with the premise
-   prh_head_wide, which pf_specX_of_walk passes to the walk. FITTED to the kit's tip d607d12e4b0f: tfuzz_free_specX's post
+   prh_head_wide, which pf_specX_of_walk passes to the walk. FITTED to the kit's tip: tfuzz_free_specX's post
    is BUDGETED at its own trace (fpostbm .. (YCbqGwild.wbudget [call_trace ..] 0) ..); pj_free's fuzz_free traces are
    FIXED, so tfuzz_free_specO takes the trace in u_fix (the walk's prh_univ_closure_lit fact), and pf_ff_of_kit gives
    the kit's `admits` premise by YCbqG.admits_ct_fix and reads the post back by PRH_Base.fpost_of_fpostb_fix.
    pf_ff_of_kit reads the kit's fuzz_free post BY NAME through the kit's projection layer (PRH_FnAlloc.v tffP_R_of, the record
    tffP_R and the arm records tffP_R1 / tffP_R2), never by position; pf_specX_of_walk builds the kit's pj_free post BY NAME
    (PRH_FnPj.v tpfP_Q_of_R from the record tpfP_R).
-   ONE COPY for images A' and B' on the kit's cut 7cdbb61b5fa0 (owner 06:38Z; writer a Theorem Labs lane): this file is a Theorem Labs lane's
+   ONE COPY for images A' and B' on the kit's cut (owner 06:38Z; writer a Theorem Labs lane): this file is a Theorem Labs lane's
    df66e85d3123 (the form above, which its B' pj_free walk needs: the walk exists only under the kit's prh_head_wide, so
    pf_specX_of_walk hands the kit's premise to it) plus pf_admits_fix from a Theorem Labs lane's b81eeb4e6e61 (the S6 A' walk's
    measurement: admission at EVERY fuzz_free call of pj_free holds whatever the earlier frees stored, because each

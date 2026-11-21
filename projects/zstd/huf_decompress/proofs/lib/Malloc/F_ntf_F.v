@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (4 recorded proofs replaced by written proofs (free_fp_ctx_only, fm_facts_ctx, seq_range_test and 1 more)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -27,23 +28,28 @@ Definition seq_st (ns sc : Z) (st : mstate) : mstate := record_seq sc (upd_ctx (
 Lemma free_fp_ctx_only : forall st st' lo sp a,
   s_regions st' = s_regions st -> s_shadow st' = s_shadow st -> s_groups st' = s_groups st ->
   free_fp st' lo sp a -> free_fp st lo sp a.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_ntf_F ()) ["CANSEC1"] "h04__x1h11bh22ghh32EGh42ERh52ESh61Hh72H0h87__arithh94__ffh:8__varmaph;5__with<1ah=1gh>2loh?2sph@2sthA3st'p;4p;1p;3p;6p;2p;7p;;g0000R0p4p70R1p1000ep4p710R2p8P1p1001CR3p4p710R4p8P1P3p4p7210R3p8P1g001\R5p4p710p8P1p10025p4p73110R6p8P1g002GR1p4p710p8p1002[p4p70R7p1003Pp4p710p8P7g003lR8p4p710p8P7P5p4p741110p8P7P1p4p7210p8P7P1p4p73110p8P2P4p8P2P3p8g004JR7p4p710R9P2p8P9P4p8P9P3p8P9P6p8P7j43Tg004^j16Tg005Xj30Tg0062j15Tg006kj4LTg007Ij6@Tg007jj11Tg008cj4;Tg009bj19TP5j48Tg00:Dj24TP8j67Tg00:fj1KTg00;Fj1JTg00;fj2ITg00<Dj1?Tg00<bj1=Tg00=Mj2>Tg00>0j4<Tg00>[j7ATg00??j2BTg00?aj2:Tg00@;j2CTg00@gj3DTg00AFj4ETg00B8j2FTg00BTl;GTP1j6HTP0g00CXR1f3R8f2R5f1R7f0R6EHp=2g00DOR9g00EHR3g00EfR4g00FDR2g00F]R:g00G;C3%68f4R;#630P4P2P:g00H4C3%5;f5R<#530P0P4P2P3g00HmR=CLR>P4P2P:P3P=g00IFE@R=P1C3R:%1<f6R2#130P2P<P;P8C;f8R4f7R?P2P<P<P;P8P5P:%14%91R4P:P0P>P=P1C8R=P7P5C21416R>30P:P=P5f<#1C21417504[^21^10X=:P:P=P7f:#1C2=04>P6W7X21X10%1?P7E7g00IdR?#K%J?1I37%?3%=3R?g00JPg00JoR0P0g00KOR0P3g00Ko,>3R1g00LTP1C<g00M;FA1B?0P6P5g00M[R0g00N;R?':1C65=00?dg00N[=D37CEb9b:b;X031F66^03P6P2O1b8P6M;GW6W3W5W4X<3X?3W>XA9W@o"). Qed.
+Proof. intros st st' lo sp a ER ES EG H. eapply (free_fp_mono st st' lo sp sp a ER ES); [rewrite EG; auto| lia| exact H]. Qed.
 
 Lemma fm_facts_ctx : forall st f g,
   c_free_meta_head (f (s_ctx st)) = c_free_meta_head (s_ctx st) -> fm_facts st g -> fm_facts (upd_ctx f st) g.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_ntf_F ()) ["CANSEC1"] "h02Hhh11Eh21Hh31fh41gh52hdh61oh72pvh82sth91xp;1p;3p;2p;6g00O9j18Tg00Ooj11Tg005Xj30Tg00Q0j25Tg00Qlj23Tg00Rdj1<Tg00:Dj24Tg003Pj6;Tg00SXj16Tg00T1j27Tg00U0j2:Tg00Umj19Tg00Vdj22Tg00W?j2=Tg00DOg00WYR0P0]9g0000R0g002[R1f1R2f2R3#8R4O1#1%1430f3R4/52f4R5f5R6'3#<#1f0R7,40R8501P1P6f6R9#8R:O1#114039017X61P7%1:R:P4E;1402901:P4P3P7O2b0A0025#61369/72f7,39R9/:3#9=018A0076#61797'2'2X70,=0'2'2eW0X501345/53eW2W1W4W3W8o"). Qed.
+Proof. intros st f g E H hd Hh. unfold ctx in *. cbn [upd_ctx s_ctx] in Hh. rewrite E in Hh. exact (H hd Hh). Qed.
 
 Lemma seq_range_test sc : 0 <= sc <= 63 ->
   (31 < Z.land (sc + -7) 18446744073709551615 <-> sc_in_seq_range sc = false).
 Proof.
-ltac2:(KReplay.run1 (kr_t_F_ntf_F ()) ["CANSEC1"] "p'0h04__x1h14__p1h27__arithh34__ffh48__varmaph55__with62H0h71bi001bh82b0h91Hh:1zh;2sch<2GEh=2H2h>3Hsch?1Lh@1ehA1op;1p;2p;3p;6p;4p;7p;8g00XPj17Tg00Y5j1:Tg00B8j21Tg00Vdj2@Tg00YSj1bTg00Z1j22Tg00ZNj1>Tg00[3j2XTg00[Pj2ATg00\0j20Tg00\Lj1HTg00]Lj23Tg00]ej2mTg00^JR0j2fTg00^dj2DTg00_Aj2=Tg00_^j2_Tg005Xj38Tg00:fj1\Tg00;Fj1[Tg00;fj2ZTg00<Dj1YTg00<bj1WTg00=Mj2VTg00`;j1UTg00`]j2JTg00a@j6STg00adj3ITg00bGj1RTg00bej3QTg00??j2TTg00?aj2PTg00@;j2oTg00@gj3nTg00AFj4lTg00cHj3OTg00ckj1kTg00>0j4FTg00dIj6eTg00dmj4cTg003Pj6GTg00eNj4aTg00ejj2MTg00fLR1j3ETg00g0j2LTg00gRj4BTg00gmj2`Tg003lj6NTg00hLj1dTg00hjj2^Tg00iHj3gTg00ikj2hTg00>[j7]Tg00jIj7iTg00jmj8jTg00N[R2f0R3'1p=?g00M[R4g00kQR5783p=Kf1R6/h3=845p=6g00EHR7/J3p=9P7P6g00l1P3CFp=<P6g00JPR8g00JoR9P9g00KOR:P3g00M;F]p=4P7P6g00LTP3CFp=;f2R;P8P9P9P:P6P3Fip=Cf3R<P8P9P9P:P;P6P3Gjp=5%?3R=g00KoR>#7#7R?#7#7R@#7#:RA,13'@P7%b?RB,26RC%>>RD#:RE%>DRD#>#>#>#>RF#:RG'XRH'ARI%:@R@/03RJ%H;#K'3X:7%:?R?,m6106?RK11?6RL'fP010;?11?;12<B/AH,0@1D?<%7D#7#7#:RD,=<'6'3P310<?P7f4R0/2BRM/AHRN12MHROP7%:>RP/_H,2M/AHf5RQ/2BRR/2HRS9873X:7p-0RTg00IdRU#\RV%[URU1Z76RW%Y7RX%W7RY1V7>R>%9?RZ'<,4YR[%U9R\PY1J72R]/;>,4YPYP8P9P9P:P<ESR^5CYR_P\%9B9I7>R`%9E%RF5Q7RF5I7RE,;],4Y1<EF,4Y5CYC5C51TY:RaP3P;g00N;Rb,P41o3;=84bdAn726ClRcb3b4b5X07W1103?Rd%?6/@;12;BRe/2HRf#?10fH'@[[^07^1TP311QAPQP6P0O4b29OOHPNPMPPPHPVPU%k7RPPXPYP8P9P9P:P7PFg00lXP]CF,4YEePaPcb3b4b5A87H2g00m?R2[P3b2CcEGCaA87ONP7PSf6RS,D?RO1=SD'6,3JX:71M?Q11?Q10Q?1D?QR:3EPOP4P1f7RO,1?R910O?ROf9R8/2B/2H,0@1=8DRf,66'3P6f8Rg,1?1L8DRh108D11D8;EfR8f:Ri/=DRjP4P1f;Rk/0DRl11DkRmf=/2BRn/2H,0@Ro16b6Rp'3P6f<Rq/0DRrA84b5Rs\of>Rt/2BRu/2H,0@Rv\sPVPUPWPXPY1;Z>,4YRZP\PYP[P\P^C5C5PaPcb3b4b5X07X1T11?3RwP<\K[^07^1TP3Psf?RKPSPkO4b2VoPVPUPWPXPYP_P\%9@R_/<E,4YC5PaPcb3b4b5X07X1T1@=612CH,0@[^07^1TP311KAPKPtO3b2RKVsCB16bbR=,3oeW6P3O111DqREA8455Rk\oPv\k1P45RvVoPKVkCBRK16b5Rx,3oeW6P3O1n200210000000021100011000b8b7W9P3O110g?PhP8PjP4P1PlPm1656Rj,3oP6PK165bR8,3oeX6rP3O1PK1655RK,3oeX6EP3O1n200210000000021100011000b8b7W9P3O1n200210000000021100011000b8b71ARHP3EGb9W?P3O111?<P7PM1=QD,6:,3JX:71M?011?0100?1D?03EP:P4P111?S10S?12gB,0@1=gDR?,66'3P61LgDR:10gD11Dg;E?R?PfP4P110iDRg11DiRJ12qB,0@Rq/3pP6Ps\q10@nRn\sPVPUPWPXPY1<_`,4YR_P\PY%9DRp,<>,4YP\P^C5C5PaPcb3b4b5X07X1T123B,0@106DP<[[^07^1TP3PsPtP6P;O4b2VqP4PbP4PTP3g00m\P2n0110000020000X@4g00n8P5P3EGP210@uRu/`3b=VsCB13q=eX6lP3O1Pk\qR=Pn\kRnPvVqRvPVPUPWPXPY1;p>,4YP\P_C5PaPcb3b4b5X0711D310@C[^07P3PtP;O2b2VkCB13qxeX6mP3O1n200210000000021100011000b8b7X99P3O1P:P?PfP4P1PgPJ13qjP6P=PnPvPVPUPWPXPYP[P\PYPZP\P^C5C5PaPcb3b4b5X07X1TP<\L\d^07^1TP3PuPtPSPiO4b2VkCBRk13q8eX6lP3O1Pk13qKeX6mP3O1n200210000000021100011000b8b7X9OP3O1n200210000000021100011000b8b7PNPVPUPWPXPYPZP\PY%9A,;>,4Y9CY^P\1;]`,4Y1<`F,4Y5CYC5C5PaPcb3b4b5X07X1T116A,@;%?e10eH'@[\w^07^1TP3%?QPQP6P0O4b29OMHENW<P3O1n200100000021100011000bA10@I%H6#K'3e%dG,^CPVPUPPPX%9G,;],4YPaPcb3b4b5%?GP3b29gCGENW>X;7P3O1X;7o"). Qed.
+  intros Hsc. change 18446744073709551615 with (Z.ones 64). rewrite Z.land_ones by lia.
+  unfold sc_in_seq_range.
+  destruct (Z.lt_ge_cases sc 7) as [L|GE].
+  - replace ((sc + -7) mod 2 ^ 64) with (sc + -7 + 2^64).
+    2:{ symmetry. rewrite <- (Z.mod_add _ 1) by lia. apply Z.mod_small. lia. }
+    destruct (Z.leb_spec 7 sc); destruct (Z.ltb_spec sc 39); cbn; split; intros; try reflexivity; try lia.
+  - rewrite Z.mod_small by lia.
+    destruct (Z.leb_spec 7 sc); destruct (Z.ltb_spec sc 39); cbn; split; intros; try reflexivity; try discriminate; lia.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Lemma unmap_seqs_empty st : unmap_seqs (upd_ctx (fun c => set_unmap_seq_map ∅ c) st) = zeros 32.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_ntf_F ()) ["CANSEC1"] "h02stp;1p;2g00ZNj12Tg00bGj17Tg00nTj14Tg00;Fj13Tg00o7j16Tg00?aj25Tg0102j11Tf0R0#1#1#1#1p=0g00DOR1g00Ko#2#2#2#7#4#3g010Q#0#0#0#0#0#0#0#0#6'5X01P0O1W0o"). Qed.
+Proof. reflexivity. Qed.
 
 End CANSEC1.

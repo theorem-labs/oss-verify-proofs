@@ -3,21 +3,21 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_pool_config (plugin-hostd/fuzz_command, image
    fuzz_command.asan-ubsan, entry BASE + AF_sup_pool_config = 0x8bed0, 127 instructions): it proves a Theorem Labs lane's
-   `tsup_pool_config_spec` (lib/B/Prog/sup_pool_config_c.v, a working branch 707acd856cb; the same text as at
-   f490061c104) in the form of
+   `tsup_pool_config_spec` (lib/B/Prog/sup_pool_config_c.v, a working branch; the same text as)
+   in the form of
    cgif_file_fuzzer's per-function walks: afn_pre at the entry, the symbolic executor over the position-abstract
    listing up to each call, the runtime's rules at the runtime calls (__asan_stack_malloc_0, the snprintf wrapper,
    the frame's release by its flag byte), the callee contracts record_c, arg_s_c, rec_shape_of_c and answer_c at the
    program calls (through cl_callS_wide / cl_callS_na), the return through paj_ret_at, and apost_base at the end.
 
-   It is the B re-walk of the A walk lib/A/Prog/sup_pool_config.v (a working branch c4f188792bb),
+   It is the B re-walk of the A walk lib/A/Prog/sup_pool_config.v (a working branch),
    whose B code differs: B calls record() and arg_s() where A inlined record() and called xstrdup, and B inlines
    arg_i, so this function owns arg_i's class-0 side-stack frame (64 bytes, b = frame + 32) and its snprintf. The
    frame code (prologue, realignment `andi sp,sp,-32`, __asan_stack_malloc_0, header and shadow f1 f1 f1 f1 | f8 f8 |
    f3 f3, b unpoisoned around the snprintf and the second arg_s, the release through the flag byte) is arg_i's ASan
-   walk's (lib/A/Prog/arg_i.v, a working branch 12dc52bfe84) and answer_code's ASan walk's
-   (lib/A/Prog/answer_code.v, a working branch 2ba4488ce71); the B kit usage is socket_send's B walk
-   (lib/B/Prog/socket_send.v, a working branch a470f91dbfb).
+   walk's (lib/A/Prog/arg_i.v, a working branch) and answer_code's ASan walk's
+   (lib/A/Prog/answer_code.v, a working branch); the B kit usage is socket_send's B walk
+   (lib/B/Prog/socket_send.v, a working branch).
 
    Report and trap edges: none. The function has no `jal __asan_report_*`, no `unimp`, no UBSan handler call
    (capstone over the pin's .symtab, gen/traps.B.summary row `sup_pool_config 0`). Its branches: 0x8bf30 `beqz a2`
@@ -28,6 +28,7 @@
    are not reached. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_pool_config.v, with its module paths and module names changed; 234 of its 315 lines of code are new or changed and 1983 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_s10k.v, with its module paths and module names changed; 170 of its 217 lines of code are new or changed and 268 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the shared
    vocabulary of segment B8b of reac_segconf_parse_file's walk (lib/B/Prog/pf_pieces.v's S_B8b): the walk-internal
    cut JOIN, the listing offsets the segment names, and the geometry of the cut facts every sub-walk of the segment

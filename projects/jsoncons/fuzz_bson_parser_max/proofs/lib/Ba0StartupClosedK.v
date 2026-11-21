@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE disposition left free, the rseq-dependent auxv, the launch input's kernel build): changed SINV, abrt, argH and 10 more; added Hlau, Hlaunch, Hrz and 7 more; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0StartupClosedK.v, lines 47-66, 72-95, 108-114, 131-137, 147-158, 172-184. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -47,17 +48,57 @@ Section Closed.
   Variable argv envp : list (list byte).
   Variables uid hw : word.
   Variable fs : Fs.Fs.
+  (* [AsanInitK]'s [Section Init] is parameterised by the full
+     [State.mkProcInput_full] field list, so [SINV0]/[argH0] discharge all
+     fifteen of [AsanInitK.inp]'s arguments plus [mbase] and [apc].  Same block
+     as the already-migrated [HandoffBridgeK.v:619-629]. *)
+  Variable mbase : word.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable abrt : bool.
+  Variable ur : InputStream.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable sdf : bool.
+  Variable apc : N.
+  (* the run's CONFIG_RSEQ flag as 0 or 1: [AsanPlanK]'s slot 6 ([AsanPlanK.v:33])
+     and [APSK.x_stmt]'s, since the auxv's size decides where the strings sit.
+     Free here, as in [Ba0StartupK]'s [Section Stage]; a certificate is checked
+     at one literal value, and that join is not closed in this file. *)
+  Variable rz : Z.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
 
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  #[local] Notation INP :=
+    (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
+  (* [Run.valid_entry_va]'s fifth conjunct ([727298f3:Run.v:3750], [valid_entry_sv48]
+     :3767) and a conjunct of [Run.valid_input_either] (:4703): both are in the
+     published binder of this unit's top, so they are ported premises here, not
+     new assumptions. *)
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+  (* [XPnScan] reads [e_str0 rz], so at the [x_stmt] boundary the flag must be
+     the one the run's own kernel build carries.  A caller discharges this with
+     [eq_refl]; it does not close the free-[rz]-to-certificate-literal join. *)
+  Hypothesis Hrz : rz = rseq_z (kb_rseq (in_kernel INP)).
+
+  #[local] Notation SINV :=
+    (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc).
+  #[local] Notation argH :=
+    (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
   #[local] Notation LIM := AsanInitK.LIMIT.
 
-  Lemma as0_X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 LIM SINV argH fs x.
-  Proof. exact (asan_X_ALL scfg sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit). Qed.
+  Lemma as0_X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 LIM rz SINV argH fs x.
+  Proof.
+    exact (asan_X_ALL scfg sp brk0 rdraw argv envp uid hw rz fs
+             mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc
+             Hsp Hva Hve Hfit Hlaunch Hlau Hrz).
+  Qed.
 
   Variable IT0 : itab.
   Hypothesis IT0_ok : itab_sound ASEGS0 IT0.
@@ -69,11 +110,13 @@ Section Closed.
 
   (* [comment removed for export] *)
   Theorem as0_stage_hole : forall p cs0 s,
-    check ASEGS0 IT0 ASAN0 NX0 LIM XN0 XE0 XB0 HS KC0 BFUEL FUEL None cs0 p = COk s -> hole_only s = true ->
+    check ASEGS0 IT0 ASAN0 NX0 LIM rz XN0 XE0 XB0 HS KC0 BFUEL FUEL None cs0 p = COk s -> hole_only s = true ->
     forall E R FULL model, cs_ok ASEGS0 ASAN0 LIM SINV argH fs E cs0 R FULL model ->
       srealizes ASEGS0 scfg (cfg_of ASEGS0 R (pc cs0) FULL model) (T (m_fs model)).
   Proof.
-    exact (stage_hole scfg Halloc as0_AIMW as0_SMEARW sp brk0 rdraw argv envp uid hw fs Hsp Hva IT0 IT0_ok HS T T_nil HS_sound as0_X_ALL KC0 BFUEL FUEL).
+    exact (stage_hole scfg Halloc as0_AIMW as0_SMEARW sp brk0 rdraw argv envp uid hw fs
+             mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc rz
+             Hsp Hva IT0 IT0_ok HS T T_nil HS_sound as0_X_ALL KC0 BFUEL FUEL).
   Qed.
 End Closed.
 
@@ -90,7 +133,14 @@ Section ClosedStartup.
   Variable groups : list word.
   Variable net : NetQueue.
   Variables nofile sigmask : word.
-  Variable abrt : bool. Variable ur : InputStream.  (* [comment removed for export] *)
+  Variable abrt : bool. Variable ur : InputStream.
+  (* The kernel build and the exec file name are the two places of
+     [State.mkProcInput_full] this cone leaves free; see [AsanInitK.inp]. *)
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable sdf : bool.
+  (* the run's CONFIG_RSEQ flag, free as in [Section Closed] above *)
+  Variable rz : Z.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk ASEGS0 brk0.
   Hypothesis Hmb : valid_mmap_base mbase.
@@ -100,8 +150,19 @@ Section ClosedStartup.
   Hypothesis Huid : valid_id uid.
   Hypothesis Hhw : valid_hwcap hw.
 
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  #[local] Notation INP :=
+    (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
+  (* ported premises, as in [Section Closed] *)
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+  Hypothesis Hrz : rz = rseq_z (kb_rseq (in_kernel INP)).
+
+  (* [apc] is the image's ELF entry, the literal [Asan.M.init_pc], exactly as
+     [Ba0StartupK]'s [Section Startup] instantiates it. *)
+  #[local] Notation SINV :=
+    (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf Asan.M.init_pc).
+  #[local] Notation argH :=
+    (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
   #[local] Notation LIM := AsanInitK.LIMIT.
 
   Variable IT0 : itab.
@@ -114,15 +175,18 @@ Section ClosedStartup.
   Variable startup_plan : plan.
   Variable startup_shape : shape.
   Hypothesis startup_cert :
-    check ASEGS0 IT0 ASAN0 NX0 LIM XN0 XE0 XB0 HS KC0 BFUEL FUEL None asan0_init startup_plan = COk startup_shape.
+    check ASEGS0 IT0 ASAN0 NX0 LIM rz XN0 XE0 XB0 HS KC0 BFUEL FUEL None (asan0_init rz) startup_plan = COk startup_shape.
   Hypothesis startup_ho : hole_only startup_shape = true.
 
   Theorem as0_startup_hole_c :
-    srealizes ASEGS0 scfg (init_config ASEGS0 Asan.M.init_pc APH0 sp brk0 mbase rdraw LIM
-                                 (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur))
+    srealizes ASEGS0 scfg (init_config ASEGS0 Asan.M.init_pc APH0 sp brk0 mbase rdraw LIM INP)
               (T fs).
   Proof.
-    eapply (as0_startup_hole scfg Halloc as0_AIMW as0_SMEARW); try eassumption.
-    exact (as0_X_ALL scfg sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit).
+    eapply (as0_startup_hole scfg Halloc as0_AIMW as0_SMEARW); try eassumption;
+      (* [Hapc]: the image's ELF entry, by computation *)
+      try reflexivity.
+    exact (as0_X_ALL scfg sp brk0 rdraw argv envp uid hw fs
+             mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf Asan.M.init_pc rz
+             Hsp Hva Hve Hfit Hlaunch Hlau Hrz).
   Qed.
 End ClosedStartup.

@@ -1,24 +1,25 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs (for the cf layer at plugin-hostd/fuzz_reply; row img-oomconst-A).
    rule 24: no function proved (kind: image row; closed computations over reply image A's constant-cell table and
    owned-static table, fuzz_reply.asan, pin 42c58610e125, and the layout geometry of layout_ok).
 
    oom_const_img at image A, in the cf layer's restated form: oom_const_t
-   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v:312-314 @ 90854e46e5c; the fact `Hypothesis oom_const_img :
+   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v:312-314; the fact `Hypothesis oom_const_img :
    oom_const_t` at :316), over the layout predicate ly_img_ok
-   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142 @ e73dee6cc107, the same text @ 90854e46e5c):
+   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142, the same text):
      ly_img_ok ly := layout_ok ly /\ ly_tsd ly = as_tsd B /\
                      Forall (fun r => zr_sub r (ly_img ly)) (as_owned_static B ++ as_zero_shadow B).
    The reply tree does not carry those layer files, so the Lemma at the end states oom_const_t's body with ly_img_ok
    UNFOLDED, at any B with the image's symbol facts (ImgBase.im_syms at AImg_reply,
-   proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:27 @ d2bd679271c, = lib/A/AF0m.v's TfibSyms).  The form without
-   ly_img_ok is false at this image (oom_const_t_refuted_A, lib/A/ReplyImg_oomconst.v @ 9c5a7ec6f3a).
+   proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:28, = lib/A/AF0m.v's TfibSyms).  The form without
+   ly_img_ok is false at this image (oom_const_t_refuted_A, lib/A/ReplyImg_oomconst.v).
    as_const B ly = Tfib_const ly = Tfib_const_sym ++ Tfib_const_abs ++ Tfib_const_shadow
-   (proofs/plugin-hostd/fuzz_reply/lib/A/AF0m.v:817 @ d2bd679271c):
+   (proofs/plugin-hostd/fuzz_reply/lib/A/AF0m.v:818):
    - the absolute cells (Tfib_const_abs ++ Tfib_const_shadow): no byte is the OOM byte TFIB_OOM = 0x128320 (a boolean
      scan of the table, vm_compute; the nearest cells are the 1-byte cells at 0x128321 / 0x128322);
-   - the SYM cells (Tfib_const_sym, lib/A/AF0m.v:32-38): each byte lies in the thread object [ly_T, + 80), the cache
+   - the SYM cells (Tfib_const_sym, lib/A/AF0m.v:33-39): each byte lies in the thread object [ly_T, + 80), the cache
      [ly_C, + 160) or [ly_D, + 32) (inside the owned extents of layout_ok, apart from ly_img by lo_disj, so no owned static
      byte: the owned static ranges lie in ly_img), or at a fixed address of B (the instance + 0 .. 88, the thread pointer
      - 88 .. + 16, the TSD slot, pinned by ly_tsd ly = as_tsd B), none of which is 0x128320.
@@ -95,7 +96,7 @@ exists a. split; [exact E|]. intros k Hk. exact (in_zr_b_sound _ _ (H k Hk)).
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The owned static ranges that hold the fixed SYM cells' bytes (lib/A/AF0m.v:823, :854).                          *)
+(* The owned static ranges that hold the fixed SYM cells' bytes (lib/A/AF0m.v:824, :855).                          *)
 Lemma own_entry : forall lo len x, In (lo, len) Tfib_owned_static -> lo <= x < lo + len -> Exists (in_zr x) Tfib_owned_static.
 Proof. intros lo len x Hi Hx. apply Exists_exists. exists (lo, len). split; [exact Hi | exact Hx]. Qed.
 
@@ -140,7 +141,7 @@ intros B ly x F Ex. apply Exists_exists in Ex as (r & Hr & Hx). rewrite Forall_f
 pose proof (F r ltac:(apply in_or_app; left; exact Hr)) as S. unfold zr_sub, in_zr in *. lia.
 Qed.
 
-(* The SYM cells of Tfib_const_sym (lib/A/AF0m.v:32-38), byte by byte. *)
+(* The SYM cells of Tfib_const_sym (lib/A/AF0m.v:33-39), byte by byte. *)
 Lemma sym_where : forall B ly c k, In c Tfib_const_sym -> 0 <= k < Z.max 1 (Z.of_nat (c_w c)) ->
   (ly_T ly <= aeval B ly (c_at c) + k < ly_T ly + 80) \/ (ly_C ly <= aeval B ly (c_at c) + k < ly_C ly + 160) \/
   (ly_D ly <= aeval B ly (c_at c) + k < ly_D ly + 32) \/ (as_inst B <= aeval B ly (c_at c) + k < as_inst B + 88) \/
@@ -190,8 +191,8 @@ apply in_app_or in Hc as [Hc|Hc].
 - destruct (abs_shadow_off_oom c Hc) as (a & E & K). rewrite E. cbn [aeval]. exact (K k Hk).
 Qed.
 
-(* oom_const_img at image A: proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v:312-314 @ 90854e46e5c, with ly_img_ok
-   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142 @ e73dee6cc107) unfolded. *)
+(* oom_const_img at image A: proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v:312-314, with ly_img_ok
+   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142) unfolded. *)
 Lemma oom_const_img_A : forall B, @im_syms AImg_reply B ->
   forall ly c k,
   (layout_ok ly /\ ly_tsd ly = as_tsd B /\ Forall (fun r => zr_sub r (ly_img ly)) (as_owned_static B ++ as_zero_shadow B)) ->

@@ -119,8 +119,8 @@ constructor.
   exact CfAroPresetB.ro_reads_nw_preset_AU.
 Qed.
 
-(* ---- THE FUNCTION'S THEOREM at the instance: the kit's ttx_put_specX (PRH_FnTx.v 88468bf162d8, the batch kit
-   c23331281d07), every row by its Qed lemma (TxPut102B_All.tx_put_holds_B_rows; no NULL row: the batch kit's text has no
+(* ---- THE FUNCTION'S THEOREM at the instance: the kit's ttx_put_specX (PRH_FnTx.v 88468bf162d8, the batch kit),
+   every row by its Qed lemma (TxPut102B_All.tx_put_holds_B_rows; no NULL row: the batch kit's text has no
    refused path) ---- *)
 Theorem tx_put_holds_B_inst : ttx_put_specX (PA := PA) B (ARcfx (PA := PA) B) SK CTX0.
 Proof. exact (tx_put_holds_B_rows (PA := PA) B SK CTX0 tp_hhi_B tp_img_B AREAL AREALN tp_arx_depot_B AI). Qed.

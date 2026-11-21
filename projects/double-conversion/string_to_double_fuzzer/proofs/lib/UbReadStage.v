@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mapping ledger's reserved ranges and mmap base). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -76,7 +77,7 @@ Definition sr_FULL (j : Z) : list expr := sr_LOOP (bx (off_of j)) (cap_of j) (ca
 (* [comment removed for export] *)
 Definition kn_static (j : Z) : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) 6144513;
    KRange (EVar 1) 0x7fff80000000 0x800000400000;
    KAlign (EVar 2) 4096; KRange (EVar 2) 0x1000 (CEIL - 8192);
    KDisj (LA 0x10000) 0xd6000 (SA (EVar 2) 0) 8192;     (* [comment removed for export] *)
@@ -156,7 +157,7 @@ Definition kn_FULL (j : Z) : list kentry := kn_static j ++ kn_ctx j ++ kn_meta j
 (* [comment removed for export] *)
 Definition kn_G0 : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) 6144513;
    KRange (EVar 1) 0x7fff80000000 0x800000400000;
    KAlign (EVar 2) 4096; KRange (EVar 2) 0x1000 (CEIL - 8192);
    KDisj (LA 0x10000) 0xd6000 (SA (EVar 2) 0) 8192;
@@ -307,7 +308,7 @@ Definition store_pres_ok (kn : list kentry) (b : expr) (k w : Z) : bool :=
   match b with
   | ELit 0 => Z.leb 0 w && (inb 0xc4f74 0xc4f78 k w || inb 0xe5434 0xe5450 k w || inb 0xe55d8 0xe55e0 k w
               || inb 0xe5758 0xe5760 k w || inb 0xe57b8 0xe57b9 k w || inb 0xb35e9 0xc35e9 k w)
-  | EVar 0 => Z.leb (-8388608) k && Z.leb (k + w) (-128) && Z.leb 0 w
+  | EVar 0 => Z.leb (-6144513) k && Z.leb (k + w) (-128) && Z.leb 0 w
   | _ => match base_range kn b with
          | Some (lo, hi) =>
              (Z.leb 0xe6000 (lo + k) || (Z.leb 0 (lo + k) && ranges_apart kn (ELit 0) 0x10000 0xd6000 b k w))
@@ -408,23 +409,27 @@ Proof.
   intros. eapply pres_trans; [eassumption|]. eapply pres_mem_denot; eassumption.
 Qed.
 
-(* [comment removed for export] *)
-Definition vm_stage (VM : VmMaps) (sp0 mb B : word) (nb : Z) : Prop :=
-  vm_reserved VM = segments_reserved RSEGS
+(** The address space at read stage [j]: the current buffer [B] of [nb_of j] bytes heads the
+    ledger, followed by [rest].  [rest] holds the start-up mappings and every read buffer an
+    earlier growth step freed with a refused [munmap] (musl's [free] ignores munmap's result,
+    so a refused buffer stays mapped): one more entry and at most [nb_of j] more bytes per
+    stage, hence the stage-indexed bounds on its length and size. *)
+Definition vm_stage (VM : VmMaps) (sp0 mb B : word) (j : Z) : Prop :=
+  (exists VX, vm_reserved VM = segments_reserved RSEGS ++ VX /\ (length VX <= 2)%nat /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 2 ^ 30)%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) VX)
   /\ vm_init_sp VM = sp0                       (* [comment removed for export] *)
   /\ vm_limit VM = target_alloc_limit
   /\ exists rest,
-      vm_maps VM = (B, Z_to_bv 64 nb) :: rest
+      vm_maps VM = (B, Z_to_bv 64 (nb_of j)) :: rest
       /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 2 ^ 30)%Z
                           /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z
                           /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned sp0 - 8388608)%Z) rest
                                                (* [comment removed for export] *)
-      /\ (length rest <= 8)%nat
-      /\ (live_bytes rest <= 2 ^ 20)%Z
+      /\ (Z.of_nat (length rest) <= 8 + j)%Z
+      /\ (live_bytes rest <= 2 ^ 20 + 2 * nb_of j)%Z
       /\ (exists p, In p rest /\ (bv_unsigned (fst p) <= bv_unsigned mb + 4096)%Z
                              /\ (bv_unsigned mb + 8192 <= bv_unsigned (fst p) + bv_unsigned (snd p))%Z)
       /\ Forall (fun p => (bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned B
-                          \/ bv_unsigned B + nb <= bv_unsigned (fst p))%Z) rest
+                          \/ bv_unsigned B + nb_of j <= bv_unsigned (fst p))%Z) rest
       /\ seps rest.
 
 (* [comment removed for export] *)
@@ -436,17 +441,220 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma vm_stage_seps : forall VM sp0 mb B nb, (0 < nb < 2 ^ 62)%Z -> (bv_unsigned B + nb <= 2 ^ 64)%Z ->
-  vm_stage VM sp0 mb B nb -> seps (vm_maps VM)
+Lemma vm_stage_seps : forall VM sp0 mb B j, (0 < nb_of j < 2 ^ 62)%Z -> (bv_unsigned B + nb_of j <= 2 ^ 64)%Z ->
+  vm_stage VM sp0 mb B j -> seps (vm_maps VM)
   /\ Forall (fun p => (0 < bv_unsigned (snd p))%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) (vm_maps VM).
 Proof.
-  intros VM sp0 mb B nb Hnb Hnw (Vres & Visp & Vlim & rest & Vmaps & Vsz & Vlen & Vlive & Vcont & Vdisj & Vseps).
+  intros VM sp0 mb B j Hnb Hnw (Vres & Visp & Vlim & rest & Vmaps & Vsz & Vlen & Vlive & Vcont & Vdisj & Vseps).
   rewrite Vmaps. split.
   - constructor; [|exact Vseps]. eapply Forall_impl; [|exact Vdisj].
     intros [qb qs] Hq. unfold iv_disjoint. cbn [fst snd] in *. rewrite u_small by lia. lia.
   - constructor.
     + cbn [fst snd]. rewrite u_small by lia. lia.
     + eapply Forall_impl; [|exact Vsz]. intros [qb qs] Hq. cbn [fst snd] in *. lia.
+Qed.
+
+Lemma stage_map_remove_length : forall l (a : word), (length (map_remove l a) <= length l)%nat.
+Proof.
+  intros l a. unfold map_remove. induction l as [|x l IH]; cbn [List.filter length]; [lia|].
+  destruct (negb _); cbn [length]; lia.
+Qed.
+
+Lemma stage_live_bytes_filter_le : forall (f : word * word -> bool) l, (live_bytes (List.filter f l) <= live_bytes l)%Z.
+Proof.
+  intros f l. induction l as [|[b s] l IH]; [cbn; lia|].
+  cbn [List.filter]. destruct (f (b, s)); cbn [live_bytes]; pose proof (bv_unsigned_in_range _ s) as Hs;
+    change (bv_modulus 64) with (2 ^ 64)%Z in Hs; lia.
+Qed.
+
+(** The growth step that frees the old buffer: the ledger after the grant of [B'] and the
+    cut of [B] ([mmap_fixed_destroyed_next]'s [maps_subtract], which an exact, isolated entry
+    turns into [map_remove]). *)
+Lemma vm_stage_cut : forall VM VX sp0 mb B B' (j j' nb nb' : Z),
+  nb = nb_of j -> nb' = nb_of j' -> (j <= j')%Z -> (0 < nb < 2 ^ 62)%Z -> (0 < nb' < 2 ^ 62)%Z ->
+  (2 ^ 20 + 2 * nb <= 2 ^ 20 + 2 * nb')%Z ->
+  vm_stage VM sp0 mb B j ->
+  vm_reserved VX = vm_reserved VM -> vm_init_sp VX = vm_init_sp VM -> vm_limit VX = vm_limit VM ->
+  vm_maps VX = maps_subtract ((B', Z_to_bv 64 nb') :: vm_maps VM)
+                             (bv_unsigned B) (bv_unsigned B + bv_unsigned (Z_to_bv 64 nb)) ->
+  (bv_unsigned B + nb <= 2 ^ 64)%Z ->
+  Forall (fun p => bv_unsigned B' + nb' <= bv_unsigned (fst p)
+                   \/ bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned B')%Z (vm_maps VM) ->
+  vm_stage VX sp0 mb B' j'.
+Proof.
+  intros VM VX sp0 mb B B' j j' nb nb' -> -> Hjj Hnb Hnb' Hlv VS Hres Hisp Hlim Hmaps HBw HF.
+  destruct VS as (Vres & Visp & Vlim & rest & Vmaps & Vsz & Vlen & Vlive & Vcont & Vdisj & Vseps).
+  rewrite Vmaps in HF, Hmaps. apply Forall_cons_iff in HF as [HFB HF]. cbn [fst snd] in HFB.
+  rewrite u_small in HFB by lia.
+  assert (Hbb : B' <> B) by (intros HH; subst B'; lia).
+  assert (Hrest : forall q, In q rest -> fst q <> B).
+  { intros [qb qs] Hq HH. cbn [fst] in HH. subst qb.
+    pose proof (proj1 (Forall_forall _ _) Vdisj _ Hq) as X. pose proof (proj1 (Forall_forall _ _) Vsz _ Hq) as Y.
+    cbn [fst snd] in X, Y. lia. }
+  assert (Hcut : maps_subtract ((B', Z_to_bv 64 (nb_of j')) :: (B, Z_to_bv 64 (nb_of j)) :: rest)
+                   (bv_unsigned B) (bv_unsigned B + bv_unsigned (Z_to_bv 64 (nb_of j)))
+                 = (B', Z_to_bv 64 (nb_of j')) :: map_remove rest B).
+  { rewrite maps_subtract_exact.
+    - unfold map_remove. cbn [List.filter fst]. rewrite (bv_eqb_neq _ _ Hbb), bv_eqb_refl. reflexivity.
+    - rewrite u_small by lia. lia.
+    - intros b s [HH|[HH|HH]].
+      + injection HH as <- <-. rewrite u_small by lia. lia.
+      + injection HH as <- <-. rewrite u_small by lia. lia.
+      + pose proof (proj1 (Forall_forall _ _) Vsz _ HH) as Y. cbn [fst snd] in Y. lia.
+    - intros b s [HH|[HH|HH]] Hb.
+      + injection HH as <- <-. exfalso. exact (Hbb Hb).
+      + injection HH as <- <-. reflexivity.
+      + exfalso. exact (Hrest _ HH Hb).
+    - intros b s [HH|[HH|HH]] Hb.
+      + injection HH as <- <-. rewrite !u_small by lia. lia.
+      + injection HH as <- <-. exfalso. exact (Hb eq_refl).
+      + pose proof (proj1 (Forall_forall _ _) Vdisj _ HH) as X. cbn [fst snd] in X. rewrite u_small by lia. lia. }
+  unfold vm_stage. rewrite Hres, Hisp, Hlim, Hmaps, Hcut.
+  split; [exact Vres|]. split; [exact Visp|]. split; [exact Vlim|].
+  exists (map_remove rest B). split; [reflexivity|]. split; [|split; [|split; [|split; [|split]]]].
+  - apply incl_Forall with (l1 := rest); [|exact Vsz]. unfold map_remove. apply incl_filter.
+  - pose proof (stage_map_remove_length rest B). lia.
+  - unfold map_remove. pose proof (stage_live_bytes_filter_le (fun p => negb (bv_eqb (fst p) B)) rest). lia.
+  - destruct Vcont as (pc & Cin & C1 & C2). exists pc. split; [|split; assumption].
+    unfold map_remove. apply filter_In. split; [exact Cin|].
+    apply Bool.negb_true_iff. destruct (bv_eqb (fst pc) B) eqn:HE; [|reflexivity].
+    assert (HE' : fst pc = B) by (apply bv_eq; unfold bv_eqb in HE; lia). exfalso. exact (Hrest _ Cin HE').
+  - apply Forall_forall. intros [qb qs] Hq. cbn [fst snd].
+    unfold map_remove in Hq. apply filter_In in Hq as [Hq _].
+    pose proof (proj1 (Forall_forall _ _) HF _ Hq) as X. cbn [fst snd] in X. lia.
+  - unfold map_remove. apply seps_filter. exact Vseps.
+Qed.
+
+(** The growth step whose free of the old buffer is refused: the ledger after the grant of
+    [B'] still holds [B], which joins [rest]. *)
+Lemma vm_stage_keep : forall VM VX sp0 mb B B' (j j' nb nb' : Z),
+  nb = nb_of j -> nb' = nb_of j' -> (j + 1 <= j')%Z -> (0 < nb <= 2 ^ 30)%Z -> (0 < nb' < 2 ^ 62)%Z ->
+  (3 * nb <= 2 * nb')%Z ->
+  vm_stage VM sp0 mb B j ->
+  vm_reserved VX = vm_reserved VM -> vm_init_sp VX = vm_init_sp VM -> vm_limit VX = vm_limit VM ->
+  vm_maps VX = (B', Z_to_bv 64 nb') :: vm_maps VM ->
+  (bv_unsigned B + nb <= bv_unsigned sp0 - 8388608)%Z ->
+  Forall (fun p => bv_unsigned B' + nb' <= bv_unsigned (fst p)
+                   \/ bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned B')%Z (vm_maps VM) ->
+  vm_stage VX sp0 mb B' j'.
+Proof.
+  intros VM VX sp0 mb B B' j j' nb nb' -> -> Hjj Hnb Hnb' Hlv VS Hres Hisp Hlim Hmaps HBsp HF.
+  destruct VS as (Vres & Visp & Vlim & rest & Vmaps & Vsz & Vlen & Vlive & Vcont & Vdisj & Vseps).
+  pose proof (bv_unsigned_in_range _ B) as UB. change (bv_modulus 64) with (2 ^ 64)%Z in UB.
+  pose proof (bv_unsigned_in_range _ sp0) as USP. change (bv_modulus 64) with (2 ^ 64)%Z in USP.
+  unfold vm_stage. rewrite Hres, Hisp, Hlim, Hmaps.
+  split; [exact Vres|]. split; [exact Visp|]. split; [exact Vlim|].
+  exists (vm_maps VM). split; [reflexivity|]. rewrite Vmaps in HF |- *.
+  split; [|split; [|split; [|split; [|split]]]].
+  - constructor; [|exact Vsz]. cbn [fst snd]. rewrite u_small by lia. lia.
+  - cbn [length]. lia.
+  - cbn [live_bytes]. rewrite u_small by lia. lia.
+  - destruct Vcont as (pc & Cin & C1 & C2). exists pc. split; [right; exact Cin | split; assumption].
+  - eapply Forall_impl; [|exact HF]. intros [qb qs] Hq. cbn [fst snd] in *. lia.
+  - constructor; [|exact Vseps]. eapply Forall_impl; [|exact Vdisj].
+    intros [qb qs] Hq. unfold iv_disjoint. cbn [fst snd] in *. rewrite u_small by lia. lia.
+Qed.
+
+Lemma stage_seps_In2 : forall l p q, seps l -> In p l -> In q l -> p = q \/ iv_disjoint p q.
+Proof.
+  intros l p q Hs. induction Hs as [|r l Hf Hs IH]; intros Hp Hq; [destruct Hp|].
+  destruct Hp as [<-|Hp]; destruct Hq as [<-|Hq].
+  - left; reflexivity.
+  - right. exact (proj1 (Forall_forall _ _) Hf q Hq).
+  - right. pose proof (proj1 (Forall_forall _ _) Hf p Hp) as H. unfold iv_disjoint in *. lia.
+  - exact (IH Hp Hq).
+Qed.
+
+(** On a separated ledger of non-empty entries, cutting out exactly one entry's range removes
+    that entry and nothing else. *)
+Lemma stage_maps_subtract_seps : forall l (a n : word),
+  seps l -> Forall (fun p => 0 < bv_unsigned (snd p))%Z l -> In (a, n) l ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove l a.
+Proof.
+  intros l a n Hs Hpos Hin. apply maps_subtract_exact.
+  - exact (proj1 (Forall_forall _ _) Hpos _ Hin).
+  - intros b s H. exact (proj1 (Forall_forall _ _) Hpos _ H).
+  - intros b s H Hb. subst b. destruct (stage_seps_In2 l _ _ Hs H Hin) as [HH|HH].
+    + inversion HH. reflexivity.
+    + pose proof (proj1 (Forall_forall _ _) Hpos _ H) as P1. pose proof (proj1 (Forall_forall _ _) Hpos _ Hin) as P2.
+      unfold iv_disjoint in HH. cbn [fst snd] in *. lia.
+  - intros b s H Hb. destruct (stage_seps_In2 l _ _ Hs H Hin) as [HH|HH].
+    + exfalso. apply Hb. inversion HH. reflexivity.
+    + unfold iv_disjoint in HH. cbn [fst snd] in HH. lia.
+Qed.
+
+Lemma stage_In_map_has : forall maps (a n : word), map_has maps a n = true -> In (a, n) maps.
+Proof.
+  intros maps a n H. unfold map_has in H. apply existsb_exists in H as ([b m] & Hin & Hb).
+  cbn [fst snd] in Hb. apply andb_prop in Hb as [H1 H2].
+  assert (b = a) by (apply bv_eq; unfold bv_eqb in H1; lia).
+  assert (m = n) by (apply bv_eq; unfold bv_eqb in H2; lia). subst. exact Hin.
+Qed.
+
+(** The same two steps out of the pre-read state [vm_pre] (the first growth, which frees the
+    69632-byte buffer [gm]). *)
+Lemma vm_stage_cut_pre : forall VM VX sp0 mb gm B' (j' nb' : Z),
+  nb' = nb_of j' -> (0 <= j')%Z -> (0 < nb' < 2 ^ 62)%Z ->
+  vm_pre VM sp0 mb gm ->
+  vm_reserved VX = vm_reserved VM -> vm_init_sp VX = vm_init_sp VM -> vm_limit VX = vm_limit VM ->
+  vm_maps VX = maps_subtract ((B', Z_to_bv 64 nb') :: vm_maps VM)
+                             (bv_unsigned gm) (bv_unsigned gm + bv_unsigned (Z_to_bv 64 69632)) ->
+  Forall (fun p => bv_unsigned B' + nb' <= bv_unsigned (fst p)
+                   \/ bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned B')%Z (vm_maps VM) ->
+  vm_stage VX sp0 mb B' j'.
+Proof.
+  intros VM VX sp0 mb gm B' j' nb' -> Hj Hnb' VP Hres Hisp Hlim Hmaps HF.
+  destruct VP as (Vres & Visp & Vlim & Vhas & Vsz & Vlen & Vlive & Vcont & Vseps).
+  pose proof (stage_In_map_has _ _ _ Vhas) as Hgm.
+  assert (Hbg : B' <> gm).
+  { intros ->. pose proof (proj1 (Forall_forall _ _) HF _ Hgm) as X. pose proof (proj1 (Forall_forall _ _) Vsz _ Hgm) as Y.
+    cbn [fst snd] in X, Y. lia. }
+  assert (Hcut : maps_subtract ((B', Z_to_bv 64 (nb_of j')) :: vm_maps VM)
+                   (bv_unsigned gm) (bv_unsigned gm + bv_unsigned (Z_to_bv 64 69632))
+                 = (B', Z_to_bv 64 (nb_of j')) :: map_remove (vm_maps VM) gm).
+  { rewrite stage_maps_subtract_seps.
+    - unfold map_remove. cbn [List.filter fst]. rewrite (bv_eqb_neq _ _ Hbg). reflexivity.
+    - constructor; [|exact Vseps]. eapply Forall_impl; [|exact HF].
+      intros [qb qs] Hq. unfold iv_disjoint. cbn [fst snd] in *. rewrite u_small by lia. lia.
+    - constructor; [cbn [snd]; rewrite u_small by lia; lia|].
+      eapply Forall_impl; [|exact Vsz]. intros [qb qs] Hq. cbn [snd] in *. lia.
+    - right. exact Hgm. }
+  unfold vm_stage. rewrite Hres, Hisp, Hlim, Hmaps, Hcut.
+  split; [exact Vres|]. split; [exact Visp|]. split; [exact Vlim|].
+  exists (map_remove (vm_maps VM) gm). split; [reflexivity|]. split; [|split; [|split; [|split; [|split]]]].
+  - apply incl_Forall with (l1 := vm_maps VM); [|exact Vsz]. unfold map_remove. apply incl_filter.
+  - pose proof (stage_map_remove_length (vm_maps VM) gm). lia.
+  - unfold map_remove. pose proof (stage_live_bytes_filter_le (fun p => negb (bv_eqb (fst p) gm)) (vm_maps VM)). lia.
+  - destruct Vcont as (pc & Cin & Cne & C1 & C2). exists pc. split; [|split; assumption].
+    unfold map_remove. apply filter_In. split; [exact Cin|].
+    apply Bool.negb_true_iff. destruct (bv_eqb (fst pc) gm) eqn:HE; [|reflexivity].
+    assert (HE' : fst pc = gm) by (apply bv_eq; unfold bv_eqb in HE; lia). exfalso. exact (Cne HE').
+  - apply Forall_forall. intros [qb qs] Hq. cbn [fst snd].
+    unfold map_remove in Hq. apply filter_In in Hq as [Hq _].
+    pose proof (proj1 (Forall_forall _ _) HF _ Hq) as X. cbn [fst snd] in X. lia.
+  - unfold map_remove. apply seps_filter. exact Vseps.
+Qed.
+
+Lemma vm_stage_keep_pre : forall VM VX sp0 mb gm B' (j' nb' : Z),
+  nb' = nb_of j' -> (0 <= j')%Z -> (0 < nb' < 2 ^ 62)%Z ->
+  vm_pre VM sp0 mb gm ->
+  vm_reserved VX = vm_reserved VM -> vm_init_sp VX = vm_init_sp VM -> vm_limit VX = vm_limit VM ->
+  vm_maps VX = (B', Z_to_bv 64 nb') :: vm_maps VM ->
+  Forall (fun p => bv_unsigned B' + nb' <= bv_unsigned (fst p)
+                   \/ bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned B')%Z (vm_maps VM) ->
+  vm_stage VX sp0 mb B' j'.
+Proof.
+  intros VM VX sp0 mb gm B' j' nb' -> Hj Hnb' VP Hres Hisp Hlim Hmaps HF.
+  destruct VP as (Vres & Visp & Vlim & Vhas & Vsz & Vlen & Vlive & Vcont & Vseps).
+  unfold vm_stage. rewrite Hres, Hisp, Hlim, Hmaps.
+  split; [exact Vres|]. split; [exact Visp|]. split; [exact Vlim|].
+  exists (vm_maps VM). split; [reflexivity|]. split; [|split; [|split; [|split; [|split]]]].
+  - exact Vsz.
+  - lia.
+  - lia.
+  - destruct Vcont as (pc & Cin & Cne & C1 & C2). exists pc. split; [exact Cin | split; assumption].
+  - eapply Forall_impl; [|exact HF]. intros [qb qs] Hq. cbn [fst snd] in *. lia.
+  - exact Vseps.
 Qed.
 
 (* [comment removed for export] *)
@@ -460,13 +668,13 @@ Definition half (j : Z) (sp0 p1 mb gm : word) (L : Z) (B e can sec : word) (cont
        (M0 : word -> option byte) (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) : Prop :=
   loop_at (sr_HALF j) (kn_HALF j) sp0 p1 mb gm L B e can sec content R M
   /\ pres M0 M sp0
-  /\ vm_stage VM sp0 mb B (nb_of j).
+  /\ vm_stage VM sp0 mb B j.
 
 Definition full (j : Z) (sp0 p1 mb gm : word) (L : Z) (B e can sec : word) (content : list byte)
        (M0 : word -> option byte) (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) : Prop :=
   loop_at (sr_FULL j) (kn_FULL j) sp0 p1 mb gm L B e can sec content R M
   /\ pres M0 M sp0
-  /\ vm_stage VM sp0 mb B (nb_of j).
+  /\ vm_stage VM sp0 mb B j.
 
 (* [comment removed for export] *)
 Definition full0 (sp0 p1 mb gm : word) (L : Z) (e can sec : word) (content : list byte)
@@ -503,7 +711,7 @@ Record read_post (k : Z) (sp0 p1 mb gm B e can sec : word) (content : list byte)
   rk_pres : pres M0 M sp0;
   rk_know : exists extra : list word, length extra = 32%nat /\
       know_ok RSEGS (ENV_RD sp0 p1 mb gm (Z.of_nat (length content)) B e can sec extra content) M (kn_POST k);
-  rk_vm : vm_stage VM sp0 mb B (nb_of k) }.
+  rk_vm : vm_stage VM sp0 mb B k }.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

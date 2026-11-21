@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSstrlen.v, with its module paths, module names and addresses changed; 289 of its 700 lines of code are new or changed and 332 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs.asan-ubsan's (image B) strlen interceptor (PC_strlen 0x426c4), its runtime contract in S0's ARU form:
    astrlen_realizesU, the FsRt field lib/B/FSH_Rt.v:113 fr_strlen.
-   rule 24: no function proved. A PORT of image A's closed proof lib/A/FSstrlen.v (a working branch
-   0bc79e8d0f8, a Theorem Labs lane) onto image B; it composes existing pieces:
-   - the B Bz body walk: a working branch 51f06361767 lib/B/Bz/A/I_strlen.v istrlen_spec (from
+   rule 24: no function proved. A PORT of image A's closed proof lib/A/FSstrlen.v (a working branch,
+   a Theorem Labs lane) onto image B; it composes existing pieces:
+   - the B Bz body walk: a working branch lib/B/Bz/A/I_strlen.v istrlen_spec (from
      __interceptor_strlen 0x42754 to the return), with its section hypotheses RIP = lib/B/Bz/A/R_isPoisoned.v rip_proof
      and SL = lib/B/FSsl.v sl_proof (the plain strlen 0x9958c through REAL(strlen), slot 0xa1928);
-   - the trampoline: __wrap_strlen 0x426c4 is one `j 0x42754`, 51f06361767 lib/B/Bz/A/I_tramp.v:24 tramp_strlen;
-   - the bridge: lib/B/FSbz_bridge.v / lib/B/FSbz_str.v (B twins of A's, a working branch cedf3d02589
+   - the trampoline: __wrap_strlen 0x426c4 is one `j 0x42754`, lib/B/Bz/A/I_tramp.v:24 tramp_strlen;
+   - the bridge: lib/B/FSbz_bridge.v / lib/B/FSbz_str.v (B twins of A's, a working branch
      FMbz_bridge.v / FMbz_str.v: srr_of_evt, stk_of_apresent, chk_ok_of_view, hull_of_shadow_hull_vis, mbyte_mrd);
    - a Theorem Labs lane's transport of a Bz walk to the machine, image-generic and in S0: lib/MemNorm.v evt_normalize_cj (the walk
      runs on the memory with the read-only and above-TASK_SIZE bytes dropped) and lib/Lib/RegisterBridge.v

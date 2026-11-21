@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, ref_big_file takes the stderr writes' channel reader (a_channel_reader) and passes it on. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -42,11 +43,12 @@ Lemma ref_big_file : forall (sp0 p1 mb gm sec cn : word) (R : bvmap 5 word) (M :
   world0 area (bv_unsigned gm) brkv mas (bv_unsigned tid) M ->
   main_frame (bv_unsigned sp0) M ->
   vm_pre VM sp0 mb gm ->
+  a_channel_reader = true ->   (* LPS 08b1429: the stderr writes' channel reader (UbBigLeaves.Hrdr0) *)
   realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13b14) M (seg_rom RSEGS))
                           (model_pre path VM stdin0 fs0 tid))
              (t_alt2 (t_die msg_oom fs0) (t_body content fs0)).
 Proof.
-  intros sp0 p1 mb gm sec cn R M area brkv mas VM path content stdin0 fs0 tid Hfile HL Harea RP W MF VP.
+  intros sp0 p1 mb gm sec cn R M area brkv mas VM path content stdin0 fs0 tid Hfile HL Harea RP W MF VP Hrdr0.
   set (L := Z.of_nat (length content)) in *.
   assert (Hvsp : valid_sp sp0).
   { pose proof (rp_sp0 _ _ _ _ _ _ _ _ RP) as Hs. unfold valid_sp, sp_window_lo, sp_window_hi. lia. }
@@ -60,16 +62,16 @@ Proof.
   apply (read_big sp0 p1 mb gm sec cn path content stdin0 fs0 tid Hfile R M VM
            (t_body content fs0) (t_die msg_oom fs0) (t_die msg_refused fs0) RP VP Hpage0 HL).
   - (* [comment removed for export] *)
-    apply (big_oom_branch sp0 gm area brkv mas tid M path stdin0 fs0 Hvsp W).
+    apply (big_oom_branch sp0 gm area brkv mas tid M path stdin0 fs0 Hvsp W Hrdr0).
   - (* [comment removed for export] *)
-    apply (big_refused_leaf sp0 gm area brkv mas tid M path stdin0 fs0 Hvsp W).
+    apply (big_refused_leaf sp0 gm area brkv mas tid M path stdin0 fs0 Hvsp W Hrdr0).
   - (* [comment removed for export] *)
     intros k Hk Hrange. unfold post_cont. intros R' M' V' B e RQ.
     apply (header_phase_k k sp0 p1 mb gm sec cn B e tid area brkv mas content M R' M' V' stdin0 fs0 Hk Hvsp RQ W MF).
     + unfold capk. subst L. exact Hrange.
     + intros R'' M'' TPK TVK.
       pose proof (target_phase_k_top k Hk (bv_unsigned sp0) (bv_unsigned B) area brkv mas (bv_unsigned tid) content
-                    R'' M'' V' (model_post V' stdin0 fs0 tid) TPK TVK (SPSA.std_model_mk _ _ _ _ _)) as X.
+                    R'' M'' V' (model_post V' stdin0 fs0 tid) TPK TVK (SPSA.std_model_mk _ _ _ _ _ Hrdr0)) as X.
       exact X.
 Qed.
 End BigFile.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (clock_gettime's destination is read through copy_bytes_map, so the node carries the access_ok bound of its timespec). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import PropExec MState Mem Exec ITree Nodes.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Spec Require Import MmNodes.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import Scfg RelSpec SReach SReachTree.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import RomBase.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
@@ -27,7 +29,7 @@ Definition cg_at_node (n : cgnode) (ms : machine_state) : Prop :=
   | CGRealtime tp =>
       ms_svc_pending ms = Some (Z_to_bv 64 113) /\
       areg ms 10 = Z_to_bv 64 0 /\ areg ms 11 = Z_to_bv 64 tp /\
-      ms_rom ms = seg_rom segs /\ wr_at segs (ms_mem ms) tp 16
+      ms_rom ms = seg_rom segs /\ wr_at segs (ms_mem ms) tp 16 /\ tp + 16 <= TASK_SIZE
   end.
 End AtNode.
 
@@ -65,8 +67,16 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma percall_realtime : clockid_percall_b (Z_to_bv 64 0) = true.
 Proof. vm_compute. reflexivity. Qed.
 
+(* LPS 727298f3: the destination is walked through [copy_bytes_map], i.e. [access_okb] and then
+   [read_bytes_map]; a range [access_okb] admits is the old walk ([copy_bytes_map_accepted]). *)
+Lemma access_okb_16 : forall tp, 0 <= tp -> tp + 16 <= TASK_SIZE -> access_okb (Z_to_bv 64 tp) 16 = true.
+Proof.
+  intros tp H0 H1. unfold access_okb. rewrite unsigned_lit by (unfold TASK_SIZE in *; lia).
+  apply andb_true_iff. split; apply Z.leb_le; unfold TASK_SIZE in *; lia.
+Qed.
+
 Lemma clock_realtime_outcome : forall tp i m o w,
-  read_bytes_map (in_wmem i) tp (Z_to_bv 64 16) = Some w ->
+  copy_bytes_map (in_wmem i) tp 16 = Some w ->
   clock_gettime_spec (Z_to_bv 64 0) tp i m o <->
   exists bs, realtime_ok_b bs = true /\ o = Ok (mkEffect (Z_to_bv 64 0) [(tp, bs)] []) m [].
 Proof.
@@ -97,16 +107,17 @@ Lemma cg_input : forall tp ms x8 mo,
   bv_unsigned (in_sysno (sys_input segs ms x8)) = 113
   /\ clockid32 (in_arg (sys_input segs ms x8) 0) = Z_to_bv 64 0
   /\ in_arg (sys_input segs ms x8) 1 = Z_to_bv 64 tp
-  /\ (exists w, read_bytes_map (in_wmem (sys_input segs ms x8)) (Z_to_bv 64 tp) (Z_to_bv 64 16) = Some w)
+  /\ (exists w, copy_bytes_map (in_wmem (sys_input segs ms x8)) (Z_to_bv 64 tp) 16 = Some w)
   /\ (forall o, syscall_spec (sys_input segs ms x8) mo o <->
         exists bs, realtime_ok_b bs = true /\ o = Ok (mkEffect (Z_to_bv 64 0) [(Z_to_bv 64 tp, bs)] []) mo []).
 Proof.
-  intros tp ms x8 mo (SV & A0 & A1 & ROM & WR) SV'. rewrite SV in SV'. injection SV' as <-.
+  intros tp ms x8 mo (SV & A0 & A1 & ROM & WR & TS) SV'. rewrite SV in SV'. injection SV' as <-.
   assert (NO : bv_unsigned (in_sysno (sys_input segs ms (Z_to_bv 64 113))) = 113) by (rewrite in_sysno_si; reflexivity).
   assert (C0 : clockid32 (in_arg (sys_input segs ms (Z_to_bv 64 113)) 0) = Z_to_bv 64 0) by (rewrite in_a0_si, A0; apply clockid32_realtime).
   assert (C1 : in_arg (sys_input segs ms (Z_to_bv 64 113)) 1 = Z_to_bv 64 tp) by (rewrite in_a1_si, A1; reflexivity).
-  assert (W : exists w, read_bytes_map (in_wmem (sys_input segs ms (Z_to_bv 64 113))) (Z_to_bv 64 tp) (Z_to_bv 64 16) = Some w).
-  { rewrite in_wmem_si. unfold ms_writable_byte. rewrite read_bytes_map_eq.
+  assert (W : exists w, copy_bytes_map (in_wmem (sys_input segs ms (Z_to_bv 64 113))) (Z_to_bv 64 tp) 16 = Some w).
+  { rewrite copy_bytes_map_accepted by (apply access_okb_16; [destruct WR as (T0 & _); exact T0| exact TS]).
+    rewrite in_wmem_si. unfold ms_writable_byte. rewrite read_bytes_map_eq.
     pose proof (read_bytes_aux_wr_at segs (ms_mem ms) tp 16 16 WR ltac:(cbn; lia)) as X.
     change (wa tp) with (Z_to_bv 64 tp) in X. replace (word_to_nat (Z_to_bv 64 16)) with 16%nat by reflexivity.
     destruct (read_bytes_aux (wview segs (ms_mem ms)) (Z_to_bv 64 tp) 16) as [w|]; [exists w; reflexivity| exfalso; apply X; reflexivity]. }
@@ -120,7 +131,26 @@ Proof.
   intros i mo eff NO (_ & R & _). unfold Run.refusal_b in R. rewrite NO in R. cbn in R. discriminate R.
 Qed.
 
-Theorem cg_node_sound : node_sound cgnode segs (cg_at_node segs) cg_nstep cg_nexit mminv cg_safe.
+(* LPS 08b1429: clock_gettime reads only the writable view [in_wmem] ([clock_realtime_outcome]),
+   which does not depend on the read-only backing, so the node's specification is the same over
+   every larger backing ([RomBase.sys_rob]). *)
+Lemma cg_rob : forall n ms mo, cg_at_node segs n ms -> sys_rob segs (mkCfg ms mo).
+Proof.
+  intros [tp] ms mo AT. pose proof AT as (SV & _).
+  destruct (cg_input tp ms (Z_to_bv 64 113) mo AT SV) as (NO & C0 & C1 & (w & Hw) & SP).
+  apply (sys_rob_of_char segs ms mo (Z_to_bv 64 113)
+           (fun o => exists bs, realtime_ok_b bs = true /\ o = Ok (mkEffect (Z_to_bv 64 0) [(Z_to_bv 64 tp, bs)] []) mo [])
+           SV).
+  intros r Hr o.
+  rewrite (syscall_spec_113 (sys_input segs (wrom ms r) (Z_to_bv 64 113)) mo o NO).
+  change (in_arg (sys_input segs (wrom ms r) (Z_to_bv 64 113)) 0) with (in_arg (sys_input segs ms (Z_to_bv 64 113)) 0).
+  change (in_arg (sys_input segs (wrom ms r) (Z_to_bv 64 113)) 1) with (in_arg (sys_input segs ms (Z_to_bv 64 113)) 1).
+  rewrite C0, C1.
+  exact (clock_realtime_outcome (Z_to_bv 64 tp) (sys_input segs (wrom ms r) (Z_to_bv 64 113)) mo o w Hw).
+Qed.
+(* [ITree.npost] is [fun _ => nret] here: a trap node returns through [advance_past_svc].
+   [Spec/VdNode] is the one node family for which it is not. *)
+Theorem cg_node_sound : node_sound cgnode segs (cg_at_node segs) cg_nstep cg_nexit mminv cg_safe (fun _ => nret).
 Proof.
   split.
   - apply cg_at_node_pending.
@@ -157,6 +187,8 @@ Proof.
     intros [tp] ms mo AT HH MI _. left.
     exists (mkEffect (Z_to_bv 64 0) [(Z_to_bv 64 tp, repeat (Z_to_bv 8 0) 16)] []), mo, [].
     cbn. split; [reflexivity|]. split; [reflexivity|]. exists (repeat (Z_to_bv 8 0) 16). split; [exact realtime_ok_zeros| reflexivity].
+  - (* robustness over a larger read-only backing *)
+    intros n ms mo AT _ _ _. exact (cg_rob n ms mo AT).
 Qed.
 
 (* [comment removed for export] *)

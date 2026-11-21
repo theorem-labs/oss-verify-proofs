@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the free(NULL) CALL-SITE RULE over the cf allocator contract (a Theorem Labs lane R, new file).
    Rule 24: no function proved. This is journal plumbing over afree_realizes_cf (YG0dcf.v) at the cf relation; the
    only facts read from the model are the model laws (YGcallcf.v alloc_model_laws_x_cf).

@@ -438,7 +438,7 @@ Proof.
     destruct Hiv.
 Qed.
 
-(* ==== Route (C) (a Theorem Labs lane 09:20Z; form of record lib/A/ShadowRwOn.v, a working branch ea8776b2302; wave lead
+(* ==== Route (C) (a Theorem Labs lane 09:20Z; form of record lib/A/ShadowRwOn.v, a working branch; wave lead
    a Theorem Labs lane, ASSIGN.md (a working note, not in this delivery)): the four contracts above with the universal premise `shadow_rw m` narrowed
    to `shadow_rw_on (reac_ctrl_parse_shadow_R f n o S FS) m` and the post's `shadow_rw m'` stated as
    `forall P, shadow_rw_on P m -> shadow_rw_on P m'`. The four Definitions above stay byte-identical; the run lemmas
@@ -446,7 +446,7 @@ Qed.
    contracts (a Theorem Labs lane 09:58Z ruling). Each `_on` Definition below is its old Definition with exactly those two
    changes. rule 24: proof-index reac_ctrl_parse (2026-10-29 00:3xZ, exit 0): 12 named files + 8 lemma rows,
    plain / ubsan builds of fuzz_disco / fuzz_grant / fuzz_scene; checker a Theorem Labs lane:
-   CONFIRM. At ossv/recipes c5e779efe8c (2026-10-31), released ASan proofs of reac_ctrl_parse exist in fuzz_grant, fuzz_disco and fuzz_scene. This restates ctrl's own image-A parse contracts; no function is proved in this file. ==== *)
+   CONFIRM. At (2026-10-31), released ASan proofs of reac_ctrl_parse exist in fuzz_grant, fuzz_disco and fuzz_scene. This restates ctrl's own image-A parse contracts; no function is proved in this file. ==== *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import ShadowRwOn.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import sh_word_on asan_stack_malloc_c_on.
 

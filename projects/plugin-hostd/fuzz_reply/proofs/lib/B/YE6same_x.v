@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from cgif_file_fuzzer lib/A/AE2q.v with AE6k.v (mc_tail, section l), AE6l.v-AE6s.v and AE3c.v (section f) for libreac/fuzz_disco's __asan_memcpy called with the source equal to the destination: x = d in place of the disjointness premise, the branch at 0x520e0 taken past the overlap check, the musl memcpy source read through the bytes it has already written (src_read, rdn_bytes1); module paths; addresses. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/Rt/AcpySame.v, with its module paths, module names and numbers changed; 62 of its 6276 lines of code are new or changed and 47 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/YE6same_x.v: fuzz_reply.asan-ubsan's __asan_memcpy (0x52780) called with the source equal to the destination,
    over any allocator invariant ARx (YE2y.v icpt_laws_x).  The image-B twin of lib/A/AE6same_x.v (a Theorem Labs lane,
-   a working branch 18fa009773c6), which is fuzz_disco's released lib/A/Rt/AcpySame.v (ossv/recipes
-   3abc3740de97) relocated to fuzz_reply.asan and converted to ARx; fuzz_disco's own asan-ubsan copy of that walk is its
+   a working branch), which is fuzz_disco's released lib/A/Rt/AcpySame.v
+    relocated to fuzz_reply.asan and converted to ARx; fuzz_disco's own asan-ubsan copy of that walk is its
    lib/Y/Rt/AcpySame.v.  Module C (tfib_memcpy_same, the musl memcpy with s = d), the oC states (the branch past the
    overlap check when the destination equals the source), section h (mc_tail_same) and section l (the source and
    destination range checks with x = d, acpy_same_srr), as in lib/A/AE6same_x.v.

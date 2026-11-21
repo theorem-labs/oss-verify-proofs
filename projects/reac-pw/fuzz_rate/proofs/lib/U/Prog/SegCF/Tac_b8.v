@@ -3,6 +3,7 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 458 of its 575 lines of code are new or changed and 410 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/U/Prog/SegCF/Tac_slot.v; 502 of its 599 lines of code are new or changed and 478 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Cut-free (agreement) copy of lib/U/Prog/Seg/Tac_b8.v, over U/Prog/SlotInvCF.v (SR := SRcf). Model:
    reac-pw/fuzz_role's U/Prog/SegCF/Tac_b8.v, as libreac/fuzz_ctrl's released
    U/Prog/SegCF/*.v copy its U/Prog/Seg/*.v: the same text with SlotFR, SlotInv -> SlotInvCF, Seg -> SegCF, the
@@ -15,7 +16,7 @@
    (b8_post_FR), and the free call of a live harness block in any position of hb (b8_free_call: libreac/fuzz_ctrl's
    released Prog/Seg/Tac_b3.v b3_free_call statement on fuzz_pin's one-block proof, without ctrl's 1 <= n).
    The plain file (lib/Prog/Seg/Tac_b8.v) with the UBSan numbers below. Taken from reac-pw/fuzz_role's copy, itself reac-pw/fuzz_pin's U/Prog/Seg/Tac_b8.v, itself libreac/fuzz_ctrl's released Prog/Seg/Tac_b8.v
-   (origin/ossv/recipes 25e3d17bdb50) adapted (ctrl's cut-bundle transports FT / VCm / IFS / CC7 / OURb / M7 and its
+   adapted (ctrl's cut-bundle transports FT / VCm / IFS / CC7 / OURb / M7 and its
    Tac_b8m model facts are not here), with rate's UBSan numbers: frame 592 bytes, saved registers [S - 104, S), free at
    0x1693c, errno at 0x301f0 - 164, frame_RELRO's first block (0x1ecb8, 448), the sink symbols 0x50481 / 0x508a8 /
    0x508b0 (frame_facts_cf's fields, read through Tac_slot's accessors). CUTST and Post take the FP state of their
@@ -559,7 +560,7 @@ Proof.
 Qed.
 
 (* free of a live harness block (p, n) in any position of hb, n >= 0: FR with hb1 ++ (p, n) :: hb2 becomes FR with
-   hb1 ++ hb2 (libreac/fuzz_ctrl's released Prog/Seg/Tac_b3.v b3_FR_free, origin/ossv/recipes 25e3d17bdb50, on
+   hb1 ++ hb2 (libreac/fuzz_ctrl's released Prog/Seg/Tac_b3.v b3_FR_free, on
    fuzz_pin's b8_FR_free proof: the other blocks keep their bytes because block starts are distinct, blocks_nodup,
    so 1 <= n is not needed). The bytes from the frame's sp up are unchanged. *)
 Lemma b8_FR_free : forall g hb1 hb2 L A regs mem md regs_c p n L' A' regs' mem' md' b1 b2,

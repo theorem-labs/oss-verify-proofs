@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_segX_crt1_crt: the two call-context facts every call of check_round_trip inside image B's
    LLVMFuzzerTestOneInput needs, which lib/B/Prog/check_round_trip_cg.v:150-168 asks for and no leaf bridge gives:
 
      c1c_chain : the frame-pointer chain at the call, built from the slot pre's own chain (which is empty) and the
                  frame record the prologue wrote below the entry sp (dec_b_saved's words (8, ra) and (16, s0));
      c1c_ctx   : the call context is one of CTX_check_round_trip's
-                 (lib/B/Prog/LLVMFuzzerTestOneInput_cg.v:193, :165).
+                 (lib/B/Prog/LLVMFuzzerTestOneInput_cg.v:194, :166).
 
    Both are cgif's pattern at fuzz_decode's names: cgif_file_fuzzer lib/A/ACf5.v:172 rt_chain (over
-   lib/Reusable/YCbq.v:296 achain_push) and :132 rt_ctx_in (origin/ossv/recipes c8557374ad2e).  The segment that
+   lib/Reusable/YCbq.v:296 achain_push) and :132 rt_ctx_in.  The segment that
    calls check_round_trip (crt1 at +0x68c, exit at +0xaa0) uses both. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

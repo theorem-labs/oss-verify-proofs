@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the cf twin of cgif's ledger lemma YG0j.v anon_grant_facts, over WfP_cf / ALedger_cf, for
-   the event-free allocator instance (generic: no image, no unit numeral). Text taken by path from port-reply's
-   commit 2093a8411df, proofs/plugin-hostd/fuzz_reply/lib/A/AFiacf.v:83-159 (XcfFinish), module
+   the event-free allocator instance (generic: no image, no unit numeral). Text taken by path from port-reply's,
+   proofs/plugin-hostd/fuzz_reply/lib/A/AFiacf.v:83-159 (XcfFinish), module
    paths fuzz_reply -> fuzz_preset; no other change. The proof is YG0j.v:299-367 with three changes: ALedger_cf's
    fields, the secondary sizes from YG08cf.sec_extents_sizes64P_cf, and the hole case (a cf class may carry ONE hole,
-   the zero-length sentinel (EXH_HOLE, 0) (YG01cf.v:44-46), which covers no address). The zify flag is set LOCALLY
+   the zero-length sentinel (EXH_HOLE, 0) (YG01cf.v:45-47), which covers no address). The zify flag is set LOCALLY
    here, so it does not leak into importers. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -25,13 +26,14 @@ Context {ci : YGcfNames.CfImg} {cp : YGcfNames.CfParams}.
 
 Lemma anon_grant_facts_cf : forall segs U pp cc bb ly S md (a n : word),
 layout_ok ly -> WfP_cf U pp cc bb S -> sec_placed ly S -> ALedger_cf segs ly S md ->
-grant_ok_na_pin md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
+grant_ok_na_pin (Z_to_bv 64 0) md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
 page_aligned (bv_unsigned a) /\ in_app (bv_unsigned a) (bv_unsigned n) /\ bv_unsigned a + bv_unsigned n <= ASAN_CEIL /\
 Forall (zdisjoint (bv_unsigned a, bv_unsigned n)) (static_extents ly ++ sec_extents ly S ++ perm_maps ly ++ band_maps).
 Proof.
 intros segs U pp cc bb ly S md a n LO W PL L G Hn Hnal.
 pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 n) as Rn. unfold bv_modulus in Ra, Rn.
-unfold grant_ok_na_pin in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn ltac:(unfold page_size; exact Hnal) G) as G0. clear G. rename G0 into G.
+unfold YK13.grant_ok_na_pin_b in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
 apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. unfold page_size in G1.
 assert (Hn64 : Z_to_bv 64 (bv_unsigned n) = n) by (apply w64_uw). rewrite Hn64 in G4.
 set (lo := bv_unsigned a) in *. set (len := bv_unsigned n) in *.
@@ -79,7 +81,8 @@ destruct (Z_lt_le_dec lo (fst (ly_img ly) + snd (ly_img ly))) as [X1|X1]; [|righ
 destruct (Z_lt_le_dec (fst (ly_img ly)) (lo + len)) as [X2|X2]; [|left; lia]. exfalso.
 set (x := Z.max lo (fst (ly_img ly))).
 destruct (L14 x ltac:(unfold in_zr; subst x; lia)) as (e & He & E1).
-pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(apply in_app_iff; left; rewrite L3, <- surjective_pairing; exact He)) as D.
+pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(apply in_app_iff; left; destruct L3 as (rx & L3e & _); rewrite L3e; apply in_app_iff; left;
+  rewrite <- surjective_pairing; exact He)) as D.
 subst lo len x. lia. }
 assert (PERM : Forall (zdisjoint (lo, len)) (perm_maps ly)).
 { apply Forall_forall. intros z Hz. pose proof (perm_facts ly 1 LO ltac:(lia) z Hz) as (Z1 & Z2 & Z3 & _). apply RFm; [lia | lia | lia | exact (L10 z Hz)]. }

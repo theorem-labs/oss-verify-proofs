@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rauxv_ok_magree re-proved for the new rauxv_ok, whose auxv list comes from the launch's auxv entries, with a length set by the CONFIG_RSEQ flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -51,11 +52,11 @@ apply AG; [lia| apply HC; exact Ha]. Qed. Local Ltac2 Set LiaHints.tbl := fun ()
 #[using="Type"] Lemma rauxv_ok_magree C m m' B :
   rauxv_ok m B -> magree C m m' -> (forall a, C a -> a < B /\ ~ (RAUXV_CELL <= a < RAUXV_CELL + 8)) -> rauxv_ok m' B.
 Proof.
-  intros (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AC & AL & RN & H) AG HC.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros (av & rnd & la & ent & uid & gid & hw & efn & AC & AL & RN & H) AG HC.
+  exists av, rnd, la, ent, uid, gid, hw, efn. split; [|split; [|split; [|exact H]]].
   - eapply rrw_cells_magree; [exact AC| exact AG|]. cbn. intros a Ha X. destruct (HC a X) as [_ Y]. apply Y. exact Ha.
   - eapply rbytes_at_magree; [exact AL| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
-    unfold rauxv_list in Ha. rewrite u64s_length, map_length in Ha. cbn in Ha. Local Ltac2 Set LiaHints.tbl := fun () => "0010>59323410545.26000008S1H2Ha1Y".
+    rewrite u64s_length, rauxv_list_length in Ha. Local Ltac2 Set LiaHints.tbl := fun () => "0010>59323410545.26000008S1H2Ha1Y".
 lia.
   - eapply rbytes_at_magree; [exact RN| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. rewrite length_le8 in Ha. lia.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".

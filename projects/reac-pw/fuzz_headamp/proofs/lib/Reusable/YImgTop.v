@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/Reusable/YImgTop.v at ca77675ebeb (itself proofs/libreac/fuzz_knock/lib/Reusable/YImgTop.v at origin/ossv/recipes 6ebe35ba632, fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_headamp; IMG_TOP set for fuzz_headamp; both bounds in the parsing-only notation form of role's d69ff7857e0. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/Reusable/YImgTop.v (itself proofs/libreac/fuzz_knock/lib/Reusable/YImgTop.v at theorem-labs/oss-verify-proofs@f92feaf8b7e6, fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_headamp; IMG_TOP set for fuzz_headamp; both bounds in the parsing-only notation form of role. *)
 From Stdlib Require Import ZArith.
 Local Open Scope Z_scope.
 

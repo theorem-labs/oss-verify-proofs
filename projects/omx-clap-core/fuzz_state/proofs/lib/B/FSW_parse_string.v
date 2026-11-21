@@ -6,16 +6,16 @@
    128 by address, 4 related, 17 lemma(s), [the delivered package] 56 named and 725 name(s) holding it` = a Theorem Labs lane's
    idx-B-parse_string.txt; by ADDRESS: image B entry 0x85534, no trampoline / REAL slot (a Theorem Labs lane's
    reuse-parse_string.md:13-18); named cold branches: lib/B files naming parse_string are only the statement
-   files FSH_Fn_reader.v / FSH_Fn_writer.v; the only lib/B proofs are a working branch 955803f9b2e
+   files FSH_Fn_reader.v / FSH_Fn_writer.v; the only lib/B proofs are a working branch
    lib/B/Prog/parse_string.v, stated over another engine, so a template, not a port source. CONFIRM (2026-10-29T04:34Z,
    a Theorem Labs lane): "CONFIRM: reuse search for parse_string (B) holds").
 
-   TEMPLATES. (1) image A's walk over the same S0 statement form, PROVED: a working branch 9f3343583b7
+   TEMPLATES. (1) image A's walk over the same S0 statement form, PROVED: a working branch
    lib/A/FSW_parse_string.v (Section W :108-1047 stage 1, pstr_scan_loop :464, pstr_stage1 :731; Section W3
    :2006-2251 the call step pstr_call_step :2091, split here at its step 3 into pstr_call_pre / pstr_call_post).
    Its structure, definitions and lemma names are ported; the addresses, the register allocation and the cut points
    are B's. (2) the bespoke B proof,
-   a working branch 955803f9b2e lib/B/Prog/parse_string.v :1027 (aps_loop_evt, the scan loop) and
+   a working branch lib/B/Prog/parse_string.v :1027 (aps_loop_evt, the scan loop) and
    lib/B/Prog/parse_string_segs.v :39-47 (aps_out, B's registers): B's cut points and register facts; not imported.
    The shared definitions (pstr_call_facts, pstr_ret_facts, the shadow lemmas) are lib/B/FSW_parse_string_defs.v.
 
@@ -816,7 +816,7 @@ End W.
    - pstr_call_post: from fuzz_malloc_spec's post at n = Q + 1 (pstr_malloc_post, its text) to stage 2's return-site
      facts (pstr_ret_facts), by the journal composition FSW_K3's fsw_rt_atU3 (its FP arm: the four statics are image
      bytes, pc_fp_img).
-   Ported from image A's walk (9f3343583b7 lib/A/FSW_parse_string.v :2044-2251, pstr_call_step split at its step 3);
+   Ported from image A's walk (lib/A/FSW_parse_string.v :2044-2251, pstr_call_step split at its step 3);
    B's registers at the call are s6 / s7 / s8 = x22 / x23 / x24 (lib/B/FSW_parse_string_defs.v). *)
 Section W3. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
@@ -1085,7 +1085,7 @@ End W3.
 
 (* ================= the composition: stage 1, the fuzz_malloc call 0x85614, stage 2 =================
    parse_string_proof : fuzz_malloc_spec tfibsegs B -> parse_string_spec tfibsegs B, on the CTX-drop statements
-   (a working branch faa7e2570e5: neither spec takes a CTX list). The call is SRr_bind over
+   (a working branch: neither spec takes a CTX list). The call is SRr_bind over
    fuzz_malloc_spec at n = Q + 1, between pstr_call_pre (its premises at the call) and pstr_call_post (its post to
    stage 2's return-site facts); stage 2 is lib/B/FSW_parse_string_s2.v's pstr_stage2. *)
 Section W4. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.

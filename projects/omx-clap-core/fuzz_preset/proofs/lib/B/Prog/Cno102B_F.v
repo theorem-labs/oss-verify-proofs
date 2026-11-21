@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 234 of its 303 lines of code are new or changed and 709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/PRW_WalkEnv.v, with its module paths and module names changed; 2314 of its 2391 lines of code are new or changed and 226 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved
    rule 24: proves no function (kind: segment lemma)
    fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b):
@@ -9,8 +10,8 @@
    listing), and the call steps CB9 End needs. Lane CnoB102f (a Theorem Labs lane, #102 plan
    the internal file PLAN-cno-caw-102.md sections 5.0 / 5.2, row "CB8 Free | 0x81cd0 -> 0x81d04"); first proved on the
    exact-position contract (the #102 kit tip) by a first fit, re-fit to the kit's CUT
-   a working branch 7cdbb61b5fa0 by sub-lane CutF8. The twin of image A''s lib/A/Prog/Cno102A_F.v.
-   INPUTS (every path at the cut's blob, through the row's base 75415fdb6e76, except
+   a working branch by sub-lane CutF8. The twin of image A''s lib/A/Prog/Cno102A_F.v.
+   INPUTS (every path at the cut's blob, through the row's base, except
    the two kit files named below):
      SHARED CONTRACT lib/B/Prog/Cno102B_Base.v 20c89a1d4da2 (lane CnoB102rR, the B' contract on the cut): every cut,
      cnb_pre / cnb_at_freeR / cnb_Q / cnb_ex_ret, the budgeted journal cnb_JR / cnb_baseR at the spent wild budget wk
@@ -19,12 +20,12 @@
      progress fact cnb_prog, the structs against the grants cnb_rd / cnb_rds3, the trees' free order cnb_fo, the
      refused copy's cnb_cdead, and the listing tables PL_cno_B. This file STATES CB8's exit cut (cnb_at_end /
      cnb_ex_end, CB9's start) and PROVES the call steps; nothing here re-states the contract.
-     STEP KIT lib/B/Prog/Cno102B_Ro.v c1b5ec3f8fff (sub-lane CutRo, a working branch 77b925b222cc, by
+     STEP KIT lib/B/Prog/Cno102B_Ro.v c1b5ec3f8fff (sub-lane CutRo, a working branch, by
      path): cnb_J_rebaseR / cnb_J_fixedR (the cut's journal across a fixed-trace step at the same wild budget, at
      the world relation of the cut: wle' at the re-hiding zone here) and the progress lemma cnb_prog_app that
      threads cnb_prog through the six frees.
      FREE KIT lib/A/Prog/Cno102_FKit.v 460df9d979c5 (the A' twin's re-fit on the cut, lane CnoABatch2,
-     a working branch 695448b071a2, by path): pjf_fd_of_node (the ported tree lemmas) and
+     a working branch, by path): pjf_fd_of_node (the ported tree lemmas) and
      aj_free_null_at_cf_rh_keep (free(NULL) over ajournal_xR at wle' segs RZ_cf, its PNull-only text from the primed
      free row with the keep, with the free's admission, the depot it keeps and the memnorm keep).
      lib/Prog/PvFdZeroR.v 4767f7407d9b: pv_fd_zeroR, the ONE home of `pj_rwR -> pj_zeroR -> pj_fdR n v []` in R form (a
@@ -106,7 +107,7 @@
    a Theorem Labs lane's preset_head_wide; HEAD16: prh_head16, owner the instance, reflexivity at CfParams_preset).
    THE REFUSED COPY (ownl <> 0): the free cut's cnb_cdead D reads only D; cnb_at_end carries it to CB9 for the post's
    outcome clause.
-   BATCH 2 (the kit decff67d721f, kept at the cut): CB8 neither reads nor writes g_own_ran_out or g_most; both are fields
+   BATCH 2 (the kit, kept at the cut): CB8 neither reads nor writes g_own_ran_out or g_most; both are fields
    of the ledger, so the cut's own value ownl and the input's bi_most D travel in the ledger through every call (the
    pj_free text carries them in its post's ledger; the runtime free keeps every program static, cnob_glob_keep), and
    the r fact over ownl is passed through unchanged.

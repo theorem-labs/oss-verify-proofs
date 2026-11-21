@@ -5,14 +5,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2065 of its 2181 lines of code are new or changed and 895 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F3.v, with its module paths, module names, addresses and numbers changed; 415 of its 490 lines of code are new or changed and 2106 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F25.v, with its module names changed; 125 of its 216 lines of code are new or changed and 399 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-   source run: lib/B/Prog/Seg/F25.v f25_evt (:125) at a working branch 3803efccea0
+   source run: lib/B/Prog/Seg/F25.v f25_evt (:125) at a working branch
      (blob 1da81b404de775e28447fbfc9e953350839e7717);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: f25_evt calls reac_ports_unknown (jal at 0x828a0), so it is split: f25_pre_F re-runs F25.v:159-242
      (0x82888 -> the callee entry 0x88628, ra = 0x828a4), carrying to the callee entry exactly the facts about
      the post-store memory that f25_evt feeds to the contract, and f25_post_F re-runs F25.v:259-272 (the return

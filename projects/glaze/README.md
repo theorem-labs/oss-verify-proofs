@@ -3,14 +3,14 @@
 
 [stephenberry/glaze](https://github.com/stephenberry/glaze) · OSS-Fuzz: [projects/glaze](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/glaze)
 
-**Status: available.** 1 of OSS-Fuzz's 23 fuzz targets has statements. 4 binaries, 2.8 MB. 13 statements: 3 proved, 0 known false, 0 suspected false, 0 blocked by the model, 10 open.
+**Status: available.** 1 of OSS-Fuzz's 23 fuzz targets has statements. 4 binaries, 2.8 MB. 13 statements: 7 proved, 0 known false, 0 suspected false, 0 blocked by the model, 6 open.
 
 Built from glaze 8.3.0 (commit `dce5e0f7`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [binary_reflection](binary_reflection/) | nothing is checked beyond crashes, sanitizers and uncaught exceptions. | none | 13, 3 proved |
+| [binary_reflection](binary_reflection/) | nothing is checked beyond crashes, sanitizers and uncaught exceptions. | none | 13, 7 proved |
 
 Not included: **api-driver** (held from this release); **cbor_reflection** (built, but not included in this release yet); **cbor_roundtrip_floating** (built, but not included in this release yet); **cbor_roundtrip_int** (built, but not included in this release yet); **cbor_roundtrip_string** (built, but not included in this release yet); **csv_parsing** (built, but not included in this release yet); **json_generic** (built, but not included in this release yet); **json_jmespath** (built, but not included in this release yet); **json_minify** (built, but not included in this release yet); **json_prettify** (built, but not included in this release yet); **json_reflection** (built, but not included in this release yet); **json_roundtrip_floating** (built, but not included in this release yet); **json_roundtrip_int** (built, but not included in this release yet); **json_roundtrip_string** (built, but not included in this release yet); **json_with_comments** (built, but not included in this release yet); **jsonb_reflection** (built, but not included in this release yet); **jsonrpc_registry** (not built yet); **msgpack_reflection** (built, but not included in this release yet); **msgpack_roundtrip_floating** (built, but not included in this release yet); **msgpack_roundtrip_int** (built, but not included in this release yet); **msgpack_roundtrip_string** (built, but not included in this release yet); **repe_registry** (not built yet); **yaml_generic** (built, but not included in this release yet).
 
@@ -39,8 +39,12 @@ By hand: download `glaze-bin.tar.zst` from release [v2026.10.0](https://github.c
 | statement | result |
 |---|---|
 | [glaze/binary_reflection/asan_agrees](binary_reflection/proofs/asan_agrees) | proved |
+| [glaze/binary_reflection/asan_halts](binary_reflection/proofs/asan_halts) | proved |
 | [glaze/binary_reflection/asan_ubsan_agrees](binary_reflection/proofs/asan_ubsan_agrees) | proved |
+| [glaze/binary_reflection/asan_ubsan_halts](binary_reflection/proofs/asan_ubsan_halts) | proved |
+| [glaze/binary_reflection/plain_halts](binary_reflection/proofs/plain_halts) | proved |
 | [glaze/binary_reflection/ubsan_agrees](binary_reflection/proofs/ubsan_agrees) | proved |
+| [glaze/binary_reflection/ubsan_halts](binary_reflection/proofs/ubsan_halts) | proved |
 
 ## Licence
 glaze is under `MIT`. Each binary is a combined work of glaze, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `glaze-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `glaze-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

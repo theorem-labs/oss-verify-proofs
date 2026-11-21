@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 1239 of its 1257 lines of code are new or changed and 230 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block_case56.v, with its module names changed; 22 of its 511 lines of code are new or changed and 768 lines of the source are left out. *)
-(* GENERATED - do not edit.  C_reac_box_model_blockRB_case56.v is the re-based copy of lib/B/Prog/reac_box_model_block_case56.v at 20372bbcc3a
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* GENERATED - do not edit.  C_reac_box_model_blockRB_case56.v is the re-based copy of lib/B/Prog/reac_box_model_block_case56.v
    (source sha256 457487e4bc0e5f33dc130980ec76bffe47e737235c7a02711e8e54530486b0a6) by gen_rb_modelblock.py
    (its sha256 is cited in the commit that adds this file); the substitutions are listed there.  Dropped here: c56_call_nf, c56_call_mco, c56_call_mcf, c56_st31, c56_tail5, c56_tail6, c56_loop5, c56_loop6, c56_case5. *)
 From Stdlib Require Import ZArith List Lia Bool.

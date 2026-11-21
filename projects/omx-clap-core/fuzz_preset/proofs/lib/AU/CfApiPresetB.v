@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's AsanAPI_cf (YGcfNames.v, Section API) at the second allocator instance,
    image B (asan-ubsan). The image-B twin of lib/A/CfApiPreset.v: the same three sections, the same fields and the
    same definitions, by this name map and no other change:
@@ -24,7 +25,7 @@
       record's parameter (list Segment -> Prop) does not take, so the instance's B is captured.
       The strcmp / strlen contracts are c-libc-stdio's (YGcfStr.v): their predicates are the real definitions;
       their proofs are open arguments. The snprintf contract is a Theorem Labs lane's row YGcallSnp.asnprintf_realizes_xrom
-      (by path from commit 193779166e07) at ARx := ARcf segs B, the form
+      (by path) at ARx := ARcf segs B, the form
       YGcallSnpCk.asnprintf_cf_of_xrom instantiates, at preset's format family, window and read-only ranges at image
       B (CfSnprintfPresetB.v), CfImg_B's canary cells and image range, and as the row's [rlo, rhi) (the relro range
       of PresetRodata.arodata_okP, lib/Spec/PresetRodata.v) the image's relro range pa_relro_lo / pa_relro_hi of

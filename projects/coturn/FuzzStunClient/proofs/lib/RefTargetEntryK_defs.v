@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the stack window is LPS 727298f3's 6144513 bytes, was 8388608, and the entry state's fresh-variable counter and size bound grow for the refused munmaps. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase.
 From LinuxProcessSemantics.Riscv Require Import Instr.
@@ -52,7 +53,7 @@ Definition sr_Tk (k : Z) : list expr :=
 Definition kn_Tk0 (k : Z) : list kentry :=
   [KAlign (EVar 0) 16;
    KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) (ELit 8388608);
+   KWr (SA (EVar 0) (-6144513)) (ELit 6144513);   (* LPS 08b1429: RefTargetPre.stack_writableZ's window *)
    KWord (SA (EVar 0) (-56)) 8 (ELit 0x1b594);
    KWord (SA (EVar 0) (-64)) 8 (EAlu ALU_ADD (EVar 0) (ELit 8));
    KWord (SA (EVar 0) (-72)) 8 (ELit 2);
@@ -165,4 +166,4 @@ Definition slots_Tk (k : Z) : list sslot :=
   [SL (EAlu ALU_ADD (EVar 1) (ELit 16)) (ELit (nbk k - 16)) (ELit (capk k)) (ELit (k + 1)) (ELit (Wk k)) 0 (EAlu ALU_ADD (EVar 1) (ELit (offk k)))].
 
 (* [comment removed for export] *)
-Definition cs_Tk (k nlo nhi : Z) : cstate := CS (SS 0x13cb0 (sr_Tk k) [] (kn_Tk k nlo nhi) NX0k) (maps_Tk k) 9 (nbk k + 2^20 + 8192) (slots_Tk k).
+Definition cs_Tk (k nlo nhi : Z) : cstate := CS (SS 0x13cb0 (sr_Tk k) [] (kn_Tk k nlo nhi) NX0k) (maps_Tk k) 20 (3 * nbk k + 2^20 + 8192) (slots_Tk k).

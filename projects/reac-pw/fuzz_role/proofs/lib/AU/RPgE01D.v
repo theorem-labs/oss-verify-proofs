@@ -1,7 +1,7 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01D.v at ba6d82f81177 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01D.v for image B
    (fuzz_rate.asan-ubsan): image B's pcs, registers and frame class; the harness records of lib/AU/RtPgSegB.v
    (rhb_ names) and the frame shadow pattern rsb_P0 of 88 bytes. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgE01DB.v at 48db065d2b9c; for reac-pw/fuzz_role
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgE01DB.v; for reac-pw/fuzz_role
    image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the harness records of lib/AU/RPgHarn.v (rh_
    names, RPgBase's rl_env), role B's pcs (frame entry 0x3cc74, FR 0x80094, HD 0x80270, malloc 0x524c0, C1 0x802c4),
    registers (n in s2, p in s5, the shadow offset in s11, F in s7 and s10), the real frame 0x200, the frame shadow

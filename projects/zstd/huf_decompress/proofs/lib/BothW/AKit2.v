@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (le1_sym)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -19,7 +20,9 @@ Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 Section CANSEC1. Context {rc : runConstT}.
 Lemma le1_sym : forall z, le1 (Z_to_bv 64 z) = [Z_to_bv 8 z].
 Proof.
-ltac2:(KReplay.run1 (kr_t_AKit2 ()) ["CANSEC1"] "h01zp;1p;2p;3p;4p;8p;6g0000j10Tg000Uj13Tg0013j25Tg001Pj2>Tg0020j1;Tg002Nj1HTg0031j1FTg003Qj1ATg0040j27Tg004mj21Tg005Sj1=Tg0063j36j2<j1ITg006Sj32Tg006mj24Tg007Gj2:Tg007dj18Tg008Ij4GTg008cj4ETg009Ij3BTg00:Bj89Tg00:_j2@Tg00;Ij1CTg00<Jj6DTg00<hj1?Tg00=XR0P0f0R1g00>6R2#0R3#3R4%03#0R3#0#0#0R5#3'5R6'>R7%;3R8#HR9#FR:g00>[#AR;/71f1,18%=9R<56932X00P:P:1187R=,<91181R8,<9P<P<P9P:\:R>%I9R?P?P=P8P>\9/4?P1P6%33,54R3P01:139206X00%82#8#0#0#0#3,54R41:43,40CGCE9B71G914:<G917;7A698<R852:e%;5R51151R5'@%C1ED%?5=2:8eW0o"). Qed.
+  intros z. unfold le1. rewrite unsigned_lit_wrap. cbn. f_equal. apply Z_to_bv8_mod.
+  apply Z.mod_mod_divide. exists (2^56). reflexivity.
+Qed.
 
 End CANSEC1.
 Ltac sym_store_bytes :=

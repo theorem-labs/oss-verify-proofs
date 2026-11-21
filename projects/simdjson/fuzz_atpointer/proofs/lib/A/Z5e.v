@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -367,7 +368,7 @@ Hypothesis ANN : annotate_contract RT.
 
 Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK in *; lia.
 
-Lemma shz_stackv : forall Σ m a n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + 8 <= a -> 0 <= n -> a + n <= USTACK_TOP -> shz m a n.
+Lemma shz_stackv : forall Σ m a n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP + 8 <= a -> 0 <= n -> a + n <= USTACK_TOP -> shz m a n.
 Proof using AF.
   intros Σ m a n HA LO N0 HI.
   pose proof (af_sp0_range RT AF Σ m HA) as SPR. pose proof (af_sp0_win RT AF Σ m HA) as SPW.
@@ -415,20 +416,20 @@ Proof using AF.
   right; right; right; right. exists f, c. split; [exact Hin| lia].
 Qed.
 
-Lemma x_shz_of_fp : forall Σ m lo W X n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= lo -> fp_client RT Σ lo W ->
-  rt_sp0 RT Σ - STACK_WIN + 8 <= X -> 0 <= n -> X + n <= USTACK_TOP -> x_shz W m X n.
+Lemma x_shz_of_fp : forall Σ m lo W X n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> fp_client RT Σ lo W ->
+  rt_sp0 RT Σ - STACK_WIN + STACK_GAP + 8 <= X -> 0 <= n -> X + n <= USTACK_TOP -> x_shz W m X n.
 Proof using AF.
   intros Σ m lo W X n HA LO FP X0 N0 XT m' MU WM. apply (shz_stackv Σ m'); [exact (art_fp_client RT AF Σ m m' lo _ HA LO FP MU WM)| lia| lia| lia].
 Qed.
 
-Lemma v_shz_of_fp : forall Σ m lo W V, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= lo -> fp_client RT Σ lo W -> fobj RT Σ m V 24 -> v_shz W m V.
+Lemma v_shz_of_fp : forall Σ m lo W V, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> fp_client RT Σ lo W -> fobj RT Σ m V 24 -> v_shz W m V.
 Proof using AF.
   intros Σ m lo W V HA LO FP FO m' MU WM. apply (fobj_shz RT AF Σ m'); [exact (art_fp_client RT AF Σ m m' lo _ HA LO FP MU WM)|].
   exact (fobj_munch RT AF Σ m m' lo _ V 24 HA LO FP MU FO).
 Qed.
 
 Lemma fobj_pres_fpc : forall Σ Σ' live sp lo W m m' a n, ART RT Σ m -> fobj RT Σ m a n ->
-  rt_pres_fp live (rt_frames RT Σ) sp W m m' -> rt_frames RT Σ' = rt_frames RT Σ -> rt_sp0 RT Σ - STACK_WIN <= lo -> fp_client RT Σ lo W ->
+  rt_pres_fp live (rt_frames RT Σ) sp W m m' -> rt_frames RT Σ' = rt_frames RT Σ -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> fp_client RT Σ lo W ->
   fobj RT Σ' m' a n.
 Proof using AF.
   intros Σ Σ' live sp lo W m m' a n HA FO PRES FRS LO FP.
@@ -446,7 +447,7 @@ Proof using AF.
 Qed.
 
 Lemma chunk_apart : forall Σ m l1 q k l2 (L : list (Z * Z)) sp a, ART RT Σ m -> rt_live RT Σ = l1 ++ (q, k) :: l2 ->
-  (forall e, In e L -> In e (l1 ++ l2)) -> rt_sp0 RT Σ - STACK_WIN <= sp -> aclient L (rt_frames RT Σ) sp a -> ~ (q <= a < q + k).
+  (forall e, In e L -> In e (l1 ++ l2)) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= sp -> aclient L (rt_frames RT Σ) sp a -> ~ (q <= a < q + k).
 Proof using AF.
   intros Σ m l1 q k l2 L sp a HA LV SUB LO Ha.
   assert (INQ : In (q, k) (rt_live RT Σ)) by (rewrite LV; apply in_or_app; right; left; reflexivity).
@@ -475,7 +476,7 @@ Lemma anninc_cps :
   rt_live RT Σ = ann_block b n v ++ L0 ->
   0 <= v -> 0 <= k -> v + 16 * k <= n -> v mod 16 = 0 -> n mod 16 = 0 -> 1 <= n <= 0x20001000 ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 16 + RT_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + 16 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VA_ANNINC m)))
@@ -554,7 +555,7 @@ Lemma anndel_cps :
   rt_live RT Σ = l1 ++ ann_block b n v ++ L0 -> Forall (fun e => fst e <> b) l1 ->
   0 <= v <= n -> v mod 16 = 0 -> n mod 16 = 0 -> 1 <= n <= 0x20001000 ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 16 + RT_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + 16 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VA_ANNDEL m)))
@@ -628,7 +629,7 @@ Lemma anndel0_cps :
   fdfs_only PMc -> mat_stable PMc -> a0 = Z_to_bv 64 V -> tp = Z_to_bv 64 0x646eb0 ->
   rw_cells asegs m V (vcells 0 e cc) -> fobj RT Σ m V 24 -> 0 <= e < 2^63 -> 0 <= cc < 2^63 ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 16 <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + 16 <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VA_ANNDEL m)))
@@ -674,7 +675,7 @@ Lemma annnew_cps :
   rt_live RT Σ = l1 ++ ann_block b n n ++ L0 -> Forall (fun x => fst x <> b) l1 ->
   0 <= sz -> 16 * sz <= n -> n mod 16 = 0 -> 1 <= n <= 0x20001000 ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 16 + RT_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + 16 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VA_ANNNEW m)))
@@ -759,7 +760,7 @@ Lemma alloc_cps :
   1 <= n -> 16 * n <= 0x20001000 -> a1 = Z_to_bv 64 n -> tp = Z_to_bv 64 0x646eb0 ->
   Z.of_nat (length (rt_live RT Σ)) < LIVE_MAX -> mcost (16 * n) <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 32 + RT_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + 32 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VA_ALLOCATE m)))
@@ -823,7 +824,7 @@ Lemma sbdtor_cps :
   0 <= bb < 2^63 -> fi <= ce < 2^63 -> 0 <= al < 2^64 ->
   In (fi, nf) (rt_live RT Σ) ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + RT_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> unwind_ok ra s0 sp -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VA_SBDTOR m)))
@@ -870,7 +871,7 @@ Lemma sbdtor0_cps :
   rw_cells asegs m X (sb_cells 0 bb ce al) -> bv_unsigned sp <= X -> X + 40 <= USTACK_TOP -> X mod 8 = 0 ->
   0 <= bb < 2^63 -> 0 <= ce < 2^63 -> 0 <= al < 2^64 ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 16 <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + 16 <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VA_SBDTOR m)))

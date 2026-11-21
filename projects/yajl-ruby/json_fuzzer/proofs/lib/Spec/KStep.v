@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (page-aligned brk grants and their page-count charge, the vDSO pair kept by every step and missed by meta blocks and mprotect, steps over nstep_cfg acfg, munmap's ENOMEM and maps_subtract cut, and the NULL-hint place_declined_b case). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
-From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import PropExec MState ITree Nodes NodesMat Decode.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import PropExec MState ITree Nodes NodesCfg NodesMat Decode.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Spec Require Import Prelim Monad MSafe STree Malloc RawAlloc KInv KLink.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Spec Require Export KArith.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -276,13 +277,15 @@ Qed.
 Lemma brk_model_next_grown : forall h req,
   let b := bv_unsigned (vm_brk h) in
   0 < b -> b < req < 2^64 ->
+  (* LPS 08b1429: brk grants whole pages; on page-aligned ends that is the byte range *)
+  b mod 4096 = 0 -> req mod 4096 = 0 ->
   let h' := brk_model_next h (Z_to_bv 64 req) (Z_to_bv 64 req) in
   vm_reserved h' = vm_reserved h
   /\ vm_maps h' = (vm_brk h, Z_to_bv 64 (req - b)) :: vm_maps h
   /\ vm_noaccess h' = vm_noaccess h
   /\ vm_start_brk h' = vm_start_brk h /\ vm_brk h' = Z_to_bv 64 req.
 Proof.
-  intros h req b Hb Hreq h'. subst h'. cbn [brk_model_next vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk].
+  intros h req b Hb Hreq Hba Hra h'. subst h'. cbn [brk_model_next vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk].
   unfold brk_maps_next. rewrite unsigned_lit by lia. fold b.
   replace (0 <? b) with true by (symmetry; apply Z.ltb_lt; lia).
   replace (req <? b) with false by (symmetry; apply Z.ltb_ge; lia). cbn [andb].
@@ -292,9 +295,10 @@ Proof.
   unfold brk_unmaps, brk_page_range. rewrite unsigned_lit by lia. fold b.
   replace (page_round_up_Z req <? page_round_up_Z b) with false.
   2:{ symmetry. apply Z.ltb_ge. apply page_round_up_Z_mono. lia. }
-  assert (Hsub : (Z_to_bv 64 req - vm_brk h)%bv = Z_to_bv 64 (req - b)).
-  { apply bv_eq. rewrite bv_sub_unsigned, unsigned_lit by lia. fold b. rewrite Z_to_bv_unsigned. reflexivity. }
-  rewrite Hsub. unfold maps_subtract_ranges. destruct (0 <? b); cbn; repeat split; reflexivity.
+  rewrite (page_round_up_Z_id b), (page_round_up_Z_id req) by lia.
+  replace (b <? req) with true by (symmetry; apply Z.ltb_lt; lia).
+  replace (Z_to_bv 64 b) with (vm_brk h) by (unfold b; symmetry; apply Z_to_bv_bv_unsigned).
+  unfold maps_subtract_ranges. destruct (0 <? b); cbn; repeat split; reflexivity.
 Qed.
 
 Lemma brk_r_ok_grow : forall mo req r,
@@ -334,10 +338,12 @@ Proof.
   replace ((req + 4096 - 1) / 4096 * 4096) with req in H.
   2:{ pose proof (Z_div_mod_eq_full req 4096). pose proof (Z_div_mod_eq_full (req+4096-1) 4096). pose proof (Z.mod_pos_bound (req+4096-1) 4096). nia. }
   replace (b <? req) with true in H by (symmetry; apply Z.ltb_lt; lia).
-  apply andb_prop in H as [H HB]. apply andb_prop in H as [H1 H2]. apply Z.leb_le in H1. apply Z.leb_le in HB.
-  assert (Hsub : bv_unsigned (Z_to_bv 64 req - vm_brk h)%bv = req - b).
-  { rewrite bv_sub_unsigned, unsigned_lit by lia. fold b. unfold bv_wrap. apply Z.mod_small. unfold bv_modulus. lia. }
-  rewrite Hsub in HB. apply (region_free_shrink _ _ (req - b) (req + 4096 - b)) in H2; [|lia|lia]. auto.
+  apply andb_prop in H as [H HB]. apply andb_prop in H as [H1 H2]. apply Z.leb_le in H1.
+  (* LPS 08b1429: the charge is the PAGE count [brk_grow_bytes]; on aligned ends it is req - b *)
+  unfold brk_budget_ok, brk_grow_bytes in HB. cbv zeta in HB. fold h in HB. rewrite unsigned_lit in HB by lia. fold b in HB.
+  rewrite (page_round_up_Z_id b), (page_round_up_Z_id req) in HB by lia.
+  rewrite Z.max_r in HB by lia. apply Z.leb_le in HB.
+  apply (region_free_shrink _ _ (req - b) (req + 4096 - b)) in H2; [|lia|lia]. auto.
 Qed.
 
 Lemma nstep_mmap_fixed_inv : forall a mo rsp mo' evs,
@@ -361,7 +367,7 @@ Proof.
   intros a mo rsp mo' evs h aw n Hminv Ha Hc Hal Hrf Hmc H.
   pose proof alloc_ceiling_lt as Hcl. pose proof (minv_alloc_top mo Hminv) as Htop. fold h in Htop.
   pose proof (nstep_mm_vm_only (NMmap a PGSZ PROT_NONE MAPFX) mo rsp mo' evs ltac:(reflexivity) H) as [[Hv _] ->]. split; [reflexivity|]. split; [exact Hv|].
-  apply nstep_mmap_iff in H. destruct rsp as [r ws zs us cs ci]. unfold check_mmap in H.
+  apply nstep_mmap_iff in H. destruct rsp as [r ws zs us cs ci]. unfold check_mmap, check_mmap_fixed_overflow in H.
   change (negb (mmap_off_aligned_b (Z_to_bv 64 0))) with false in H.
   change (negb (mmap_anon_b (Z_to_bv 64 MAPFX))) with false in H. cbv iota in H.
   rewrite w_is0_lit in H by (unfold PGSZ; lia). change (PGSZ =? 0) with false in H.
@@ -407,7 +413,7 @@ Proof.
 Qed.
 
 End RC__1.
-Ltac kl_open HK := destruct HK as [Kminv Khalt Kwf Kresv Krt Kstart Kgr Kme Kdis Kreg Kph Kgrv Kna Kmat Kpg].
+Ltac kl_open HK := destruct HK as [Kminv Khalt Kwf Kresv Krt Kstart Kgr Kme Kdis Kreg Kph Kgrv Kna Kmat Kpg Kmrv Kvd].
 
 (* [comment removed for export] *)
 Section RC__2.
@@ -419,9 +425,10 @@ Lemma KL_vm_eq : forall L pbrk mo mo',
   vm_noaccess (m_vmmaps mo') = vm_noaccess (m_vmmaps mo) ->
   vm_start_brk (m_vmmaps mo') = vm_start_brk (m_vmmaps mo) ->
   vm_brk (m_vmmaps mo') = vm_brk (m_vmmaps mo) ->
+  vdso_of mo' = vdso_of mo ->
   KL L pbrk mo'.
 Proof.
-  intros L pbrk mo mo' K Hmi Hh Hmat H1 H2 H3 H4 H5. kl_open K; constructor; rewrite ?H1, ?H2, ?H3, ?H4, ?H5; auto.
+  intros L pbrk mo mo' K Hmi Hh Hmat H1 H2 H3 H4 H5 H6. kl_open K; constructor; rewrite ?H6, ?H1, ?H2, ?H3, ?H4, ?H5; auto.
 Qed.
 
 (* [comment removed for export] *)
@@ -460,16 +467,22 @@ Proof.
   eapply mspec_bind.
   { apply (mspec_sys (NBrk 0) dec_brk0 _ (fun r s mo => s = s0 /\ G s mo /\ brk0_answer_ok r = true /\ KL (set_brkph (BPQueried r) L) r mo)).
     intros s mo (-> & HK & HGs). split; [exact I|].
-    intros rsp mo' evs Hst.
+    (* LPS 75d69e00: [mspec_sys]'s premise is now over [nstep_cfg acfg], so the
+       hypothesis arrives as the stronger fact; every [nstep_*] lemma below takes the
+       plain relation and is fed by [nstep_cfg_sub] (Lib/NodesCfg.v:80).  Bound as
+       [Hst] so the rest of this proof is unchanged. *)
+    intros rsp mo' evs Hstc.
+    pose proof (nstep_cfg_sub _ _ _ _ _ _ Hstc) as Hst.
     unshelve epose proof (minv_preserved _ _ _ _ _ _ (kl_minv _ _ _ HK) (kl_halt _ _ _ HK) Hst) as [Hh' Hmi']; [first [exact I | reflexivity | destruct isnone; reflexivity]|].
     pose proof (nstep_mat_nil _ _ _ _ _ Hst (kl_mat _ _ _ HK)) as Hmat'.
+    pose proof (nstep_vdso _ _ _ _ _ Hst) as Hvd'.
     pose proof (nstep_dec_brk0 _ _ _ _ Hst) as (_ & Hdec & Hvo & Hbrk).
     pose proof (nstep_brk_inv _ _ _ _ _ Hst) as (r & Hr & Emo' & _ & _).
     apply brk_r_ok_query in Hr. subst r.
     pose proof (brk_model_next_query (m_vmmaps mo)) as (E1 & E2 & E3 & E4 & E5).
     exists (bv_unsigned (vm_brk (m_vmmaps mo))). split; [exact Hdec|].
     assert (HK' : KL L (ps_brk s0) mo').
-    { eapply KL_vm_eq; [exact HK| exact Hmi'| exact Hh'| exact Hmat'| | | | |]; rewrite Emo'; cbn [m_vmmaps with_vmmaps]; assumption. }
+    { eapply KL_vm_eq; [exact HK| exact Hmi'| exact Hh'| exact Hmat'| | | | | |]; first [exact Hvd' | rewrite Emo'; cbn [m_vmmaps with_vmmaps]; assumption]. }
     pose proof (kl_phase _ _ _ HK') as Kph. rewrite Hph in Kph. destruct Kph as [Ebrk Ereg].
     pose proof (kl_start _ _ _ HK') as (S1 & S2 & S3 & S4).
     splits.
@@ -535,7 +548,7 @@ Proof.
   enough (lo + len <= b0 \/ b0 + m0 <= lo) as D.
   { destruct D as [D|D]; [rewrite (proj2 (Z.leb_le _ _) D); reflexivity| rewrite (proj2 (Z.leb_le _ _) D); apply orb_true_r]. }
   apply In_lranges in Hin as [H|[(b1 & l1 & H & E)|[(b1 & l1 & k & H & E)|(b1 & l1 & H & E)]]].
-  - rewrite (kl_resv _ _ _ HK) in H. apply in_map_iff in H as ([e sz] & E & H). unfold wwZ in E. cbn [fst snd] in E. injection E as <- <-.
+  - apply (kl_resv_in _ _ _ _ HK) in H. apply in_map_iff in H as ([e sz] & E & H). unfold wwZ in E. cbn [fst snd] in E. injection E as <- <-.
     pose proof (region_free_In _ _ _ _ _ Hrf (in_or_app _ _ _ (or_introl H))) as D. rewrite Ulo, Ulen in D. exact D.
   - injection E as -> ->. pose proof (went_In_bounds _ _ _ b1 l1 HK (or_introl H)) as (B1 & B2 & B3 & B4 & B5 & B6).
     pose proof (region_free_disj _ _ _ _ Hrfm B4) as D. rewrite B5, B6, Ulo, Ulen in D. rewrite round_up_pg_eq. fold (mmap_len l1). exact D.
@@ -566,9 +579,14 @@ Proof.
                 | BrkSame => KL (set_brkph BPDead L) cur mo
                 end)).
     intros s mo (-> & HK & HGs). split; [exact I|].
-    intros rsp mo' evs Hst.
+    (* Second consumer of the same shape as :468 — a build named it
+       with [(NBrk req)] concrete, so it is [ev_step_brk]'s own premise and nothing wider.
+       Bound as [Hstc] and re-bound as [Hst] so the rest of the proof is unchanged. *)
+    intros rsp mo' evs Hstc.
+    pose proof (nstep_cfg_sub _ _ _ _ _ _ Hstc) as Hst.
     unshelve epose proof (minv_preserved _ _ _ _ _ _ (kl_minv _ _ _ HK) (kl_halt _ _ _ HK) Hst) as [Hh' Hmi']; [first [exact I | reflexivity | destruct isnone; reflexivity]|].
     pose proof (nstep_mat_nil _ _ _ _ _ Hst (kl_mat _ _ _ HK)) as Hmat'.
+    pose proof (nstep_vdso _ _ _ _ _ Hst) as Hvd'.
     pose proof (kl_phase _ _ _ HK) as Kph. rewrite Hph in Kph. destruct Kph as (Ecur & Ebrk & Epbrk & Ereg).
     pose proof (kl_start _ _ _ HK) as (S1 & S2 & S3 & S4).
     assert (Hreq : req = cur + 2 * PGSZ). { subst req. rewrite round_up_pg_aligned; [reflexivity|]. rewrite Ecur. exact S2. }
@@ -580,7 +598,7 @@ Proof.
     split; [unfold PGSZ in *; lia|]. split; [reflexivity|].
     apply brk_r_ok_grow in Hr; [| subst h; lia| subst h; unfold PGSZ in *; lia].
     pose proof (brk_model_next_same h (Z_to_bv 64 req)) as (Q1 & Q2 & Q3 & Q4 & Q5).
-    pose proof (brk_model_next_grown h req ltac:(lia) ltac:(unfold PGSZ in *; lia)) as (P1 & P2 & P3 & P4 & P5).
+    pose proof (brk_model_next_grown h req ltac:(lia) ltac:(unfold PGSZ in *; lia) ltac:(unfold PGSZ in *; lia) ltac:(unfold PGSZ in *; lia)) as (P1 & P2 & P3 & P4 & P5).
     destruct a.
     - (* [comment removed for export] *)
       destruct Hr as [-> | [-> Hgo]].
@@ -595,7 +613,7 @@ Proof.
       rewrite Z_to_bv_bv_unsigned in Hrf.
       assert (Hn : bv_unsigned (Z_to_bv 64 (req - bv_unsigned (vm_brk h))) = 2 * PGSZ) by (rewrite unsigned_lit; unfold PGSZ in *; lia).
       split; [|exact HPG].
-      kl_open HK. constructor; rewrite ?Emo'; cbn [m_vmmaps with_vmmaps set_brkph ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live];
+      kl_open HK. constructor; rewrite ?Hvd', ?Emo'; cbn [m_vmmaps with_vmmaps set_brkph ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live];
         rewrite ?P1, ?P2, ?P3, ?P4, ?P5; auto.
       + apply vmwf_cons; [exact Kwf| rewrite Hn; unfold PGSZ in *; lia| eapply region_free_app_r; exact Hrf].
       + rewrite unsigned_lit by (unfold PGSZ in *; lia). splits; try lia; auto.
@@ -604,9 +622,9 @@ Proof.
       + intros b l Hb. rewrite Ereg in Hb. discriminate.
       + rewrite unsigned_lit by (unfold PGSZ in *; lia). splits; auto; try lia.
         * exists (vm_brk h, Z_to_bv 64 (req - bv_unsigned (vm_brk h))). split; [left; reflexivity|]. rewrite elo_pair, ehi_pair, Hn. lia.
-        * intros b l Hin. pose proof (went_In_bounds _ _ _ b l (mkKL _ _ _ Kminv Khalt Kwf Kresv Krt Kstart Kgr Kme Kdis Kreg Kph Kgrv Kna Kmat Kpg) (or_introl Hin)) as (B1 & B2 & B3 & B4 & B5 & B6).
+        * intros b l Hin. pose proof (went_In_bounds _ _ _ b l (mkKL _ _ _ Kminv Khalt Kwf Kresv Krt Kstart Kgr Kme Kdis Kreg Kph Kgrv Kna Kmat Kpg Kmrv Kvd) (or_introl Hin)) as (B1 & B2 & B3 & B4 & B5 & B6).
           pose proof (region_free_disj _ _ _ _ (region_free_app_r _ _ _ _ Hrf) B4) as D. rewrite B5, B6, Hn in D. lia.
-        * intros b l k Hin. pose proof (went_In_bounds _ _ _ b l (mkKL _ _ _ Kminv Khalt Kwf Kresv Krt Kstart Kgr Kme Kdis Kreg Kph Kgrv Kna Kmat Kpg) (or_intror (ex_intro _ k Hin))) as (B1 & B2 & B3 & B4 & B5 & B6).
+        * intros b l k Hin. pose proof (went_In_bounds _ _ _ b l (mkKL _ _ _ Kminv Khalt Kwf Kresv Krt Kstart Kgr Kme Kdis Kreg Kph Kgrv Kna Kmat Kpg Kmrv Kvd) (or_intror (ex_intro _ k Hin))) as (B1 & B2 & B3 & B4 & B5 & B6).
           pose proof (region_free_disj _ _ _ _ (region_free_app_r _ _ _ _ Hrf) B4) as D. rewrite B5, B6, Hn in D. lia.
       + intros e He. destruct (Kna e He) as [Hm | (b0 & l0 & e0 & Hb & _)]; [left; exact Hm | rewrite Ereg in Hb; discriminate].
       + intros e [<-|He]; [| exact (Kpg e He)]. rewrite elo_pair, ehi_pair, Hn, Ebrk, Ecur. split; [exact S2|].
@@ -615,7 +633,7 @@ Proof.
       destruct Hr as [-> | [-> Hgo]].
       2:{ exfalso. rewrite Emo' in Ha. cbn [m_vmmaps with_vmmaps] in Ha. rewrite P5 in Ha.
           apply (f_equal bv_unsigned) in Ha. rewrite unsigned_lit in Ha by (unfold PGSZ in *; lia). lia. }
-      apply KL_dead with (pbrk := ps_brk s0). eapply KL_vm_eq; [exact HK| exact Hmi'| exact Hh'| exact Hmat'| | | | |]; rewrite Emo'; cbn [m_vmmaps with_vmmaps]; assumption. }
+      apply KL_dead with (pbrk := ps_brk s0). eapply KL_vm_eq; [exact HK| exact Hmi'| exact Hh'| exact Hmat'| | | | | |]; first [exact Hvd' | rewrite Emo'; cbn [m_vmmaps with_vmmaps]; assumption]. }
   intros a. cbn beta. destruct a.
   - eapply mspec_bind; [apply mspec_upd|]. intros []. apply mspec_ret.
     intros s mo (s1 & -> & -> & HGs & [Hne Hpos] & Ecur & [HK HPG]). unfold ev_step_post.
@@ -652,9 +670,10 @@ Proof.
                 | BrkSame => KL (set_brkph BPDead L) (b + l) mo
                 end)).
     intros s mo (-> & HK & HGs). split; [exact I|].
-    intros rsp mo' evs Hst.
+    intros rsp mo' evs Hstc. pose proof (nstep_cfg_sub _ _ _ _ _ _ Hstc) as Hst.
     unshelve epose proof (minv_preserved _ _ _ _ _ _ (kl_minv _ _ _ HK) (kl_halt _ _ _ HK) Hst) as [Hh' Hmi']; [first [exact I | reflexivity | destruct isnone; reflexivity]|].
     pose proof (nstep_mat_nil _ _ _ _ _ Hst (kl_mat _ _ _ HK)) as Hmat'.
+    pose proof (nstep_vdso _ _ _ _ _ Hst) as Hvd'.
     pose proof (kl_phase _ _ _ HK) as Kph. rewrite Hph in Kph. destruct Kph as (b' & l' & Ereg' & Ebrk & Epbrk).
     rewrite Ereg in Ereg'. injection Ereg' as <- <-.
     pose proof (kl_brkreg _ _ _ HK b l Ereg) as (R1 & R2 & R3 & R4 & R5 & Rcov).
@@ -667,7 +686,7 @@ Proof.
     split; [unfold PGSZ in *; lia|]. split; [reflexivity|].
     apply brk_r_ok_grow in Hr; [| subst h; lia| subst h; unfold PGSZ in *; lia].
     pose proof (brk_model_next_same h (Z_to_bv 64 req)) as (Q1 & Q2 & Q3 & Q4 & Q5).
-    pose proof (brk_model_next_grown h req ltac:(lia) ltac:(unfold PGSZ in *; lia)) as (P1 & P2 & P3 & P4 & P5).
+    pose proof (brk_model_next_grown h req ltac:(lia) ltac:(unfold PGSZ in *; lia) ltac:(unfold PGSZ in *; lia) ltac:(unfold PGSZ in *; lia)) as (P1 & P2 & P3 & P4 & P5).
     destruct a.
     - (* [comment removed for export] *)
       destruct Hr as [-> | [-> Hgo]].
@@ -683,7 +702,7 @@ Proof.
       assert (Hn : bv_unsigned (Z_to_bv 64 (req - bv_unsigned (vm_brk h))) = PGSZ) by (rewrite unsigned_lit; unfold PGSZ in *; lia).
       pose proof (fun b0 l0 H => went_In_bounds _ _ _ b0 l0 HK H) as WB.
       split; [|exact HPG].
-      kl_open HK. constructor; rewrite ?Emo'; cbn [m_vmmaps with_vmmaps set_brkreg ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live];
+      kl_open HK. constructor; rewrite ?Hvd', ?Emo'; cbn [m_vmmaps with_vmmaps set_brkreg ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live];
         rewrite ?P1, ?P2, ?P3, ?P4, ?P5; auto.
       + apply vmwf_cons; [exact Kwf| rewrite Hn; unfold PGSZ in *; lia| eapply region_free_app_r; exact Hrf].
       + rewrite unsigned_lit by (unfold PGSZ in *; lia). splits; try lia; auto.
@@ -711,7 +730,7 @@ Proof.
       destruct Hr as [-> | [-> Hgo]].
       2:{ exfalso. rewrite Emo' in Ha. cbn [m_vmmaps with_vmmaps] in Ha. rewrite P5 in Ha.
           apply (f_equal bv_unsigned) in Ha. rewrite unsigned_lit in Ha by (unfold PGSZ in *; lia). lia. }
-      apply KL_dead with (pbrk := ps_brk s0). eapply KL_vm_eq; [exact HK| exact Hmi'| exact Hh'| exact Hmat'| | | | |]; rewrite Emo'; cbn [m_vmmaps with_vmmaps]; assumption. }
+      apply KL_dead with (pbrk := ps_brk s0). eapply KL_vm_eq; [exact HK| exact Hmi'| exact Hh'| exact Hmat'| | | | | |]; first [exact Hvd' | rewrite Emo'; cbn [m_vmmaps with_vmmaps]; assumption]. }
   intros a. cbn beta. destruct a.
   - eapply mspec_bind; [apply mspec_upd|]. intros []. apply mspec_ret.
     intros s mo (s1 & -> & -> & HGs & [Hne Hpos] & Ecur & HK). unfold ev_step_post.
@@ -756,14 +775,14 @@ Lemma KL_mmap_new : forall L pbrk mo mo' a len (isnone : bool),
   let h := m_vmmaps mo in let n := mmap_len len in
   mmap_addr_ok len [] a = true ->
   region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 a) (Z_to_bv 64 n) = true ->
-  minv mo' -> m_halted mo' = None -> m_vm_materialized mo' = [] ->
+  minv mo' -> m_halted mo' = None -> m_vm_materialized mo' = [] -> vdso_of mo' = vdso_of mo ->
   m_vmmaps mo' = mkVmMapsFull (vm_reserved h) ((Z_to_bv 64 a, Z_to_bv 64 n) :: vm_maps h)
                  (if isnone then (Z_to_bv 64 a, Z_to_bv 64 n) :: vm_noaccess h else vm_noaccess h)
                  (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h) ->
   KL (if isnone then set_metas ((a, len, 0) :: ld_metas L) L else set_groups ((a, len) :: ld_groups L) L) pbrk mo'
   /\ mmap_answer_ok (lranges L) len a = true /\ is_err a = false.
 Proof.
-  intros L pbrk mo mo' a len isnone HK Hq Hlen h n Hok Hrf Hmi' Hh' Hmat' Evm. pose proof alloc_ceiling_lt as Hcl.
+  intros L pbrk mo mo' a len isnone HK Hq Hlen h n Hok Hrf Hmi' Hh' Hmat' Hvd' Evm. pose proof alloc_ceiling_lt as Hcl.
   apply mmap_addr_ok_true in Hok as [(A1 & A2 & A3) _]. rewrite page_size_eq in A1. (* [comment removed for export] *) fold n in A3.
   pose proof (mmap_len_ge len ltac:(lia)) as Hn1. pose proof (mmap_len_pos_pg len ltac:(lia)) as Hn2. fold n in Hn1, Hn2.
   assert (Ua : bv_unsigned (Z_to_bv 64 a) = a) by (apply unsigned_lit; lia).
@@ -786,7 +805,7 @@ Proof.
       enough (a + n <= lo \/ lo + m <= a) as D.
       { destruct D as [D|D]; [rewrite (proj2 (Z.leb_le _ _) D); reflexivity| rewrite (proj2 (Z.leb_le _ _) D); apply orb_true_r]. }
       apply In_lranges in Hin as [H|[(b0 & l0 & H & E)|[(b0 & l0 & k & H & E)|(b0 & l0 & H & E)]]].
-      - rewrite (kl_resv _ _ _ HK) in H. apply in_map_iff in H as ([e sz] & E & H). unfold wwZ in E. cbn [fst snd] in E. injection E as <- <-.
+      - apply (kl_resv_in _ _ _ _ HK) in H. apply in_map_iff in H as ([e sz] & E & H). unfold wwZ in E. cbn [fst snd] in E. injection E as <- <-.
         pose proof (region_free_In _ _ _ _ _ Hrf (in_or_app _ _ _ (or_introl H))) as D. rewrite Ua, Un in D. exact D.
       - injection E as -> ->. rewrite round_up_pg_eq. fold (mmap_len l0). apply Dgm. left; exact H.
       - injection E as -> ->. rewrite round_up_pg_eq. fold (mmap_len l0). apply Dgm. right; exists k; exact H.
@@ -818,7 +837,7 @@ Proof.
   destruct isnone; constructor;
     first [ apply (Hph' (set_metas _ L)); reflexivity
           | apply (Hph' (set_groups _ L)); reflexivity
-          | rewrite ?Evm; cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk set_metas set_groups ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live]; auto ].
+          | rewrite ?Hvd', ?Evm; cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk set_metas set_groups ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live]; auto ].
   - apply vmwf_cons; [exact Kwf| rewrite Ua, Un; lia| exact Hrfm].
   - intros b0 l0 Hin. specialize (Kgr b0 l0 Hin). unfold brk_disj in *; cbn. intuition auto with datatypes.
   - intros b0 l0 k [E|Hin].
@@ -835,6 +854,9 @@ Proof.
     + left. exists a, len, 0. split; [left; reflexivity|]. rewrite elo_pair, ehi_pair, Ua, Un. fold n. lia.
     + destruct (Kna e He) as [(b0 & l0 & k0 & Hin & R1 & R2)|(b0 & l0 & e0 & E & R1 & R2 & He0 & Q1 & Q2)]; [left; exists b0, l0, k0; split; [right; exact Hin| auto]| right; exists b0, l0, e0; repeat split; auto; right; exact He0].
   - intros e [<-|He]; [| exact (Kpg e He)]. rewrite elo_pair, ehi_pair, Ua, Un. unfold PGSZ. split; [exact A1|]. rewrite Z.add_mod, A1, (mmap_len_aligned len) by lia. reflexivity.
+  - (* LPS 727298f3: the new meta block misses the reserved ledger by the grant's own check. *)
+    intros b0 l0 k [E|Hin]; [injection E as <- <- <-| exact (Kmrv b0 l0 k Hin)]. intros e He.
+    pose proof (region_free_disj _ _ _ _ Hrf (in_or_app _ _ _ (or_introl He))) as D. rewrite Ua, Un in D. fold n. exact D.
   - apply vmwf_cons; [exact Kwf| rewrite Ua, Un; lia| exact Hrfm].
   - intros b0 l0 [E|Hin].
     + injection E as <- <-. unfold brk_disj; cbn. splits; try lia.
@@ -875,10 +897,13 @@ Proof.
                             /\ mmap_answer_ok (lranges L) len a = true /\ is_err a = false
                 end)).
     intros s mo (-> & HK & HGs). split.
-    { subst prot. destruct isnone; [apply nsafe_mmap_none| apply nsafe_mmap_rw]. }
-    intros rsp mo' evs Hst.
+    { (* LPS 727298f3: the hint is the literal NULL, so [place_declined_b] is false by
+         computation ([place_declined_b_null]). *)
+      subst prot. destruct isnone; [apply nsafe_mmap_none| apply nsafe_mmap_rw]; apply place_declined_b_null. }
+    intros rsp mo' evs Hstc. pose proof (nstep_cfg_sub _ _ _ _ _ _ Hstc) as Hst.
     unshelve epose proof (minv_preserved _ _ _ _ _ _ (kl_minv _ _ _ HK) (kl_halt _ _ _ HK) Hst) as [Hh' Hmi']; [first [exact I | reflexivity | destruct isnone; reflexivity]|].
     pose proof (nstep_mat_nil _ _ _ _ _ Hst (kl_mat _ _ _ HK)) as Hmat'.
+    pose proof (nstep_vdso _ _ _ _ _ Hst) as Hvd'.
     assert (Hcase : vm_only mo mo' /\ exists x, dec rsp = Some x /\
               match x with
               | MmErr e => e = ENOMEM /\ mo' = mo
@@ -897,7 +922,7 @@ Proof.
     split; [reflexivity|]. split; [eapply HG; [reflexivity|reflexivity| exact Hvo| exact HGs]|].
     destruct x as [e|a].
     - destruct Hx as [-> ->]. split; [reflexivity| exact HK].
-    - destruct Hx as (Hok & Hrf & Evm). apply (KL_mmap_new L (ps_brk s0) mo mo' a len isnone HK Hq Hlen Hok Hrf Hmi' Hh' Hmat' Evm). }
+    - destruct Hx as (Hok & Hrf & Evm). apply (KL_mmap_new L (ps_brk s0) mo mo' a len isnone HK Hq Hlen Hok Hrf Hmi' Hh' Hmat' Hvd' Evm). }
   intros x. cbn beta. apply mspec_ret. intros s mo (-> & HGs & Hx). unfold ev_step_post.
   cbn [answer_ok event_post]. change (Z.land MAPF MAP_FIXED =? 0) with true. cbv iota.
   destruct x as [e|a].
@@ -957,6 +982,21 @@ Proof.
   replace (bv_unsigned aw <? bv_unsigned e + bv_unsigned sz) with false by (symmetry; apply Z.ltb_ge; lia). reflexivity.
 Qed.
 
+(* LPS 727298f3: the reserved ledger also holds the vDSO/vvar pair above the range, so an
+   entry is either below it or above it. *)
+Lemma region_free_apart : forall maps aw nw,
+  (forall e, In e maps -> ehi e <= bv_unsigned aw \/ bv_unsigned aw + bv_unsigned nw <= elo e) ->
+  region_free maps aw nw = true.
+Proof.
+  induction maps as [|[e sz] maps IH]; intros aw nw H; [reflexivity|]. cbn [region_free].
+  rewrite IH by (intros e' He'; apply H; right; exact He'). unfold iv_overlap.
+  specialize (H (e, sz) (or_introl eq_refl)). unfold ehi, elo in H; cbn in H.
+  destruct H as [H|H].
+  - replace (bv_unsigned aw <? bv_unsigned e + bv_unsigned sz) with false by (symmetry; apply Z.ltb_ge; lia). reflexivity.
+  - replace (bv_unsigned e <? bv_unsigned aw + bv_unsigned nw) with false by (symmetry; apply Z.ltb_ge; lia).
+    rewrite andb_false_r. reflexivity.
+Qed.
+
 Lemma ev_mmap_fixed_ok : forall L G s0 cur, frame_ok G -> ld_brk L = BPGuard cur ->
   let a := round_up_pg cur in
   mspec (fun s mo => s = s0 /\ KL L (ps_brk s) mo /\ G s mo)
@@ -979,12 +1019,21 @@ Proof.
     assert (Uhi : bv_unsigned (aw + nw)%bv = a + PGSZ).
     { rewrite bv_add_unsigned, Ua, Un. apply bv_wrap_small. unfold bv_modulus, PGSZ in *. lia. }
     assert (Hrf : region_free (vm_reserved h) aw nw = true).
-    { apply region_free_above. intros e He. rewrite Ua, Ha, Ecur. apply (kl_resv_top _ _ _ HK). exact He. }
+    { apply region_free_apart. intros e He. rewrite Ua, Un, Ha, Ecur.
+      destruct (kl_resv_top _ _ _ HK e He) as [T|T]; [left; exact T|].
+      right. try (change (m_vmmaps mo) with h in T). unfold PGSZ in *. lia. }
     assert (Hmc : map_contains (vm_maps h) aw nw = true).
     { unfold map_contains. apply existsb_exists. exists e0. split; [exact He0|]. rewrite Ua, Un. unfold elo, ehi in *.
       rewrite (proj2 (Z.leb_le _ _)) by lia. rewrite (proj2 (Z.leb_le _ _)) by (unfold PGSZ in *; lia). reflexivity. }
     split.
-    { unfold nsafe. split; [reflexivity|]. unfold mmap_safe_b. fold aw nw.
+    { unfold nsafe. split; [reflexivity|].
+      (* LPS 727298f3: a MAP_FIXED request takes neither freely placed arm, so the decline
+         conjunct holds vacuously. *)
+      split; [| intros Hc;
+        change (mmap_modeled_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 0)) with false in Hc;
+        change (mmap_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 0)) with false in Hc;
+        destruct Hc as [Hc|Hc]; discriminate Hc].
+      unfold mmap_safe_b. fold aw nw.
       change (mmap_modeled_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 0)) with false.
       change (mmap_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 0)) with false.
       change (mmap_fixed_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 0)) with true.
@@ -995,9 +1044,10 @@ Proof.
       rewrite page_size_eq. replace (a mod 4096 =? 0) with true by (symmetry; apply Z.eqb_eq; rewrite Ha, Ecur; exact S2). cbn [negb].
       replace (0 <? a) with true by (symmetry; apply Z.ltb_lt; lia). cbn [negb].
       fold h. change (Z_to_bv 64 PGSZ) with nw. rewrite Hrf, Hmc. reflexivity. }
-    intros rsp mo' evs Hst.
+    intros rsp mo' evs Hstc. pose proof (nstep_cfg_sub _ _ _ _ _ _ Hstc) as Hst.
     unshelve epose proof (minv_preserved _ _ _ _ _ _ (kl_minv _ _ _ HK) (kl_halt _ _ _ HK) Hst) as [Hh' Hmi']; [first [exact I | reflexivity | destruct isnone; reflexivity]|].
     pose proof (nstep_mat_nil _ _ _ _ _ Hst (kl_mat _ _ _ HK)) as Hmat'.
+    pose proof (nstep_vdso _ _ _ _ _ Hst) as Hvd'.
     pose proof (nstep_mmap_fixed_inv a mo rsp mo' evs (kl_minv _ _ _ HK) ltac:(lia) ltac:(lia) ltac:(rewrite Ha, Ecur; exact S2) Hrf Hmc Hst) as (_ & Hvo & x & Hd & Hx).
     fold h aw nw in Hx.
     exists x. split; [exact Hd|]. split; [reflexivity|]. split; [eapply HG; [reflexivity|reflexivity| exact Hvo| exact HGs]|].
@@ -1018,7 +1068,7 @@ Proof.
               m_vmmaps mo' = mkVmMapsFull (vm_reserved h) maps' noacc' (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h) ->
               KL L' (ps_brk s0) mo').
     { intros maps' noacc' Hwf' Hkeep Hback Hna Hnb Hcov' Evm. subst L'.
-      kl_open HK. constructor; rewrite ?Evm; cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk set_brkph set_brkreg ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live]; auto.
+      kl_open HK. constructor; rewrite ?Hvd', ?Evm; cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk set_brkph set_brkreg ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live]; auto.
       - intros b0 l0 Hin. pose proof (WB b0 l0 (or_introl Hin)) as (B1 & B2 & B3 & B4 & B5 & B6). pose proof (Dgm b0 l0 (or_introl Hin)) as D.
         specialize (Kgr b0 l0 Hin). destruct Kgr as ([G0 G1] & G2 & G3 & G4 & G5 & G6). splits; try assumption.
         + apply Hkeep; [exact B4|]. rewrite B5, B6. clear -D. unfold PGSZ in *. lia.
@@ -1117,7 +1167,7 @@ Proof.
   set (L' := set_groups (g_remove a (ld_groups L)) L).
   eapply mspec_bind.
   { apply (mspec_sys (NMunmap a len) (dec_munmap a len) _
-             (fun x s mo => s = s0 /\ G s mo /\ KL L' (ps_brk s0) mo /\ match x with RgErr e => e = EINVAL | RgDone _ => True end)).
+             (fun x s mo => s = s0 /\ G s mo /\ KL L' (ps_brk s0) mo /\ match x with RgErr e => e = EINVAL \/ e = ENOMEM | RgDone _ => True end)).
     intros s mo (-> & HK & HGs).
     pose proof (kl_groups _ _ _ HK a l0 Hin) as (A1 & A2 & A3 & A4 & A5 & A6).
     pose proof (went_In_bounds _ _ _ a l0 HK (or_introl Hin)) as (_ & B2 & _ & _ & B5 & B6).
@@ -1137,9 +1187,10 @@ Proof.
       replace (len =? 0) with false by (symmetry; apply Z.eqb_neq; lia). cbn [negb orb Z.eqb]. cbv zeta.
       rewrite (unsigned_lit len) by lia. fold (mmap_len len). rewrite Hlen2. change (Z_to_bv 64 n) with nw.
       destruct (TASK_SIZE <? a + n); [reflexivity|]. rewrite Hhas. reflexivity. (* [comment removed for export] *) }
-    intros rsp mo' evs Hst.
+    intros rsp mo' evs Hstc. pose proof (nstep_cfg_sub _ _ _ _ _ _ Hstc) as Hst.
     unshelve epose proof (minv_preserved _ _ _ _ _ _ (kl_minv _ _ _ HK) (kl_halt _ _ _ HK) Hst) as [Hh' Hmi']; [first [exact I | reflexivity | destruct isnone; reflexivity]|].
     pose proof (nstep_mat_nil _ _ _ _ _ Hst (kl_mat _ _ _ HK)) as Hmat'.
+    pose proof (nstep_vdso _ _ _ _ _ Hst) as Hvd'.
     pose proof (nstep_dec_munmap a len mo rsp mo' evs ltac:(lia) ltac:(lia) ltac:(rewrite Hlen2; lia) Hst) as (_ & Hvo & x & Hd & Hx).
     rewrite Hlen2 in Hx. fold h aw nw in Hx.
     exists x. split; [exact Hd|]. split; [reflexivity|]. split; [eapply HG; [reflexivity|reflexivity| exact Hvo| exact HGs]|].
@@ -1173,7 +1224,7 @@ Proof.
       assert (Hph' : phase_inv (ld_brk L') L' (ps_brk s0) mo') by (eapply phase_quiet; [exact HK| exact Hq| reflexivity| reflexivity| rewrite Evm; reflexivity| rewrite Evm; reflexivity]).
       assert (Kfst : forall b l, b <> a -> 0 < b < 2^64 -> fst (went b (mmap_len l)) <> aw).
       { intros b l Hne Hb E. apply Hne. apply (f_equal bv_unsigned) in E. cbn [fst went] in E. rewrite unsigned_wz, Ua in E by lia. exact E. }
-      subst L'. kl_open HK. constructor; try exact Hph'; rewrite ?Evm; cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk set_groups ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live]; auto.
+      subst L'. kl_open HK. constructor; try exact Hph'; rewrite ?Hvd', ?Evm; cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk set_groups ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live]; auto.
       - intros b0 l1 Hin0. destruct (Hg' b0 l1 Hin0) as [Hin1 Hne]. specialize (Kgr b0 l1 Hin1). destruct Kgr as ([G0 G1] & G2 & G3 & G4 & G5 & G6). splits; try assumption.
         apply Hkeep; [exact G5|]. apply Kfst; auto. pose proof (mmap_len_ge l1 G0). lia.
       - intros b0 l1 k Hin0. pose proof (Hm' b0 l1 k Hin0) as Hne. specialize (Kme b0 l1 k Hin0). destruct Kme as ([G0 G1] & G2 & G3 & G4 & G5 & G6 & G7 & G8 & G9). splits; try assumption.
@@ -1194,7 +1245,7 @@ Proof.
         + left. exists b2, l2, k2. split; [exact Hin2| lia].
         + right. exists b2, l2, e0. split; [exact E2|]. split; [lia|]. split; [lia|]. split; [| lia].
           apply Hkeep; [exact He0|]. intros Efst.
-          pose proof (kl_brkreg _ _ _ (mkKL _ _ _ Kminv Khalt Kwf Kresv Krt Kstart Kgr Kme Kdis Kreg Kph Kgrv Kna Kmat Kpg) b2 l2 E2) as (_ & _ & R3 & _).
+          pose proof (kl_brkreg _ _ _ (mkKL _ _ _ Kminv Khalt Kwf Kresv Krt Kstart Kgr Kme Kdis Kreg Kph Kgrv Kna Kmat Kpg Kmrv Kvd) b2 l2 E2) as (_ & _ & R3 & _).
           unfold brk_disj in A6. specialize (A6 b2 l2 E2).
           destruct (pwdisj_In _ _ _ (proj2 Kwf) He0 A5) as [->|D].
           * rewrite B5 in W1. rewrite B6 in W2. clear -W1 W2 A6 R3 B2. unfold PGSZ in *. lia.
@@ -1202,14 +1253,23 @@ Proof.
     assert (Hlohi : a < a + n) by lia.
     assert (Ha0 : 0 <= a) by lia. assert (Hhi64 : a + n < 2 ^ 64) by (pose proof alloc_ceiling_lt; lia).
     destruct x as [e|[|]].
-    - destruct Hx as [-> ->]. split; [|reflexivity]. apply (KLnew (vm_maps h) (vm_noaccess h)).
+    - destruct Hx as [Herr ->]. split; [|exact Herr]. apply (KLnew (vm_maps h) (vm_noaccess h)).
       + exact (kl_wf _ _ _ HK).
       + auto.
-      + intros e x y He H1 H2 H3 H4. exists e. auto.
+      + intros e1 x1 y1 He H1 H2 H3 H4. exists e1. auto.
       + intros e' He'. exists e'. split; [exact He'| lia].
       + auto.
       + subst h. destruct (m_vmmaps mo); reflexivity.
-    - destruct Hx as [_ Evm]. rewrite Ua, Un in Evm. split; [|exact I]. apply (KLnew (map_remove (vm_maps h) aw) (maps_subtract (vm_noaccess h) a (a + n))).
+    - destruct Hx as [_ Evm]. unfold Sys.Mm.Mmap.mmap_fixed_destroyed_next in Evm.
+      (* LPS 08b1429: the cut is [maps_subtract]; on the ledger's own entry it is [map_remove] *)
+      rewrite (maps_subtract_exact (vm_maps h) aw nw) in Evm.
+      2:{ rewrite Un. lia. }
+      2:{ intros b s Hbs. destruct (pwdisj_In _ _ _ (proj2 (kl_wf _ _ _ HK)) Hbs A5) as [E|D].
+          - left. unfold went, wz in E. fold aw nw in E. injection E as -> ->. split; reflexivity.
+          - right. pose proof (proj1 (kl_wf _ _ _ HK) (b, s) Hbs) as W.
+            unfold edisj, elo, ehi in D, W. cbn [fst snd went] in D, W. unfold wz in D. fold aw nw in D.
+            rewrite Ua, Un in D |- *. lia. }
+      rewrite Ua, Un in Evm. split; [|exact I]. apply (KLnew (map_remove (vm_maps h) aw) (maps_subtract (vm_noaccess h) a (a + n))).
       + apply vmwf_remove. exact (kl_wf _ _ _ HK).
       + intros e He Hne. unfold map_remove. apply filter_In. split; [exact He|]. destruct (bv_eqb (fst e) aw) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. contradiction.
       + intros e x y He H1 H2 H3 H4. destruct (iv_subtract_contains (fst e) (snd e) a (a + n) x y Ha0 Hlohi Hhi64 H1 H2 H3 H4) as (e' & He' & Hr).
@@ -1226,8 +1286,9 @@ Proof.
       + subst h. destruct (m_vmmaps mo); reflexivity. }
   intros x. cbn beta. apply mspec_ret. intros s mo (-> & HGs & HK & Hx). unfold ev_step_post.
   cbn [answer_ok event_post]. fold L'.
-  splits; auto. unfold munmap_answer_ok. destruct x as [e|b]; try subst e.
-  - rewrite is_errno_form_neg by (unfold EINVAL; lia). apply orb_true_r.
+  splits; auto. unfold munmap_answer_ok. destruct x as [e|b].
+  - destruct Hx as [-> | ->];
+      rewrite is_errno_form_neg by (unfold EINVAL, ENOMEM; lia); apply orb_true_r.
   - reflexivity.
 Qed.
 
@@ -1282,6 +1343,11 @@ Proof.
   { apply check_ret_only_ok_iff in H as (-> & -> & _).
     unfold dec_mprotect in Hd. cbn in Hd. rewrite errno_of_errno_ret in Hd by (unfold ENOMEM; lia). discriminate. }
   cbv zeta in H. fold h in H. rewrite Hcn, Hrf in H. cbn [andb] in H.
+  (* LPS 08b1429: the vDSO gate comes first; a range meeting the pair is unmodeled. *)
+  lazymatch type of H with
+  | context [region_free (vdso_reserved ?k ?t) ?x ?y] =>
+      destruct (region_free (vdso_reserved k t) x y) eqn:Hvd; cbn [negb] in H; [| discriminate]
+  end.
   destruct (map_contains (vm_maps h) a n) eqn:Hcm; [|rewrite ?andb_false_r in H; discriminate].
   destruct rsp as [r ws zs us cs ci].
   destruct ws; [|discriminate]. destruct us; [|destruct zs; discriminate].
@@ -1327,14 +1393,22 @@ Proof.
     { unfold map_contains. apply existsb_exists. exists (went b nb). split; [exact A5|]. rewrite Ua, Un. unfold elo, ehi in B5, B6. rewrite B5.
       replace (bv_unsigned (fst (went b nb)) + bv_unsigned (snd (went b nb))) with (b + nb) by (symmetry; exact B6).
       rewrite (proj2 (Z.leb_le _ _)) by lia. rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity. }
+    (* LPS 727298f3: [check_mprotect] first declines a range meeting the vDSO/vvar pair; the
+       pair is in the reserved ledger ([kl_vdso]) and this meta block misses that ledger
+       ([kl_metas_resv]), so the page inside the block misses the pair. *)
+    assert (Hvdf : region_free (vdso_reserved (m_kernel mo) (vdso_top h)) aw nw = true).
+    { apply region_free_apart. intros e He. rewrite Ua, Un.
+      pose proof (kl_metas_resv _ _ _ HK b l k Hin e (kl_vdso _ _ _ HK e He)) as D.
+      change (mmap_len l) with nb in D. clear - D Hab. unfold elo, ehi, PGSZ in *. lia. }
     split.
     { unfold nsafe, mprotect_safe_b. fold h aw nw.
       change (mprotect_grows_conflict_b (Z_to_bv 64 PROT_RW)) with false. change (mprotect_modeled_b (Z_to_bv 64 PROT_RW)) with true.
       rewrite Ua, page_size_eq, Hamod. change (w_is0 nw) with false. cbv iota. cbn [Z.eqb negb]. rewrite Un. change (page_round_up_Z PGSZ) with PGSZ.
-      replace (two_pow_64 <=? a + PGSZ) with false by (symmetry; apply Z.leb_gt; unfold two_pow_64, PGSZ in *; lia). cbv zeta. fold nw. rewrite Hcn, Hcm. reflexivity. }
-    intros rsp mo' evs Hst.
+      replace (two_pow_64 <=? a + PGSZ) with false by (symmetry; apply Z.leb_gt; unfold two_pow_64, PGSZ in *; lia). cbv zeta. fold nw. rewrite Hvdf, Hcn, Hcm. reflexivity. }
+    intros rsp mo' evs Hstc. pose proof (nstep_cfg_sub _ _ _ _ _ _ Hstc) as Hst.
     unshelve epose proof (minv_preserved _ _ _ _ _ _ (kl_minv _ _ _ HK) (kl_halt _ _ _ HK) Hst) as [Hh' Hmi']; [first [exact I | reflexivity | destruct isnone; reflexivity]|].
     pose proof (nstep_mat_nil _ _ _ _ _ Hst (kl_mat _ _ _ HK)) as Hmat'.
+    pose proof (nstep_vdso _ _ _ _ _ Hst) as Hvd'.
     pose proof (nstep_dec_mprotect a PGSZ mo rsp mo' evs ltac:(unfold PGSZ in *; lia) ltac:(unfold PGSZ; lia) ltac:(change (mmap_len PGSZ) with PGSZ; unfold PGSZ; lia) Hst) as (_ & Hvo & x & Hd & Hx).
     change (mmap_len PGSZ) with PGSZ in Hx. fold h aw nw in Hx.
     assert (HdRW : dec_mprotect_rw a PGSZ rsp = Some x).
@@ -1361,7 +1435,7 @@ Proof.
               KL L' (ps_brk s0) mo').
     { intros noacc' Hna Hnb Evm.
       assert (Hph' : phase_inv (ld_brk L') L' (ps_brk s0) mo') by (eapply phase_quiet; [exact HK| exact Hq| reflexivity| reflexivity| rewrite Evm; reflexivity| rewrite Evm; reflexivity]).
-      subst L'. kl_open HK. constructor; try exact Hph'; rewrite ?Evm; cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk set_metas ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live]; auto.
+      subst L'. kl_open HK. constructor; try exact Hph'; rewrite ?Hvd', ?Evm; cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk set_metas ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live]; auto.
       - intros b0 l0 k0' Hin0. apply in_map_iff in Hin0 as ([[b1 l1] k0] & Eb & Hin1).
         specialize (Kme b1 l1 k0 Hin1). destruct Kme as ([G0 G1] & G2 & G3 & G4 & G5 & G6 & G7 & G8 & G9).
         unfold bump_meta in Eb. destruct (Z.eqb_spec (b1 + (1 + k0) * PGSZ) a) as [Ea|Na]; injection Eb as -> -> <-.
@@ -1385,7 +1459,11 @@ Proof.
         + left. exists b2, l2, (snd (bump_meta a (b2, l2, k2))). split; [| lia].
           replace (b2, l2, snd (bump_meta a (b2, l2, k2))) with (bump_meta a (b2, l2, k2)) by (unfold bump_meta; destruct (_ =? _); reflexivity).
           apply in_map. exact Hin2.
-        + right. exists b2, l2, e0. split; [exact E2|]. repeat split; try lia. exact He0. }
+        + right. exists b2, l2, e0. split; [exact E2|]. repeat split; try lia. exact He0.
+      - (* LPS 727298f3: [bump_meta] moves only k, never the base or the length. *)
+        intros b0 l0 k0' Hin0. apply in_map_iff in Hin0 as ([[b1 l1] k0] & Eb & Hin1).
+        unfold bump_meta in Eb. destruct (Z.eqb_spec (b1 + (1 + k0) * PGSZ) a) as [Ea|Na]; injection Eb as -> -> <-;
+          exact (Kmrv _ _ _ Hin1). }
     destruct x as [e|[|]].
     - destruct Hx as [He ->]. split; [exact He| exact HK].
     - destruct Hx as (_ & _ & Evm). rewrite Ua, Un in Evm.

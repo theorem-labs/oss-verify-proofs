@@ -5,9 +5,10 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 507 of its 559 lines of code are new or changed and 3060 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtl.v, with its module names changed; 166 of its 213 lines of code are new or changed and 512 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlTopFacts.v -- two walk-shell obligations of fuzz_ctrl image B's (asan-ubsan) cgif-form walk of
-   LLVMFuzzerTestOneInput (libreac v1.9.0), PROVED: the Section hypotheses CTLRT_ENTRY (lib/B/ACtl.v:358-359) and
-   CHAIN_OF_CUT (lib/B/ACtl.v:370-390) of ACtl.v's Section Ctl, in route (C)'s shell (staging a working branch 78699c46fe7).
+   LLVMFuzzerTestOneInput (libreac v1.9.0), PROVED: the Section hypotheses CTLRT_ENTRY (lib/B/ACtl.v:359-360) and
+   CHAIN_OF_CUT (lib/B/ACtl.v:371-391) of ACtl.v's Section Ctl, in route (C)'s shell (staging a working branch).
    Written by a Theorem Labs lane.  rule 24: proves no function of the image; these are bridge lemmas of
    the walk shell.
 
@@ -24,8 +25,8 @@
      into arodata_okP, and the proved B.ProgWorldCtlRtC.ctl_rt_C_of_AR (CtrlTSyms + AR_laws; no
      AR_states_vis0_shadow, no AR_states_owned_ro) gives ctl_rt_C at the entry.  Its AR_laws premise is the core's
      PROVED Reusable.YG0q.AR_laws_ok (the stage files take it as a LAWS hypothesis; here no hypothesis is needed).
-   - chain_of_cut: the donor's route (cgif A/ACf5.v rt_chain :170-185 and rt_trace_in :155-163, origin/ossv/recipes
-     c8557374ad2e), restated over the walk's journal.  The entry chain is afn_pre's achain at the entry
+   - chain_of_cut: the donor's route (cgif A/ACf5.v rt_chain :170-185 and rt_trace_in :155-163),
+     restated over the walk's journal.  The entry chain is afn_pre's achain at the entry
      (YCbq.afn_pre: `achain ly (aview ..) sp s0 []`).  The saved-register bytes give the caller frame record at
      fp = S (the entry sp): [S - 8] = RA_LLVMF and [S - 16] = the entry s0, read through the core's view by
      tf_rdword_le8 (the bytes lie in the journal's stack window, where the journal keeps every byte present:
@@ -141,23 +142,23 @@ Qed.
    2. The two obligations, in ACtl.v's Section Ctl shape. *)
 Section TopFacts.
 
-(* ACtl.v:144-148, verbatim. *)
+(* ACtl.v:145-149, verbatim. *)
 Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil} {LS : lib.Reusable.YO09.lib_shape}.
 Variable B : Reusable.YG0f.asyms.
 Variable MT : Reusable.YC5d.ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
 Variables RLO RHI : Z.
-(* ACtl.v:157-158, verbatim (the hypotheses the two proofs read). *)
+(* ACtl.v:158-159, verbatim (the hypotheses the two proofs read). *)
 Hypothesis TFIB_SYMS : Reusable.YF0m.CtrlTSyms B.
 Hypothesis TFIB_LIB : Reusable.YCeg.TfibLib B.
 
-(* ACtl.v:171, :178-180, verbatim. *)
+(* ACtl.v:172, :179-181, verbatim. *)
 Local Notation ctlcx := ACtlCut.ctlcx.
 Local Notation c_md := ACtlCut.c_md.
 Local Notation c_mem := ACtlCut.c_mem.
 Local Notation CB cx := (ACtlCut.ctl_base B MT XM_LIB RLO RHI cx).
 
-(* CTLRT_ENTRY (ACtl.v:358-359). *)
+(* CTLRT_ENTRY (ACtl.v:359-360). *)
 Lemma ctlrt_entry : forall cx : ctlcx, CB cx ->
   B.ACtlRtC.ctl_rt_C B (ACtlCut.c_ly cx) (ACtlCut.c_S cx) (c_mem cx).
 Proof using TFIB_SYMS.
@@ -167,7 +168,7 @@ Proof using TFIB_SYMS.
            (B.ProgWorld.arodata_okP_of_S B RLO RHI RLO RHI _ HROS (Z.le_refl _) (Z.le_refl _))).
 Qed.
 
-(* CHAIN_OF_CUT (ACtl.v:370-390). *)
+(* CHAIN_OF_CUT (ACtl.v:371-391). *)
 Lemma chain_of_cut : forall (FP : list (Z * Z)) (cx : ctlcx) own ly3 S3 W3 mem3 md3 k (regsT : bvmap 5 word)
     (pc0 ra : Z),
   CB cx ->
@@ -271,7 +272,7 @@ End TopFacts.
 
 (* ---------------------------------------------------------------------------------------------------------
    3. The statements are ACtl.v's hypotheses: ACtl.v's Section Ctl shape again (Context, Variables and the Section
-   hypotheses declared before CTLRT_ENTRY, verbatim ACtl.v:144-158 and :352), and B.ACtl.ctl_lib_x applied to the
+   hypotheses declared before CTLRT_ENTRY, verbatim ACtl.v:145-159 and :353), and B.ACtl.ctl_lib_x applied to the
    two lemmas in the argument slots of CTLRT_ENTRY and CHAIN_OF_CUT. *)
 Section CheckAgainstACtl.
 Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil} {LS : lib.Reusable.YO09.lib_shape}.

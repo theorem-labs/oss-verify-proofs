@@ -5,11 +5,11 @@
    through Reusable/YG0d.v:67 amreal, Reusable/YG0n.v:489 AR and Reusable/YG0n.v:17 aview).
 
    cgif's allocator model has malloc and free but no calloc (its plain and ubsan calloc lemmas are vacuous:
-   lib/YN33.v:18, lib/UN33.v:18; lib/A names only the symbol address, A/AB1w.v:479 tfib_A_calloc), so this
+   lib/YN33.v:18, lib/UN33.v:18; lib/A names only the symbol address, A/AB1w.v:480 tfib_A_calloc), so this
    contract is new.  It is written once and unit-generically: the malloc tree, the call precondition, the
    realization relation, the leaves, the trace universe, the stack-buffer predicate, the journal, the kept-frame
    predicate and the meter are Section Variables, as a Theorem Labs lane's realloc kit abstracts its own
-   (proofs/cgif/cgif_rgb_fuzzer/lib/ReallocP.v on a working branch c6ef6b691bf: segs, B, U,
+   (proofs/cgif/cgif_rgb_fuzzer/lib/ReallocP.v on a working branch: segs, B, U,
    mt, cpre, rpre, areal, rleaf, mleaf), so a second unit instantiates the same text at its own model.
    [*_cgif] below instantiates what can be instantiated from this unit's lib/Reusable today: YG00.malloc,
    YG0d.acall_pre, YG0d.amreal, YG0d.malloc_leaf.
@@ -35,7 +35,7 @@
    that allocates nothing.  Nothing else of the allocator differs, so the allocator-state post of the in-range arm
    IS cgif's malloc post at n = nm * sz: the same block table, the same unpoisoned user bytes and poisoned
    redzones, the same chunk header, the same ONE allocation event (calloc ticks once, as malloc does: the tree is
-   [mt (nm * sz) tr], whose head at mt = YG00.malloc is YG00.v:411 [tick]), and the allocation-refusal case
+   [mt (nm * sz) tr], whose head at mt = YG00.malloc is YG00.v:412 [tick]), and the allocation-refusal case
    exactly as cgif's malloc contract states it.  [acalloc04_rule] is the call-rule form of the same thing, in
    amalloc04_rule's shape: its post states [4096 <= res], so a walk refutes the caller's abort-on-NULL branch at a
    calloc site exactly as it does at a malloc site (cgif derives that from the realizes form in
@@ -51,7 +51,7 @@
    premise (n < MALLOC_MAX = 2 ^ 28, far below 2 ^ 40) keeps calloc's walk clear of it.
 
    ---------------------------------------------------------------------------------------------------------------
-   Each conjunct against the machine code of libreac/fuzz_decode (ORIGINAL binaries, FACTS f0e6eb38667;
+   Each conjunct against the machine code of libreac/fuzz_decode (ORIGINAL binaries, FACTS;
    fuzz_decode.asan and
    .asan-ubsan, read with capstone).  Image A = fuzz_decode.asan, image B = fuzz_decode.asan-ubsan.
 
@@ -72,7 +72,7 @@
    | in-range size is the 64-bit product nm * sz | A 0x31bfc `mul s0, a1, a0`, passed as a1 of Allocate (A 0x31c18 `mv a1, s0`) |
    | [aallocate_realizesP]'s register premises, read at calloc's call of Allocate | a0 = the allocator instance base [inst]: A 0x31c00 `auipc a0, 0x6c` + A 0x31c08 `addi s2, a0, -0x4a8` = 0x9d758 `__asan::instance` (3632 bytes, the size [asyms_areas] gives [as_inst B]), A 0x31c14 `mv a0, s2`; a1 = the size (above); a2 = 8 (A 0x31c04 `addi a2, zero, 8`); a3 = the BufferedStackTrace the unwinder filled (A 0x31c1c `mv a3, s1`); a4 = 1 = FROM_MALLOC (A 0x31c0c `addi a4, zero, 1`); a5 = 0 = can_fill FALSE (A 0x31c20 `mv a5, zero`) |
    | that it is the SAME Allocate asan_malloc calls, so no second copy is stated | asan_malloc A 0x311f0 sets the same a0 (A 0x31204 auipc + A 0x31210 `addi a0, a0, 0x554` = 0x9d758), a2 = 8 (A 0x31208), a4 = 1 (A 0x3120c) and calls A 0x31218 `jal 0x3124c`; its only difference is a5 = 1 (A 0x31214 `addi a5, zero, 1`), can_fill TRUE |
-   | ONE allocation event (tick) | the single Allocate call above; the tree is [mt (nm * sz) tr], whose head is YG00.v:411 `tick` |
+   | ONE allocation event (tick) | the single Allocate call above; the tree is [mt (nm * sz) tr], whose head is YG00.v:412 `tick` |
    | the user bytes come back zero, over the FULL requested size n = nm * sz | the memset is called with a2 = n: A 0x31c54 `mv a2, s0` (s0 = nm * sz from A 0x31bfc), a1 = 0 (A 0x31c50 `mv a1, zero`), a0 = the block (A 0x31c4c `mv s1, a0`), through the variable `__interception::real_memset` at 0x9abc0, whose address the GOT slot 0x98d60 holds (A 0x31c40 auipc + A 0x31c44 `ld a1, 0x120(a1)` load the GOT slot, A 0x31c48 `ld a3, 0(a1)` loads the variable, A 0x31c58 `jalr a3`; the variable holds 0x92474, the image's memset) |
    | the memset runs ONLY for a primary-allocator block; a secondary (mmap) block is zero already | A 0x31c2c `ld a1, 0x20(s2)` (instance + 0x20 = the primary space base), A 0x31c30 `bltu a0, a1, 0x31c7c` -> skip; A 0x31c34 `slli s3, s3, 0x25` (2 ^ 37 = the primary space size), A 0x31c38 `add a1, a1, s3`, A 0x31c3c `bgeu a0, a1, 0x31c7c` -> skip. So the walk takes two branches to one post: primary, where the zero comes from the memset; secondary, where it comes from the fresh mmap pages the model's KMmapSec grant maps |
    | the overflow arm allocates nothing and returns NULL | A 0x31c64..0x31c70: `jal 0x5df50 <AllocatorMayReturnNull>`, `beqz a0, 0x31c98`; on the non-zero arm A 0x31c74 `jal 0x6be1c <SetErrnoToENOMEM>` then A 0x31c78 `mv a0, zero` and the epilogue A 0x31c7c..0x31c94 `ret`. Allocate is not reached on this path, so no tick and no depot trace |
@@ -99,7 +99,7 @@
    unit's call precondition carries, as it does for malloc.
 
    Released templates this is ported from (rule 24; what is taken from each):
-   - tcpreplay/fuzz_services lib/aleaf/A1IcptCalloc.v (origin/main e966c513ee6): the interceptor's split into a
+   - tcpreplay/fuzz_services lib/aleaf/A1IcptCalloc.v: the interceptor's split into a
      prefix to the entry and a suffix after it (:401 calloc_prefix_T, :444 calloc_suffix_T) and the stack-trace pc
      at entry + 0x3c / the return at entry + 0x144 - decode's interceptor is the same 368-byte, 92-instruction
      function;
@@ -111,7 +111,7 @@
    - openssl/bndiv lib/A/R_asan_calloc.v:120-122 calloc_A_spec: the premises on the two arguments
      (`0 <= k < 2^64`, `0 <= sz < 2^64`, a bound on the product), which this file states as
      `0 <= nm`, `0 <= sz` and `nm * sz < MALLOC_MAX`;
-   - cgif_rgb_fuzzer lib/ReallocP.v (a working branch c6ef6b691bf): the Section-variable shape
+   - cgif_rgb_fuzzer lib/ReallocP.v (a working branch): the Section-variable shape
      and the P-suffix naming;
    - cgif_file_fuzzer lib/YC5d.v:56-70 amalloc04_rule: the call-rule shape of [acalloc04_rule], conjunct for
      conjunct, with n = nm * sz and the zero conjunct added. *)
@@ -168,7 +168,7 @@ Variable areal : forall R : Type, itree astate R -> world segs -> config -> (R -
 Variable aleaf : alayout -> astate -> world segs -> bvmap 5 word -> (word -> option byte) -> Model ->
 Z -> sptr * astate -> world segs -> config -> Prop.
 (* The parameters of a Theorem Labs lane's frame-generic Allocate statement (lib/Reusable/YGAlloc.v, this unit's by-path copy
-   of proofs/cgif/cgif_file_fuzzer/lib/AllocG.v at the frozen commit 95e6f1d72b6), in its order:
+   of proofs/cgif/cgif_file_fuzzer/lib/AllocG.v at the frozen), in its order:
    the allocator relation over the instance, the addresses the allocator owns, the premise on state and size, the
    size and live-byte bounds, the extra post on the state, and the allocator's out-of-memory byte.  cgif's
    instantiation is ARX inst := (inst = the image's instance /\ AR), AOX := aowned B, rpre := aregime /\ qmeter,

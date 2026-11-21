@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the rseq-dependent auxv): changed ME, drv_target, hiv_facts' and 3 more; added entry, inp, mbase. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -30,7 +31,7 @@ Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
 
 Section DrvD.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable L : heap_layout.
   Variable HI : heap_iface.
   Hypothesis HIok : heap_iface_ok L scfg HI.
@@ -52,7 +53,9 @@ Section DrvD.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hplen : (length path <= 4095)%nat.
   Hypothesis DL : drv_layout L sp0.
@@ -76,7 +79,10 @@ Section DrvD.
   Let CFG : Z := CFG fdata.
   Let PL : Z := PL fdata.
   Let B2 : Z := B2 fdata.
-  Let target_k := target_k scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata CAP crC.
+  (* same family as close_kg: [target_k] (Pm10DrvC.v:123-) reads [p0 .. inp], [p1 .. inp]
+     and [rnd .. inp], so Pm10DrvC's section discharges [inp] ahead of its explicit
+     [CAP crC KT] - the term CAP has type Z while it is expected to have type ProcInput. *)
+  Let target_k := target_k scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata inp CAP crC.
 
   Hypothesis Hok : (6 + CFG <= LEN)%Z.
 
@@ -97,8 +103,8 @@ Section DrvD.
 
   Definition lh_vals (vals : list word) (A1 PTR OWN k : Z) : Prop :=
     length vals = 102%nat /\ vals_ev vals 0 = sp0
-    /\ vals_ev vals 1 = p0 sp0 a0s path envv /\ vals_ev vals 2 = p1 sp0 a0s path envv
-    /\ vals_ev vals 3 = auxvp sp0 a0s path envv /\ vals_ev vals 4 = rnd sp0 a0s path envv /\ vals_ev vals 5 = tid
+    /\ vals_ev vals 1 = p0 a0s path envv rdraw inp /\ vals_ev vals 2 = p1 a0s path envv rdraw inp
+    /\ vals_ev vals 3 = auxvp sp0 a0s path envv /\ vals_ev vals 4 = rnd sp0 a0s path envv inp /\ vals_ev vals 5 = tid
     /\ vals_ev vals 48 = Z_to_bv 64 A1 /\ vals_ev vals 70 = Z_to_bv 64 LEN
     /\ vals_ev vals 73 = Z_to_bv 64 CFG /\ vals_ev vals 79 = Z_to_bv 64 PL
     /\ vals_ev vals 81 = Z_to_bv 64 k /\ vals_ev vals 82 = Z_to_bv 64 PTR /\ vals_ev vals 83 = Z_to_bv 64 OWN.
@@ -120,9 +126,10 @@ Section DrvD.
       srealizes RSEGS scfg (mkCfg (@mkst fx' R (Z_to_bv 64 0x392e4) M (seg_rom RSEGS)) (model2 VM)) K.
 
   Lemma hiv_facts' : forall vals,
-    vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv ->
+    vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp ->
     forall i, In i [3%nat; 4%nat] -> (bv_unsigned sp0 <= bv_unsigned (vals_ev vals i))%Z /\ (bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64)%Z.
-  Proof. intros vals P3 P4 i Hi. exact (hiv_facts sp0 a0s path envv uid hw rdraw Hva Hve Hvsp Hplen vals P3 P4 i Hi). Qed.
+  (* same Pm10DrvA prefix as Pm10DrvB.v:145, Pm10DrvC.v:168, Pm10DrvG.v:192, Pm10DrvH.v:199 *)
+  Proof. intros vals P3 P4 i Hi. exact (hiv_facts sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen vals P3 P4 i Hi). Qed.
 
   Lemma m2_but : forall VM m', model_but_vm (model2 VM) m' -> m' = model2 (m_vmmaps m').
   Proof. intros VM m' H. exact H. Qed.
@@ -207,8 +214,8 @@ Section DrvD.
   Lemma pl0_to_lh : forall K (fx' : PropExec.FPState) vals1 srX R' M' VM (A1 : Z),
     lh1_k K ->
     length vals1 = 82%nat -> vals_ev vals1 0 = sp0 ->
-    vals_ev vals1 1 = p0 sp0 a0s path envv -> vals_ev vals1 2 = p1 sp0 a0s path envv ->
-    vals_ev vals1 3 = auxvp sp0 a0s path envv -> vals_ev vals1 4 = rnd sp0 a0s path envv -> vals_ev vals1 5 = tid ->
+    vals_ev vals1 1 = p0 a0s path envv rdraw inp -> vals_ev vals1 2 = p1 a0s path envv rdraw inp ->
+    vals_ev vals1 3 = auxvp sp0 a0s path envv -> vals_ev vals1 4 = rnd sp0 a0s path envv inp -> vals_ev vals1 5 = tid ->
     vals_ev vals1 48 = Z_to_bv 64 A1 -> vals_ev vals1 70 = Z_to_bv 64 LEN -> vals_ev vals1 73 = Z_to_bv 64 CFG ->
     vals_ev vals1 79 = Z_to_bv 64 PL -> vals_ev vals1 81 = Z_to_bv 64 CALLS ->
     regs_ok (ENVb vals1) srX R' -> relay_ok_b (sr_upd srX (ridx 21) (EVar 81)) = true ->
@@ -374,7 +381,7 @@ Section DrvD.
       pose proof (hz_of_block_range L sp0 DL _ _ HBR2) as HZ2. pose proof HZ2 as (U1 & U2 & U4). pose proof HBR2 as (_ & _ & U3 & _ & _).
       assert (X0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W0).
       assert (X3 : vals_ev vals2 3 = auxvp sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W3).
-      assert (X4 : vals_ev vals2 4 = rnd sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W4).
+      assert (X4 : vals_ev vals2 4 = rnd sp0 a0s path envv inp) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W4).
       assert (X48 : vals_ev vals2 48 = Z_to_bv 64 A1) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W48).
       assert (X73 : vals_ev vals2 73 = Z_to_bv 64 CFG) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W73).
       assert (X79 : vals_ev vals2 79 = Z_to_bv 64 PL) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W79).

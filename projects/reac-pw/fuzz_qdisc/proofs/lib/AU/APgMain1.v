@@ -5,7 +5,7 @@
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc image A (fuzz_qdisc.asan, sha256
    980e2b8458528060633e6c98fff20d2f46b97738c06eae4307d09f59c82c890e) from
    proofs/libreac/fuzz_knock/lib/A/APgMain3.v (its in_byte, fin_conj and lemma rt_S3, lines 56-60, 85-92 and
-   128-236) at origin/ossv/recipes 6ebe35ba632, with its module paths changed, knock's frame arguments (fpos, F,
+   128-236), with its module paths changed, knock's frame arguments (fpos, F,
    EFA3, HpF) dropped because qdisc's harness owns no fake frame (lib/A/QPgRt.v, change Q1), a fourth path added
    (qdisc's loop head also takes rem = 0) and the selector's mod-6 arithmetic added (denot_qd_lead, U_qd_q,
    U_qd_sel). rule 24 (reuse): no function is proved here; this is SEGMENT S1, the input-byte reads of
@@ -65,6 +65,7 @@
    overlap); the selector is U_qd_sel: (b2 * 171) >> 10 = b2 / 6 (qd_div6), so b2 - 6 * (b2 / 6) = b2 mod 6, at
    most 5 (qd_mod6_range), which the `andi 0xff` keeps and `slli 2` makes 4 * (b2 mod 6) <= 20 (U_qd_sel4). (The
    engine carries `subw` as a 64-bit ALU_SUB here; its denotation is all U_qd_sel uses.) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

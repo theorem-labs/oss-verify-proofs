@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_twoway_strstr.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
-(* lib/A/Prog/twoway_strstr.v (a Theorem Labs lane's port, unchanged from a working branch affce6489c8), over the
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_twoway_strstr.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* lib/A/Prog/twoway_strstr.v (a Theorem Labs lane's port, unchanged from a working branch), over the
    local-shadow statements (FMss_twoway_strstr_c.v, FMss_TwFront.v, FMss_TwBack.v); the proof line is the original's. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.B.Prog Require Import memchr_wrap_c memcmp_wrap_c twoway_strstr_c.
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.B Require Import

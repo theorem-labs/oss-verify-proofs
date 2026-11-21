@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfCallRhG.v at commit 5034424e29db (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t + pf_cells_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfCallRhG.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t + pf_cells_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
 (* The cf call post under the re-hide, generic in the dead set of one call. IMAGE-FREE: no lib/A or lib/B file is
    Required, so a unit's Reusable layer and the core both state their posts through it.
    DS : alayout -> astate -> astate -> Z -> Prop is the set the call from S to S' may hide, read with the call's pre

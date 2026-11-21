@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO02.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the repeated leaves of a fallible request whose answer is ignored). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia FunctionalExtensionality.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YK15 YM02.
@@ -114,7 +115,12 @@ End h.
 Ltac pair_subst Hin :=
 let Ha := fresh "Ha" in
 pose proof (f_equal fst Hin) as Ha; apply (f_equal snd) in Hin; cbn [fst snd] in Ha, Hin; subst.
+(* A fallible request whose answer is ignored can produce adjacent identical
+   leaves. Eliminate the repeated proposition before branching on membership. *)
+Lemma in_cases_duplicate (P Q : Prop) : (P \/ P \/ Q) <-> (P \/ Q).
+Proof. tauto. Qed.
 Ltac in_cases Hin :=
+cbn [In] in Hin; repeat rewrite in_cases_duplicate in Hin;
 repeat (destruct Hin as [Hin | Hin]; [pair_subst Hin | ]); [ .. | destruct Hin].
 Ltac jif c :=
 lazymatch c with

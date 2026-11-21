@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/B/El_defsA.v, line 237. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -243,7 +244,7 @@ Definition osdtor_cpsA : Prop :=
   fdfs_only PMc -> mat_stable PMc ->
   In (fO, kO) (rt_frames RT Σ) -> fO <= OS -> OS + 288 <= fO + fs_size kO - 8 -> OS mod 16 = 0 ->
   OSDUMPA m OS -> bytes_at bsegs m (shad OS) (repeat z8 36) -> pj_locA m -> libc_nl m -> lockwA m ->
-  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + EL_OSDTOR_STACK_A <= q ->
+  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + EL_OSDTOR_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   (forall t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',
      ART RT Σ m' -> mem_inv bsegs m' -> stk bsegs m' lo q -> (exists jos, rw_cells bsegs m' OS [CB 288 jos]) -> pj_locA m' ->

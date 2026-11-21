@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormMissK0W.v (a working branch 3cae605a900a, file sha256 a9a324f041dc) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file at 08394634e479) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve none (alreloc flagged no numeral of these files) (0 lines name this file); 6 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormMissK0W.v (a working branch, file sha256 a9a324f041dc) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve none (alreloc flagged no numeral of these files) (0 lines name this file); 6 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: MemnormMissK0W, the AIfaceMw variant of
    cgif/cgif_file_fuzzer lib/MemnormMissK0.v (file sha256 7b37329e3458; donor not released): the refill's stack window is the Section variable RW (0 <= RW, 176 + RW <= AFSTACK: hypothesis
    RWB) of MnRefillW.v, not RSTACK = 1024.  Same proof script; the changes are AIfaceM -> AIfaceMw (fields if_ ->
@@ -61,7 +62,7 @@ Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : YGcfNames.CfImg
 Local Open Scope am_scope.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* copy of AGin0.v:52-67 (section b), with the refill's memnorm-kept contract in place of IFME, and AGin0.v:70-72 *)
+(* copy of AGin0.v:53-68 (section b), with the refill's memnorm-kept contract in place of IFME, and AGin0.v:71-73 *)
 Section b.
 Variable B : asyms.
 Variable U : list Z -> astate -> Prop.
@@ -85,7 +86,7 @@ Hypothesis RFm : MnRefillW.amm_refill_w_t B ARX AOX rpre lpost rtree RW.
 Hypothesis EAI : ErrnoApart.errno_in_img.
 Hypothesis EAS : ErrnoApart.errno_apart_shadow_ag.
 Hypothesis EAD : ErrnoApart.errno_apart_dzone_ag.
-(* AGin's section-b definitions (copy of AGin0.v:76-84). *)
+(* AGin's section-b definitions (copy of AGin0.v:77-85). *)
 Local Abbreviation Finst := (AGinWB.Finst B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag IF).
 Local Abbreviation if_mview := (AGinWB.if_mview B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag rtree RW IFM).
 Local Abbreviation if_shape_miss := (AGinWB.if_shape_miss B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag rtree RW IFM).
@@ -96,7 +97,7 @@ Local Abbreviation vregs_11 := AGinWB.vregs_11.
 Local Abbreviation vregs_12 := AGinWB.vregs_12.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* copy of AGin0.v:87-125 (section c) *)
+(* copy of AGin0.v:88-126 (section c) *)
 Section c.
 Variables (inst : Z) (ly : alayout) (S : astate) (W : world tfibsegs).
 Variables (regs0 regsU : bvmap 5 word) (mem0 : word -> option byte) (md0 : Model).
@@ -139,7 +140,7 @@ Hypothesis HU11 : getr regsU 11%bv = getr regs0 10%bv.
 Hypothesis HU12 : getr regsU 12%bv = w64 8.
 Hypothesis HU14 : getr regsU 14%bv = w64 1.
 
-(* AGin's section-c facts (copy of AGin0.v:129-131). *)
+(* AGin's section-c facts (copy of AGin0.v:130-132). *)
 Local Abbreviation Hn0 := (AGinWB.Hn0 ly regs0 n tr Nrange Htrlen).
 Local Abbreviation FP := (AGinWB.FP n Nrange).
 Local Abbreviation Hcl_class := (AGinWB.Hcl_class n).
@@ -156,7 +157,7 @@ Local Abbreviation REFILL_em := (MemnormMissKWB.REFILL_em B U mt ARX AOX rpre nm
 Local Abbreviation OOMJ_em := (MemnormMissKWB.OOMJ_em B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag TS rtree RW RWB IFM inst ly S W regs0 regsU mem0 md0 n tr
   HARX Nrange Hmiss Htrlen Htp Hra Hsp Hso Hbp HUo).
 
-(* --- The refill-call machine state (copy of AGin0.v:172-178). --- *)
+(* --- The refill-call machine state (copy of AGin0.v:173-179). --- *)
 Section f.
 Variables (ms1 : machine_state) (mat1 : list word) (Em : env).
 Hypothesis HEm : forall k, (k < aHAV)%nat -> ew Em k = ew E0m k.
@@ -165,7 +166,7 @@ Hypothesis MEQW : forall x : word, ~ AGj8.WINM ly regs0 (bv_unsigned x) -> (ms_m
 Hypothesis PRESW : forall a, sp0 - AFSTACK <= a < sp0 -> apresent (w_H W) (ms_mem ms1) a.
 Hypothesis BUFW : forall i, (i < length tr)%nat -> val_mem tfibsegs (mrestrict (w_H W) (ms_mem ms1)) (BPv + 8 * Z.of_nat i) 8 (nth i tr 0).
 
-(* --- After the refill (copy of AGin0.v:182-198), with the refill's keep. --- *)
+(* --- After the refill (copy of AGin0.v:183-199), with the refill's keep. --- *)
 Section g0.
 Variables (S' : astate) (ly' : alayout) (W' : world tfibsegs) (regsR : bvmap 5 word) (memR : word -> option byte) (mdR : Model).
 Hypothesis HARXp : ARX inst ly' S' W' memR mdR.
@@ -186,7 +187,7 @@ Hypothesis HPRR : forall a, spZ (ms_regs ms1) - RW <= a < spZ (ms_regs ms1) -> a
 Hypothesis HERRp : ErrnoG.errno_kept B (ms_mem ms1) memR.
 Hypothesis HMN : MemnormT.memnorm_keep tfibsegs (ms_mem ms1) memR.
 
-(* --- The a0 = 1 cache join (copy of AGin0.v:211-218). --- *)
+(* --- The a0 = 1 cache join (copy of AGin0.v:212-219). --- *)
 Section g.
 Variables (l : list Z) (off : Z).
 Hypothesis Hcache' : pc_chunks (cache S' cl) = l ++ [off].
@@ -207,7 +208,7 @@ Local Abbreviation LEAFJ_em := (MemnormMissKWB.LEAFJ_em B U mt ARX AOX rpre nmax
 (* AGin0WB.JOIN_e over LEAFJ_em. *)
 Lemma JOIN0_em : amreal tfibsegs (malloc_join_t stag n tr cl S') W' (cfg_at tfibsegs 0x36ff4 regsR memR mdR) PL_em.
 Proof.
-(* copy of AGin0.v:332-335 *)
+(* copy of AGin0.v:333-336 *)
 destruct (@AGjd.vw_junk_values _ _ B W' ly' inst memR n cl cnt' v' TS HV' Nrange Hcl_class)
   as (j0 & j1 & j2 & j3 & j4 & jb & Hj0 & Hj1 & Hj2 & Hj3 & Hj4 & Hjb & Hjb_def).
 eapply amreal_mono; [| eapply TAILJ0; eassumption].
@@ -223,7 +224,7 @@ End f.
 Lemma missk_core0_em : amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs A_Allocate regsU mem0 md0)
 (MemnormT.alloc_leaf_em tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regsU mem0 md0 n tr).
 Proof.
-(* copy of AGin0.v:387-422, over the _em lemmas *)
+(* copy of AGin0.v:388-423, over the _em lemmas *)
 assert (CORE : amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs A_Allocate regsU mem0 md0) PL_em).
 {
 rewrite (if_shape_miss n tr S Hn0 FP Hmiss). fold cl.
@@ -272,7 +273,7 @@ YG0dcf.arodata_ok_cf tfibsegs B mem ->
 amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (MemnormT.alloc_leaf_em tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 Proof.
-(* copy of AGin0.v:499-542, over missk_core0_em *)
+(* copy of AGin0.v:500-543, over missk_core0_em *)
 intros inst so bp ly S W regs mem md n tr PRE HRO Nrange Hmiss.
 destruct PRE as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & Hpres0 & Hgp & Htp & Hr10 & Hr11 & Hr12 & Hr13 & Hr14 & Hr15 &
 Hso1 & Hso2 & Hso3 & Hbp1 & Hbp2 & Hbp3 & Htrlen & PSO & PLEN & PBUF & Htr & Hn0 & Hlive).
@@ -327,7 +328,7 @@ YG0dcf.arodata_ok_cf tfibsegs B mem ->
 amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (MemnormT.alloc_leaf_em tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 Proof.
-(* copy of AGin0.v:551-553, over the _em theorems *)
+(* copy of AGin0.v:552-554, over the _em theorems *)
 intros cf inst so bp ly S W regs mem md n tr [-> | ->].
 - exact (alloc_missk0_em inst so bp ly S W regs mem md n tr).
 - exact (MemnormMissKWB.alloc_missk_em B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag IF TS rtree RW RWB IFM RFm EAI EAS EAD inst so bp ly S W regs mem md n tr).

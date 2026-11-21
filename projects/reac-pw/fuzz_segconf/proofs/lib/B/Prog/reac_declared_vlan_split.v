@@ -10,12 +10,13 @@
    cmd_prog_unowned (CmdRecImg.v), all over IMG : cmd_img_facts. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_exact.v, with its module paths and module names changed; 20 of its 39 lines of code are new or changed and 65 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/trim.v, with its module paths and module names changed; 63 of its 85 lines of code are new or changed and 17 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_split on fuzz_segconf image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca;
    entry 0x8a218 = BASE + AF_reac_declared_vlan_split, 496 bytes, 124 instructions): the walk, the image-B port of
-   lib/A/Prog/reac_declared_vlan_split.v's design (commit ceb7e39832b2: its point interface
+   lib/A/Prog/reac_declared_vlan_split.v's design (its point interface
    _d.v, its kit _k.v, its helpers _h.v and _lem.v, KR in _r.v and K6 in _s6.v), with image B's UBSan arms.
    `reac_declared_vlan_split_walk` proves reac_declared_vlan_split_contract (lib/B/Prog/reac_declared_vlan_split_c.v,
-   image B's copy of the FINAL contract 6f783602b5e3) at image B's numbers.
+   image B's copy of the FINAL contract) at image B's numbers.
 
    The chain of points (_d.v), each segment proving its point's statement from the next ones':
      entry -> K1        _s0 (vs_K0: seed, the four beqz, the shadow base, the strrchr wrapper)

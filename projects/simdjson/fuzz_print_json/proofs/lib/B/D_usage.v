@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/D_usage.v, lines 138-140. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -134,7 +135,9 @@ Proof using AF AF_DRV FPR EXC VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV
   destruct HSIG as (LV & FRS & CR & USP0 & SPW).
   pose proof (AF_DRV Σ m HART) as (SC0 & _).
   pose proof (u64arr_bound bsegs m ap ptrs ARR) as ARB.
-  set (lo := rt_sp0 RT Σ - 8388608) in *.
+  (* STACK_WIN is unfolded in the context above, so the span is set in its
+     unfolded form [STACK_WIN - 0x230000] (RT_iface.STACK_SPAN). *)
+  set (lo := rt_sp0 RT Σ - (8388608 - 2293760)) in *.
   rewrite (nth0_argv_Z argvb arg0 Ha0).
   replace (evw 2 (msg_usage (map bv_unsigned arg0))) with (evw 2 (fp_msg (FPusage (bv_unsigned p0) arg0)) ++ evw 1 (so_buf stdout_init))
     by (cbn [fp_msg so_buf stdout_init]; rewrite app_nil_r; reflexivity).

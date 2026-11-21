@@ -53,8 +53,8 @@ the plain pin and twin used by the run (sha256 above); the other images are the 
     python3 recompute.py --img A --expr "(sec('.text').hi-sym('sysconf').addr)//4" IMG PLAIN_IMG   # one quantity
     LIB=... python3 recompute.py --chunk "A/AD2j.v R_A1j: mkChunk 118583 (CImg 16113)"           # one GEN-CHUNK row
 
-LIB = proofs/plugin-hostd/fuzz_command/lib at plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record); DONOR_LIB = proofs/cgif/cgif_file_fuzzer/lib at
-c8557374ad2e; RUNS = the gate runs RA, RB, RU of port_addr_check 3d2eee813cce (full.tsv); IMG = the A, B, dA, dB
+LIB = proofs/plugin-hostd/fuzz_command/lib at plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record); DONOR_LIB = proofs/cgif/cgif_file_fuzzer/lib;
+RUNS = the gate runs RA, RB, RU of port_addr_check 3d2eee813cce (full.tsv); IMG = the A, B, dA, dB
 copies (cmd.A.pin, cmd.A.twin, ... cgif.B.twin); PLAIN_IMG = img/. pyelftools 0.33. enumerate.py and recompute.py
 each finish in under a minute on a free machine.
 

@@ -1,11 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the rseq-dependent auxv, the launch input's kernel build): changed check, check_all, node_x; added rz; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/AsanPlanK.v, 80 lines within its lines 23-390. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType State Run.
@@ -25,85 +21,79 @@ Section WithSegs.
 Variable segs : list Segment.
 Variable IT : itab.
 Variable A : atable.
-Variable nx0 : nat.     (* [comment removed for export] *)
-Variable LIMIT : Z.     (* [comment removed for export] *)
+Variable nx0 : nat.
+Variable LIMIT : Z.
+(* the run's CONFIG_RSEQ flag as 0 or 1 ([APCK.rseq_z]), which fixes the auxv's
+   size ([APCK.AUXSZ rz]) and hence where the strings sit; a certificate is
+   checked at one literal value *)
+Variable rz : Z.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Inductive snode : Type :=
-| YMunmap      (* [comment removed for export] *)
-| YBrk         (* [comment removed for export] *)
-| YSetTid.     (* [comment removed for export] *)
+| YMunmap
+| YBrk
+| YSetTid.
 
-(* [comment removed for export] *)
 Inductive xnode : Type :=
-| XIMemset     (* [comment removed for export] *)
-| XIMemcpy     (* [comment removed for export] *)
-| XMemset      (* [comment removed for export] *)
-| XMemcpy      (* [comment removed for export] *)
-| XMemIsZero   (* [comment removed for export] *)
-| XEnvScan     (* [comment removed for export] *)
-| XPnScan      (* [comment removed for export] *)
-| XLayout      (* [comment removed for export] *)
-| XIStrncpy    (* [comment removed for export] *)
-| XPopFree     (* [comment removed for export] *)
-| XSniff.      (* [comment removed for export] *)
+| XIMemset
+| XIMemcpy
+| XMemset
+| XMemcpy
+| XMemIsZero
+| XEnvScan
+| XPnScan
+| XLayout
+| XIStrncpy
+| XPopFree
+| XSniff.
 
 Inductive plan : Type :=
-| PRun (stops : list Z) (k : plan)           (* [comment removed for export] *)
-| PSplit (e : expr) (mid : Z) (k1 k2 : plan) (* [comment removed for export] *)
-| PCase2 (e : expr) (mid : Z) (k1 k2 : plan) (* [comment removed for export] *)
-| PCaseDisj (b1 b2 : expr) (k1 k2 : plan)  (* [comment removed for export] *)
-| PShDisj (b1 n1 b2 n2 : expr) (k : plan)  (* [comment removed for export] *)
-| PContra                                    (* [comment removed for export] *)
-| PFact (K : kentry) (k : plan)              (* [comment removed for export] *)
-| PJoin (b : expr) (off : Z) (n : nat) (k : plan)  (* [comment removed for export] *)
-| PForget (ixs : list nat) (k : plan)        (* [comment removed for export] *)
-| PDropRange (b : expr) (n : expr) (k : plan) (* [comment removed for export] *)
-| PGcKeep (ws : list (expr * expr)) (k : plan) (* [comment removed for export] *)
-| PBump (m : nat) (k : plan)                 (* [comment removed for export] *)
-| PHavoc (rs : list nat) (k : plan)          (* [comment removed for export] *)
-| PHavocBig (K : nat) (k : plan)             (* [comment removed for export] *)
-| PFresh (r : nat) (logc : Z) (base : option expr) (k : plan)  (* [comment removed for export] *)
-| PSys (y : snode) (k : plan)                (* [comment removed for export] *)
-| PMmap (krefused kgranted : plan)           (* [comment removed for export] *)
-| PMmapIn (kkept kok kdestroyed : plan)      (* [comment removed for export] *)
-| PMprotect (krefused kgranted : plan)       (* [comment removed for export] *)
-| PBrk2 (kblocked kgranted : plan)           (* [comment removed for export] *)
-| PX (x : xnode) (args : list expr) (k : plan)   (* [comment removed for export] *)
-| PExt (id : nat) (args : list expr) (k : plan)  (* [comment removed for export] *)
-| PEmit (id : nat) (args : list expr) (k : plan) (* [comment removed for export] *)
-| PExt2 (id : nat) (args : list expr) (k1 k2 : plan) (* [comment removed for export] *)
-| PLoop (J : nat) (N : expr) (inv : acs) (body k : plan)  (* [comment removed for export] *)
-| PNext                                      (* [comment removed for export] *)
-| PHandoff (h : nat)                         (* [comment removed for export] *)
-| PExit                                      (* [comment removed for export] *)
-| PSpin                                      (* [comment removed for export] *)
-| PFog (i : nat) (sz : Z) (k : plan)          (* [comment removed for export] *)
-| PFogNew (i : nat) (sz : Z) (k : plan)       (* [comment removed for export] *)
-| PGhost (b n : expr) (k : plan)              (* [comment removed for export] *)
-| PUnvis (b n : expr) (k : plan)              (* [comment removed for export] *)
-| PHavocBrk (lo hi : Z) (k : plan)            (* [comment removed for export] *)
-| PIntro (lo hi : Z) (k : plan)               (* [comment removed for export] *)
-| PDiamond (joinpc : Z) (rs : list nat) (k : plan)  (* [comment removed for export] *)
-| PRename (m : list (nat * nat)) (k : plan)   (* [comment removed for export] *)
-| PCompact (k : plan)                         (* [comment removed for export] *)
-| PVia (j : nat) (js : acs) (lo : nat) (karms k : plan)  (* [comment removed for export] *)
-| PMerge (j : nat)                            (* [comment removed for export] *)
-| PAbstractCell (b : expr) (n : Z) (k : plan) (* [comment removed for export] *)
-| PHavocWords (bs : list expr) (k : plan)    (* [comment removed for export] *)
-| PRespell (r : nat) (e : expr) (k : plan)    (* [comment removed for export] *)
-| PMmapInH (kkept kok kdestroyed : plan)      (* [comment removed for export] *)
-| PHAbs (i : nat) (lo hi nlo nhi : Z) (k : plan)  (* [comment removed for export] *)
-| PAbsWord (b : expr) (off : Z) (n : nat) (lo hi : Z) (k : plan)  (* [comment removed for export] *)
-| PMmapLH (klow khigh : plan).                 (* [comment removed for export] *)
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+| PRun (stops : list Z) (k : plan)
+| PSplit (e : expr) (mid : Z) (k1 k2 : plan)
+| PCase2 (e : expr) (mid : Z) (k1 k2 : plan)
+| PCaseDisj (b1 b2 : expr) (k1 k2 : plan)
+| PShDisj (b1 n1 b2 n2 : expr) (k : plan)
+| PContra
+| PFact (K : kentry) (k : plan)
+| PJoin (b : expr) (off : Z) (n : nat) (k : plan)
+| PForget (ixs : list nat) (k : plan)
+| PDropRange (b : expr) (n : expr) (k : plan)
+| PGcKeep (ws : list (expr * expr)) (k : plan)
+| PBump (m : nat) (k : plan)
+| PHavoc (rs : list nat) (k : plan)
+| PHavocBig (K : nat) (k : plan)
+| PFresh (r : nat) (logc : Z) (base : option expr) (k : plan)
+| PSys (y : snode) (k : plan)
+| PMmap (krefused kgranted : plan)
+| PMmapIn (kkept kok kdestroyed : plan)
+| PMprotect (krefused kgranted : plan)
+| PBrk2 (kblocked kgranted : plan)
+| PX (x : xnode) (args : list expr) (k : plan)
+| PExt (id : nat) (args : list expr) (k : plan)
+| PEmit (id : nat) (args : list expr) (k : plan)
+| PExt2 (id : nat) (args : list expr) (k1 k2 : plan)
+| PLoop (J : nat) (N : expr) (inv : acs) (body k : plan)
+| PNext
+| PHandoff (h : nat)
+| PExit
+| PSpin
+| PFog (i : nat) (sz : Z) (k : plan)
+| PFogNew (i : nat) (sz : Z) (k : plan)
+| PGhost (b n : expr) (k : plan)
+| PUnvis (b n : expr) (k : plan)
+| PHavocBrk (lo hi : Z) (k : plan)
+| PIntro (lo hi : Z) (k : plan)
+| PDiamond (joinpc : Z) (rs : list nat) (k : plan)
+| PRename (m : list (nat * nat)) (k : plan)
+| PCompact (k : plan)
+| PVia (j : nat) (js : acs) (lo : nat) (karms k : plan)
+| PMerge (j : nat)
+| PAbstractCell (b : expr) (n : Z) (k : plan)
+| PHavocWords (bs : list expr) (k : plan)
+| PRespell (r : nat) (e : expr) (k : plan)
+| PMmapInH (kkept kok kdestroyed : plan)
+| PHAbs (i : nat) (lo hi nlo nhi : Z) (k : plan)
+| PAbsWord (b : expr) (off : Z) (n : nat) (lo hi : Z) (k : plan)
+| PMmapLH (klow khigh : plan).
 
 Definition node_sys (y : snode) (cs : acs) : option acs :=
   match y with
@@ -114,39 +104,32 @@ Definition node_sys (y : snode) (cs : acs) : option acs :=
 
 Definition node_x (x : xnode) (args : list expr) (cs : acs) : option acs :=
   match x with
-  | XIMemset => summary_fill A nx0 cs (x_imemset A) 256       (* [comment removed for export] *)
+  | XIMemset => summary_fill A nx0 cs (x_imemset A) 256
   | XMemset => summary_fill A nx0 cs (x_memset A) two64
   | XIMemcpy => summary_copy segs A nx0 cs (x_imemcpy A)
   | XMemcpy => summary_copy segs A nx0 cs (x_memcpy A)
   | XMemIsZero => summary_miz A nx0 cs
   | XEnvScan => node_envscan A cs
-  | XPnScan => node_pnscan A nx0 cs
-  | XLayout => node_layout cs args
+  | XPnScan => node_pnscan A nx0 rz cs
+  | XLayout => node_layout rz cs args
   | XIStrncpy => summary_istrncpy A nx0 cs
   | XPopFree => summary_popfree A nx0 cs args
-  | XSniff => None   (* [comment removed for export] *)
+  | XSniff => None
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Inductive cres : Type := COk (s : shape) | CErr (code : Z) (where_ : plan) (cs : acs).
 
 Section Check.
-Variable XN : nat -> list expr -> acs -> option acs.                      (* [comment removed for export] *)
-Variable XE : nat -> list expr -> acs -> option (Z * list spiece * acs).  (* [comment removed for export] *)
-Variable XB : nat -> list expr -> acs -> option (acs * acs).              (* [comment removed for export] *)
-Variable HS : nat -> option acs.   (* [comment removed for export] *)
-Variable KC : nat.                 (* [comment removed for export] *)
-Variable bfuel : nat.              (* [comment removed for export] *)
+Variable XN : nat -> list expr -> acs -> option acs.
+Variable XE : nat -> list expr -> acs -> option (Z * list spiece * acs).
+Variable XB : nat -> list expr -> acs -> option (acs * acs).
+Variable HS : nat -> option acs.
+Variable KC : nat.
+Variable bfuel : nat.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
   match css with
-  | [] => CErr 3 k (init_acs_of A)
+  | [] => CErr 3 k (init_acs_of rz A)
   | cs0 :: rest =>
       match chk cs0 k with
       | COk s0 =>
@@ -167,7 +150,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
   | S f =>
   let check_in := check in
   let check (f : nat) := check_in f lc in
-  (* [comment removed for export] *)
+
   let gcb := match lc with Some c => lc_bnd c | None => nx0 end in
   if negb match lc with Some c => Nat.leb (lc_bnd c) (nxt cs) | None => true end then CErr 9 p cs else
   match p with
@@ -189,7 +172,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
                 end
             | err => err
             end
-          else (* [comment removed for export] *)
+          else
             if Z.leb hi mid then check f cs k1 else check f cs k2
       | None => CErr 3 p cs
       end
@@ -201,7 +184,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
           if (Z.leb lo mid && Z.ltb mid hi)%bool then
             let cs1 := set_kn cs (KRange e lo mid :: kn cs) in
             let cs2 := set_kn cs (KRange e (mid + 1) hi :: kn cs) in
-            (* [comment removed for export] *)
+
             if kn_contra (kn cs1) then check f cs2 k2
             else if kn_contra (kn cs2) then check f cs1 k1
             else
@@ -244,7 +227,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
         match node_sys y cs with Some cs' => check f cs' k | None => CErr 3 p cs end
       else CErr 2 p cs
   | PBrk2 ka kb =>
-      (* [comment removed for export] *)
+
       if is_ecall_at segs cs then
         match node_brk2 A LIMIT cs with
         | Some (csa, csb) =>
@@ -258,19 +241,19 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
         | None => CErr 3 p cs
         end
       else CErr 2 p cs
-  (* [comment removed for export] *)
+
   | PMmap ka kb =>
-      (* [comment removed for export] *)
+
       if is_ecall_at segs cs then
-        match node_mmap2 A nx0 LIMIT false cs with
+        match node_mmap2 A nx0 LIMIT rz false cs with
         | Some (csa, csb) => check f csb kb
         | None => CErr 3 p cs
         end
       else CErr 2 p cs
   | PMmapLH ka kb =>
-      (* [comment removed for export] *)
+
       if is_ecall_at segs cs then
-        match node_mmap2 A nx0 LIMIT true cs with
+        match node_mmap2 A nx0 LIMIT rz true cs with
         | Some (csa, csb) =>
             if kn_contra (kn csa) then check f csb kb
             else if kn_contra (kn csb) then check f csa ka
@@ -291,7 +274,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
         | None => CErr 3 p cs
         end
       else CErr 2 p cs
-  | PMmapInH ka kb kc =>      (* [comment removed for export] *)
+  | PMmapInH ka kb kc =>
       if is_ecall_at segs cs then
         match node_mmapin A LIMIT true cs with
         | Some (csa, csb, cscs) => check f csb kb
@@ -301,7 +284,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
   | PMprotect ka kb =>
       if is_ecall_at segs cs then
         match node_mprotect2 A LIMIT cs with
-        | Some (csa, csb) => check f csb kb      (* [comment removed for export] *)
+        | Some (csa, csb) => check f csb kb
         | None => CErr 3 p cs
         end
       else CErr 2 p cs
@@ -349,7 +332,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
       if is_ecall_at segs cs then
         match node_exit cs with Some code => COk (SExit code) | None => CErr 3 p cs end
       else CErr 2 p cs
-  | PSpin => if node_spin segs cs then COk SNil else CErr 2 p cs
+  | PSpin => CErr 2 p cs
   | PFog i sz k => match node_fog cs i sz with Some cs' => check f cs' k | None => CErr 3 p cs end
   | PFogNew i sz k => match node_fognew cs i sz with Some cs' => check f cs' k | None => CErr 3 p cs end
   | PGhost b n k => match node_ghost LIMIT cs b n with Some cs' => check f cs' k | None => CErr 3 p cs end
@@ -382,7 +365,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
       | Some e =>
           match erange (kn cs) e with
           | Some (lo, hi) =>
-              (* [comment removed for export] *)
+
               if (Z.ltb hi 1 || Z.ltb 0 lo)%bool then
                 match run_block_gc segs IT gcb KC bfuel (joinpc :: STOPS A) cs with
                 | Some cs' => if Z.eqb (pc cs') joinpc then check f cs' k else CErr 3 p cs'
@@ -397,7 +380,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
                     | Some cb =>
                         match node_diamond_join A nx0 (nxt cs) joinpc rs ca cb with
                         | Some csj => check f csj k
-                        | None => CErr 3 p ca    (* [comment removed for export] *)
+                        | None => CErr 3 p ca
                         end
                     | None => CErr 1 p cs2
                     end
@@ -405,7 +388,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
                 end
           | None => CErr 3 p cs
           end
-      | None => CErr 2 p cs                  (* [comment removed for export] *)
+      | None => CErr 2 p cs
       end
   end
   end.
@@ -413,7 +396,6 @@ End Check.
 
 End WithSegs.
 
-(* [comment removed for export] *)
 Definition hs_ext (HS JS : nat -> option acs) (h : nat) : option acs :=
   match JS h with Some c => Some c | None => HS h end.
 End APK.

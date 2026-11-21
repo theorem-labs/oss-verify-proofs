@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACam.v, with its module paths and module names changed; 669 of its 691 lines of code are new or changed and 308 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pcap_source_next (fuzz_pcap.asan 0x8181c, listing offset AF_pcap_source_next = 0x10e4) on the ASan
    build of libreac v1.9.0: the last two phases of the walk, from the exit join NP_exit (0x81d24) and
    from NP_x0 (0x81d34) to the `ret` at NP_ret (0x81dd4).
@@ -27,8 +28,8 @@
    PcapPaLib.paj_ret_at. The run writes 17 bytes, nx_tail_wr: F..F+8, the frame's shadow, the flag
    byte. None of them is a byte the caller sees (nx_tail_out), so the caller-facing facts nx_fin carries
    are kept (nx_fin_tail). The template of the run is a Theorem Labs lane's GrantEntryEnd.ge_leave
-   (libreac/fuzz_grant lib/A/Prog/GrantEntryEnd.v (file sha256 e0ad3cd39638; at ossv/recipes 8bece492f26b (2026-10-29), donor not released)), the control flow a Theorem Labs lane's
-   v1.9 run lemmas psn_exit / psn_x0 / psn_epi (lib/A/Prog/pcap_source_next_ret.v / _ep.v on a working branch 157412fa743, read only). *)
+   (libreac/fuzz_grant lib/A/Prog/GrantEntryEnd.v (file sha256 e0ad3cd39638; (2026-10-29), donor not released)), the control flow a Theorem Labs lane's
+   v1.9 run lemmas psn_exit / psn_x0 / psn_epi (lib/A/Prog/pcap_source_next_ret.v / _ep.v on a working branch, read only). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

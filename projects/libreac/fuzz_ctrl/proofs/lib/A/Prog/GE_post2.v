@@ -1,7 +1,7 @@
 (* fuzz_ctrl image A, ctrl_emit_as (0x849d8): the second lifted stretch of a Theorem Labs lane's cgif-form glue, from the
    return point 0x84cf0 of the ctrl_lay_block call to ret, on the REAL memory m5 that the call returns.
 
-   The stretch is A/Prog/ctrl_emit_asF2.v `ctrl_emit_as_post_lay_F`, RE-BASED on m5 (a Theorem Labs lane, ca4c8f36aa1): its
+   The stretch is A/Prog/ctrl_emit_asF2.v `ctrl_emit_as_post_lay_F`, RE-BASED on m5 (a Theorem Labs lane): its
    premises about the run are facts at m5 and its post is `aQg m5 aWL`, the stretch's own window from m5. Its
    Section is instantiated as GE_pre instantiates the first stretch:
      ra sp gp tp := getr regs 1 .. 4;  s0 s1 := getr regs 8, 9;  s2 .. s11 := getr regs 18 .. 27;

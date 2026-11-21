@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Ent102L6A.v, with its module paths changed; 84 of its 345 lines of code are new or changed and 19 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4):
    SEGMENT L6x of LLVMFuzzerTestOneInput (entry 0x815e0), the EXIT LANE: listing slots 113 .. 177 (+0x1c4 .. the one
@@ -10,7 +11,7 @@
    releases the fake frame INLINE (`ld a0,0x78(s2); sb zero,0(a0)`: the flag byte at flag_addr := 0), sets a0 = 0,
    restores sp = s0 - 0x80, reloads ra and s0 .. s11 from the saved block, pops the frame and returns to the entry ra.
    STATEMENT: lib/A/Ent102CutsA.v (blob 2fb50b636f51, the statements of record at a working branch
-   83576a163e5b = CUT STABLE 2ab248e3b164: every segment over `forall E fk, ec_hyps (e_dw E) -> ..`, the decff
+   = CUT STABLE: every segment over `forall E fk, ec_hyps (e_dw E) -> ..`, the decff
    ledger arity `exists most own, prh_ledger .. most own` in ec_inv and cut_ret, ec_at's frm_zero of the cut's float
    state fy; seg_L6x_stmt, cut_exit (its index pair e_os E ++ [trp], e_i0 E + |ec_call_evs E trp|), cut_ret, the
    RECORD ec_hyps read by name - ech_frame_area's astack_free_law_cf and ech_img's ei_pst / ei_sio / ei_sio_frame).
@@ -20,16 +21,16 @@
    ec_conj_pick. The run's data words are the cut context's own e_dw E; this lane reads no DW-dependent part. The
    lane makes NO model event: cut_exit's position is carried to cut_ret's room conjunct at the same trp, the stack
    release keeping it (PresetRoomPosKeep.room_pos_stack_free); the ledger's most / own witnesses are cut_exit's,
-   kept (the lane touches neither cell). RE-PROVED on this statement: the earlier Qeds at b82ef77aeac
-   (a working branch 1dc8de9a0253), f40892fb5ddb (a working branch a2d6bb26a279) and
-   92683b094505 (a working branch 307ac42af035) were against older cuts. The B' twin
-   lib/AU/Prog/Ent102L6B.v (a working branch c07214c6429c, green on the same statements) was read
+   kept (the lane touches neither cell). RE-PROVED on this statement: the earlier Qeds
+   (a working branch), f40892fb5ddb (a working branch) and
+   92683b094505 (a working branch) were against older cuts. The B' twin
+   lib/AU/Prog/Ent102L6B.v (a working branch, green on the same statements) was read
    for the new shapes, not imported.
    LISTING: a Theorem Labs lane's whole-program listing lib/A/Listing_prog.v (blob 7ed1529926bd, v3; slot k = byte offset 4k from
    the entry; the bodies are those of 1ab147923c5d), run with the PAListing PL_102_A of lib/A/Ent102PLA.v (blob
    a55fa7414ddf); the image half stays generic ({PA : PAImg A_prog_listing}; lib/A/PAImg_prog.v is not loaded, no
    vm_compute on pa_val / pa_sigma).
-   The kit TEXTS (kit of record f97c8b2f046b): lib/A/PRH_Base.v fdb45545469b (prh_ledger with its most / own fields,
+   The kit TEXTS (kit of record): lib/A/PRH_Base.v fdb45545469b (prh_ledger with its most / own fields,
    prh_pst, PrhRoomLive's RL_stack_free; the ledger is moved by lib/A/Prog/S1Ledger.v (blob 8cf15eeb6311)'s
    prh_ledger_kept, no positional destruct), lib/A/PRH_FnPj.v 908f34f0beaa (pj_free is not called in this lane;
    named for the text set).
@@ -40,7 +41,7 @@
    xs_placed_cf). The whole lane is ONE run of the flag-store rule (lib/A/Prog/Ent102L6AFlag.v aj_flag_store_x_inv =
    YGcallSx.v aj_flag_store_x with YC80x.v's run invariant, at P := YSRrMemnorm.v's memnorm instance), then the `ret` by
    YC1fP.v paj_ret_at. The symbolic state is lib/A/Prog/Ent102L6ADefs.v, the entry state lib/A/Prog/Ent102L6AEnt.v.
-   PORTED FROM (by path, image-free shape): lib/B/Prog/EntS7B.v of a working branch c3e54cc5ad62 (image B,
+   PORTED FROM (by path, image-free shape): lib/B/Prog/EntS7B.v of a working branch (image B,
    old pin; its open return, EntS7B.v:263-271, is closed here at this statement's cut_ret).
    NUMERALS: 128 / 120 / 16 / 8 are LENGTHs of this frame (EC_FRAME_BYTES, the flag-pointer slot, the shadow bytes, the
    word); 32768 is LLVMF_STK; 2 ^ 46 / 2 ^ 47 / 2 ^ 64 and kLowMemEnd are the engine's range facts. No ADDRESS.

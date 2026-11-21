@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the esc_specA_al proofs name it and pass it to the escape loop; the stack_malloc_full and FREEL calls discharge it; PE_STATIC_A's conjunct HBTs). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -39,7 +40,7 @@ Hypothesis SNP_U : isnprintf_u00cc_stmt PFRT PFLO.
 
 Theorem json_escape_str_A_16 : esc_specA_al HIx 16.
 Proof.
-unfold esc_specA_al. intros until errv. intros D32 HP PB INs Hs1 Hs2 SRC SRCL Hn CAP TXT NEED FL FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+unfold esc_specA_al. intros until errv. intros D32 HP PB INs Hs1 Hs2 SRC SRCL Hn CAP TXT NEED FL FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 subst a0 a1 a2 a3 tp.
 unfold AESCAPE, AESC_STACK in *.
 word_range sp SPR.
@@ -82,6 +83,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - D32; Z.div_mod_to_equations; lia.
 1: lia.
@@ -232,7 +234,7 @@ split; [lia|]. split; [unfold ser_capb; lia|]. split; lia. }
 evt_done5.
 pose proof (QtyQ.Mq0.esc_loopA HIx OBL_REALLOC_NF ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B pb lo bpos cap Sa n sa sk src T
 (bv_unsigned sp + -240) 16 Fr ltac:(right; reflexivity) ltac:(lia) ltac:(clear - D32; Z.div_mod_to_equations; lia)
-LO LOS HT CAP TXT NEED JHX0 INs Hs1 Hs2 SRC0 SRCL ltac:(lia) PFRT PFLO OBL_PFRT OBL_PFLO SNP_U K (Z.to_nat n)) as LOOP.
+LO HBT LOS HT CAP TXT NEED JHX0 INs Hs1 Hs2 SRC0 SRCL ltac:(lia) PFRT PFLO OBL_PFRT OBL_PFLO SNP_U K (Z.to_nat n)) as LOOP.
 unfold loopKA in LOOP.
 eapply (LOOP _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc mL md1 A1 0 0 0); [exact INVL | apply fsaved_refl | exact FRM | lia | lia | lia | lia].
 Qed.
@@ -291,7 +293,7 @@ fsaved F0 F -> (frm0 fc0 -> frm0 fc) ->
 AJ5 A4L HIx A T md (pe_msO asegs pf pa APE_OUT x1 gp t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s5 s7 (Z_to_bv 64 (pf_tk pf + 56)) s11 t4 t6 F fc m).
 Proof.
 intros until fc. intros STC INVW TDOK JO OLDL INNL LOC0 CUR0 S0V RAV BSL VM0 FS FRM K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct RR as (LRR & MXB & FLB).
 assert (RAE : bv_unsigned (pe_ra sv) mod 2 = 0) by (rewrite RAV; unfold PE_RA2; rewrite unsigned_lit by lia; reflexivity).
 pose proof INVW as (CORE & BASE & LVW & BUDW).
@@ -369,7 +371,7 @@ clear SLc LOCmc MUc MUc72 WMc MIc TOKc INVWc OUTWc.
 step. step.
 evt_done5.
 eapply (FREEL) with (LB := LBall) (LM := LM) (FRS := (Ff, 2) :: FRS) (d := newloc) (n := nl) (lo := lo) (errv := errv);
-[ exact HP1 | exact INNL | rewrite unsigned_lit by lia; exact ST1 | exact LO | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
+[ exact HP1 | exact INNL | rewrite unsigned_lit by lia; exact ST1 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
 | rewrite unsigned_lit by lia; clear - Gspf; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERR1 | reflexivity | rewrite unsigned_lit by lia; reflexivity | ].
 intros ms2 m2 md2 A2 r2 RS2 VM2 ST2 HPR2 ERR2 HP2. open_ret RS2.
 rewrite (unsigned_lit spf) in ST2, HPR2 by lia.
@@ -505,7 +507,7 @@ fsaved F0 F -> (frm0 fc0 -> frm0 fc) ->
 AJ5 A4L HIx A T md (pe_msO asegs pf pa APE_OUT gp t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s11 t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC INVW TDOK JO OLDL INNL LOC0 CUR0 S0V RAV BSL VM0 FS FRM K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct RR as (LRR & MXB & FLB).
 assert (RAE : bv_unsigned (pe_ra sv) mod 2 = 0) by (rewrite RAV; unfold PE_RA2; rewrite unsigned_lit by lia; reflexivity).
 pose proof INVW as (CORE & BASE & LVW & BUDW).
@@ -584,7 +586,7 @@ clear SLc LOCmc MUc MUc72 WMc MIc TOKc INVWc OUTWc.
 step. step.
 evt_done5.
 eapply (FREEL) with (LB := LBall) (LM := LM) (FRS := (Ff, 2) :: FRS) (d := newloc) (n := nl) (lo := lo) (errv := errv);
-[ exact HP1 | exact INNL | rewrite unsigned_lit by lia; exact ST1 | exact LO | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
+[ exact HP1 | exact INNL | rewrite unsigned_lit by lia; exact ST1 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
 | rewrite unsigned_lit by lia; clear - Gspf; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERR1 | reflexivity | rewrite unsigned_lit by lia; reflexivity | ].
 intros ms2 m2 md2 A2 r2 RS2 VM2 ST2 HPR2 ERR2 HP2. open_ret RS2.
 rewrite (unsigned_lit spf) in ST2, HPR2 by lia.
@@ -748,7 +750,7 @@ Hypothesis SNP_U : isnprintf_u00cc_stmt PFRT PFLO.
 
 Theorem json_escape_str_A_16 : esc_specA_al HIx 16.
 Proof.
-unfold esc_specA_al. intros until errv. intros D32 HP PB INs Hs1 Hs2 SRC SRCL Hn CAP TXT NEED FL FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+unfold esc_specA_al. intros until errv. intros D32 HP PB INs Hs1 Hs2 SRC SRCL Hn CAP TXT NEED FL FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 subst a0 a1 a2 a3 tp.
 unfold AESCAPE, AESC_STACK in *.
 word_range sp SPR.
@@ -791,6 +793,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - D32; Z.div_mod_to_equations; lia.
 1: lia.
@@ -952,7 +955,7 @@ split; [lia|]. split; [unfold ser_capb; lia|]. split; lia. }
 evt_done5.
 pose proof (QtyQ.Mq8.esc_loopA HIx OBL_REALLOC_NF ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B pb lo bpos cap Sa n sa sk src T
 (bv_unsigned sp + -240) 16 Fr ltac:(right; reflexivity) ltac:(lia) ltac:(clear - D32; Z.div_mod_to_equations; lia)
-LO LOS HT CAP TXT NEED JHX0 INs Hs1 Hs2 SRC0 SRCL ltac:(lia) PFRT PFLO OBL_PFRT OBL_PFLO SNP_U K (Z.to_nat n)) as LOOP.
+LO HBT LOS HT CAP TXT NEED JHX0 INs Hs1 Hs2 SRC0 SRCL ltac:(lia) PFRT PFLO OBL_PFRT OBL_PFLO SNP_U K (Z.to_nat n)) as LOOP.
 unfold loopKA, st_escA in LOOP.
 
 epose proof (LOOP _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc mL md1 A1 0 0 0 INVL (fsaved_refl _) FRM ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia)) as LP.

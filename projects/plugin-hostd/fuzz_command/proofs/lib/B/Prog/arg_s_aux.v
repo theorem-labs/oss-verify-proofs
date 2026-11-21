@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the symbolic states, seeds and small lemmas of arg_s's ASan+UBSan walk
    (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan, entry 0x8a820), after lib/A/Prog/sup_pin_accept_s1.v and
-   sup_pin_accept_s4.v (a working branch 3cc8391594b: the entry seed with the shadow-base GOT word and cell,
+   sup_pin_accept_s4.v (a working branch: the entry seed with the shadow-base GOT word and cell,
    the join seed rebuilt from concrete facts), at B's addresses.
 
    The code (capstone 5.0.7 over fuzz_command.asan-ubsan, .symtab LOCAL FUNC arg_s 0x8a820, 344 bytes, 86 instructions;
@@ -42,6 +42,7 @@
    - ss_B0: the point both arms of `bnez s3` meet (+0x70), rebuilt from concrete facts (atom 32 the shadow base,
      33 the slot, 34 .. 41 the entry's ra, s0 .. s6, which the frame holds). The tail (+0x94) adds the slot's nargs
      field (as_slotA m) and args[m] (as_slotB m) to the state the calls leave. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -184,7 +185,7 @@ intros x Hx. unfold shadow_of_addr, SHADOW_OFF. pose proof (Z.div_pos x 8 ltac:(
 pose proof (Z.div_le_upper_bound x 8 (2 ^ 44) ltac:(lia) ltac:(lia)). lia.
 Qed.
 
-(* ---------- the representation's readers (a working branch c79a9f2daf7, lib/B/Prog/sup_reset.v:64-195,
+(* ---------- the representation's readers (a working branch, lib/B/Prog/sup_reset.v:65-196,
    srb_aval_keep .. srb_arep_at_ext, under this walk's names) ---------- *)
 
 Lemma as_aval_keep : forall rd rd' a n v, aval_mem rd a n v ->
@@ -569,7 +570,7 @@ destruct Hkind as [(p & kk & Hin & H1 & H2) | [(Hro & Ha & Hh) | ((cid & pos & H
 Qed.
 
 (* ---------- the allocator's blocks: RecBLemmas.v's recb_ablocks_nodup_m, recb_heap_apart_m, and the cons-permutation
-   forms recb_fresh_disj_perm_m / recb_awr_new_block_perm_m (a Theorem Labs lane fc8bcbd8b42) take xmalloc_c.v's post as it is ---------- *)
+   forms recb_fresh_disj_perm_m / recb_awr_new_block_perm_m (a Theorem Labs lane) take xmalloc_c.v's post as it is ---------- *)
 
 (* the block a callee handed out is apart from the string: a live block's string by the allocator's separation, an
    image string because the block's bytes are no image bytes, a side-stack frame's string by the separation of

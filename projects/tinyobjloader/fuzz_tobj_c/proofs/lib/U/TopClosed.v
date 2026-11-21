@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (top_closed_U_lim and top_closed_U state their three facts over the run's segment list and the run's start, where Run.run_scfg reads the binary, LPS 75d69e00, lifted from the walk's by RobReach.facts_run_init with U.Top.top_rob_U). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -18,6 +19,7 @@ Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.L1.lo_tail OSSVerify.Pr
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.L1.lo_bd OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.L4.bd.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.L1.lo_loop OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.L5.hf.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
+Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.RobReach.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 
@@ -83,19 +85,22 @@ Lemma lim_U : 2 ^ 30 <= target_alloc_limit <= 2 ^ 40. Proof. unfold target_alloc
 (* [comment removed for export] *)
 Theorem top_closed_U_lim : forall lim, 2 ^ 30 <= lim <= 2 ^ 40 -> forall sp brk mb draw inp,
   valid_entry48 imgU (mkEntry sp brk mb draw) inp -> valid_input_either inp ->
-  SOUND segsU (c0U sp brk mb draw lim inp) (Spec inp) /\
-  COMPLETE segsU (c0U sp brk mb draw lim inp) (Spec inp) /\
-  ~ reaches_error_a segsU (c0U sp brk mb draw lim inp).
+  SOUND (run_segments segsU inp sp mb) (init_config (run_segments segsU inp sp mb) pcU phU sp brk mb draw lim inp) (Spec inp) /\
+  COMPLETE (run_segments segsU inp sp mb) (init_config (run_segments segsU inp sp mb) pcU phU sp brk mb draw lim inp) (Spec inp) /\
+  ~ reaches_error_a (run_segments segsU inp sp mb) (init_config (run_segments segsU inp sp mb) pcU phU sp brk mb draw lim inp).
 Proof.
   intros lim Hlim sp brk mb draw inp Hent Hinp.
-  apply (U.Top.top_U sp brk mb draw lim inp Hent Hinp).
-  - exact (U.Drv_spine.spine_safe_U sp brk mb draw lim inp Hent Hinp MCs_U MIS_U MBS_U FDS_U MPS_U FS_U Hlim).
-  - exact (U.Drv_spine.spine_ex_U sp brk mb draw lim inp Hent Hinp MIX_U MBX_U FDX_U MPX_U FCX_U FSX_U Hlim).
+  pose proof (U.Drv_spine.spine_safe_U sp brk mb draw lim inp Hent Hinp MCs_U MIS_U MBS_U FDS_U MPS_U FS_U Hlim) as Hs.
+  apply (RobReach.facts_run_init segsU inp sp brk mb pcU phU draw lim (Spec inp)).
+  - reflexivity.
+  - exact (U.Top.top_rob_U sp brk mb draw lim inp Hent Hinp Hs).
+  - exact (U.Top.top_U sp brk mb draw lim inp Hent Hinp Hs
+             (U.Drv_spine.spine_ex_U sp brk mb draw lim inp Hent Hinp MIX_U MBX_U FDX_U MPX_U FCX_U FSX_U Hlim)).
 Qed.
 
 Theorem top_closed_U : forall sp brk mb draw inp,
   valid_entry48 imgU (mkEntry sp brk mb draw) inp -> valid_input_either inp ->
-  SOUND segsU (c0U sp brk mb draw target_alloc_limit inp) (Spec inp) /\
-  COMPLETE segsU (c0U sp brk mb draw target_alloc_limit inp) (Spec inp) /\
-  ~ reaches_error_a segsU (c0U sp brk mb draw target_alloc_limit inp).
+  SOUND (run_segments segsU inp sp mb) (init_config (run_segments segsU inp sp mb) pcU phU sp brk mb draw target_alloc_limit inp) (Spec inp) /\
+  COMPLETE (run_segments segsU inp sp mb) (init_config (run_segments segsU inp sp mb) pcU phU sp brk mb draw target_alloc_limit inp) (Spec inp) /\
+  ~ reaches_error_a (run_segments segsU inp sp mb) (init_config (run_segments segsU inp sp mb) pcU phU sp brk mb draw target_alloc_limit inp).
 Proof. exact (top_closed_U_lim target_alloc_limit lim_U). Qed.

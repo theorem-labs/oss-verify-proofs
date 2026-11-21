@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B,
-   its transport kit (the image-B twin of lib/A/W_LLVMFuzzerTestOneInput_gone_tk.v on a working branch
-   32b23a20c3e): the frame / model / input / rom / jump-table facts kept across a step that keeps every byte below
+   its transport kit (the image-B twin of lib/A/W_LLVMFuzzerTestOneInput_gone_tk.v on a working branch):
+   the frame / model / input / rom / jump-table facts kept across a step that keeps every byte below
    alloc_ceiling + 8.  COPIED from image B's latch walk, lib/B/W_LLVMFuzzerTestOneInput_latch.v on
-   a working branch ee519e5e2f5 (Section kit :75-268 and the kit lemmas of Section w :299-465;
+   a working branch (Section kit :75-268 and the kit lemmas of Section w :299-465;
    lt_ -> gk_, CEIL8 -> GK_CEIL8), exactly as A's arm copied A's latch, so this piece does not import another piece's
    file; plus gk_keep_lo_w / gk_keep_hi_w / gk_gframe_kept, the same three facts for a callee window of any size and for
    the base's gframe (the frame with the fake frame's shadow as a parameter). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

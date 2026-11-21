@@ -2,33 +2,33 @@
 
 Code commits before BASE:
 
-1. 21a12f93ff3: file_sink_syms and sk_file : option file_sink_syms in lib/Reusable/YI14.v, env_ivl in YL03.v, and src0_sink
+1.: file_sink_syms and sk_file : option file_sink_syms in lib/Reusable/YI14.v, env_ivl in YL03.v, and src0_sink
    with sk_file := None in YI5c.v (lib/Reusable and lib/U/Reusable). YI14.v and YL03.v are libreac/fuzz_grant's files
-   at 197e1eccfcd with module paths changed and without the comment lines grant added or reworded (libreac/fuzz_knock
-   e4ef51a4690 form). YI5c.v carries grant's hunks on this unit's file and keeps its own bounds. New YI5cSat.v (both
-   copies) is grant's 4ee60a453489 file with module paths changed and cs_env_addr_range's bound set to this unit's
+   with module paths changed and without the comment lines grant added or reworded (libreac/fuzz_knock
+   form). YI5c.v carries grant's hunks on this unit's file and keeps its own bounds. New YI5cSat.v (both
+   copies) is grant's file with module paths changed and cs_env_addr_range's bound set to this unit's
    src0_env_addr_range. Item 7 deletes both copies again.
-2. 5dc55e235e5: in lib/Reusable/YH03.v and lib/U/Reusable/YH03.v, src0_D_str_wb (0x102a2), src0_D_str_tmp_out_gif (0x10304),
-   src0_D_str_3 (0x10311) and src0_D_str_rwa (0x102ed) are deleted (libreac/fuzz_grant e6d75498860 form), then
+2.: in lib/Reusable/YH03.v and lib/U/Reusable/YH03.v, src0_D_str_wb (0x102a2), src0_D_str_tmp_out_gif (0x10304),
+   src0_D_str_3 (0x10311) and src0_D_str_rwa (0x102ed) are deleted (libreac/fuzz_grant form), then
    `yh03regen.py --pinned --elf --proofs --write` (sha256 prefix 1254e5c96a44) removes src0_A_stdio_read (ABSENT: the
    image links no __stdio_read).
-3. 8b420399cf8c (review): YI14.v's comment above closed_stdio_env is the base's text again (the port had carried the
+3. (review): YI14.v's comment above closed_stdio_env is the base's text again (the port had carried the
    donor's rewording), and YH03.v loses the
    comment line yh03regen left behind.
-4. 167c590ef1b8: lib/Reusable/YK1a.v:901, :907, :911, :917, two Aborted jalr self-tests (no theorem, no reader), hold the
+4.: lib/Reusable/YK1a.v:901, :907, :911, :917, two Aborted jalr self-tests (no theorem, no reader), hold the
    donor's model constant 0x20000 again; the relocation had moved it as an address. The file now equals
-   libreac/fuzz_decode's (25e3d17bdb50) except for module paths.
-5. a8248a48a2c5: src0_A_stdio_write / _seek / _close stay in YH03.v (commit 3 had also deleted them): they are present and true
+   libreac/fuzz_decode's except for module paths.
+5.: src0_A_stdio_write / _seek / _close stay in YH03.v (commit 3 had also deleted them): they are present and true
    in this unit's images, with 0 readers; the series removes only ABSENT or FALSE unread cells. YH03.v:5 then said the file
    keeps only the definitions the unit uses, which did not hold for these three; a later commit of the series rewrote
    that line to name them as kept though unread.
-6. 4f4da94a3b6a: lib/Lib/Acfg.v is the shared clean-room restatement, taken byte-equal (blob 856bba129dff, sha256
-   e593ed06c2e910bd93735dae0be5ea136cfeba1b501f358b0ee77af47b3858a5). A later commit of the series (c60f89d18849) takes the
+6.: lib/Lib/Acfg.v is the shared clean-room restatement, taken byte-equal (blob 856bba129dff, sha256
+   e593ed06c2e910bd93735dae0be5ea136cfeba1b501f358b0ee77af47b3858a5). A later commit of the series takes the
    next version of that shared file, again byte-equal by its object id: blob f6823e3203523bd010870ce2a6fcba0a107f2c97
    (sha256 52757821ba5f), which changes two comment lines (:631 and :667) that their proofs did not derive.
-7. 05336ebfc612: lib/Reusable/YI5cSat.v and lib/U/Reusable/YI5cSat.v (added by item 1) are deleted: no .v file of the
+7.: lib/Reusable/YI5cSat.v and lib/U/Reusable/YI5cSat.v (added by item 1) are deleted: no .v file of the
    unit requires them and no top depends on them, so the series head has no YI5cSat.v.
-8. b96006e5d59f: lib/Reusable/R/Cfg.v is the shared clean-room restatement, taken byte-equal (blob ccff5f969374, sha256
+8.: lib/Reusable/R/Cfg.v is the shared clean-room restatement, taken byte-equal (blob ccff5f969374, sha256
    f50add21a0613ed380d2fc6e09d562116e1550b02170884858962aaa4857623b); lib/U/Reusable/R/Cfg.v is unchanged.
 
 Why: the old src0_sink named cgif's FILE sink (stdio read / write / seek / close, "/tmp/out.gif", "wb", ";", "rwa").
@@ -47,8 +47,8 @@ Checks:
 - Print Assumptions of plain_halts, ubsan_halts and ubsan_agrees: 15 axioms each, all on the allowed list, the same set
   as the shipped release check (PrimInt63 / PrimString / PrimArray primitives, functional_extensionality_dep,
   Classical_Prop.classic).
-- L2 layout: the whole-unit build without cache of 4f4da94a3b6a (item 6; cb d02a58a345b9, the unit's L2 base build): rc 0,
-  1233 files compiled, 0 failed, the 4 pinned binaries matched; the build of 05336ebfc612 (item 7) on that tree: rc 0,
+- L2 layout: the whole-unit build without cache (item 6; cb d02a58a345b9, the unit's L2 base build): rc 0,
+  1233 files compiled, 0 failed, the 4 pinned binaries matched; the build (item 7) on that tree: rc 0,
   nothing to recompile. On that tree, the Print Assumptions output (assumptions.out) of plain_halts, ubsan_halts and
   ubsan_agrees is byte-equal to the pre-series release's, the same file for all three tops (item 8 is not in that tree): sha256
   d0a538d26101ede968a64d67ea6f7ea33908754e40a174a54c535542d8a11f75.

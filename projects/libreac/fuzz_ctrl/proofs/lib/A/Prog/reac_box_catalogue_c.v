@@ -102,7 +102,7 @@ Qed.
    [c, c + 8) (shadow_addr c; c is 8-aligned), but that byte comes from the premise addressable m c 8 (AsanRT.addr_byte:
    mrd rsegs m (wa (shadow_addr a)) = Some b), not from shadow_rw: neither proof uses the premise, that is,
    reac_box_catalogue_holds_on (in reac_box_catalogue.v) and reac_box_catalogue_F_holds_on (in reac_box_catalogueF.v,
-   a Theorem Labs lane's file, on its branch at 330e60af39d, not in this lane). Stores: the run stores only its frame
+   a Theorem Labs lane's file, on its branch, not in this lane). Stores: the run stores only its frame
    [sp - 16, sp) and the 8 bytes at c, both outside the shadow (the premise forall x, ... in_shadow x -> outside [...]
    x, and app_mem by addressable): no shadow byte. No post names shadow_rw m', so nothing else changes. The old
    statements above stay byte-identical; each follows from its _on twin in one line. *)

@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match.v, with its module paths, module names, addresses and numbers changed; 2488 of its 3291 lines of code are new or changed and 2298 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_catalogue_match.v, with its module paths and module names changed; 2419 of its 2557 lines of code are new or changed and 3153 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v; 615 of its 747 lines of code are new or changed and 2425 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Demonstrator segment for fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): a register-only
    block of the R5 segment (plan-asan-ubsan.md 3.3, R5 = Inv_B8169c "b=0 constants"). The block 0x816bc..0x816d4
    computes the round_trip.box address (BOXA = 0x21140) with auipc / lui / li / addi -- seven register-only
@@ -88,7 +89,7 @@ End Demo.
 
 (* ==== The full R5 segment (libreac v1.9.0): [0x8169c, 0x816e8], 20 instructions, no call, no instrumented check,
    no trap; cut Inv_B8169c (v1.9 pc 0x8169c) -> cut Inv_B816ec_at g 0 (v1.9 pc 0x816ec).  Re-fit of the v1.8 proof
-   (a working branch c439fa41c5b) onto the v1.9.0 bytes and a Theorem Labs lane's v1.9 cut bundle; the cut names are still the
+   (a working branch) onto the v1.9.0 bytes and a Theorem Labs lane's v1.9 cut bundle; the cut names are still the
    v1.8 names.  rule 24: no function proved (a slot segment).
    0x8169c li s6,0 (b = 0); the spills 0x816a4 sd a0,32(s1) (a0 = s2 & 7), 0x816ac sd a0,24(s1) (a0 = s2 + 16),
    0x816b0 sd s2,272(s1) (the catalogue box), 0x816b8 sd s2,16(s1) (s2 + 20); the constants 0x816c8 li s5,36,

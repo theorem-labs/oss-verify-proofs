@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the journal of fuzz_reply's ASan program walks.  It is the donor's
    journal (Reusable/YCbq.v:351 ajournal) with two extensions the donor's programs never needed, and the
    run chain of Reusable/YC80.v restated over it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* (G) WRITES TO THE PROGRAM'S OWN GLOBALS.  The donor's journal keeps every image byte outside the
        allocator's statics and errno unchanged (YCbq.v:363), and its runner admits a write only to an
        awr_byte (YCbq.v:461-465: the frame, a heap block of FP, a block allocated during the call, an own
@@ -372,7 +373,7 @@ ajournal_gx G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k -> AR seg
 Proof. intros G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k (_ & _ & (memS & HJ & _) & _). exact (proj1 HJ). Qed.
 (* An owned read-only byte is a byte of one of AR's AV const cells, pinned to the image's byte.  AR holds every
    as_const cell (YG0n.v ARm am_const), so every AR state shows that byte as the image does, whatever a callee did.
-   On image A, AF0m's Tfib_const_abs pins all 408 owned read-only bytes this way (a working branch 56fc92fe6b0;
+   On image A, AF0m's Tfib_const_abs pins all 408 owned read-only bytes this way (a working branch;
    re-derived from AF0m and the ELF by a Theorem Labs lane's rom_owned_check.py). *)
 Definition rom_pinned (a : Z) : Prop :=
 forall ly, exists c e, In c (as_const B ly) /\ c_val c = AV e /\
@@ -745,12 +746,12 @@ End g.
      - `~ In (sptr_addr B ly p) Hp`: this unit's instance parameter is Hp = [] (cf_fs_classes [0;1],
        cf_malloc_max 2 ^ 30 - 2 ^ 20), so the premise is `~ In _ []`, closed inside the instance's proof of the
        rule; no walk takes it (after the Xcf conversion each walk carries `Hp = []` as a header fact).  The
-       global form is ARmcf's amc_hp_live (YGcfHp.v:235-236 hp_live_ablock: every Hp entry is a live block's base);
+       global form is ARmcf's amc_hp_live (YGcfHp.v:236-237 hp_live_ablock: every Hp entry is a live block's base);
      - the trace universe: the BESIDE-FORMS below (`<rule>_c CTX`, Section hc) carry the caller-context premise
        `In (raZ regsT :: spine ch) CTX` (a Theorem Labs lane's ruling 13:59Z / 14:08Z, form chosen by W5, the shape of
        Reusable/YC20.v:140), with the table CTX a Section Variable so one twin serves A and B.  It REPLACES option
        (ii) (the call_trace-free singleton UNIV0 gives), withdrawn because the cf free STORES its trace argument in
-       the depot (YG00cf.v:341 depot_put) and ARcf's Wf_cf keeps `incl (st_depot s) U` (YG01cf.v:151), so a
+       the depot (YG00cf.v:342 depot_put) and ARcf's Wf_cf keeps `incl (st_depot s) U` (YG01cf.v:152), so a
        singleton premise leaves the post unprovable at every chain site (XcfFinish, a Theorem Labs lane).  The rules WITHOUT
        the premise (this Section's first five) stay until every walk has switched: a walk switches to the _c form
        when its own spec carries the chain fact over the ch afn_pre binds, in W8's callee order; the instance

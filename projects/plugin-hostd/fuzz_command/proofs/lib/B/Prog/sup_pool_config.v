@@ -3,21 +3,21 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_pool_config (plugin-hostd/fuzz_command, image
    fuzz_command.asan-ubsan, entry BASE + AF_sup_pool_config = 0x8bed0, 127 instructions): it proves a Theorem Labs lane's
-   `tsup_pool_config_spec` (lib/B/Prog/sup_pool_config_c.v, a working branch 707acd856cb; the same text as at
-   f490061c104) in the form of
+   `tsup_pool_config_spec` (lib/B/Prog/sup_pool_config_c.v, a working branch; the same text as)
+   in the form of
    cgif_file_fuzzer's per-function walks: afn_pre at the entry, the symbolic executor over the position-abstract
    listing up to each call, the runtime's rules at the runtime calls (__asan_stack_malloc_0, the snprintf wrapper,
    the frame's release by its flag byte), the callee contracts record_c, arg_s_c, rec_shape_of_c and answer_c at the
    program calls (through cl_callS_wide / cl_callS_na), the return through paj_ret_at, and apost_base at the end.
 
-   It is the B re-walk of the A walk lib/A/Prog/sup_pool_config.v (a working branch c4f188792bb),
+   It is the B re-walk of the A walk lib/A/Prog/sup_pool_config.v (a working branch),
    whose B code differs: B calls record() and arg_s() where A inlined record() and called xstrdup, and B inlines
    arg_i, so this function owns arg_i's class-0 side-stack frame (64 bytes, b = frame + 32) and its snprintf. The
    frame code (prologue, realignment `andi sp,sp,-32`, __asan_stack_malloc_0, header and shadow f1 f1 f1 f1 | f8 f8 |
    f3 f3, b unpoisoned around the snprintf and the second arg_s, the release through the flag byte) is arg_i's ASan
-   walk's (lib/A/Prog/arg_i.v, a working branch 12dc52bfe84) and answer_code's ASan walk's
-   (lib/A/Prog/answer_code.v, a working branch 2ba4488ce71); the B kit usage is socket_send's B walk
-   (lib/B/Prog/socket_send.v, a working branch a470f91dbfb).
+   walk's (lib/A/Prog/arg_i.v, a working branch) and answer_code's ASan walk's
+   (lib/A/Prog/answer_code.v, a working branch); the B kit usage is socket_send's B walk
+   (lib/B/Prog/socket_send.v, a working branch).
 
    Report and trap edges: none. The function has no `jal __asan_report_*`, no `unimp`, no UBSan handler call
    (capstone over the pin's .symtab, gen/traps.B.summary row `sup_pool_config 0`). Its branches: 0x8bf30 `beqz a2`
@@ -26,6 +26,7 @@
    0x8c040 `beqz s2` on the side-stack frame (nonzero, __asan_stack_malloc_0's post; decided by the frame atom's
    fact), so the real-stack fallback 0x8bf50-0x8bf68 with its page probe and the real-stack release 0x8c074-0x8c090
    are not reached. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -341,7 +342,7 @@ Variable B : asyms.
 Variable MT : ameter_ops.
 #[local] Notation RLO := CMD_RLO.
 #[local] Notation RHI := CMD_RHI.
-(* the statement's Section hypotheses (sup_pool_config_c.v, a Theorem Labs lane 707acd856cb), word for word *)
+(* the statement's Section hypotheses (sup_pool_config_c.v, a Theorem Labs lane), word for word *)
 Hypothesis TRECORD : forall fx0 : YK11.FPState, @trecord_spec fx0 rc SK PI B MT.
 Hypothesis TARG_S : forall fx0 : YK11.FPState, @targ_s_spec fx0 rc SK PI B MT.
 Hypothesis TREC_SHAPE_OF : forall fx0 : YK11.FPState, @trec_shape_of_spec fx0 rc SK PI B MT.
@@ -356,7 +357,7 @@ Hypothesis VOBJS : cmd_val_objs.
    allocator record (lib/B/YF0m.v CmdBSyms); MTL and MTLF, the meter's laws and their side-stack form (YC5d.v);
    cmd_sig_prog_PB, the program functions' call targets; cmd_palib, the trampolines' pcs and the shadow cells;
    cmd_palibf, the side-stack entries' pcs and the use-after-return cells; cmd_frame_flag_law, a live side-stack
-   frame's flag byte (all four of a Theorem Labs lane's CmdRecRest.v lemmas at PB_cmd, a working branch 707acd856cb);
+   frame's flag byte (all four of a Theorem Labs lane's CmdRecRest.v lemmas at PB_cmd, a working branch);
    cmd_img_facts_tfib, the image facts (a Theorem Labs lane's CmdRecImg.v). The model laws and the side-stack progress are a Theorem Labs lane's
    CmdRecRest.cmd_model_laws / cmd_stack_malloc_progress, which hold at any image, and the program statics' apartness
    is RecBLemmas.recb_prog_unowned_m. *)
@@ -406,7 +407,7 @@ Let RUNTOP := SRr_run_to_pi_AJ (L := cmd_listing) (PL := PL_cmd) (PI := PI) B LA
 Let RUNC := SRr_run_pi_AJ_call (L := cmd_listing) (PL := PL_cmd) (PI := PI) B LAWS.
 
 (* ---------- the recorder's blocks, the footprint and what a journal keeps: sup_reset's B walk helpers
-   (a working branch c79a9f2daf7 lib/B/Prog/sup_reset.v:339-636, srb_ renamed spr_) ---------- *)
+   (a working branch lib/B/Prog/sup_reset.v:340-637, srb_ renamed spr_) ---------- *)
 (* ---------- the allocator's blocks ---------- *)
 
 Lemma spr_O_in : forall ly S rd R O, rec_repA B ly S rd R O -> forall pn, In pn O -> In pn (ablocks B ly S).

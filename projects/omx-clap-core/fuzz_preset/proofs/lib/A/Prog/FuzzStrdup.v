@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of reac_ctrl_identity_poll_block on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlIdentityPollBlock.v, with its module paths, module names and numbers changed; 695 of its 772 lines of code are new or changed and 346 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, S1 ALLOC-HEAP, image A' (asan, #102 pin 1be0f53d): the walk of fuzz_strdup (alloc.c :108-116; 23 slots
    of the whole-program listing lib/A/Listing_prog.v / PAImg_prog.v, instances PL_prog_A / PI_prog_A) against the
    batch-cut text tfuzz_strdup_specX (lib/A/PRH_FnAlloc.v:1102: THE OUTCOME conjunct, the LIVE premise guarded by cnt <> fail, the hull_budget
@@ -237,7 +238,7 @@ rewrite ?ew_ewset_other in Hr by lia; rewrite ?ew_havoc_old in Hr by (cbv; lia);
 rewrite HU in Hr; lia)
 end.
 (* the top-level conjuncts of a hypothesis (a syntactic `_ /\ _` only), then the goal BY ITS TYPE: the kit's ec_conj_split /
-   ec_conj_pick (lib/A/Prog/Ent102CallA.v of the kit's batch d6318e886fd9; the cut does not carry that file). fuzz_malloc's
+   ec_conj_pick (lib/A/Prog/Ent102CallA.v of the kit's batch; the cut does not carry that file). fuzz_malloc's
    post is read through it, so a conjunct the kit adds to that post (the kit's outcome conjunct) cannot shift the others. *)
 Ltac sd_conj_split H :=
   lazymatch type of H with

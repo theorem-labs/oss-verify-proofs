@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 507 of its 559 lines of code are new or changed and 3060 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtl.v, with its module names, addresses and numbers changed; 409 of its 435 lines of code are new or changed and 533 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/Free81920.v -- the ONE free-site lemma of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput:
    the round trip's `jal wrapper_free` at 0x81920, whose return address 0x81924 is the cut C_A81924_at.  Segments
    R13, R15, R16 and R20 all end there (plan section 2.5 row 0x81920: ONE lemma shared by the four, as ctrl's
@@ -20,7 +21,7 @@
    THE PROOF (glue-pattern.md section 9, steps 2-4)
    - The core's free rule afree04_rule (YC5d.v:76), a Section hypothesis of the walk as in the donor (A/ACfj.v:110),
      applied directly at the call state through SRr_bind: its start pc is pc_wrap_free (as_code B) = 0x53378
-     (CtrlTSyms' ts_code, AF0l.v:10).  Premises: the journal; (phi, n) live (the Permutation); a0 = phi; the stack
+     (CtrlTSyms' ts_code, AF0l.v:11).  Premises: the journal; (phi, n) live (the Permutation); a0 = phi; the stack
      offset o := sp - c_sp cx (FRAC: sp mod 16 = 0, c_sp cx - 4096 < sp <= A, A + 416 <= c_sp cx; astk_ok's
      sp0 mod 16 = 0), so ASTACK - o < 16384 + 4096 <= LLVMF_STK; gp / tp (FRAC + afn_pre); ra = 0x81924 and
      ret_ok; st_nev (journal + the pre's EV_LIB headroom, k <= 13); chain_pre and the call trace by CHAIN_OF_CUT at
@@ -50,7 +51,7 @@
      True (YCbp.v:17-18), so it is discharged there by `fun _ => I`.
    - (VIS0 / OWNED_RO are gone: ctl_rt_C_of_AR needs neither.  BLKSH is gone too (a Theorem Labs lane 13:12Z): the block-shadow
      fact is a Theorem Labs lane's PROVED A.ProgWorldShadow.ctl_block_shadow_of_AR, cited by name.)
-   - The three pointwise keep helpers are KitMem.v's (a working branch 4a56e997c0f):
+   - The three pointwise keep helpers are KitMem.v's (a working branch):
      A.ACtlG.KitMem.kitmem_bytes_at_mrd / kitmem_addressable_mrd / kitmem_rw_cells_mrd, cited by name.
 
    CLOSURE: every project Require below is qualified; no statement names a frame-route identifier.  Seg/R15.v is
@@ -60,8 +61,8 @@
    qualified because ctrl's lib/A/Reusable/YK11 is also loaded) / Reusable.YG0d-qualified everywhere; lib/Lib's
    Mem / Step / Cells through the aliases LMem / LStep / LCells (lib/A/Bz/Lib twins are in the closure).
 
-   BUILD STATE (route (C), type-check): rc=0 on a working branch (a working branch 1899bed1aee merged) through
-   cb (BASE row 23b918fe0c2e, a build machine), no substitution; the build of record
+   BUILD STATE (route (C), type-check): rc=0 on a working branch (a working branch merged) through
+   cb (BASE row, a build machine), no substitution; the build of record
    (cbrec) is named in the commit.  Print Assumptions glue_free_81920 = Rocq primitives only (no
    functional_extensionality: no lift here).  No Axiom, no Parameter, no Admitted, no admit. *)
 

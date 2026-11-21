@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch input ProcInput; the m_channel_reader premise; the vDSO; the run's segments (RomBase.sys_rob)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -23,6 +24,7 @@ Require OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.K5.B15.TopA_final.
 From OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.Top Require Import SpecCanonBridge.
 From OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.Common Require BudgetBridge.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+From OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.Common.Cfg Require Import RomStable.
 Import ListNotations.
 
 Section Pre.
@@ -40,14 +42,17 @@ Section Pre.
     destruct (TopLevelA.T_canon _ _ _ S3A ent inp Hvt Hvi) as [HtrT HerrT].
     pose proof (valid_input_va_size _ Hvi) as Hsv.
     rewrite (valid_entry_sv48 _ _ _ Hsv) in Hvs.
-    destruct Hvs as (Hsps & Hbrks & _ & Hfits).
+    destruct Hvs as (Hsps & Hbrks & _ & Hfits & Hlaus).
+    pose proof (valid_input_channel_reader _ Hvi) as Hrd. pose proof (valid_input_launch _ Hvi) as Hvl.
     destruct Hvi as (Hva & Hve & _).
-    assert (Hsrc : realizes Plain.M.loaded_segments
-                     (init_config Plain.M.loaded_segments
+    (* the run reads the binary against its segments and the vDSO pair: [RomStable.run_init] *)
+    assert (Hsrc : realizes (run_segments Plain.M.loaded_segments inp sps mbs)
+                     (init_config (run_segments Plain.M.loaded_segments inp sps mbs)
                         Plain.M.init_pc Plain.M.phdrs
                         sps brks mbs draws ShippedBudgets.lim_source inp)
                      (spec (in_argv inp) (in_fs inp))).
-    { apply (@O15Main.ref_realizes_spec_pins ALs CLs ASRs PINs FZs); try assumption.
+    { apply run_init; [reflexivity |].
+      apply (@O15Main.ref_realizes_spec_pins ALs CLs ASRs PINs FZs); try assumption.
       unfold ShippedBudgets.lim_source, source_alloc_limit. apply Z.le_refl. }
     split; [| split].
     - cbn. eapply realizes_no_error; exact Hsrc.
@@ -65,5 +70,5 @@ Theorem strong_universal_error_free_grayquant_fuzzer_both :
     (mkImage AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs).
 Proof.
   apply (OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.Common.BudgetBridge.sue_budgets_source_shrink _ _ _ _ _ _ OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.Common.BudgetBridge.sanitizer_le_shipped).
-  exact (@grayquant_both_pre _ _ s16_sure O15Tail.O15Pins.s16_pins (s16_fuzz_call s16_sure) OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.K5.B15.TopA_final.s3s_closed).
+  exact (@grayquant_both_pre _ _ s16_sure O15Tail.O15Pins.s16_pins (s16_fuzz_call s16_sure) (OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.K5.B15.TopA_final.s3s_closed OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.K5.B15.TopA.topA_runseg)).
 Qed.

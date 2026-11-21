@@ -1,9 +1,10 @@
 (* IMAGE B twin of lib/A/W_ge_room.v: image-independent trace arithmetic over the B kit's W_contract (only the
-   import path differs; re-taken at A's F7 room re-fit, a working branch f6038f3d481, a Theorem Labs lane). *)
+   import path differs; re-taken at A's F7 room re-fit, a working branch, a Theorem Labs lane). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the arithmetic of gesture_end's room (lane W4), apart from the walk so that the
    gestures_end loop pieces can use it without the walk of W_gesture_end.v.  No Section hypotheses. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* W_contract.v ge_room states gesture_end's room over the plain model's request trace ge_tr (lib/Prog/
    gesture_end_b_c.v gesture_end_tr: the first send's trace, then the second's).  Here: the trace's sum (tr_alloc)
    and largest request (tr_max) in send_line's terms (sl_alloc / sl_maxr, W_contract.v Section s7), hence the two

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed sym_step_soundP. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -320,10 +321,7 @@ eexists; (split; [reflexivity|]);
 (split; [apply st_ok_mach; cbn; auto; [apply regs_ok_set'; [exact Hregs| reflexivity] | apply pc_plus4]
 | cbn [ms_mem]; eapply store_region_frame; [exact Hmem| | cbn; lia] ]).
 all: unfold sstore in Hst; unfold st_bytes; rewrite length_zbytes; exact Hst.
-+ injection H as <-. rewrite ?rset_core.
-cbv beta iota zeta delta [Sem.c_regs Sem.c_fregs Sem.c_pc Sem.c_fcsr Sem.c_resv].
-eexists; (split; [reflexivity|]); (split; [|cbn [ms_mem]; apply frame_of_refl]).
-apply st_ok_mach; cbn; auto; [apply regs_ok_set'; [exact Hregs| reflexivity] | apply pc_plus4].
++ discriminate H.
 Qed.
 Theorem sym_step_ecallP : forall E ss ss' ms,
 st_okP E ss ms -> sym_step segs tbl ss = SEcall ss' ->

@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the statement of the memory-checking runtime's fmemopen wrapper as fuzz_pcap's
    program code calls it, for libreac/fuzz_pcap on libreac v1.9.0 (ASan build). The shape is cgif_file_fuzzer's
-   lib/YE01.v afopen_spec (origin/ossv/recipes c8557374ad2e): the same premise order, an SRr post over ajournal with
+   lib/YE01.v afopen_spec (theorem-labs/oss-verify-proofs@6b32741d849a): the same premise order, an SRr post over ajournal with
    an exact event count, and the success / failure split; the stream is a Theorem Labs lane's read-stream predicate
    lib/A/Stdio/PSource.v (asource_none / asource_at) instead of cgif's write sink. Statement only; the proof is
    another owner's (a Theorem Labs lane assigns it). It does not mention the C library's own contract: that enters only in the
@@ -41,6 +41,7 @@
   below 18624 (a Theorem Labs lane ruling: the donor value is kept; the slack is deliberate). The interceptors' ERROR paths
   are NOT budgeted: their measured depth is only a floor (>= 5360 bytes), so no bound covers them; a walk of this
   call must prove every report path unreachable from its premises, never rely on AFMEMOPEN_STK for it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YK11 YK0s YK18 YM05.
@@ -92,8 +93,8 @@ Definition afmemopen_spec (CTX : list (list Z)) (pc ra mc_lo mc_hi : Z) : Prop :
   In (b, n) (ablocks B ly S) -> garr8 segs (rd W mem) b C -> bytes_ok C ->
   (* the word constants musl fmemopen's strchr calls read (__strchrnul, [mc_lo, mc_hi) = 0x10350 / 0x10370 on the
      pin), as the image has them: AR does not pin them (YG0n.v:490). The donor's NARROW form, cgif A/AE39.v:28
-     mconsts_view over segs, derived at the program site from its image-region fact (cgif A/AD1k.v:266) and moved across
-     calls by mconsts_view_keep (cgif A/AE39.v:42); mirrors a Theorem Labs lane's rfmemopen_pre (a working branch c53fee70393; a Theorem Labs lane 00:23Z).
+     mconsts_view over segs, derived at the program site from its image-region fact (cgif A/AD1k.v:267) and moved across
+     calls by mconsts_view_keep (cgif A/AE39.v:42); mirrors a Theorem Labs lane's rfmemopen_pre (a working branch; a Theorem Labs lane 00:23Z).
      It replaces an earlier full rom_view premise, which no caller could derive. *)
   (forall a, mc_lo <= a < mc_hi ->
      aview segs (w_H W) mem a = option_map (fun b : byte => bv_unsigned b) (seg_rom segs (Z_to_bv 64 a))) ->

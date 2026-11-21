@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of mmap, Linux's mmap placement, the reserved ledger, the reservation a system-call return or a failing store-conditional clears and the vDSO). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -169,8 +170,15 @@ Definition AST : Type := astate amodel.
 
 Definition out_val (ρ : valuation) (A : AST) (o : list byte) : Prop := pieces_val ρ (am_out (a_model A)) o.
 
+(* WAS `AS pc regs (a_resv A) mem s am budget (a_steps A + 1)`.  with_model builds the
+   abstract state AFTER a syscall and nothing else -- every caller is a sys_* handler --
+   and LPS@75d69e00 Run.v:221-227 has advance_past_svc set `ms_resv := None`, so the
+   concrete post-state's reservation is None while the old abstract one still claimed
+   (a_resv A).  RResv reads RNone as `mr = None` (AxState.v), so the abstract side must
+   record the clearing.  RNone is the strongest rsv satisfied by None, so this is the
+   truth about the post-state, not a weakening.  Ported from bndiv. *)
 Definition with_model (A : AST) (pc : w64) (regs : aregs) (mem : list region) (s : store) (am : amodel) (budget : Z) : AST :=
-  AS pc regs (a_resv A) mem s am budget (a_steps A + 1).
+  AS pc regs RNone mem s am budget (a_steps A + 1).
 
 Definition xlit (v : xv) : option Z := match v with XL x => Some (wZ x) | _ => None end.
 
@@ -285,19 +293,45 @@ Definition sys_set_tid (A : AST) : option (list AST) :=
 Section WithSegs.
 Variable segs : list Segment.
 
+(* 727298f3 (#146) ADDED THE a0 GATE.  [Mmap.place_declined_b] makes the model answer
+   [unmodeled] for a HINT whose range ends within [stack_guard_gap_bytes] of the run's
+   [alloc_top], and [linux_place_is] can hold for exactly such a hint -- the decline sits
+   outside the [alt], so it is not implied by placement.  This shape read registers 11,
+   12, 13 and 15 and left a0 free, so [null_core] below would have claimed a modeled
+   outcome for a call the model declines.  Requiring a0 to be the literal 0 makes the
+   premise discharge by [AxSysMmap.place_declined_b_null], the decline's first conjunct.
+   THIS NARROWS WHAT THE TREE MODELS AND DOES NOT SILENTLY DO SO, exactly as [pack_ok]
+   below: [sys_mmap_null] is one `if ... else None` and every soundness theorem on the
+   chain is hypothesised on `= Some l`, so a hinted request this now rejects REDDENS A
+   PROOF rather than becoming an accepted refusal. *)
 Definition null_shape (A : AST) : option (Z * bool * bool) :=
   let r := a_regs A in
-  match xlit (aget r 11%uint63), xlit (aget r 12%uint63), xlit (aget r 13%uint63), xlit (aget r 15%uint63) with
-  | Some len, Some prot, Some flags, Some off =>
-      if (0 <? len) &&& (len <? 70368744177664) &&& (off =? 0) &&& ((flags =? 34) ||| (flags =? 16418)) &&& ((prot =? 3) ||| (prot =? 0))
+  match xlit (aget r 10%uint63), xlit (aget r 11%uint63), xlit (aget r 12%uint63), xlit (aget r 13%uint63), xlit (aget r 15%uint63) with
+  | Some hint, Some len, Some prot, Some flags, Some off =>
+      if (hint =? 0) &&& (0 <? len) &&& (len <? 70368744177664) &&& (off =? 0) &&& ((flags =? 34) ||| (flags =? 16418)) &&& ((prot =? 3) ||| (prot =? 0))
       then Some (page_round_up_Z len, prot =? 0, flags =? 16418) else None
-  | _, _, _, _ => None
+  | _, _, _, _, _ => None
   end.
 
 Definition ents_total (l : list aent) : Z := fold_right (fun e z => ae_size e + z) 0 l.
 
+(* GROWN BY THE vDSO TAIL, old text beside new.  WAS:
+     183251939328 + (live_bytes (segments_reserved segs) + ents_total (am_maps am))
+     + Z.of_nat (length (segments_reserved segs) + length (am_maps am)) * (nZ + 4096)
+     + nZ <=? tlo.
+   mr_res now reads vm_reserved = segments_reserved segs ++ rx, so MR_place_exists's
+   live_bytes/length_app sum picks up rx, bounded by the field's own conjuncts
+   (live_bytes rx <= 0x14000 and length rx <= 2).  pack_ok IS that premise as a
+   Boolean, byte for byte, so it must grow by the same 81920 + 2 * (nZ + 4096).
+   Measured: without this, a farm round fails the MR_place_exists
+   premise at AxSysMmapS.v:377 with "Cannot find witness".
+   THIS NARROWS WHAT THE TREE MODELS AND DOES NOT SILENTLY DO SO: sys_mmap_null is one
+   `if ... else None` and every soundness theorem on the chain is hypothesised on
+   `= Some l`, so a request this now rejects REDDENS A PROOF rather than becoming an
+   accepted refusal.  Ported from bndiv. *)
 Definition pack_ok (am : amodel) (nZ tlo : Z) : bool :=
-  4096 + (live_bytes (segments_reserved segs) + ents_total (am_maps am))
+  183251939328 + 81920 + 2 * (nZ + 4096)
+  + (live_bytes (segments_reserved segs) + ents_total (am_maps am))
   + Z.of_nat (length (segments_reserved segs) + length (am_maps am)) * (nZ + 4096) + nZ <=? tlo.
 
 Definition sys_mmap_null (LIM : Z) (A : AST) : option (list AST) :=

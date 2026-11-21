@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_grant/proofs/lib/A/Prog/CtrlParseCut.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse (fuzz_scene.asan 0x83dd8, 616 instructions): the contract of the ASan build's code, in the
    caller-journal form (it writes the caller's 36-byte `struct reac_ctrl_parsed`). The return code and the 36 bytes
    it writes are Pau's model `ctrlparse` (lib/Prog/RcParse.v:45). Statement only; the walk is ported later.
-   Ported from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseCut.v (at
-   d315cc159b2; the same text at 9fb598002a1): the module paths and the listing's names changed; the
+   Ported from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseCut.v (
+   the same text): the module paths and the listing's names changed; the
    text of A_ctrl_parseP, TPARSE_STK, tctrl_parse_post and tctrl_parse_spec is the donor's. The function's 616 words
    equal the donor image's except the 52 pc-relative ones (auipc / ld / addi of the two GOT words, the frame
    description and the broadcast string; jal to the runtime entries).
    Numbers: fuzz_scene.asan, sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026
-   (projects/libreac/fuzz_scene/harness.yaml at c8557374ad2e); symbols from the .symtab of
+   (projects/libreac/fuzz_scene/harness.yaml); symbols from the .symtab of
    unstripped/fuzz_scene/fuzz_scene.asan, whose bytes at 0x83dd8..0x84778 equal the pinned image's.
    - reac_ctrl_parse = 0x83dd8, st_size 2464 = 616 instructions (no compressed instruction).
    - LLVMFuzzerTestOneInput = 0x82878 = the listing's base (SceneAddr.v scene_text), so
@@ -105,7 +106,7 @@ length fr = 50%nat ->
 (forall i, (i < 50)%nat -> aview SEGS (w_H W) memc (f + Z.of_nat i) = Some (cp_v fr i)) ->
 SRr SEGS W (cfg_at SEGS A_ctrl_parseP regs memc mdc)
 (tctrl_parse_post STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs n o fr).
-(* pb_ctrl_parse: proved in lib/A/Prog/CtrlParse.v:74 (Qed), which lib/A/G_Close.v applies. *)
+(* pb_ctrl_parse: proved in lib/A/Prog/CtrlParse.v:75 (Qed), which lib/A/G_Close.v applies. *)
 (* The port plan, as written before the port (this file proves nothing): prove `pb_ctrl_parse : tctrl_parse_spec` by porting
    a Theorem Labs lane's walk of the same code (that walk is closed nowhere; see the last three items)
    (CtrlParse.v, CtrlParseMid.v, CtrlParseTail.v, CtrlParseEpi.v, with CtrlParseLib.v and
@@ -113,7 +114,7 @@ SRr SEGS W (cfg_at SEGS A_ctrl_parseP regs memc mdc)
    pz_E0, pz_cur, pz_post, the three cut specs, pz_open*, pz_std), with these changes, each measured in
    fuzz_scene.asan:
    - RET takes PL_scene; the listing is scene_listing.
-   - Listing objects (atom A_OBJ i = 241 + i, PaTable.v:15): the shadow-base cell
+   - Listing objects (atom A_OBJ i = 241 + i, PaTable.v:16): the shadow-base cell
      __asan_shadow_memory_dynamic_address 0xa37f8 is object 16 (atom 257) and the UAR flag
      __asan_option_detect_stack_use_after_return 0xa3800 is object 17 (atom 258), ScenePaLib.v pal_cell /
      pal_uar_cell; the GOT words are objects 0 (0x9b768, ld @0x83e2c) and 1 (0x9b710, ld @0x83e30), unchanged.
@@ -129,15 +130,15 @@ SRr SEGS W (cfg_at SEGS A_ctrl_parseP regs memc mdc)
      __asan_stack_malloc_1 returns), cut M 0x83f18 (AF + 0x140, after __asan_memset returns), cut B 0x83fa0
      (AF + 0x1c8, after the bcmp wrapper returns), cut J 0x84180 (AF + 0x3a8).
    - The donor walk is closed at no cited commit, so no part of this file may be reported as "proved by port"
-     while that holds. At d315cc159b2 the donor theorem itself ends in `admit` / `Admitted`
-     (CtrlParse.v:381-382). At 119225419ab CtrlParse.v:318 is Qed, but every segment it
-     applies is Admitted: pz_segB (CtrlParseMid.v:41), pz_segD (CtrlParseEpi.v:41), pz_segAcc
-     (CtrlParseAcc.v:42), pz_segN (CtrlParseNone.v:42) and pz_tail1..pz_tail5 (CtrlParseTail1..5.v:41).
+     while that holds. At the donor theorem itself ends in `admit` / `Admitted`
+     (CtrlParse.v:382-383). At CtrlParse.v:319 is Qed, but every segment it
+     applies is Admitted: pz_segB (CtrlParseMid.v:42), pz_segD (CtrlParseEpi.v:42), pz_segAcc
+     (CtrlParseAcc.v:43), pz_segN (CtrlParseNone.v:43) and pz_tail1..pz_tail5 (CtrlParseTail1..5.v:41).
      So parse's inline release of its class-1 fake frame, and the AR re-establishment after it
      (astack_free_law), were machine-checked nowhere then: this port had to close every segment itself, or wait
      until the donor closed them. This tree's CtrlParseMid.v .. CtrlParseTail5.v close every segment with Qed.
-   - The section hypotheses the port inherits from the donor theorem (CtrlParse.v:44-65 at 119225419ab, the
-     same list at :133-151 of d315cc159b2): RO : ro_below_ofl SEGS pa_relro_lo pa_relro_hi; B : asyms, with
+   - The section hypotheses the port inherits from the donor theorem (CtrlParse.v:45-66, the
+     same list at :133-151): RO : ro_below_ofl SEGS pa_relro_lo pa_relro_hi; B : asyms, with
      LAWS : AR_laws SEGS B, TL : PALib B, TLF : PALibF B, ML : model_laws (as_universe B),
      AMEMSET / AMEMCPY : aintrin_realizes SEGS B OSet / OCpy (SIGMA SS___asan_memset / SS___asan_memcpy),
      ABCMP : abcmp_realizes SEGS B (SIGMA SS___interceptor_trampoline_bcmp),

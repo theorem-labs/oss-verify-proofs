@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ASan malloc invariant's added conjunct named in its destruct patterns and kept). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -139,7 +140,7 @@ Proof using .
   intros rho rho' tp A tr ms md tr' h' a n r e nx Hsp Hmaps Hna Hlim Huniq Hfree Hal Hnl Hend Hdisj Hxs Hag' Hnx He Hev.
   pose proof (smatch_pendingA_halted segs _ _ _ _ _ _ Hsp) as Hh.
   pose proof (smatch_pendingA_MI segs _ _ _ _ _ _ Hsp) as HMI.
-  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm).
+  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd).
   pose proof Hsp as (Hspv & _ & Hwf & Hsh & Hhz). rewrite virt_unfold in Hspv.
   pose proof (urange a) as Ra. pose proof (urange n) as Rn. pose proof page_size_pos as Pps.
   set (lo := bv_unsigned a) in *. set (hi := lo + bv_unsigned n) in *.
@@ -209,6 +210,7 @@ Proof using .
     + apply model_ivs_wf_vm_forget_range; [lia | exact Hwf1].
     + unfold md1, lo, hi. apply (lazy_in_maps_munmap md h' a n Hivs Hlm Huniq Hmaps).
     + unfold md1, tp', tp_forget, lo, hi. apply tp_in_maps_munmap; [exact Htm | exact Huniq | exact Hal | exact Hnl | exact Hmaps].
+    + exact Hrd.
   -   unfold axwf in Hwf |- *. cbn. apply andb_prop in Hwf as [HX Hb]. apply andb_true_intro. split.
     + apply forallb_forall. intros rr Hr. pose proof (proj1 (forallb_forall _ _) HX rr Hr) as Y.
       unfold xr_below in Y |- *. apply andb_prop in Y as [Y1 Y2].
@@ -300,7 +302,7 @@ Proof using .
   intros rho rho' tp A tr ms md tr' h' a n r e nx Hsp Hmaps Hna Hlim Hal Hnl Hpos Hend Hmap Hseg Htl Hdisj Hxs new Hag' Hnx He Hev.
   pose proof (smatch_pendingA_halted segs _ _ _ _ _ _ Hsp) as Hh.
   pose proof (smatch_pendingA_MI segs _ _ _ _ _ _ Hsp) as HMI.
-  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm).
+  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd).
   pose proof Hsp as (Hspv & _ & Hwf & Hsh & Hhz). rewrite virt_unfold in Hspv.
   pose proof (urange a) as Ra. pose proof (urange n) as Rn. pose proof page_size_pos as Pps.
   set (lo := bv_unsigned a) in *. set (hi := lo + bv_unsigned n) in *.
@@ -367,6 +369,7 @@ Proof using .
       * unfold md2. rewrite m_vmmaps_vm_forget_range. unfold md1. rewrite m_vmmaps_with_vmmaps, Hmaps. exact Hmap.
     + intros p Hp. destruct (Htm p Hp) as (Hpal & b & s0 & Hbs & X). split; [exact Hpal|]. exists b, s0.
       rewrite m_vmmaps_vm_add_lazy. unfold md2. rewrite m_vmmaps_vm_forget_range. unfold md1. rewrite m_vmmaps_with_vmmaps, Hmaps. split; [exact Hbs | exact X].
+    + exact Hrd.
   -   unfold axwf in Hwf |- *. cbn. apply andb_prop in Hwf as [HX Hb]. apply andb_true_intro. split.
     + apply forallb_forall. intros rr Hr. pose proof (proj1 (forallb_forall _ _) HX rr Hr) as Y.
       unfold xr_below in Y |- *. apply andb_prop in Y as [Y1 Y2].

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: copied from the fuzz_state unit's lib/A/FSRealloc_inst.v:293-369 (commit ddc081c1a03, sha256 370329004827; internal record) fs_amemcpy_realizes, ported to the asan image A of the preset unit and restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_memcpy; the overlay normal form conjunct (at_mem_cf) added. *)
+(* Modified by Theorem Labs, 2026-10-29: copied from the fuzz_state unit's lib/A/FSRealloc_inst.v:293-369 (sha256 370329004827; internal record) fs_amemcpy_realizes, ported to the asan image A of the preset unit and restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_memcpy; the overlay normal form conjunct (at_mem_cf) added. *)
 (* Modified by Theorem Labs, 2026-10-31: field round 3 part 3c (the record's rw_memcpy no longer states the overlay
    normal form): the at_mem_cf conjunct and its proof (MN2) removed. *)
-(* Modified by Theorem Labs, 2026-10-31: relocated from fuzz_preset (commit dc970db26dad) to fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125): module paths changed (YGcfMallocCompose from lib.Reusable to lib.A) and every image numeral moved by symbol + offset. *)
+(* Modified by Theorem Labs, 2026-10-31: relocated from fuzz_preset to fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125): module paths changed (YGcfMallocCompose from lib.Reusable to lib.A) and every image numeral moved by symbol + offset. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_reply.asan image A: the copy routine REAL(memcpy) (musl memcpy 0x964cc = cf_pc_memcpy of CfImg_A,
    Reallocate's `jalr a3` 0x326ec target, loaded at 0x326b8-0x326bc from the RELRO cell 0x9d9f8, which holds
    &__interception::real_memcpy 0x9f868, which holds 0x964cc): rw_memcpy_A is YGcfReallocCompose.wrap_realloc_walk_cf's

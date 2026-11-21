@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from part of proofs/libreac/fuzz_grant/lib/A/Prog/GrantClose.v (grant_PALib,
-   grant_api_env, grant_ML, grant_SMP, grant_FFL; a working branch bcad42da99f) and of a Theorem Labs lane's AGrantT.v (Let HD)
+   grant_api_env, grant_ML, grant_SMP, grant_FFL; a working branch) and of a Theorem Labs lane's AGrantT.v (Let HD)
    for libreac/fuzz_identity's ASan+UBSan build (image B): the facts are stated at the applied B core's record IdentB
    (lib/ReusableB/YD2l.v, cgif YD2l.v's TfibB renamed) and the listing's instance PI_identb (B/Prog/IdentBImg.v); the
    allocator rules AMALLOC4 and AFREE4 are added; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The runtime glue of fuzz_identity's ASan+UBSan closer (lib/B/IdentTopB.v): TL, ML, SMP, FFL, AMALLOC4 and AFREE4, the
    link's Section hypotheses, each at its exact type, and the closer's Let HD, proved from the applied B core's lemmas:
      TL        PALib IdentB                       IdentBPaLib.v:308; api_env from TfibB_syms's ts_universe_drv (YF0m.v)

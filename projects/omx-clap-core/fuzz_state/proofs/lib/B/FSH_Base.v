@@ -10,7 +10,7 @@
    e_shstrndx and the .note.gnu.build-id descriptor; no numeral below lies there) by `python3 (internal path) <twin>`
    (output (internal path)), each from B's own symbol table and disassembly, not by mapping A's:
    "sym X" = X's .symtab st_value (`readelf -sW`), "sec X" = sh_addr / sh_size (`readelf -SW`), "dis" = the instruction.
-   Ported from: lib/A/FSH_Base.v (this branch), itself a Theorem Labs lane's FMH_Base.v (a working branch e48bf3cce32 .. a1902517c68). *)
+   Ported from: lib/A/FSH_Base.v (this branch), itself a Theorem Labs lane's FMH_Base.v (a working branch ..). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -33,7 +33,7 @@ Definition FS_RLO : Z := 0x9f6b0.
 Definition FS_RHI : Z := 0xa0908.
 
 (* ---- fs.asan-ubsan: the 43 target functions (T: rows of FsBinMatch.data/fs-functions.asan-ubsan.tsv), each sym <name> ---- *)
-(* LLVMFuzzerTestOneInput is FS_LLVMF above (the name A_LLVMF is the core's, A/ACfn.v:20) *)
+(* LLVMFuzzerTestOneInput is FS_LLVMF above (the name A_LLVMF is the core's, A/ACfn.v:21) *)
 Definition A_check_no_overread : Z := 0x8124c.
 Definition A_check_bounded_alloc : Z := 0x81618.
 Definition A_check_as_written : Z := 0x8164c.

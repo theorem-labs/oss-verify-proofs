@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfFw.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfFw.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
@@ -6,6 +6,7 @@
    fm.asan addresses; the frame invariant FWI, fw_phase and the window lemmas follow A/YE3h.v's VI_run / vf_phase /
    vf_windows_sound with the stderr FILE replaced by the snprintf sink. The kit (Section g) is generic in the call's
    band top sp0 + T, so FMsnprintfFl.v reuses it for vfprintf's flush. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* __fwritex (s, l, f) on the snprintf FILE, called from printf_core's out(): the bytes go to vfprintf's 80-byte
    internal buffer, or, when they do not fit, sn_write copies the buffer and the bytes to the destination behind the
    cookie and writes a NUL after them. Stated over the sink invariant SNK (FMsnprintfI.v); no truncation. *)

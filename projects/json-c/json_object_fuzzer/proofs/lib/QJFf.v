@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's exact arm as the model's mmap_fixed_destroyed_next, the ledger cut by maps_subtract, in munmap_model and its lemmas; read_cstr_aux's per-byte access_okb: the TASK_SIZE premises of read_cstr_aux_bytes_in and read_cstr_aux_toolong_bytes_in and a new at_node conjunct bounding openat's path below TASK_SIZE; iovec_entry_accesses in writev's copy-in record; the new descriptor kinds FdStream, FdEventfd, FdDgram and FdAnon in the read node). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -162,6 +163,113 @@ Lemma covered_filter_sub : forall f l y, covered (List.filter f l) y = true -> c
 Proof.
 intros f l y H. apply covered_true in H as (iv & Hin & Hr). apply filter_In in Hin as [Hin _].
 apply covered_true. exists iv. auto.
+Qed.
+
+(* LPS 727298f3: munmap's exact arm cuts the ledger with maps_subtract
+   (Mmap.mmap_fixed_destroyed_next), where it removed the entry before.  On a ledger
+   whose entries at the cut's base have the cut's length and whose other entries miss
+   the cut, that is map_remove less the empty entries sitting exactly at the cut's
+   end, which cover nothing and count nothing. *)
+Definition zero_at (z : Z) (e : word * word) : bool :=
+  (bv_unsigned (fst e) =? z) && (bv_unsigned (snd e) =? 0).
+
+Lemma iv_subtract_munmap1 : forall (b s a n : word),
+  0 < bv_unsigned n -> b <> a ->
+  (bv_unsigned b + bv_unsigned s <= bv_unsigned a \/ bv_unsigned a + bv_unsigned n <= bv_unsigned b) ->
+  iv_subtract b s (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = if zero_at (bv_unsigned a + bv_unsigned n) (b, s) then [] else [(b, s)].
+Proof.
+  intros b s a n Hn Hne Hd.
+  assert (Hu : bv_unsigned b <> bv_unsigned a) by (intros E; apply Hne; apply bv_eq; exact E).
+  pose proof (u64_range b). pose proof (u64_range s). pose proof (u64_range a).
+  unfold iv_subtract, zero_at. cbn [fst snd]. cbv zeta.
+  destruct (Z.ltb_spec (bv_unsigned b) (bv_unsigned a)) as [L1|L1];
+  destruct (Z.ltb_spec (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s)) as [L2|L2];
+  destruct (Z.eqb_spec (bv_unsigned b) (bv_unsigned a + bv_unsigned n)) as [L3|L3];
+  destruct (Z.eqb_spec (bv_unsigned s) 0) as [L4|L4]; cbn [andb app]; try (exfalso; lia); try reflexivity.
+  - rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma maps_subtract_munmap : forall l (a n : word), 0 < bv_unsigned n ->
+  (forall e, In e l -> fst e = a -> snd e = n) ->
+  region_free (map_remove l a) a n = true ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = List.filter (fun e => negb (zero_at (bv_unsigned a + bv_unsigned n) e)) (map_remove l a).
+Proof.
+  induction l as [|[b s] r IH]; intros a n Hn Hsz Hfree; [reflexivity|].
+  assert (Hr : forall e, In e r -> fst e = a -> snd e = n) by (intros e He; apply Hsz; right; exact He).
+  cbn [maps_subtract]. unfold map_remove in Hfree |- *. cbn [List.filter fst] in Hfree |- *.
+  destruct (bv_eqb b a) eqn:E; try rewrite E in Hfree; cbn [negb] in Hfree |- *.
+  - apply bv_eqb_eq in E. subst b.
+    assert (Es : s = n) by exact (Hsz (a, s) (or_introl eq_refl) eq_refl). subst s.
+    unfold iv_subtract at 1. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a))).
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a + bv_unsigned n))).
+    cbn [app]. exact (IH a n Hn Hr Hfree).
+  - cbn [region_free] in Hfree. apply andb_prop in Hfree as [Hov Hfree].
+    assert (Hne : b <> a).
+    { intros Heq. subst b. assert (bv_eqb a a = true) by (apply bv_eqb_eq; reflexivity). congruence. }
+    assert (Hd : bv_unsigned b + bv_unsigned s <= bv_unsigned a \/ bv_unsigned a + bv_unsigned n <= bv_unsigned b).
+    { unfold iv_overlap in Hov. apply negb_true_iff, andb_false_iff in Hov.
+      destruct Hov as [Hov|Hov]; apply Z.ltb_ge in Hov; lia. }
+    rewrite (iv_subtract_munmap1 b s a n Hn Hne Hd), (IH a n Hn Hr Hfree).
+    cbn [List.filter]. destruct (zero_at _ (b, s)); reflexivity.
+Qed.
+
+Lemma zero_at_size : forall z b s, zero_at z (b, s) = true -> bv_unsigned s = 0.
+Proof. intros z b s H. unfold zero_at in H. cbn [fst snd] in H. apply andb_prop in H as [_ H]. apply Z.eqb_eq. exact H. Qed.
+
+Lemma covered_filter_nozero : forall f z l y,
+  covered (List.filter f (List.filter (fun e => negb (zero_at z e)) l)) y = covered (List.filter f l) y.
+Proof.
+  intros f z l y. induction l as [|[b s] l IH]; [reflexivity|].
+  cbn [List.filter]. destruct (zero_at z (b, s)) eqn:Ez; cbn [negb List.filter];
+  destruct (f (b, s)); rewrite ?covered_cons, ?IH; try reflexivity.
+  rewrite (zero_at_size z b s Ez), Z.add_0_r.
+  replace (in_rng (bv_unsigned b) (bv_unsigned b) y) with false by (symmetry; apply in_rng_false; lia).
+  reflexivity.
+Qed.
+
+Lemma covered_nozero : forall z l y,
+  covered (List.filter (fun e => negb (zero_at z e)) l) y = covered l y.
+Proof.
+  intros z l y. induction l as [|[b s] l IH]; [reflexivity|].
+  cbn [List.filter]. destruct (zero_at z (b, s)) eqn:Ez; cbn [negb];
+  rewrite ?covered_cons, ?IH; try reflexivity.
+  rewrite (zero_at_size z b s Ez), Z.add_0_r.
+  replace (in_rng (bv_unsigned b) (bv_unsigned b) y) with false by (symmetry; apply in_rng_false; lia).
+  reflexivity.
+Qed.
+
+Lemma sum_count_nozero : forall P z l,
+  sum_count P (List.filter (fun e => negb (zero_at z e)) l) = sum_count P l.
+Proof.
+  intros P z l. induction l as [|[b s] l IH]; [reflexivity|].
+  cbn [List.filter]. destruct (zero_at z (b, s)) eqn:Ez; cbn [negb sum_count];
+  rewrite ?IH; try reflexivity.
+  unfold iv_count, Qqcs.S. cbn [snd]. rewrite (zero_at_size z b s Ez).
+  change (Z.to_nat 0) with O. cbn [zcount]. lia.
+Qed.
+
+Lemma filter_nozero_id : forall z l, (forall e, In e l -> 0 < bv_unsigned (snd e)) ->
+  List.filter (fun e => negb (zero_at z e)) l = l.
+Proof.
+  intros z l Hp. induction l as [|[b s] l IH]; [reflexivity|].
+  cbn [List.filter].
+  assert (E : zero_at z (b, s) = false).
+  { unfold zero_at. cbn [fst snd]. replace (bv_unsigned s =? 0) with false; [apply andb_false_r|].
+    symmetry. apply Z.eqb_neq. pose proof (Hp (b, s) (or_introl eq_refl)) as H. cbn [snd] in H. lia. }
+  rewrite E. cbn [negb]. f_equal. apply IH. intros e He. apply Hp. right. exact He.
 Qed.
 
 Section Cov.
@@ -340,8 +448,10 @@ with_mmap_destroyed a n (h_destroy (m_vmmaps mo) a n) mo.
 
 Definition remap_model (mo : Model) (a n : word) : Model := vm_add_lazy a n (commit_model mo a n).
 
+(* LPS 727298f3: munmap's exact arm leaves the model's own successor (with
+   mmap_fixed_destroyed_next, whose vm_maps is maps_subtract of the cut). *)
 Definition munmap_model (mo : Model) (a n : word) : Model :=
-vm_forget_range (bv_unsigned a) (bv_unsigned a + bv_unsigned n) (with_vmmaps (h_munmap (m_vmmaps mo) a n) mo).
+  with_mmap_destroyed a n (mmap_fixed_destroyed_next (m_vmmaps mo) a n) mo.
 
 Lemma maps_grant : forall mo a n, vm_maps (m_vmmaps (grant_model mo a n)) = (a, n) :: vm_maps (m_vmmaps mo).
 Proof. reflexivity. Qed.
@@ -350,8 +460,21 @@ Proof. intros [fd [maps lazy mat] io fs proc lim tm] a n. reflexivity. Qed.
 
 Lemma maps_remap : forall mo a n, vm_maps (m_vmmaps (remap_model mo a n)) = vm_maps (m_vmmaps mo).
 Proof. intros [fd [maps lazy mat] io fs proc lim tm] a n. reflexivity. Qed.
-Lemma maps_munmap : forall mo a n, vm_maps (m_vmmaps (munmap_model mo a n)) = map_remove (vm_maps (m_vmmaps mo)) a.
+Lemma maps_munmap : forall mo a n, vm_maps (m_vmmaps (munmap_model mo a n))
+= maps_subtract (vm_maps (m_vmmaps mo)) (bv_unsigned a) (bv_unsigned a + bv_unsigned n).
 Proof. intros [fd [maps lazy mat] io fs proc lim tm] a n. reflexivity. Qed.
+
+(** On a ledger of nonempty entries whose entries at [a] have length [n] and whose
+    other entries miss [a, a + n), the cut is [map_remove]. *)
+Lemma maps_munmap_exact : forall mo a n,
+(forall e, In e (vm_maps (m_vmmaps mo)) -> 0 < bv_unsigned (snd e)) ->
+(forall e, In e (vm_maps (m_vmmaps mo)) -> fst e = a -> snd e = n) ->
+region_free (map_remove (vm_maps (m_vmmaps mo)) a) a n = true -> 0 < bv_unsigned n ->
+vm_maps (m_vmmaps (munmap_model mo a n)) = map_remove (vm_maps (m_vmmaps mo)) a.
+Proof.
+intros mo a n Hp Hsz Hfree Hn. rewrite maps_munmap, (maps_subtract_munmap _ a n Hn Hsz Hfree).
+apply filter_nozero_id. intros e He. unfold map_remove in He. apply filter_In in He as [He _]. exact (Hp e He).
+Qed.
 
 Lemma mat_grant : forall mo a n, m_vm_materialized (grant_model mo a n) = m_vm_materialized mo.
 Proof. intros [fd [maps lazy mat] io fs proc lim tm] a n. reflexivity. Qed.
@@ -411,7 +534,7 @@ Lemma msim_remap : forall mo mo' a n, msim mo mo' -> msim (remap_model mo a n) (
 Proof. intros mo mo' a n H. unfold remap_model. apply (msim_vm_add_lazy L). apply msim_commit. exact H. Qed.
 Lemma msim_munmap : forall mo mo' a n, msim mo mo' -> msim (munmap_model mo a n) (munmap_model mo' a n).
 Proof.
-intros mo mo' a n H. unfold munmap_model. pose proof (msim_facts L _ _ H) as (_ & _ & _ & _ & _ & Hv & _). rewrite Hv.
+intros mo mo' a n H. unfold munmap_model, with_mmap_destroyed. pose proof (msim_facts L _ _ H) as (_ & _ & _ & _ & _ & Hv & _). rewrite Hv.
 apply (msim_vm_forget_range L). apply msim_with_vmmaps. exact H.
 Qed.
 
@@ -429,7 +552,8 @@ Lemma appcov_munmap : forall mo a n y,
 region_free (map_remove (vm_maps (m_vmmaps mo)) a) a n = true -> 0 < bv_unsigned n ->
 appcov (munmap_model mo a n) y = bcov y || (ecov mo y && negb (inR a n y)).
 Proof.
-intros mo a n y Hsz Hfree Hn. unfold appcov, ecov, emaps. rewrite maps_munmap, filter_map_remove.
+intros mo a n y Hsz Hfree Hn. unfold appcov, ecov, emaps.
+rewrite maps_munmap, (maps_subtract_munmap _ a n Hn Hsz Hfree), covered_filter_nozero, filter_map_remove.
 rewrite (covered_map_remove _ a n y); [reflexivity| | |exact Hn].
 - intros e He. apply filter_In in He as [He _]. apply Hsz. exact He.
 - apply region_free_intro. intros b s Hin. eapply region_free_In; [exact Hfree|].
@@ -566,9 +690,10 @@ Proof. intros mo a n W Hb. unfold remap_model. apply model_ivs_wf_vm_add_lazy; [
 
 Lemma wf_munmap : forall mo a n, model_ivs_wf mo -> model_ivs_wf (munmap_model mo a n).
 Proof.
-intros mo a n W. pose proof W as (Wm & Wn & Wl & Wsp). unfold munmap_model. pose proof (u64_range n).
+intros mo a n W. pose proof W as (Wm & Wn & Wl & Wsp).
+unfold munmap_model, with_mmap_destroyed, mmap_fixed_destroyed_next. pose proof (u64_range n).
 apply model_ivs_wf_vm_forget_range; [lia|]. apply model_ivs_wf_with_vmmaps; [exact W| | |reflexivity]; cbn.
-- unfold map_remove. apply ivs_wf_filter. exact Wm.
+- apply maps_subtract_wf; [exact Wm| lia].
 - apply maps_subtract_wf; [exact Wn| lia].
 Qed.
 
@@ -580,8 +705,17 @@ Lemma excl_inside_commit : forall mo a n, excl_inside mo -> excl_inside (commit_
 Proof. intros mo a n Hx e Hin HE. rewrite maps_commit in Hin. exact (Hx e Hin HE). Qed.
 Lemma excl_inside_remap : forall mo a n, excl_inside mo -> excl_inside (remap_model mo a n).
 Proof. intros mo a n Hx e Hin HE. rewrite maps_remap in Hin. exact (Hx e Hin HE). Qed.
-Lemma excl_inside_munmap : forall mo a n, excl_inside mo -> excl_inside (munmap_model mo a n).
-Proof. intros mo a n Hx e Hin HE. rewrite maps_munmap in Hin. unfold map_remove in Hin. apply filter_In in Hin as [Hin _]. exact (Hx e Hin HE). Qed.
+(* LPS 727298f3: the cut is maps_subtract; on the exact munmap it keeps only
+   entries of the old ledger (maps_subtract_munmap). *)
+Lemma excl_inside_munmap : forall mo a n, excl_inside mo ->
+(forall e, In e (vm_maps (m_vmmaps mo)) -> fst e = a -> snd e = n) ->
+region_free (map_remove (vm_maps (m_vmmaps mo)) a) a n = true -> 0 < bv_unsigned n ->
+excl_inside (munmap_model mo a n).
+Proof.
+intros mo a n Hx Hsz Hfree Hn e Hin HE.
+rewrite maps_munmap, (maps_subtract_munmap _ a n Hn Hsz Hfree) in Hin.
+apply filter_In in Hin as [Hin _]. unfold map_remove in Hin. apply filter_In in Hin as [Hin _]. exact (Hx e Hin HE).
+Qed.
 
 Lemma sum_count_filter_le : forall (P P' : Z -> bool) (f : word * word -> bool) l,
 (forall e, In e l -> f e = true -> iv_count P' e = iv_count P e) ->
@@ -661,15 +795,18 @@ cbn [app] in Hs |- *. unfold lo, hi in *. rewrite page_size_4096. lia.
 Qed.
 
 Lemma backing_munmap : forall mo a n, model_ivs_wf mo ->
-region_free (map_remove (vm_maps (m_vmmaps mo)) a) a n = true ->
+(forall e, In e (vm_maps (m_vmmaps mo)) -> fst e = a -> snd e = n) ->
+region_free (map_remove (vm_maps (m_vmmaps mo)) a) a n = true -> 0 < bv_unsigned n ->
 vm_backing_used (munmap_model mo a n)
 + 4096 * (Z.of_nat (length (m_vm_materialized mo)) - Z.of_nat (length (m_vm_materialized (munmap_model mo a n))))
 <= vm_backing_used mo.
 Proof.
-intros mo a n W Hfree. pose proof W as (Wm & Wn & Wl & Wsp). pose proof (u64_range n) as Hn.
+intros mo a n W Hsz Hfree Hn0. pose proof W as (Wm & Wn & Wl & Wsp). pose proof (u64_range n) as Hn.
 set (lo := bv_unsigned a). set (hi := bv_unsigned a + bv_unsigned n).
 rewrite (vm_backing_used_sem _ (wf_munmap mo a n W)), (vm_backing_used_sem _ W).
 rewrite maps_munmap, mat_munmap.
+(* LPS 727298f3: the cut is maps_subtract, map_remove up to empty entries *)
+rewrite (maps_subtract_munmap _ a n Hn0 Hsz Hfree), sum_count_nozero.
 replace (vm_noaccess (m_vmmaps (munmap_model mo a n))) with (maps_subtract (vm_noaccess (m_vmmaps mo)) lo hi)
 by (destruct mo as [fd [maps lazy mat] io fs proc lim tm]; reflexivity).
 replace (m_vm_lazy (munmap_model mo a n)) with (maps_subtract (m_vm_lazy mo) lo hi)
@@ -730,7 +867,7 @@ region_free (map_remove (vm_maps (m_vmmaps mo)) a) a n = true -> 0 < bv_unsigned
 Phi L (munmap_model mo a n) <= Phi L mo.
 Proof.
 intros mo a n W Hsz Hfree Hn. unfold Phi.
-pose proof (backing_munmap mo a n W Hfree).
+pose proof (backing_munmap mo a n W Hsz Hfree Hn).
 assert (HG : forall p, G L (munmap_model mo a n) p = true -> G L mo p = true).
 { apply G_shrink. apply allowed_shrink. eapply appcov_shrink_of. intros y. apply appcov_munmap; assumption. }
 pose proof (Rsv_filter mo (munmap_model mo a n) _ HG (mat_munmap mo a n)). lia.
@@ -867,34 +1004,75 @@ Proof.
 intros. apply readable_bytes_full, read_bytes_map_bytes_in; assumption.
 Qed.
 
+(* #38 made State.read_cstr_aux test State.access_okb a 1 at EVERY byte it steps, so
+   the unguarded walk these two lemmas described no longer exists and they are false
+   exactly where a name's bytes sit at or above TASK_SIZE -- a range
+   strncpy_from_user refuses (lib/strncpy_from_user.c, max_addr = TASK_SIZE_MAX).
+   The model repaired its own copies rather than weakening them and says so at
+   75d69e00 Common/FileSim.v:389-399; the premises below are its premises
+   (:401-405 and :449-451), restated for this file's `a : Z` dialect, and each is the
+   weakest that makes its lemma true.  The CstrOk one bounds the last byte the walk
+   steps -- the NUL; the TooLong one bounds the last of `fuel` non-NUL bytes and is
+   GUARDED at fuel = 0, where the walk steps no byte and the lemma holds wherever a
+   is.  Below TASK_SIZE the walk's a + 1 does not wrap, so one bound puts every
+   stepped byte there and nothing is assumed about the rest of memory.
+   bytes_in cannot supply this: it bounds the range by 2^64 (:807-809) and TASK_SIZE
+   is far below that, so there is no proof-only route.  The non-wrap step is remade
+   here at wa (a + 1) rather than taken from State.bv_unsigned_succ_below_task_size,
+   which is stated on a word.  Twin: QWxq_c1.v, same text. *)
 Lemma read_cstr_aux_bytes_in : forall str fuel mp a,
 (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+(a + Z.of_nat (length str) < TASK_SIZE)%Z ->
 bytes_in mp a (str ++ [Z_to_bv 8 0]) ->
 read_cstr_aux mp (wa a) fuel = CstrOk str.
 Proof.
-induction str as [|b str IH]; intros fuel mp a Hf Hnz H.
-- destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb _].
-cbn [read_cstr_aux]. rewrite Hb. reflexivity.
-- destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb H].
-cbn [read_cstr_aux]. rewrite Hb.
+induction str as [|b str IH]; intros fuel mp a Hf Hnz Hlo H.
+- destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [length] in Hlo. cbn [app] in H.
+assert (Ha0 : (0 <= a)%Z) by (destruct H as (HH & _ & _); exact HH).
+assert (Hr : (0 <= a < 2 ^ 64)%Z)
+  by (unfold TASK_SIZE in Hlo; change (2 ^ 64)%Z with 18446744073709551616%Z; lia).
+assert (Hok : access_okb (wa a) 1 = true)
+  by (rewrite access_okb_one, (wa_unsigned a Hr); apply Z.ltb_lt; lia).
+apply bytes_in_cons in H as [Hb _].
+rewrite (read_cstr_aux_accepted mp (wa a) fuel Hok), Hb. reflexivity.
+- destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [length] in Hf, Hlo. cbn [app] in H.
+assert (Ha0 : (0 <= a)%Z) by (destruct H as (HH & _ & _); exact HH).
+assert (Hr : (0 <= a < 2 ^ 64)%Z)
+  by (unfold TASK_SIZE in Hlo; change (2 ^ 64)%Z with 18446744073709551616%Z; lia).
+assert (Hok : access_okb (wa a) 1 = true)
+  by (rewrite access_okb_one, (wa_unsigned a Hr); apply Z.ltb_lt; lia).
+apply bytes_in_cons in H as [Hb H].
+rewrite (read_cstr_aux_accepted mp (wa a) fuel Hok), Hb.
 assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
 { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
-intro Hin. apply Hnz. right. exact Hin.
+rewrite Hne, wa_succ.
+rewrite (IH fuel mp (a + 1) ltac:(lia)
+           ltac:(intro Hin; apply Hnz; right; exact Hin) ltac:(lia) H).
+reflexivity.
 Qed.
 
 Lemma read_cstr_aux_toolong_bytes_in : forall fuel str mp a,
 (fuel <= length str)%nat -> ~ In (Z_to_bv 8 0) str ->
+(fuel <> 0%nat -> (a + Z.of_nat fuel <= TASK_SIZE)%Z) ->
 bytes_in mp a str ->
 read_cstr_aux mp (wa a) fuel = CstrTooLong.
 Proof.
-induction fuel as [|fuel IH]; intros str mp a Hf Hnz H; [reflexivity|].
-destruct str as [|b str]; [cbn in Hf; lia|]. apply bytes_in_cons in H as [Hb H].
-cbn [read_cstr_aux]. rewrite Hb.
+induction fuel as [|fuel IH]; intros str mp a Hf Hnz Hlo H; [reflexivity|].
+specialize (Hlo ltac:(discriminate)).
+destruct str as [|b str]; [cbn in Hf; lia|].
+assert (Ha0 : (0 <= a)%Z) by (destruct H as (HH & _ & _); exact HH).
+assert (Hr : (0 <= a < 2 ^ 64)%Z)
+  by (unfold TASK_SIZE in Hlo; change (2 ^ 64)%Z with 18446744073709551616%Z; lia).
+assert (Hok : access_okb (wa a) 1 = true)
+  by (rewrite access_okb_one, (wa_unsigned a Hr); apply Z.ltb_lt; lia).
+apply bytes_in_cons in H as [Hb H].
+rewrite (read_cstr_aux_accepted mp (wa a) fuel Hok), Hb.
 assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
 { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
-intro Hin. apply Hnz. right. exact Hin.
+rewrite Hne, wa_succ.
+rewrite (IH str mp (a + 1) ltac:(cbn in Hf; lia)
+           ltac:(intro Hin; apply Hnz; right; exact Hin) ltac:(intros _; lia) H).
+reflexivity.
 Qed.
 
 Definition iovec_bytes (iovs : list (word * word)) : list byte :=
@@ -948,13 +1126,15 @@ intros iovs bufs mp a H HF. revert a H. induction HF as [|[b l] bs iovs bufs (Hl
 cbn [iovec_bytes flat_map fst snd] in H. rewrite <- app_assoc in H.
 apply bytes_in_app in H as [H1 H]. apply bytes_in_app in H as [H2 H3].
 rewrite !length_le8 in H2. rewrite !length_le8 in H3.
-cbn [copy_iovecs_accesses length seq map]. unfold read_iovec_entry. rewrite (read_u64_bytes_in _ _ _ H1).
+(* LPS 727298f3: each entry's record is [State.iovec_entry_accesses], one 16-byte read
+   when both words read *)
+cbn [copy_iovecs_accesses length seq map]. unfold read_iovec_entry, iovec_entry_accesses. rewrite (read_u64_bytes_in _ _ _ H1).
 rewrite !wa_add. change (bv_unsigned (8%bv : word)) with 8. change (bv_unsigned (16%bv : word)) with 16.
 replace (a + Z.of_nat 8) with (a + 8) in H2 by lia. rewrite (read_u64_bytes_in _ _ _ H2).
 cbn [fst snd] in Hl. subst l. rewrite unsigned_lit by lia.
 replace (2 ^ 63 <=? Z.of_nat (length bs)) with false by (symmetry; apply Z.leb_gt; lia).
 replace (a + Z.of_nat 8 + Z.of_nat 8) with (a + 16) in H3 by lia.
-unfold iovec_bytes in IH. rewrite (IH _ H3). rewrite <- seq_shift, map_map.
+unfold iovec_bytes in IH. rewrite (IH _ H3). rewrite <- seq_shift, map_map. cbn [app].
 replace (a + 16 * Z.of_nat 0) with a by lia. f_equal. apply map_ext. intros k. f_equal. f_equal. lia.
 Qed.
 
@@ -1057,7 +1237,14 @@ Z.ldiff (bv_unsigned (areg ms 12)) open_ignored_flags = 0 /\
 
 path_has_slash path = false /\ path_eqb path dotdot_path = false /\
 ms_rom ms = seg_rom segs /\
-bytes_at segs (ms_mem ms) (bv_unsigned (areg ms 11)) (path ++ [Z_to_bv 8 0])
+bytes_at segs (ms_mem ms) (bv_unsigned (areg ms 11)) (path ++ [Z_to_bv 8 0]) /\
+(* #38's read_cstr_aux refuses a byte at or above TASK_SIZE, so an openat node whose
+   path crosses that line is one the model declines rather than walks.  This conjunct
+   is the openat twin of the two this very definition already carries: NWritev's
+   `bv_unsigned (areg ms 11) + 16 * length bufs <= TASK_SIZE` at :1091-1092 and
+   NRead's `buf + count <= task_size_max` at :1109.  It goes LAST so the eight
+   conjuncts above keep their positions. *)
+bv_unsigned (areg ms 11) + Z.of_nat (length path) < TASK_SIZE
 | NRead fd buf count =>
 ms_svc_pending ms = Some (Z_to_bv 64 63) /\
 3 <= fd < 2^32 /\
@@ -1163,7 +1350,8 @@ eff = mkEffect (len_word bs) (delivered_writes (Z_to_bv 64 buf) bs) [] /\
 mo' = with_fds (fd_insert (m_fds mo) (Z_to_bv 64 fd) (FdFile p (off + len_word bs)%bv)) mo
 end
 | Some (FdChannel _) | Some (FdFileW _ _) | Some (FdFileA _ _) | Some (FdFileRW _ _)
-| Some (FdSocket _) | Some (FdPipe _ _) | Some (FdDevNull _ _) | Some FdUrandom => False
+| Some (FdSocket _) | Some (FdPipe _ _) | Some (FdDevNull _ _) | Some FdUrandom
+| Some (FdStream _ _ _) | Some (FdEventfd _) | Some (FdDgram _) | Some (FdAnon _ _) => False
 end
 | NClose fd =>
 evs = [] /\ 3 <= fd < 2^32 /\
@@ -1496,16 +1684,17 @@ check_syscall (sys_input segs ms (Z_to_bv 64 56)) eff mo =
 check_copyins_after [(areg ms 11, cstr_access_len_aux (ms_read_byte ms) (areg ms 11) path_max)] eff
 (open_check path (clear_copyins eff) mo).
 Proof.
-intros ms mo path eff (Hsvc & Ha0 & Hfl & Hnz & Hsl & Hdd & Hrom & Hp).
+intros ms mo path eff (Hsvc & Ha0 & Hfl & Hnz & Hsl & Hdd & Hrom & Hp & Hts).
 pose proof (bytes_at_in _ _ _ _ Hrom Hp) as Hin.
 dispatch 56. unfold check_openat. rewrite Ha0, in_mem_si.
 rewrite (modeled_open_flags_rd _ Hfl). cbn [negb]. cbv zeta. f_equal.
 unfold Open.check_openat_body, open_check.
 rewrite <- (wa_unsigned_id (areg ms 11)) at 1. unfold read_cstr.
 destruct (Nat.leb_spec0 path_max (length path)) as [Hlong|Hshort].
-- rewrite (read_cstr_aux_toolong_bytes_in path_max path); [reflexivity|exact Hlong|exact Hnz|].
+- rewrite (read_cstr_aux_toolong_bytes_in path_max path);
+    [reflexivity|exact Hlong|exact Hnz| intros _; lia |].
 apply bytes_in_app in Hin as [Hin _]. exact Hin.
-- rewrite (read_cstr_aux_bytes_in path path_max); [|lia|exact Hnz|exact Hin].
+- rewrite (read_cstr_aux_bytes_in path path_max); [|lia|exact Hnz|exact Hts|exact Hin].
 cbv iota beta.
 unfold Open.check_openat_resolved, Open.check_openat_read, path_is_dirref.
 rewrite Hsl, Hdd, Bool.orb_false_r. cbv iota beta.
@@ -1596,7 +1785,7 @@ Proof. intros. apply listN_eqb_eq. reflexivity. Qed.
 Lemma read_check_no_unmodeled : forall fd buf count eff mo, read_check fd buf count eff mo <> CheckUnmodeled.
 Proof.
 intros fd buf count eff mo. unfold read_check.
-destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id w|dnr dnw| ]|]; try discriminate; try apply check_ret_only_no_unmodeled.
+destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id w|dnr dnw| |sq sw sv|ex|dgf|ani anf]|]; try discriminate; try apply check_ret_only_no_unmodeled.
 destruct (fs_lookup (m_fs mo) p); [|discriminate]. cbv zeta.
 destruct (file_read _ _ _); [apply check_ret_only_no_unmodeled|].
 destruct eff as [ret [|[a bs'] [|? ?]] [|? ?] [|? ?] [|? ?] [|? ?]]; try discriminate.
@@ -1667,7 +1856,8 @@ rewrite (access_okb_le b) by (unfold MAX_RW_COUNT; lia). cbn [negb]. split; [ref
 cbn [copy_iovecs_accesses length]. unfold read_iovec_entry. rewrite (read_u64_bytes_in _ _ _ H1).
 rewrite wa_add. change (bv_unsigned (8%bv : word)) with 8. rewrite (read_u64_bytes_in _ _ _ H2).
 rewrite unsigned_lit by lia. replace (2 ^ 63 <=? Z.of_nat (length bs)) with false by (symmetry; apply Z.leb_gt; lia).
-reflexivity.
+(* LPS 727298f3: the one entry's record is [iovec_entry_accesses] then the empty tail *)
+rewrite ?app_nil_r. reflexivity.
 -
 set (iovs := (b, l) :: iov2 :: rest) in *.
 assert (Hn1 : bv_eqb (Z_to_bv 64 (Z.of_nat (length iovs))) (Z_to_bv 64 1) = false).

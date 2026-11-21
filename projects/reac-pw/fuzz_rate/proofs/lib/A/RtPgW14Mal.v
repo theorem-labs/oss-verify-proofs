@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v at 6ebe35ba632; its rt_chain is ported here as rl_c23_chain (statement kept, proof by the kernel's achain_push); the rest of this file is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPostMal.v at f5c24e17b400 for reac-pw/fuzz_rate image A: its helpers (memories equal at every word, a cell as a word of the view, register names, the caller chain, acall_kept across equal memories) are kept with the prefix w14m_; the step is rate's malloc(buf) step C4 -> C6 (five instructions before the call, a continuation statement whose cut C6 is rebuilt here) in place of role's C2 -> C3. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v; its rt_chain is ported here as rl_c23_chain (statement kept, proof by the kernel's achain_push); the rest of this file is new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPostMal.v for reac-pw/fuzz_rate image A: its helpers (memories equal at every word, a cell as a word of the view, register names, the caller chain, acall_kept across equal memories) are kept with the prefix w14m_; the step is rate's malloc(buf) step C4 -> C6 (five instructions before the call, a continuation statement whose cut C6 is rebuilt here) in place of role's C2 -> C3. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, same loaded bytes): THE malloc(buf) STEP of the

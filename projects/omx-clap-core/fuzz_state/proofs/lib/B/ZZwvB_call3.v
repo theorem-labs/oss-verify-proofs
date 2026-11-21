@@ -2,8 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AE2y.v, with its module paths and module names changed; 261 of its 290 lines of code are new or changed and 675 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_call3.v (a working branch
-   1a5dc5b2e7c): same lemma names and statements; imports point at lib/B's image files and walk kit (YB1v, YB1w,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_call3.v (a working branch):
+   same lemma names and statements; imports point at lib/B's image files and walk kit (YB1v, YB1w,
    FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer, FSH_Fn_alloc, FSW_K, FSW_K3, FSW_ret, FSW_rres, FSW_rd, FSW_pj,
    FSW_write_value_entry for image A's FSW_writer_tbl, ZZwvB_defs, ZZwvB_inv, ZZwvB_kit, ZZwvB_comp, ZZwvB_call,
    ZZwvB_call2); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen, FSupoisonStack stay lib/A's.
@@ -23,6 +23,7 @@
    keeps); the transports are the kit's (ZZwvB_kit, from a Theorem Labs lane's FSW_pj_write.v).
    Rule 24: no function proved here (write_value's lookup: lane record (internal path), CHECKER CONFIRM
    a Theorem Labs lane). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YA0b.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ-sized auxiliary vector; the launch's ProcInput, mmap base and entry draw). *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -17,6 +18,10 @@ Import ListNotations.
 Import AX2. Import AX2S. Import APG. Import APSG.
 Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+(* [e_str0]'s variables are below NX0G at either CONFIG_RSEQ flag; the flag is free, so
+   the check is closed per flag. *)
+Lemma nb_e_str0 : forall b, nb_lt NX0G (e_str0 (rseq_z b)) = true.
+Proof. intros [|]; reflexivity. Qed.
 Section b.
 Variable segs : list Segment.
 Variable A : atable.
@@ -24,6 +29,7 @@ Variable ph : PhdrInfo.
 Hypothesis SEGS_wx : wx_segs_nowrap segs.
 Hypothesis SEGS_in_hull : forall a : word, in_hull A (bv_unsigned a) = false -> find_segment segs (bv_unsigned a) 1 = None.
 Hypothesis HULL_ok : hull_ok A.
+Hypothesis RES_cover : res_cover_ok segs A.
 Variables we1 we2 we3 wp0 wp1 wp2 wp3 wp4 : bv 32.
 Hypothesis Xenv : 0 <= x_envscan A /\ x_envscan A + 12 < 2 ^ 64 /\ x_envscan_k A = x_envscan A + 12.
 Hypothesis Fe1 : fetch_word segs (Z_to_bv 64 (x_envscan A)) = Some we1.
@@ -45,27 +51,58 @@ Hypothesis Dp1 : decode_any wp1 = Some (OpImm ALU_ADD 11 11 1, 4%Z).
 Hypothesis Dp2 : decode_any wp2 = Some (Load SZ1 false 13 11 4095, 4%Z).
 Hypothesis Dp3 : decode_any wp3 = Some (Branch BC_EQ 13 12 8180, 4%Z).
 Hypothesis Dp4 : decode_any wp4 = Some (Branch BC_NE 13 0 8180, 4%Z).
+(* 727298f3 (75d69e00 launch): [YA02]'s Section takes the whole packed input, the mmap base,
+   the kernel build and the entry pc, and its stack strings sit at the TOP of the stack VMA.
+   This Section declares the same variables and hypotheses, in [YA02]'s order, so that each
+   [YA02] lemma below is applied by unification ([eapply] then [eassumption]) rather than by
+   a positional list. *)
 Variable sp : word.
 Variable rdraw : EntryDraw.
 Variable brk0 mbase : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variable stdin : InputStream.
+Variables uid gid hw : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variable sdef : bool.
+Variable apc : N.
 Variable FS0 : Fs.Fs.
+Hypothesis IMG : img_facts segs A ph.
 Hypothesis Hsp : valid_sp sp.
+Hypothesis Hbrk : valid_brk segs brk0.
+Hypothesis Hmb : valid_mmap_base mbase.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Variable uid : word.
-Variable hw : word.
 Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Huid : valid_id uid.
+Hypothesis Hhw : valid_hwcap hw.
+Let INP := YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef.
+Hypothesis Hnof : valid_nofile nofile.
+Hypothesis Hsig : valid_sigmask INP.
+Hypothesis Hapc : Z.of_N apc = a_entry A.
+Hypothesis Hvl : valid_launch INP.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+Let ENTRY : word := Z_to_bv 64 (Z.of_N apc).
+Let RSEQ := kb_rseq (in_kernel INP).
+Let RZ := rseq_z RSEQ.
+#[local] Notation ARGH := (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef).
+#[local] Notation E00 := (E0 sp rdraw brk0 argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef).
 Variable SINV : env -> (word -> option byte) -> Prop.
-Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 ph sp rdraw brk0 argv envp uid hw E M.
-Hypothesis SINV_frame : forall E M M', (forall a, argH0 ph sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+Hypothesis SINV_SINV0 : forall E M, SINV E M ->
+SINV0 ph sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef apc E M.
+Hypothesis SINV_frame : forall E M M', (forall a, ARGH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree NX0G E E' -> SINV E M -> SINV E' M.
 Let usp := bv_unsigned sp.
 Let argc := Z.of_nat (length argv).
 Let envc := Z.of_nat (length envp).
 Let s0 := nth 0 argv [].
+Let STR0 := usp + Z.of_nat (cat_string_off RSEQ sp (ed_top rdraw) argv envp execfn).
 Let TOP : Z := YA02.TOP sp.
 Lemma TOP_ok' : top_ok TOP. Proof. exact (top_ok0 sp Hsp). Qed.
 Lemma TOP_sp : TOP + 8388608 = bv_unsigned sp. Proof. unfold TOP, YA02.TOP. lia. Qed.
@@ -73,67 +110,61 @@ Lemma sp_lo : sp_window_lo <= bv_unsigned sp.
 Proof. destruct Hsp as [H _]. exact H. Qed.
 Lemma sp_hi : bv_unsigned sp <= sp_window_hi.
 Proof. destruct Hsp as (_ & H & _). exact H. Qed.
+Lemma ARGH_high : forall E (a : word), ARGH E a = true -> TOP <= bv_unsigned a.
+Proof. intros E a H. eapply argH0_high; try eassumption. Unshelve. all: assumption. Qed.
+Lemma ARGH_agree : forall E E' (a : word), env_agree NX0G E E' -> ARGH E a = ARGH E' a.
+Proof. intros E E' a H. eapply argH0_agree; try eassumption. Unshelve. all: assumption. Qed.
 Lemma SINV0_vals : forall E M, SINV E M ->
 uE E e_envp = usp + 8 * argc + 16
 /\ ev E V_ENVC = Z_to_bv 64 envc
-/\ uE E e_str0 = usp + 8 * argc + 8 * envc + 184.
+/\ uE E (e_str0 RZ) = STR0.
 Proof.
 intros E M HS. apply SINV_SINV0 in HS. destruct HS as [Hev _].
-pose proof (u_e_envp ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U1.
-pose proof (u_e_str0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U3.
-pose proof (uE0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (_ & _ & _ & U2 & _).
-assert (Hev7 : forall n, (n < NX0G)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n) by (intros n Hn; apply Hev; exact Hn).
+assert (U1 : uE E00 e_envp = usp + 8 * argc + 16).
+{ eapply u_e_envp; try eassumption. Unshelve. all: assumption. }
+assert (U3 : uE E00 (e_str0 RZ) = STR0).
+{ eapply u_e_str0; try eassumption. Unshelve. all: assumption. }
+assert (Hev7 : forall n, (n < NX0G)%nat -> ev E n = ev E00 n) by (intros n Hn; apply Hev; exact Hn).
 unfold uE in *.
-rewrite (edenot_ev_agree NX0G E (E0 ph sp rdraw brk0 argv envp uid hw) e_envp eq_refl Hev7).
-rewrite (edenot_ev_agree NX0G E (E0 ph sp rdraw brk0 argv envp uid hw) e_str0 eq_refl Hev7).
+rewrite (edenot_ev_agree NX0G E E00 e_envp eq_refl Hev7).
+rewrite (edenot_ev_agree NX0G E E00 (e_str0 RZ) (nb_e_str0 RSEQ) Hev7).
 split; [exact U1|]. split; [|exact U3].
-change (ev E V_ENVC) with (edenot E (EVar V_ENVC)).
-rewrite (edenot_ev_agree NX0G E (E0 ph sp rdraw brk0 argv envp uid hw) (EVar V_ENVC) eq_refl Hev7).
-apply bv_eq. rewrite U2. unfold envc. destruct Hve as [H _]. rewrite u64_lit by lia. reflexivity.
+(* [E0]'s fourth value word is the envp count itself *)
+rewrite (Hev7 V_ENVC ltac:(apply Nat.ltb_lt; reflexivity)). reflexivity.
 Qed.
 Lemma SINV0_envp : forall E M (a : word), SINV E M ->
-usp + 8 * argc + 16 <= bv_unsigned a < usp + 8 * argc + 16 + 8 * envc + 8 -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+usp + 8 * argc + 16 <= bv_unsigned a < usp + 8 * argc + 16 + 8 * envc + 8 ->
+M a = wrap_mem INP mbase ph ENTRY sp rdraw a.
 Proof.
 intros E M a HS Ha. apply SINV_SINV0 in HS. destruct HS as (_ & HM & _). apply HM. unfold argH0. apply orb_true_intro. left.
 apply andb_true_intro. unfold usp, argc, envc in Ha. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
 Qed.
-Lemma s0_fits : Z.of_nat (length s0) + 1 <= total_arg_bytes argv.
-Proof.
-unfold s0. rewrite total_arg_bytes_Z. destruct argv as [|a r]; [destruct Hva as [H _]; cbn in H; lia|].
-cbn [nth]. rewrite total_arg_bytes_cons. lia.
-Qed.
 Lemma SINV0_str0 : forall E M (a : word), SINV E M ->
-usp + 8 * argc + 8 * envc + 184 <= bv_unsigned a <= usp + 8 * argc + 8 * envc + 184 + Z.of_nat (length s0) ->
-M a = wrap_mem ph sp argv envp uid hw rdraw a.
+STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) ->
+M a = wrap_mem INP mbase ph ENTRY sp rdraw a.
 Proof.
 intros E M a HS Ha. apply SINV_SINV0 in HS. destruct HS as (_ & HM & _). apply HM. unfold argH0. apply orb_true_intro. right.
-pose proof (W_range ph sp rdraw argv envp uid hw Hva Hve) as (W1 & W2 & W3).
-pose proof (length_bsb_eq ph sp rdraw argv envp uid hw) as L. pose proof s0_fits as F.
-pose proof (total_arg_bytes_Z envp) as TE.
-unfold stack_image_size in L.
-assert (Hpd : 0 <= (8 - (8 + (Z.of_nat (length argv) + 1) * 8 + (Z.of_nat (length envp) + 1) * 8 + 160
-+ total_arg_bytes argv + total_arg_bytes envp) mod 8) mod 8 < 8) by (apply Z.mod_pos_bound; lia).
-apply andb_true_intro. unfold usp, argc, envc in Ha. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
+(* the strings run from [STR0] to the stack VMA's end, argv[0] and its NUL first *)
+assert (S1 : STR0 + Z.of_nat (launch_string_bytes argv envp execfn) + 8 = bv_unsigned (ed_top rdraw)).
+{ eapply YA02.str0_hi; try eassumption. Unshelve. all: assumption. }
+assert (S2 : Z.of_nat (length (nth 0 argv [])) + 1 <= Z.of_nat (launch_string_bytes argv envp execfn)).
+{ eapply YA02.s0_in_strings; try eassumption. Unshelve. all: assumption. }
+apply andb_true_intro. unfold s0 in Ha. split; [apply Z.leb_le | apply Z.ltb_lt]; unfold STR0, RSEQ, INP, usp in *; lia.
 Qed.
-Theorem init_x_sound_envscan :
-x_stmt segs A NX0G LIMIT TOP SINV (argH0 ph sp rdraw argv envp uid hw) FS0 XEnvScan.
+Theorem init_x_sound_envscan : x_stmt segs A NX0G LIMIT RZ TOP SINV ARGH FS0 XEnvScan.
 Proof.
-exact (x_sound_envscan segs A NX0G LIMIT TOP SINV (argH0 ph sp rdraw argv envp uid hw) FS0
-SEGS_wx SEGS_in_hull HULL_ok TOP_ok' SINV_frame
-we1 we2 we3 Xenv Fe1 Fe2 Fe3 Ee De1 De2 De3
-ph sp rdraw argv envp uid hw Hva Hve sp_lo sp_hi TOP_sp SINV0_vals SINV0_envp).
+eapply (x_sound_envscan segs A NX0G LIMIT TOP SINV ARGH FS0);
+first [ eassumption | exact TOP_ok' | exact sp_lo | exact sp_hi | exact TOP_sp
+      | exact SINV0_vals | exact SINV0_envp | exact SINV0_str0 | exact ARGH_high | exact ARGH_agree ].
+Unshelve. all: assumption.
 Qed.
-Theorem init_x_sound_pnscan :
-x_stmt segs A NX0G LIMIT TOP SINV (argH0 ph sp rdraw argv envp uid hw) FS0 XPnScan.
+Theorem init_x_sound_pnscan : x_stmt segs A NX0G LIMIT RZ TOP SINV ARGH FS0 XPnScan.
 Proof.
-exact (x_sound_pnscan segs A NX0G LIMIT TOP SINV (argH0 ph sp rdraw argv envp uid hw) FS0
-SEGS_wx SEGS_in_hull HULL_ok
-TOP_ok' (argH0_high ph sp rdraw argv envp uid hw Hsp Hva) (argH0_agree ph sp rdraw argv envp uid hw)
-SINV_frame SINV_agree
-wp0 wp1 wp2 wp3 wp4 Xpn Fp0 Fp1 Fp2 Fp3 Fp4 Ep Dp0 Dp1 Dp2 Dp3 Dp4
-ph sp rdraw argv envp uid hw Hva Hve sp_lo sp_hi TOP_sp SINV0_vals SINV0_str0).
+eapply (x_sound_pnscan segs A NX0G LIMIT TOP SINV ARGH FS0);
+first [ eassumption | exact TOP_ok' | exact sp_lo | exact sp_hi | exact TOP_sp
+      | exact SINV0_vals | exact SINV0_envp | exact SINV0_str0 | exact ARGH_high | exact ARGH_agree ].
+Unshelve. all: assumption.
 Qed.
-Theorem init_x_sound_layout :
-x_stmt segs A NX0G LIMIT TOP SINV (argH0 ph sp rdraw argv envp uid hw) FS0 XLayout.
+Theorem init_x_sound_layout : x_stmt segs A NX0G LIMIT RZ TOP SINV ARGH FS0 XLayout.
 Proof. apply x_sound_layout. Qed.
 End b.

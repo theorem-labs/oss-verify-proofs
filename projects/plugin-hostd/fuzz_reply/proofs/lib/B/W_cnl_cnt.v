@@ -1,5 +1,5 @@
-(* Image B's twin of lib/A/W_cnl_cnt.v (a working branch 6d7aa300374; the same file on
-   a working branch 1f58d4146b4), over lib/B's kit: the text below is A's with the lib/A imports read from
+(* Image B's twin of lib/A/W_cnl_cnt.v (a working branch; the same file on
+   a working branch), over lib/B's kit: the text below is A's with the lib/A imports read from
    lib/B (W_rep, W_contract, W_journal_x, W_contract_x, ReplyCnt, ReplyTrPeakW are mkbkit twins with the same names).
    The room round (ROOM-TEXTS.md v3 sha256 767baa12f13c; internal record) for check_no_loss's _x walk (lib/B/W_check_no_loss.v): the count and
    budget bookkeeping its loop carries.  Pure lemmas over the plain model, no walk.

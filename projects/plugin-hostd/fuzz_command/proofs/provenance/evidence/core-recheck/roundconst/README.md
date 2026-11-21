@@ -30,7 +30,7 @@ Reusable, by blob hash). Gate inputs, gzip'd: `in/{RA,RB,RU,CA,CB}.full.tsv.gz`.
    control (1) on the donor-on-donor TSVs CA, CB (`controls/c1-*`).
 2. `mkplants_rc2.py UNIT_LIB plants` and `PAR=4 run_plants.sh PAC_WRAPPER RUNS_DIR IMGDIR`: 9 plant copies and 8
    unplanted base runs, each `port_addr_check` run restricted to the planted file (`--include F --dst-include F`, donor
-   tree c8557374ad2e lib/A for lib/A, lib for lib/B, images keyed with their twins), then v2 and v1 with
+   tree lib/A for lib/A, lib for lib/B, images keyed with their twins), then v2 and v1 with
    `--all-verdicts` on every base and plant (`controls/pac/`, `controls/v2/`, `controls/v1/`). The plant positions were
    chosen with `find_plants.py` (`controls/plant_candidates.{A,B}.txt`).
 3. `compare_plants.py .` writes `controls.tsv`.
@@ -158,3 +158,5 @@ Of the triage rules (this directory):
   v1 on plants, logs; `plants/plants.tsv`; `in/`: gate inputs; `img/`: the two plain images and twins.
 - Scripts: `run_main.sh`, `mkplants_rc2.py`, `find_plants.py`, `run_plants.sh`, `compare_plants.py`, `run_extra.sh`,
   `triage_rows.py`, `roles_unit.py`; `tool/` holds the gate files as checked (v2 and its SHA256SUMS, v1).
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

@@ -2,8 +2,8 @@
 (* Modified by Theorem Labs, 2026-10: relocated from lib/A/<same path> to fuzz_command.asan-ubsan by the image-B address relocator (the A-to-B address map, keyed by the image maps' symbol names and by code; GXA symbol keys kept), whose check table lists every changed numeral *)
 (* The NORMALIZATION layer of the GXA seam at musl vfprintf.
 
-   GXA's statement (lib/CJ/RL/GXA/VfprintfCall.v:22 vfprintf_guarded_stmt) asks `mem_inv img_segs m`
-   (VfprintfCall.v:37) of the store it runs on.  For the harness's store m = cjstore (w_H W) mem that
+   GXA's statement (lib/CJ/RL/GXA/VfprintfCall.v:23 vfprintf_guarded_stmt) asks `mem_inv img_segs m`
+   (VfprintfCall.v:38) of the store it runs on.  For the harness's store m = cjstore (w_H W) mem that
    is not derivable (FMgxaSeamInv.v).  So the seam runs GXA on the NORMALIZED store
      cjnorm H mem := MemNorm.normalize_cj tfibsegs (cjstore H mem)        (lib/MemNorm.v:534)
    which drops every stored byte at a read-only address and every stored byte above TASK_SIZE outside
@@ -126,7 +126,7 @@ intros x Hx. destruct (CJM.ro_addr tfibsegs x) eqn:E; [|reflexivity].
 pose proof (tfib_ro_range x E). lia.
 Qed.
 
-(* GXA's GLOBALS_TOP on A_img (RT_IImgA.v:73) *)
+(* GXA's GLOBALS_TOP on A_img (RT_IImgA.v:74) *)
 Lemma globals_top_A : @GXI.GLOBALS_TOP A_img = 0x606000.
 Proof. vm_compute. reflexivity. Qed.
 
@@ -226,7 +226,7 @@ Qed.
 Lemma cj_kept_high : forall lo hi, @GXI.GLOBALS_TOP A_img <= lo -> hi <= TASK_SIZE -> cj_kept lo hi.
 Proof. intros lo hi H1 H2. rewrite globals_top_A in H1. apply cj_kept_off_ro; lia. Qed.
 
-(* GXA's destination: below the image or at or above GLOBALS_TOP (VfprintfCall.v:42) *)
+(* GXA's destination: below the image or at or above GLOBALS_TOP (VfprintfCall.v:43) *)
 Lemma cj_kept_dest : forall D n, 0 <= D -> D + n <= TASK_SIZE ->
   (D + n <= 65536 \/ @GXI.GLOBALS_TOP A_img <= D) -> cj_kept D (D + n).
 Proof. intros D n H0 H1 H2. rewrite globals_top_A in H2. apply cj_kept_off_ro; lia. Qed.
@@ -276,7 +276,7 @@ intros H mem lo hi K (H1 & H2 & H3). split; [exact H1|]. split; [exact H2|]. int
 rewrite wview_cjnorm, mrd_cjnorm_keep by exact (K a Ha). exact (H3 a Ha).
 Qed.
 
-(* ---- GXA's premises, one by one (VfprintfCall.v:29-38) ---- *)
+(* ---- GXA's premises, one by one (VfprintfCall.v:30-39) ---- *)
 Lemma snf_file_size : forall bufp CK, CJC.cells_size (@GVX.snf_file A_img bufp CK) = 232%nat.
 Proof. reflexivity. Qed.
 
@@ -491,7 +491,7 @@ Qed.
 
 Section Run. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* the premise in the shape GXA delivers (VfprintfCall.v:44, with the ambient FP state), the
+(* the premise in the shape GXA delivers (VfprintfCall.v:45, with the ambient FP state), the
    conclusion in the shape FMgxa_bridge.srr_of_gxa_evt consumes *)
 Theorem evt_from_norm : forall (W : world tfibsegs) (pc : Z) regs mem (Q : machine_state -> Prop),
   MN.ro_agree tfibsegs (cjstore (w_H W) mem) ->
@@ -626,7 +626,7 @@ Qed.
 End View.
 
 (* ---- GXA's post at the harness's final state ---- *)
-(* the post GXA's guarded statement delivers (VfprintfCall.v:43, GX's vfprintf_snf_post at
+(* the post GXA's guarded statement delivers (VfprintfCall.v:44, GX's vfprintf_snf_post at
    lib/CJ/RL/GX/G_vfprintf_snf.v:203), at the store m the harness's run started from, without
    mem_inv: mem_inv comes back only if m had it (mem_inv_from_norm) *)
 Definition vf_post_store (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word)
@@ -878,7 +878,7 @@ intros ly R H mem lo hi K (H1 & H2 & H3). split; [exact H1|]. split; [exact H2|]
 rewrite wview_cjnormv, mrd_cjnormv_keep by exact (K a Ha). exact (H3 a Ha).
 Qed.
 
-(* ---- GXA's premises (VfprintfCall.v:29-38): cjnorm's statements, the data ranges in app memory ---- *)
+(* ---- GXA's premises (VfprintfCall.v:30-39): cjnorm's statements, the data ranges in app memory ---- *)
 Lemma file_cjnormv : forall ly R H mem Fp bufp CK, @GXI.GLOBALS_TOP A_img <= Fp -> Fp + 232 <= TASK_SIZE ->
   AF.app_ivl Fp (Fp + 232) ->
   CJS.rw_cells tfibsegs (cjstore H mem) Fp (GVX.snf_file bufp CK) ->

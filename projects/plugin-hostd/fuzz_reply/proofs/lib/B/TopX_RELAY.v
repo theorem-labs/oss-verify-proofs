@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-31 (a Theorem Labs lane, for a Theorem Labs lane's B W1 rows and a Theorem Labs lane's ReplyBTop): two callee
    contracts of image B's top_x at its W1 relation, the ReplyBTop rows
      RSRC_x : relay_source (0x85d28) at fr_B0 + AF_fr_relay_source  (W_LLVMFuzzerTestOneInput_top_x.v Hypothesis RSRC_x)
      RRDS_x : relay_reads  (0x864e8) at fr_B0 + AF_fr_relay_reads   (the drain arm's RRDS_x, the same shape)
-   PROVED at top_x's relation ARX (W_LLVMFuzzerTestOneInput_top_x.v:177-179: ARcf /\ Hp = [] /\ arodata_ok_cf, restated
+   PROVED at top_x's relation ARX (W_LLVMFuzzerTestOneInput_top_x.v:178-180: ARcf /\ Hp = [] /\ arodata_ok_cf, restated
    here verbatim as ARX_rl so that this file does not build top_x; k3's `exact` at top_x's ARX is by unfolding).
    Image A has no twin: A inlines relay_source and relay_reads (W_relay_src_c.v header).  The proofs are the GENERIC
-   walks of lib/B/W_relay_src_c.v (a Theorem Labs lane, a working branch 44e1c0f0315):
+   walks of lib/B/W_relay_src_c.v (a Theorem Labs lane, a working branch):
    pb_relay_source_x_fr / pb_relay_reads_x_fr, over any ARx with AR_laws_x, Hp = [] in every ARx state and (for
    relay_reads) asyms_ok B in every ARx state, at B's pin from TfibB's two shadow cells.  At ARX_rl: the laws are
    top_x's ARX_laws proof (copied below), Hp = [] its second conjunct, asyms_ok ARcf's amc_syms.  The W1 conjunct needs
@@ -51,12 +52,12 @@ Section topx_relay. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 #[local] Existing Instance tfib_sink_head.
 
-(* W_LLVMFuzzerTestOneInput_top_x.v:177-179, verbatim *)
+(* W_LLVMFuzzerTestOneInput_top_x.v:178-180, verbatim *)
 Definition ARX_rl : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop :=
   fun ly S Hp W mem md => ARcf (ci := CfImg_B) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
     @YG0dcf.arodata_ok_cf CfImg_B segs TfibB mem.
 
-(* W_LLVMFuzzerTestOneInput_top_x.v:180-191's ARX_laws, at ARX_rl *)
+(* W_LLVMFuzzerTestOneInput_top_x.v:181-192's ARX_laws, at ARX_rl *)
 Lemma ARX_rl_laws : AR_laws_x segs TfibB ARX_rl (@cf_head CfParams_reply).
 Proof.
   apply (AR_laws_x_iff segs TfibB (fun ly S Hp W mem md =>

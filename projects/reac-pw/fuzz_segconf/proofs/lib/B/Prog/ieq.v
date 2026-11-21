@@ -13,8 +13,8 @@
    unstripped twin 80e82127e8ca; entry 0x87b70, 292 bytes, 73 instructions, a 48-byte frame, no side-stack frame):
    ieq_contract of lib/B/Prog/ieq_c.v at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre
    at the entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing
-   lib/B/Prog/SegPa.v). Adapted from the image-A m_file-family lane's image-A walk lib/A/Prog/ieqA.v (commit
-   056d4583918f: all 58 of A's instructions recur in order in B; B adds 15) and the segconf porter's UBSan walk
+   lib/B/Prog/SegPa.v). Adapted from the image-A m_file-family lane's image-A walk lib/A/Prog/ieqA.v (
+   all 58 of A's instructions recur in order in B; B adds 15) and the segconf porter's UBSan walk
    lib/U/Prog/ieq.v (which fact kills each trap).
 
    The code (the neutral listing of ieq in image B):
@@ -56,6 +56,7 @@
    of lib/B/Prog/SegList.v / SegAddr.v); STK_ieq (= 48 + ESTACK: the frame of 48 and the ESTACK window row 16
    asks), RLO_A and RHI_A from lib/B/Prog/SegInstB.v (image B's values under SegInstA's names). The contract's
    argument `word` is named wd here: `word` is also the machine-word type these lemmas use. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

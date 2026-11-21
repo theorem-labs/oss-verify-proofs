@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the sections take kb, execfn and the rest of QpvH.inp with QpvH.launch_ok in place of entry_stack_fits, and the start-up hands main SINV0 at the image's entry point; the CONFIG_RSEQ flag of the start-up layer: four main-entry states in HSCLASS_S and the states of the run's own value (HSCLASS_R, HS2s at rseq_z); the channel-reader premise (rdr = true); the stack window from the model's stack_window_depth in place of the 8 MiB bound; realizes_canon's equality argument (eq_refl); the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -35,7 +36,7 @@ pc ch = QupI.MAIN_A
 /\ nth 4 (s_regs (a_ss ch)) (ELit 0) = ELit Qwm6.Mq4.A_TP
 /\ nth 10 (s_regs (a_ss ch)) (ELit 0) = EVar 1
 /\ nth 11 (s_regs (a_ss ch)) (ELit 0) = EAlu Instr.ALU_ADD e_sp0 (ELit 8).
-Proof. intros [|] ch [-> | ->]; vm_compute; repeat split; reflexivity. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; repeat split; reflexivity. Qed.
 
 Section PerState.
 Variable sp : word.
@@ -44,32 +45,46 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation argc := (Z.of_nat (length argv)).
-#[local] Notation EI := (E0 JOB6PH sp rdraw brk0 argv envp uid hw).
+#[local] Notation EI := (E0 sp rdraw brk0 argv envp uid gid hw kb execfn).
 #[local] Notation mv := (view LV mo FULL).
 
 Lemma atop_al16 : atopE E mod 16 = 0.
 Proof. rewrite (MV4 atop_val). destruct Hsp as (_ & _ & H3). replace (usp - 8388608) with (usp + (-524288) * 16) by lia. rewrite Z.mod_add by lia. exact H3. Qed.
 Definition RCJ : Q6q3.RunConsts :=
-Q6q3.mkRunConsts (atopE E) (ev E 45) (bv_unsigned (edenot E (EBlob false 25 8 8)))
+Q6q3.mkRunConsts (atopE E) (ev E 49) (bv_unsigned (edenot E (EBlob false 25 8 8)))
 (MA main_atop_bounds) atop_al16 (u64_range (edenot E (EBlob false 25 8 8))).
 #[local] Existing Instance RCJ.
 Lemma RCJ_ceil : @Q6q3.rc_ceil RCJ = atopE E.  Proof. reflexivity. Qed.
-Lemma RCJ_can : @Q6q3.rc_canary RCJ = ev E 45.  Proof. reflexivity. Qed.
+Lemma RCJ_can : @Q6q3.rc_canary RCJ = ev E 49.  Proof. reflexivity. Qed.
 Lemma RCJ_sec : Z_to_bv 64 (@Q6q3.rc_secret RCJ) = edenot E (EBlob false 25 8 8).
 Proof. cbn [Q6q3.rc_secret RCJ]. apply Z_to_bv_bv_unsigned. Qed.
 
@@ -101,21 +116,22 @@ rewrite !reg_at by lia. cbn [Z.to_nat Pos.to_nat Pos.iter_op Nat.add]. rewrite R
 rewrite (u_sp_off (-48)), (u_sp_off 8) by lia.
 repeat split; try reflexivity.
 cbn [edenot]. rewrite (Senv 1%nat ltac:(unfold NX0; lia)).
-destruct (QpvH.uE0 JOB6PH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (_ & _ & U3 & _). unfold uE in U3. cbn [edenot] in U3.
-apply bv_eq. rewrite U3. destruct Hva as [A _]. rewrite u64_lit by lia. reflexivity.
+(* ARGC is the start state's value 1, E0's second entry. *)
+unfold E0, vals0. cbn [ev nth]. reflexivity.
 Qed.
 
-Lemma drv_pre_at : forall LO, usp - 8388608 <= LO -> LO + 2^22 <= usp - 48 ->
+(* HCLR: the state is one of the main-entry states of the run's own CONFIG_RSEQ value *)
+Lemma drv_pre_at (HCLR : HSCLASS_R (kb_rseq kb) w ch) : forall LO, usp - 6144513 <= LO -> LO + 2^22 <= usp - 48 ->
 @QupI.drvA_pre RCJ argv usp LO mv mo.
 Proof.
 intros LO L1 L2.
-pose proof (@drv_pre sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS RCJ RCJ_ceil) as D.
+pose proof (@drv_pre sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS RCJ RCJ_ceil HCLR) as D.
 destruct D as [D1 D2 D3 D4 D5 D6 D7 D8]. constructor; try assumption.
 - destruct D2 as [C1 C2]. split; lia.
 - exact (proj2 (QWxq_c1.stk_split _ _ _ LO _ D3 ltac:(lia))).
 Qed.
 
-Theorem hmain_state :
+Theorem hmain_state (HCLR : HSCLASS_R (kb_rseq kb) w ch) :
 forall (Hwx : QQIi.wx_segs_nowrap QbFI.asegs) (Hsegs : segs_in_base LV QbFI.asegs)
 (Hsh : shoff_ok LV) (Hbx : bands_excl LV) (Hbc : bands_cover LV)
 (H6 : @QZsi.heap_iface_A RCJ Qwm6.Mq4.A4L)
@@ -134,19 +150,19 @@ QXcG.Mq0.DRVA6_BQ TGT_BB_A <= QZsi.bQ B0 -> QXcG.Mq0.DRVA6_BB TGT_BB_A <= QZsi.b
 QXcG.Mq0.DRVA6_BD TGT_BD_A <= 134217728 * QZsi.bM B0 ->
 0 <= TGT_STACK_A <= 2^21 -> 0 <= TGT_BB_A -> 1536 + 4 * TGT_BB_A <= 2^30 -> 0 <= TGT_BD_A ->
 usp <= @QZsi.hiA_top RCJ Qwm6.Mq4.A4L H6 + 160 -> @QZsi.hiA_bot RCJ Qwm6.Mq4.A4L H6 <= LO ->
-usp - 8388608 <= LO -> LO + 2^22 <= usp - 48 ->
+usp - 6144513 <= LO -> LO + 2^22 <= usp - 48 ->
 Q6EJ.srealizes JOB6SEGS (cfg_of JOB6SEGS R (pc ch) FULL mo) (QBxa.Mq5.spec argv (m_fs mo)).
 Proof.
 intros Hwx Hsegs Hsh Hbx Hbc H6 H6_J GA TS_ TB_ TD_ TGT OGA BANDS OISH OBLO A0 LM0 B0 LO HEAP HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT L1 L2.
 apply (srz_A_to_C JOB6SEGS).
 destruct (REGS_MAIN_S w ch HCL) as (PC & _).
 unfold cfg_of, mkst. cbn [fp_regs fp_csr asanreflect_fx fx0]. rewrite PC.
-apply (QVHx.Mq0.srealizes_canon JOB6SEGS R bvmap_empty (Z_to_bv 64 QupI.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JOB6SEGS) mo).
+apply (QVHx.Mq0.srealizes_canon JOB6SEGS eq_refl R bvmap_empty (Z_to_bv 64 QupI.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JOB6SEGS) mo).
 destruct regs_main as (G1 & G2 & G3 & G4 & G10 & G11).
 refine (@Qzcu.main_phase_jo RCJ LV Hwx Hsegs Hsh Hbx Hbc H6 H6_J GA TS_ TB_ TD_ TGT OGA BANDS OISH OBLO
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ bvmap_empty (Z_to_bv 32 0) mv
 (mkCfg (QEpW.MS (Qe4Y.canonR R) bvmap_empty (Z_to_bv 64 QupI.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JOB6SEGS)) mo)
-A0 LM0 B0 argv usp LO _ _ _ Hva (drv_pre_at LO L1 L2) (HEAP (QEpW.MS (Qe4Y.canonR R) bvmap_empty (Z_to_bv 64 QupI.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JOB6SEGS)) eq_refl) HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT G1 G2 G3 G4 G10 G11 _).
+A0 LM0 B0 argv usp LO _ _ _ Hva (drv_pre_at HCLR LO L1 L2) (HEAP (QEpW.MS (Qe4Y.canonR R) bvmap_empty (Z_to_bv 64 QupI.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JOB6SEGS)) eq_refl) HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT G1 G2 G3 G4 G10 G11 _).
 - exact (MA main_cinvA (QEpW.MS (Qe4Y.canonR R) bvmap_empty (Z_to_bv 64 QupI.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JOB6SEGS)) eq_refl).
 - exact (P co_halt).
 - reflexivity.
@@ -172,13 +188,13 @@ QXcG.Mq0.DRVA6_BQ TGT_BB_A <= QZsi.bQ B0 -> QXcG.Mq0.DRVA6_BB TGT_BB_A <= QZsi.b
 QXcG.Mq0.DRVA6_BD TGT_BD_A <= 134217728 * QZsi.bM B0 ->
 0 <= TGT_STACK_A <= 2^21 -> 0 <= TGT_BB_A -> 1536 + 4 * TGT_BB_A <= 2^30 -> 0 <= TGT_BD_A ->
 usp <= @QZsi.hiA_top RCJ Qwm6.Mq4.A4L H6 + 160 -> @QZsi.hiA_bot RCJ Qwm6.Mq4.A4L H6 <= LO ->
-usp - 8388608 <= LO -> LO + 2^22 <= usp - 48 ->
+usp - 6144513 <= LO -> LO + 2^22 <= usp - 48 ->
 handoff_rest.
 
-Theorem hmain_of_rest : handoff_rest -> Q6EJ.srealizes JOB6SEGS (cfg_of JOB6SEGS R (pc ch) FULL mo) (QBxa.Mq5.spec argv (m_fs mo)).
+Theorem hmain_of_rest (HCLR : HSCLASS_R (kb_rseq kb) w ch) : handoff_rest -> Q6EJ.srealizes JOB6SEGS (cfg_of JOB6SEGS R (pc ch) FULL mo) (QBxa.Mq5.spec argv (m_fs mo)).
 Proof.
 intros [Hwx Hsegs Hsh Hbx Hbc H6 H6_J GA TS_ TB_ TD_ TGT OGA BANDS OISH OBLO A0 LM0 B0 LO HEAP HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT L1 L2].
-exact (hmain_state Hwx Hsegs Hsh Hbx Hbc H6 H6_J GA TS_ TB_ TD_ TGT OGA BANDS OISH OBLO A0 LM0 B0 LO HEAP HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT L1 L2).
+exact (hmain_state HCLR Hwx Hsegs Hsh Hbx Hbc H6 H6_J GA TS_ TB_ TD_ TGT OGA BANDS OISH OBLO A0 LM0 B0 LO HEAP HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT L1 L2).
 Qed.
 End PerState.
 
@@ -206,34 +222,41 @@ Variables nofile sigmask : word.
 Variable abort_terminal : bool.
 Variable urnd : InputStream.
 Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 #[local] Notation fs := (fs_seed_tmp ifs tmp).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hbrk : valid_brk JOB6SEGS brk0.
 Hypothesis Hmb : valid_mmap_base mbase.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Hypothesis Huid : valid_id uid.
+Hypothesis Hrdr : rdr = true.
 
+(* LPS 727298f3: the start-up hands main the SINV0 of the launch at the image's entry point. *)
 Hypothesis OBL_HANDOFF_REST : forall E R FULL mo w ch (HCL : HSCLASS_S w ch)
-(CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo),
-handoff_rest sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
+(HCLR : HSCLASS_R (kb_rseq kb) w ch)
+(CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo),
+handoff_rest sp rdraw brk0 argv envp fs uid hw AsanUbsan.M.init_pc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
 
-Theorem HMAIN_jo : forall h ch, QiHh.HS2s h = Some ch ->
-forall E R FULL model, cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL model ->
+Theorem HMAIN_jo : forall h ch, QiHh.HS2s (rseq_z (kb_rseq kb)) h = Some ch ->
+forall E R FULL model, cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL model ->
 Q6EJ.srealizes JOB6SEGS (cfg_of JOB6SEGS R (pc ch) FULL model) (QBxa.Mq5.spec argv (m_fs model)).
 Proof.
-intros h ch Hh E R FULL model HC. destruct (HS2s_class h ch Hh) as [w HCL].
-exact (hmain_of_rest sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL model w ch HCL HC (OBL_HANDOFF_REST E R FULL model w ch HCL HC)).
+intros h ch Hh E R FULL model HC. destruct (HS2s_class_R (kb_rseq kb) h ch Hh) as [w HCLR].
+pose proof (HSCLASS_R_S (kb_rseq kb) w ch HCLR) as HCL.
+exact (hmain_of_rest sp rdraw brk0 argv envp fs uid hw AsanUbsan.M.init_pc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model w ch HCL HC HCLR (OBL_HANDOFF_REST E R FULL model w ch HCL HCLR HC)).
 Qed.
 
 Theorem jo_both_srealizes :
 Q6EJ.srealizes JOB6SEGS (init_config JOB6SEGS AsanUbsan.M.init_pc JOB6PH sp brk0 mbase rdraw QpvH.LIMIT
-(QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp))
+(QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt))
 (QBxa.Mq5.spec argv fs).
-Proof.
-exact (QiHh.asan_startup_job6S sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp
-Hsp Hbrk Hva Hve Hfit Huid (fun fs' => QBxa.Mq5.spec argv fs') (fun fs' => spec_nil argv fs') HMAIN_jo).
+Proof using Hsp Hbrk Hmb Hva Hve Hfit Huid Hrdr OBL_HANDOFF_REST.
+exact (QiHh.asan_startup_job6S sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt
+Hsp Hbrk Hmb Hva Hve Hfit Huid Hrdr (fun fs' => QBxa.Mq5.spec argv fs') (fun fs' => spec_nil argv fs') HMAIN_jo).
 Qed.
 End Run.
 End Mq0.
@@ -297,7 +320,7 @@ pc ch = Q2y2.MAIN_A
 /\ nth 4 (s_regs (a_ss ch)) (ELit 0) = ELit Qwm6.Mq0.A_TP
 /\ nth 10 (s_regs (a_ss ch)) (ELit 0) = EVar 1
 /\ nth 11 (s_regs (a_ss ch)) (ELit 0) = EAlu Instr.ALU_ADD e_sp0 (ELit 8).
-Proof. intros [|] ch [-> | ->]; vm_compute; repeat split; reflexivity. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; repeat split; reflexivity. Qed.
 
 Section PerState.
 Variable sp : word.
@@ -306,32 +329,46 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation argc := (Z.of_nat (length argv)).
-#[local] Notation EI := (E0 JO6PH sp rdraw brk0 argv envp uid hw).
+#[local] Notation EI := (E0 sp rdraw brk0 argv envp uid gid hw kb execfn).
 #[local] Notation mv := (view LV mo FULL).
 
 Lemma atop_al16 : atopE E mod 16 = 0.
 Proof. rewrite (MV4 atop_val). destruct Hsp as (_ & _ & H3). replace (usp - 8388608) with (usp + (-524288) * 16) by lia. rewrite Z.mod_add by lia. exact H3. Qed.
 Definition RCJ : Q6q3.RunConsts :=
-Q6q3.mkRunConsts (atopE E) (ev E 45) (bv_unsigned (edenot E (EBlob false 25 8 8)))
+Q6q3.mkRunConsts (atopE E) (ev E 49) (bv_unsigned (edenot E (EBlob false 25 8 8)))
 (MA main_atop_bounds) atop_al16 (u64_range (edenot E (EBlob false 25 8 8))).
 #[local] Existing Instance RCJ.
 Lemma RCJ_ceil : @Q6q3.rc_ceil RCJ = atopE E.  Proof. reflexivity. Qed.
-Lemma RCJ_can : @Q6q3.rc_canary RCJ = ev E 45.  Proof. reflexivity. Qed.
+Lemma RCJ_can : @Q6q3.rc_canary RCJ = ev E 49.  Proof. reflexivity. Qed.
 Lemma RCJ_sec : Z_to_bv 64 (@Q6q3.rc_secret RCJ) = edenot E (EBlob false 25 8 8).
 Proof. cbn [Q6q3.rc_secret RCJ]. apply Z_to_bv_bv_unsigned. Qed.
 
@@ -363,21 +400,22 @@ rewrite !reg_at by lia. cbn [Z.to_nat Pos.to_nat Pos.iter_op Nat.add]. rewrite R
 rewrite (u_sp_off (-48)), (u_sp_off 8) by lia.
 repeat split; try reflexivity.
 cbn [edenot]. rewrite (Senv 1%nat ltac:(unfold NX0; lia)).
-destruct (QpvH.uE0 JO6PH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (_ & _ & U3 & _). unfold uE in U3. cbn [edenot] in U3.
-apply bv_eq. rewrite U3. destruct Hva as [A _]. rewrite u64_lit by lia. reflexivity.
+(* ARGC is the start state's value 1, E0's second entry. *)
+unfold E0, vals0. cbn [ev nth]. reflexivity.
 Qed.
 
-Lemma drv_pre_at : forall LO, usp - 8388608 <= LO -> LO + 2^22 <= usp - 48 ->
+(* HCLR: the state is one of the main-entry states of the run's own CONFIG_RSEQ value *)
+Lemma drv_pre_at (HCLR : HSCLASS_R (kb_rseq kb) w ch) : forall LO, usp - 6144513 <= LO -> LO + 2^22 <= usp - 48 ->
 @Q2y2.drvA_pre RCJ argv usp LO mv mo.
 Proof.
 intros LO L1 L2.
-pose proof (@drv_pre sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS RCJ RCJ_ceil) as D.
+pose proof (@drv_pre sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS RCJ RCJ_ceil HCLR) as D.
 destruct D as [D1 D2 D3 D4 D5 D6 D7 D8]. constructor; try assumption.
 - destruct D2 as [C1 C2]. split; lia.
 - exact (proj2 (QWxq_c1.stk_split _ _ _ LO _ D3 ltac:(lia))).
 Qed.
 
-Theorem hmain_state :
+Theorem hmain_state (HCLR : HSCLASS_R (kb_rseq kb) w ch) :
 forall (Hwx : QQIi.wx_segs_nowrap QvG1.asegs) (Hsegs : segs_in_base LV QvG1.asegs)
 (Hsh : shoff_ok LV) (Hbx : bands_excl LV) (Hbc : bands_cover LV)
 (H6 : @QZsi.heap_iface_A RCJ Qwm6.Mq0.A4L)
@@ -396,19 +434,19 @@ QXcG.DRVA6_BQ TGT_BB_A <= QZsi.bQ B0 -> QXcG.DRVA6_BB TGT_BB_A <= QZsi.bB B0 -> 
 QXcG.DRVA6_BD TGT_BD_A <= 134217728 * QZsi.bM B0 ->
 0 <= TGT_STACK_A <= 2^21 -> 0 <= TGT_BB_A -> 1536 + 4 * TGT_BB_A <= 2^30 -> 0 <= TGT_BD_A ->
 usp <= @QZsi.hiA_top RCJ Qwm6.Mq0.A4L H6 + 160 -> @QZsi.hiA_bot RCJ Qwm6.Mq0.A4L H6 <= LO ->
-usp - 8388608 <= LO -> LO + 2^22 <= usp - 48 ->
+usp - 6144513 <= LO -> LO + 2^22 <= usp - 48 ->
 Q6EJ.srealizes JO6SEGS (cfg_of JO6SEGS R (pc ch) FULL mo) (QBxa.Mq5.spec argv (m_fs mo)).
 Proof.
 intros Hwx Hsegs Hsh Hbx Hbc H6 H6_J GA TS_ TB_ TD_ TGT OGA BANDS OISH OBLO A0 LM0 B0 LO HEAP HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT L1 L2.
 apply (srz_A_to_C JO6SEGS).
 destruct (REGS_MAIN_S w ch HCL) as (PC & _).
 unfold cfg_of, mkst. cbn [fp_regs fp_csr asanreflect_fx fx0]. rewrite PC.
-apply (QVHx.srealizes_canon JO6SEGS R bvmap_empty (Z_to_bv 64 Q2y2.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JO6SEGS) mo).
+apply (QVHx.srealizes_canon JO6SEGS eq_refl R bvmap_empty (Z_to_bv 64 Q2y2.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JO6SEGS) mo).
 destruct regs_main as (G1 & G2 & G3 & G4 & G10 & G11).
 refine (@Qzcu.Mq0.main_phase_jo RCJ LV Hwx Hsegs Hsh Hbx Hbc H6 H6_J GA TS_ TB_ TD_ TGT OGA BANDS OISH OBLO
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ bvmap_empty (Z_to_bv 32 0) mv
 (mkCfg (QEpW.MS (Qe4Y.canonR R) bvmap_empty (Z_to_bv 64 Q2y2.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JO6SEGS)) mo)
-A0 LM0 B0 argv usp LO _ _ _ Hva (drv_pre_at LO L1 L2) (HEAP (QEpW.MS (Qe4Y.canonR R) bvmap_empty (Z_to_bv 64 Q2y2.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JO6SEGS)) eq_refl) HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT G1 G2 G3 G4 G10 G11 _).
+A0 LM0 B0 argv usp LO _ _ _ Hva (drv_pre_at HCLR LO L1 L2) (HEAP (QEpW.MS (Qe4Y.canonR R) bvmap_empty (Z_to_bv 64 Q2y2.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JO6SEGS)) eq_refl) HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT G1 G2 G3 G4 G10 G11 _).
 - exact (MA main_cinvA (QEpW.MS (Qe4Y.canonR R) bvmap_empty (Z_to_bv 64 Q2y2.MAIN_A) (Z_to_bv 32 0) None FULL (seg_rom JO6SEGS)) eq_refl).
 - exact (P co_halt).
 - reflexivity.
@@ -434,13 +472,13 @@ QXcG.DRVA6_BQ TGT_BB_A <= QZsi.bQ B0 -> QXcG.DRVA6_BB TGT_BB_A <= QZsi.bB B0 -> 
 QXcG.DRVA6_BD TGT_BD_A <= 134217728 * QZsi.bM B0 ->
 0 <= TGT_STACK_A <= 2^21 -> 0 <= TGT_BB_A -> 1536 + 4 * TGT_BB_A <= 2^30 -> 0 <= TGT_BD_A ->
 usp <= @QZsi.hiA_top RCJ Qwm6.Mq0.A4L H6 + 160 -> @QZsi.hiA_bot RCJ Qwm6.Mq0.A4L H6 <= LO ->
-usp - 8388608 <= LO -> LO + 2^22 <= usp - 48 ->
+usp - 6144513 <= LO -> LO + 2^22 <= usp - 48 ->
 handoff_rest.
 
-Theorem hmain_of_rest : handoff_rest -> Q6EJ.srealizes JO6SEGS (cfg_of JO6SEGS R (pc ch) FULL mo) (QBxa.Mq5.spec argv (m_fs mo)).
+Theorem hmain_of_rest (HCLR : HSCLASS_R (kb_rseq kb) w ch) : handoff_rest -> Q6EJ.srealizes JO6SEGS (cfg_of JO6SEGS R (pc ch) FULL mo) (QBxa.Mq5.spec argv (m_fs mo)).
 Proof.
 intros [Hwx Hsegs Hsh Hbx Hbc H6 H6_J GA TS_ TB_ TD_ TGT OGA BANDS OISH OBLO A0 LM0 B0 LO HEAP HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT L1 L2].
-exact (hmain_state Hwx Hsegs Hsh Hbx Hbc H6 H6_J GA TS_ TB_ TD_ TGT OGA BANDS OISH OBLO A0 LM0 B0 LO HEAP HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT L1 L2).
+exact (hmain_state HCLR Hwx Hsegs Hsh Hbx Hbc H6 H6_J GA TS_ TB_ TD_ TGT OGA BANDS OISH OBLO A0 LM0 B0 LO HEAP HLM HBQ HBB HBN HBD HBM TS TB TB6 TD TOP BOT L1 L2).
 Qed.
 End PerState.
 
@@ -470,33 +508,40 @@ Variables nofile sigmask : word.
 Variable abort_terminal : bool.
 Variable urnd : InputStream.
 Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 #[local] Notation fs := (fs_seed_tmp ifs tmp).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hbrk : valid_brk JO6SEGS brk0.
 Hypothesis Hmb : valid_mmap_base mbase.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Hypothesis Huid : valid_id uid.
+Hypothesis Hrdr : rdr = true.
 
+(* LPS 727298f3: the start-up hands main the SINV0 of the launch at the image's entry point. *)
 Hypothesis OBL_HANDOFF_REST : forall E R FULL mo w ch (HCL : HSCLASS_S w ch)
-(CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo),
-handoff_rest sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
+(HCLR : HSCLASS_R (kb_rseq kb) w ch)
+(CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo),
+handoff_rest sp rdraw brk0 argv envp fs uid hw Asan.M.init_pc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
 
-Theorem HMAIN_jo : forall h ch, Qb9l.HS2s h = Some ch ->
-forall E R FULL model, cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL model ->
+Theorem HMAIN_jo : forall h ch, Qb9l.HS2s (rseq_z (kb_rseq kb)) h = Some ch ->
+forall E R FULL model, cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL model ->
 Q6EJ.srealizes JO6SEGS (cfg_of JO6SEGS R (pc ch) FULL model) (QBxa.Mq5.spec argv (m_fs model)).
 Proof.
-intros h ch Hh E R FULL model HC. destruct (HS2s_class h ch Hh) as [w HCL].
-exact (hmain_of_rest sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL model w ch HCL HC (OBL_HANDOFF_REST E R FULL model w ch HCL HC)).
+intros h ch Hh E R FULL model HC. destruct (HS2s_class_R (kb_rseq kb) h ch Hh) as [w HCLR].
+pose proof (HSCLASS_R_S (kb_rseq kb) w ch HCLR) as HCL.
+exact (hmain_of_rest sp rdraw brk0 argv envp fs uid hw Asan.M.init_pc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model w ch HCL HC HCLR (OBL_HANDOFF_REST E R FULL model w ch HCL HCLR HC)).
 Qed.
 
 Theorem jo_asan_srealizes :
 Q6EJ.srealizes JO6SEGS (init_config JO6SEGS Asan.M.init_pc JO6PH sp brk0 mbase rdraw QpvH.LIMIT
-(QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp))
+(QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt))
 (QBxa.Mq5.spec argv fs).
-Proof.
-exact (Qb9l.asan_startup_jo6S sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp
-Hsp Hbrk Hva Hve Hfit Huid (fun fs' => QBxa.Mq5.spec argv fs') (fun fs' => spec_nil argv fs') HMAIN_jo).
+Proof using Hsp Hbrk Hmb Hva Hve Hfit Huid Hrdr OBL_HANDOFF_REST.
+exact (Qb9l.asan_startup_jo6S sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt
+Hsp Hbrk Hmb Hva Hve Hfit Huid Hrdr (fun fs' => QBxa.Mq5.spec argv fs') (fun fs' => spec_nil argv fs') HMAIN_jo).
 Qed.
 End Run.

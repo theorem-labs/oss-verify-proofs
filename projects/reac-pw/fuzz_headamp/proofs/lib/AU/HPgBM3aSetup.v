@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v at cdde2c4d95b (hd_getr_z,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v (hd_getr_z,
    hd_aview_some, hd_aview_grows, restated as su_getr_z, su_aview_some, su_aview_grows) and
-   proofs/reac-pw/fuzz_role/lib/A/RPgScanSetup.v at a1fdf6ce036 (su_soff; the set-up's shape: one engine run over the
+   proofs/reac-pw/fuzz_role/lib/A/RPgScanSetup.v (su_soff; the set-up's shape: one engine run over the
    first block's three fields decided by one shadow entry, split on the booleans) for reac-pw/fuzz_headamp image A;
    the rest of the file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgM3aSetupBlk.v, with its module paths, module names, addresses and numbers changed; 1543 of its 1685 lines of code are new or changed and 606 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; the addresses are measured on the
    unstripped twin 1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, whose loaded sections

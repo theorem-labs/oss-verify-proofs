@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: the ASan walk of sup_reply_code (plugin-hostd/fuzz_command, 0x89d6c, 20 instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (pb_cmpPixel, a leaf that ends in a tail jump to a runtime entry) and A/ACh2.v (the step through a call and back). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_reply_code.v, with its module paths and module names changed; 498 of its 558 lines of code are new or changed and 228 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_segconf_role_file.v; 356 of its 469 lines of code are new or changed and 445 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-B walk of reac_segconf_model (reac-pw/fuzz_segconf, fuzz_segconf.asan-ubsan, BASE + AF_reac_segconf_model
-   = 0x89e04, 30 instructions). No image-A walk of this function exists to port (commit
-   88cbb9df6662 holds its step plan only), so this is the image-B port of the image-A walk of the same-shaped
-   lib/A/Prog/reac_segconf_ignore_file.v (commit 62181ed287a7), following that plan: one symbolic
+   = 0x89e04, 30 instructions). No image-A walk of this function exists to port (
+    holds its step plan only), so this is the image-B port of the image-A walk of the same-shaped
+   lib/A/Prog/reac_segconf_ignore_file.v, following that plan: one symbolic
    run over image B's listing (SegPaLib's paj_run / paj_branch / paj_ret_at), the call of reac_segconf_find through
    PaCall's cl_callS with that function's contract as a Section hypothesis, and after the call the entry it returned,
    added to the symbolic state with an alignment fact (st_ok_pi_add_fact) and a region holding its model_set word
@@ -26,8 +27,8 @@
      0x89e64 unimp: reached only from 0x89e28 (the word before it is the `ret` at 0x89e60), so by no path.
    No abort arm; no side-stack frame.
 
-   Proves reac_segconf_model_contract (lib/B/Prog/reac_segconf_model_c.v, the image-B copy of the contract text, FINAL at
-   6f783602b5e3) at image B's numbers. *)
+   Proves reac_segconf_model_contract (lib/B/Prog/reac_segconf_model_c.v, the image-B copy of the contract text, FINAL)
+   at image B's numbers. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -5,7 +5,7 @@
    those 64 bytes decode to exactly 16 instructions, each 4 bytes (capstone, RISCV64 + C): the 15 words of the A twin's
    shape and a trailing `unimp` (0xc0001073) at 0x81b98, which no path reaches. Its one call (`jal fuzz_alloc_live` at
    0x81b78) leaves the range: lib/B/FSW_fuzz_alloc_live_tbl.v holds the callee's words. Twin of
-   lib/A/FSW_check_reject_clean_tbl.v (a working branch 3694074f8f1). *)
+   lib/A/FSW_check_reject_clean_tbl.v (a working branch). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

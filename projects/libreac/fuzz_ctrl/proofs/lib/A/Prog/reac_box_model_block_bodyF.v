@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 461 of its 476 lines of code are new or changed and 233 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block_body.v at a working branch d69f7c708f6 (proved v1.9 run
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block_body.v at a working branch (proved v1.9 run
    of record) over lib/Lib/StepF: addr_keep_app, bv_init and upd0z by the same proof script, out_wf and dj_wf with `hide_sec.` moved first, body_none_F and body_F with changed steps (the epi obligation through bmb_KR, KB's extra ra').
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes: the jump table at 0x219f4, 28 bytes (file offset 0x119f4 from
    the LOAD vaddr 0x10000 off 0x0 of fuzz_ctrl.debug):
      94 42 06 00 | f8 44 06 00 | b8 44 06 00 | c4 44 06 00 | 2c 44 06 00 | 10 45 06 00 | a4 45 06 00
@@ -19,7 +20,7 @@
       new proof obligation.
    2. The _F output feeds ONLY the ported cgif-form walk.  No W_cutfree_ok, no cut-free twin, no LSCPS join, no
       top-level claim.
-   3. The source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+   3. The source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
       wrong-image cell.  The re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes.
    4. Every _F carries provenance in its header (image root, ELF sha256, tool version, which compare) and goes to
       the auditor a Theorem Labs lane, who signs it against its proved run before it counts.
@@ -28,7 +29,7 @@
    The two runs of reac_box_model_block_body.v (body_none, body) are S2 runs: in the original they conclude the
    fixed ret-post Q0 through `epi`.  Here the post is the section variable Q and the epi obligation is the section
    hypothesis HKR : bmb_KR Q (reac_box_model_block_epiF.v), so the stretch can stop at the flag release 0x864f8.
-   reac_box_model_block_body.v's code is unchanged since release c5e779efe8c (comments edited); it keeps every code line of the source above and adds 11; its pure section facts (addr_keep_app, out_wf, dj_wf, bv_init, upd0z)
+   reac_box_model_block_body.v's code is unchanged since release (comments edited); it keeps every code line of the source above and adds 11; its pure section facts (addr_keep_app, out_wf, dj_wf, bv_init, upd0z)
    are re-proved below by their own script, not re-imported by inst_exact. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -49,7 +50,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memset_cF
   reac_box_model_block_cases0bF reac_box_model_block_cases0cF reac_box_model_block_cases0F
   reac_box_model_block_cases2aF reac_box_model_block_cases2bF.
 (* Route (C): the narrowed shadow premise, the region it names, and the callees' `_on` contracts (a Theorem Labs lane's
-   text, carried by a Theorem Labs lane from a working branch f4423e55886 and a working branch). *)
+   text, carried by a Theorem Labs lane from a working branch and a working branch). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import ShadowRwOn.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import rng_asan sh_word_on asan_memset_c_on
   asan_memset_cF_on asan_memcpy_c_on asan_memcpy_cF_on reac_box_model_block_c_on.

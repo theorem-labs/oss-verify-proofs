@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (atable gains n_resx and p_resx, room for the launch's vDSO/vvar pair, counted by gap_ok and in the initial total size (resx_bytes); a MAP_FIXED grant into free space ends at or below KHI; the start state takes the CONFIG_RSEQ value r: the auxv is AUXSZ r = 432 + 32 r bytes, AT_RANDOM and the argv strings follow it past the round-up word V_G, every auxv pair musl reads is claimed at its index in either layout with AT_GID/AT_EGID as the new V_GID, NX0 is 13, and the stack window is the 6,144,513 bytes below sp). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -20,69 +21,63 @@ Open Scope Z_scope.
 Module APC.
 Import AX2. Import AX2B.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-Definition CEIL : Z := 0x7fff7f800000.
-(* [comment removed for export] *)
 Definition KHI : Z := 0x10007fff8000.
-(* [comment removed for export] *)
+
 Definition FLOOR : Z := 0x2aaaaaaab000.
-(* [comment removed for export] *)
+
+Definition CEIL : Z := 0x7fff7f800000.
+
 Definition MBASE_MIN : Z := 0x154555557000.
-(* [comment removed for export] *)
+
 Definition PID_MAX : Z := 4194304.
-(* [comment removed for export] *)
+
 Definition TOPMAX : Z := 0x7fffff800000.
-(* [comment removed for export] *)
+
 Definition STACKWIN : Z := 0x80800000.
 
 Record atable : Type := AT {
-  img_lo : Z; img_hi : Z;          (* [comment removed for export] *)
-  n_res : nat;                     (* [comment removed for export] *)
-  shadow_off : Z;                  (* [comment removed for export] *)
-  a_entry : Z;                     (* [comment removed for export] *)
-  rw_lo : Z; rw_len : Z;           (* [comment removed for export] *)
-  ph_addr_z : Z; ph_ent_z : Z; ph_num_z : Z;   (* [comment removed for export] *)
-  (* [comment removed for export] *)
+  img_lo : Z; img_hi : Z;
+  n_res : nat;
+
+  n_resx : nat;
+  p_resx : nat;
+  shadow_off : Z;
+  a_entry : Z;
+  rw_lo : Z; rw_len : Z;
+  ph_addr_z : Z; ph_ent_z : Z; ph_num_z : Z;
+
   x_imemset : Z; x_imemcpy : Z; x_memset : Z; x_memcpy : Z; x_memiszero : Z;
-  (* [comment removed for export] *)
+
   x_istrncpy : Z; x_sealed : Z; x_popfree : Z;
-  (* [comment removed for export] *)
+
   x_sniff : Z; sniff_tab : Z; sniff_cell : Z;
-  (* [comment removed for export] *)
+
   x_envscan : Z; x_envscan_k : Z; x_pnscan : Z; x_pnscan_k : Z;
-  (* [comment removed for export] *)
+
   x_maxva : Z; x_maxva_k : Z;
-  (* [comment removed for export] *)
+
   z_lo : Z; z_hi : Z;
-  stops_more : list Z              (* [comment removed for export] *)
+  stops_more : list Z
 }.
+
+Definition resx_bytes (A : atable) : Z := Z.of_nat (p_resx A) * 4096.
 
 Section WithSegs.
 Variable segs : list Segment.
 Variable IT : itab.
 Variable A : atable.
-Variable nx0 : nat.     (* [comment removed for export] *)
-Variable LIMIT : Z.     (* [comment removed for export] *)
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
+Variable nx0 : nat.
+Variable LIMIT : Z.
 Inductive spiece : Type := SPLit (bs : list Z) | SPBlob (k : nat).
 
 Inductive shape : Type :=
 | SNil
 | SExit (code : Z)
-| SEmitP (fd : Z) (ps : list spiece) (s : shape)   (* [comment removed for export] *)
+| SEmitP (fd : Z) (ps : list spiece) (s : shape)
 | SAlt2 (a b : shape)
 | SCase (e : expr) (mid : Z) (s1 s2 : shape)
-| SHole (h : nat)                            (* [comment removed for export] *)
-| SNext.                                     (* [comment removed for export] *)
+| SHole (h : nat)
+| SNext.
 
 Definition salt2 (a b : shape) : shape :=
   match a, b with SNil, _ => b | _, SNil => a | _, _ => SAlt2 a b end.
@@ -105,13 +100,8 @@ Fixpoint shape_eqb (x y : shape) : bool :=
   | _, _ => false
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-Inductive mkind : Type := KRW | KRWLAZY | KNONE | KNONELAZY | KFOG | KHOLE    (* [comment removed for export] *)
-                        | KMIX.  (* [comment removed for export] *)
+Inductive mkind : Type := KRW | KRWLAZY | KNONE | KNONELAZY | KFOG | KHOLE
+                        | KMIX.
 
 Definition mkind_eqb (a b : mkind) : bool :=
   match a, b with
@@ -119,46 +109,40 @@ Definition mkind_eqb (a b : mkind) : bool :=
   | _, _ => false
   end.
 
-(* [comment removed for export] *)
 Definition lz_kind (k : mkind) : bool := match k with KRWLAZY | KNONELAZY | KMIX => true | _ => false end.
-(* [comment removed for export] *)
+
 Definition rekind_k (k : mkind) : mkind := if lz_kind k then KMIX else KRW.
 
-(* [comment removed for export] *)
 Record amap : Type := AM {
-  am_base : expr;       (* [comment removed for export] *)
-  am_len  : expr;       (* [comment removed for export] *)
+  am_base : expr;
+  am_len  : expr;
   am_kind : mkind
 }.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition is_tok_kind (k : mkind) : bool := match k with KFOG | KHOLE => true | _ => false end.
 Definition is_hole (m : amap) : bool := mkind_eqb (am_kind m) KHOLE.
 Definition is_fog (m : amap) : bool := is_tok_kind (am_kind m).
 Definition no_fog (ms : list amap) : bool := forallb (fun m => negb (is_fog m)) ms.
-(* [comment removed for export] *)
+
 Definition no_holes (ms : list amap) : bool := forallb (fun m => negb (is_hole m)) ms.
 
-
-(* [comment removed for export] *)
 Inductive afd : Type :=
-| FdStd                                   (* [comment removed for export] *)
-| FdFile (k : nat) (len off : expr)       (* [comment removed for export] *)
-| FdDir.                                  (* [comment removed for export] *)
+| FdStd
+| FdFile (k : nat) (len off : expr)
+| FdDir.
 
 Record acs : Type := ACS {
-  a_ss    : sym_state;          (* [comment removed for export] *)
-  a_maps  : list amap;          (* [comment removed for export] *)
-  a_totsz : Z;                  (* [comment removed for export] *)
-  a_ylo   : Z;                  (* [comment removed for export] *)
-  a_eager : Z;                  (* [comment removed for export] *)
-  a_vis   : list (expr * expr); (* [comment removed for export] *)
-  a_ghost : list (expr * expr); (* [comment removed for export] *)
-  a_abytes : Z;                 (* [comment removed for export] *)
-  a_brk   : expr;               (* [comment removed for export] *)
+  a_ss    : sym_state;
+  a_maps  : list amap;
+  a_totsz : Z;
+  a_ylo   : Z;
+  a_eager : Z;
+  a_vis   : list (expr * expr);
+  a_ghost : list (expr * expr);
+  a_abytes : Z;
+  a_brk   : expr;
   a_fd    : afd;
-  a_tidset : bool               (* [comment removed for export] *)
+  a_tidset : bool
 }.
 
 Definition reg (cs : acs) (n : nat) : expr := nth n (s_regs (a_ss cs)) (ELit 0).
@@ -184,38 +168,36 @@ Definition set_regs (cs : acs) (sr : list expr) : acs :=
 Definition lit_of (e : expr) : option Z := match e with ELit z => Some (z mod two64) | _ => None end.
 Definition reg_lit (cs : acs) (n : nat) : option Z := lit_of (reg cs n).
 
-(* [comment removed for export] *)
 Definition eadd (a b : expr) : expr := mkAlu ALU_ADD a b.
 Definition esub (a b : expr) : expr := mkAlu ALU_SUB a b.
 Definition escale (c : Z) (e : expr) : expr := mkMd M_MUL (ELit c) e.
 Definition eaddz (a : expr) (z : Z) : expr := mkAlu ALU_ADD a (ELit z).
 
-(* [comment removed for export] *)
-Definition V_S1 : nat := 0.     (* [comment removed for export] *)
+Definition V_S1 : nat := 0.
 Definition V_ARGC : nat := 1.
 Definition V_ENVC : nat := 2.
-Definition V_L0 : nat := 3.     (* [comment removed for export] *)
-Definition V_W : nat := 4.      (* [comment removed for export] *)
-Definition V_BRK : nat := 5.    (* [comment removed for export] *)
-Definition V_S2 : nat := 6.     (* [comment removed for export] *)
-Definition V_L1 : nat := 7.     (* [comment removed for export] *)
-Definition V_UID : nat := 8.    (* [comment removed for export] *)
-Definition V_HW : nat := 9.     (* [comment removed for export] *)
-Definition V_PG : nat := 10.    (* [comment removed for export] *)
-(* [comment removed for export] *)
-Definition e_psp0 : expr := eadd (escale 32768 (EVar V_S1)) (escale 4096 (EVar V_PG)).   (* [comment removed for export] *)
+Definition V_L0 : nat := 3.
+Definition V_W : nat := 4.
+Definition V_BRK : nat := 5.
+Definition V_S2 : nat := 6.
+Definition V_L1 : nat := 7.
+Definition V_UID : nat := 8.
+Definition V_HW : nat := 9.
+Definition V_PG : nat := 10.
+Definition V_G : nat := 11.
+(* LPS 727298f3: AT_GID and AT_EGID (StackLayout.auxv_entries pairs 21 and 22) both carry the
+   launching group id, and musl's __init_libc compares them, so the start state names the value.
+   Appended at the old NX0, so no existing index changes meaning. *)
+Definition V_GID : nat := 12.
+
+Definition e_psp0 : expr := eadd (escale 32768 (EVar V_S1)) (escale 4096 (EVar V_PG)).
 Definition e_sp0 : expr := eadd e_psp0 (escale 16 (EVar V_S2)).
-(* [comment removed for export] *)
+
 Definition e_top : expr := eaddz e_psp0 (-8388608).
-(* [comment removed for export] *)
+
 Definition e_stackwin : expr := esub (ELit (140737488355328 + 8388608)) e_psp0.
 Definition a_stackside : saddr := SA e_psp0 (-8388608).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Fixpoint expr_vars (e : expr) (acc : list nat) : list nat :=
   match e with
   | ELit _ => acc
@@ -262,7 +244,6 @@ Definition cs_gc_ref (cs : acs) : acs :=
   let live := live_vars cs in
   set_kn cs (List.filter (kn_gc_entry spb spk live) (kn cs)).
 
-(* [comment removed for export] *)
 Definition vkey (n : nat) : positive := Pos.of_succ_nat n.
 Fixpoint expr_vars_t (e : expr) (acc : ptree unit) : ptree unit :=
   match e with
@@ -314,7 +295,6 @@ Definition cs_gc (cs : acs) : acs :=
   let live := live_vars_t cs in
   set_kn cs (List.filter (kn_gc_entry_t spb spk live) (kn cs)).
 
-(* [comment removed for export] *)
 Definition live_agree (acc : list nat) (t : ptree unit) : Prop :=
   forall v, existsb (Nat.eqb v) acc = in_live_t t v.
 Lemma vkey_inj : forall a b, vkey a = vkey b -> a = b.
@@ -391,11 +371,6 @@ Proof.
     rewrite ?(expr_all_live_t_eq _ _ _ H); reflexivity.
 Qed.
 
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Fixpoint expr_vars_lt (b : nat) (e : expr) : bool :=
   match e with
   | ELit _ => true
@@ -406,7 +381,6 @@ Fixpoint expr_vars_lt (b : nat) (e : expr) : bool :=
   end.
 Definition saddr_vars_lt (b : nat) (a : saddr) : bool := expr_vars_lt b (a_base a).
 
-(* [comment removed for export] *)
 Fixpoint shape_vars_lt (b : nat) (s : shape) : bool :=
   match s with
   | SNil | SExit _ | SHole _ | SNext => true
@@ -437,14 +411,13 @@ Definition maps_vars_lt (b : nat) (ms : list amap) : bool :=
   forallb (fun m => expr_vars_lt b (am_base m) && expr_vars_lt b (am_len m)) ms.
 Definition fd_vars_lt (b : nat) (f : afd) : bool :=
   match f with FdStd => true | FdFile _ l o => expr_vars_lt b l && expr_vars_lt b o | FdDir => true end.
-(* [comment removed for export] *)
+
 Definition fresh_ok (cs : acs) : bool :=
   let v := nxt cs in
   sr_vars_lt v (s_regs (a_ss cs)) && kn_vars_lt v (kn cs)
   && maps_vars_lt v (a_maps cs) && pairs_vars_lt v (a_vis cs) && pairs_vars_lt v (a_ghost cs)
   && expr_vars_lt v (a_brk cs) && fd_vars_lt v (a_fd cs) && Nat.leb nx0 v.
 
-(* [comment removed for export] *)
 Definition run_block_ref (K : nat) (fuel : nat) (stops : list Z) (cs : acs) : option acs :=
   if fresh_ok cs then
     let ss := a_ss cs in
@@ -454,12 +427,12 @@ Definition run_block_ref (K : nat) (fuel : nat) (stops : list Z) (cs : acs) : op
     | _ => None
     end
   else None.
-(* [comment removed for export] *)
+
 Definition run_block (K : nat) (fuel : nat) (stops : list Z) (cs : acs) : option acs :=
   if fresh_ok cs then
     let ss := a_ss cs in
     let bc := mkbc (facts_of (s_know ss)) in
-    let kx := mk_kix (s_know ss) in                 (* [comment removed for export] *)
+    let kx := mk_kix (s_know ss) in
     let ss' := sym_execTXBI segs bc kx IT K fuel true stops (SS (s_pc ss) (s_regs ss) [] (s_know ss) (s_next ss)) in
     match carryK bc (s_log ss') (s_know ss') [] with
     | (kn', [], _) => Some (with_ss cs (mk_ss (s_pc ss') (s_regs ss') kn' (s_next ss')))
@@ -512,11 +485,6 @@ Definition afd_eqb (x y : afd) : bool :=
   | _, _ => false
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition kentry_apart_b (allkn : list kentry) (ub : expr) (uk : Z) (un : expr) (K : kentry) : bool :=
   match K with
   | KWord (SA b k) w _ => Nat.leb w 8 && ranges_apart_x allkn ub uk un b k (ELit (Z.of_nat w))
@@ -549,8 +517,6 @@ Lemma kentry_apart_bB_eqf : forall fk, kentry_apart_bB (mkbc fk) = kentry_apart_
 Proof. intros. bcfe. unfold kentry_apart_bB, kentry_apart_b. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite kentry_apart_bB_eqf : bceq.
 
-
-(* [comment removed for export] *)
 Definition kentry_apart_bp (allkn : list kentry) (sp : sprep) (ub : expr) (uk : Z) (un : expr) (K : kentry) : bool :=
   match K with
   | KWord (SA b k) w _ => Nat.leb w 8 && ranges_apart_p allkn sp ub uk un b k (ELit (Z.of_nat w))
@@ -583,11 +549,8 @@ Lemma kentry_apart_bpB_eqf : forall fk, kentry_apart_bpB (mkbc fk) = kentry_apar
 Proof. intros. bcfe. unfold kentry_apart_bpB, kentry_apart_bp. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite kentry_apart_bpB_eqf : bceq.
 
-
-
 Definition kimg_b (K : kentry) : bool := match K with KImg _ _ => true | _ => false end.
 
-(* [comment removed for export] *)
 Definition kn_unfill (k : list kentry) (ub : expr) (uk : Z) (un : expr) : list kentry :=
   let sp := mk_sprep k ub uk un in
   List.filter (fun K => kimg_b K || kentry_apart_bp k sp ub uk un K) k.
@@ -603,9 +566,6 @@ Proof. intros. bcfe. unfold kn_unfillB, kn_unfill. autorewrite with bceq. reflex
 Definition kn_unfillM (k : list kentry) := kn_unfillB (mkbc k).
 Lemma kn_unfillM_eq : kn_unfillM = kn_unfill. Proof. apply functional_extensionality; intros k. unfold kn_unfillM. apply kn_unfillB_eqf. Qed.
 
-
-
-(* [comment removed for export] *)
 Definition kwr_b (K : kentry) : bool := match K with KWr _ _ => true | _ => false end.
 Definition havoc1 (k : list kentry) (ub : expr) (uk : Z) (un : expr) (K : kentry) : list kentry :=
   if (kwr_b K || kentry_apart_b k ub uk un K)%bool then [K]
@@ -629,7 +589,6 @@ Lemma havoc1B_eqf : forall fk, havoc1B (mkbc fk) = havoc1 fk.
 Proof. intros. bcfe. unfold havoc1B, havoc1. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite havoc1B_eqf : bceq.
 
-
 Definition havoc1p (k : list kentry) (sp : sprep) (ub : expr) (uk : Z) (un : expr) (K : kentry) : list kentry :=
   if (kwr_b K || kentry_apart_bp k sp ub uk un K)%bool then [K]
   else match K with
@@ -652,7 +611,6 @@ Lemma havoc1pB_eqf : forall fk, havoc1pB (mkbc fk) = havoc1p fk.
 Proof. intros. bcfe. unfold havoc1pB, havoc1p. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite havoc1pB_eqf : bceq.
 
-
 Definition kn_havoc (k : list kentry) (ub : expr) (uk : Z) (un : expr) : list kentry :=
   let sp := mk_sprep k ub uk un in
   List.flat_map (havoc1p k sp ub uk un) k.
@@ -668,9 +626,6 @@ Proof. intros. bcfe. unfold kn_havocB, kn_havoc. autorewrite with bceq. reflexiv
 Definition kn_havocM (k : list kentry) := kn_havocB (mkbc k).
 Lemma kn_havocM_eq : kn_havocM = kn_havoc. Proof. apply functional_extensionality; intros k. unfold kn_havocM. apply kn_havocB_eqf. Qed.
 
-
-
-(* [comment removed for export] *)
 Definition kwr_cut (k : list kentry) (ub : expr) (uk : Z) (un : expr) (kb : expr) (kk : Z) (len : expr) : list kentry :=
   kcut KWr k ub uk un kb kk len.
 
@@ -680,7 +635,6 @@ Definition kwr_cutB (bc : bctx) (ub : expr) (uk : Z) (un : expr) (kb : expr) (kk
 Lemma kwr_cutB_eqf : forall fk, kwr_cutB (mkbc fk) = kwr_cut fk.
 Proof. intros. bcfe. unfold kwr_cutB, kwr_cut. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite kwr_cutB_eqf : bceq.
-
 
 Definition cutout1 (k : list kentry) (ub : expr) (uk : Z) (un : expr) (K : kentry) : list kentry :=
   if kentry_apart_b k ub uk un K then [K]
@@ -706,7 +660,6 @@ Lemma cutout1B_eqf : forall fk, cutout1B (mkbc fk) = cutout1 fk.
 Proof. intros. bcfe. unfold cutout1B, cutout1. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite cutout1B_eqf : bceq.
 
-
 Definition cutout1p (k : list kentry) (sp : sprep) (ub : expr) (uk : Z) (un : expr) (K : kentry) : list kentry :=
   if kentry_apart_bp k sp ub uk un K then [K]
   else match K with
@@ -731,7 +684,6 @@ Lemma cutout1pB_eqf : forall fk, cutout1pB (mkbc fk) = cutout1p fk.
 Proof. intros. bcfe. unfold cutout1pB, cutout1p. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite cutout1pB_eqf : bceq.
 
-
 Definition kn_cutout (k : list kentry) (ub : expr) (uk : Z) (un : expr) : list kentry :=
   let sp := mk_sprep k ub uk un in
   List.flat_map (cutout1p k sp ub uk un) k.
@@ -747,9 +699,6 @@ Proof. intros. bcfe. unfold kn_cutoutB, kn_cutout. autorewrite with bceq. reflex
 Definition kn_cutoutM (k : list kentry) := kn_cutoutB (mkbc k).
 Lemma kn_cutoutM_eq : kn_cutoutM = kn_cutout. Proof. apply functional_extensionality; intros k. unfold kn_cutoutM. apply kn_cutoutB_eqf. Qed.
 
-
-
-(* [comment removed for export] *)
 Definition kn_keep (k : list kentry) (ws : list (expr * expr)) : list kentry :=
   let wss := map (fun w => (split_lit (fst w), xlo k (snd w))) ws in
   let test (b : expr) (o : Z) (n : option Z) : bool :=
@@ -771,7 +720,6 @@ Definition kn_keep (k : list kentry) (ws : list (expr * expr)) : list kentry :=
                         | _ => true
                         end) k.
 
-(* [comment removed for export] *)
 Definition kimg_cut1 (a n : Z) (K : kentry) : list kentry :=
   match K with
   | KImg lo hi =>
@@ -781,11 +729,9 @@ Definition kimg_cut1 (a n : Z) (K : kentry) : list kentry :=
   end.
 Definition kimg_cut (k : list kentry) (a n : Z) : list kentry := List.flat_map (kimg_cut1 a n) k.
 
-(* [comment removed for export] *)
 Definition kimg_clip (k : list kentry) : list kentry :=
   List.filter (fun K => match K with KImg lo hi => Z.leb (img_lo A) lo && Z.leb lo hi && Z.leb hi (img_hi A) | _ => true end) k.
 
-(* [comment removed for export] *)
 Definition kreadZ (k : list kentry) (b : expr) (off : Z) (n : nat) : option Z :=
   match know_lookup segs k b off n false [] [] with
   | LHit (ELit z) [] _ => Some (z mod two64)
@@ -802,8 +748,6 @@ Lemma kreadZB_eqf : forall fk, kreadZB (mkbc fk) = kreadZ fk.
 Proof. intros. bcfe. unfold kreadZB, kreadZ. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite kreadZB_eqf : bceq.
 
-
-(* [comment removed for export] *)
 Definition kread8e (k : list kentry) (b : expr) (off : Z) : option expr :=
   match know_lookup segs k b off 8 false [] [] with
   | LHit v [] _ => Some v
@@ -820,9 +764,6 @@ Lemma kread8eB_eqf : forall fk, kread8eB (mkbc fk) = kread8e fk.
 Proof. intros. bcfe. unfold kread8eB, kread8e. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite kread8eB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Fixpoint kwritable (allkn k : list kentry) (b : expr) (off n : Z) : bool :=
   match k with
   | [] => false
@@ -851,12 +792,11 @@ Fixpoint kwritableB (bc : bctx) (k : list kentry) (b : expr) (off n : Z) : bool 
 
 Lemma kwritableB_eqf : forall fk, kwritableB (mkbc fk) = kwritable fk.
 Proof.
-  intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n. 
+  intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n.
   revert b off n. induction k as [|K rest IH]; intros; bcfe; [reflexivity|].
   cbn [kwritableB kwritable]. rewrite IH. autorewrite with bceq. reflexivity.
 Qed.
 #[local] Hint Rewrite kwritableB_eqf : bceq.
-
 
 Fixpoint kwritable_x (allkn k : list kentry) (b : expr) (off : Z) (n : expr) : bool :=
   match k with
@@ -892,15 +832,12 @@ Fixpoint kwritable_xB (bc : bctx) (k : list kentry) (b : expr) (off : Z) (n : ex
 
 Lemma kwritable_xB_eqf : forall fk, kwritable_xB (mkbc fk) = kwritable_x fk.
 Proof.
-  intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n. 
+  intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n.
   revert b off n. induction k as [|K rest IH]; intros; bcfe; [reflexivity|].
   cbn [kwritable_xB kwritable_x]. rewrite IH. autorewrite with bceq. reflexivity.
 Qed.
 #[local] Hint Rewrite kwritable_xB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Fixpoint kzero_x (allkn k : list kentry) (b : expr) (off : Z) (n : expr) : bool :=
   match k with
   | [] => false
@@ -935,15 +872,12 @@ Fixpoint kzero_xB (bc : bctx) (k : list kentry) (b : expr) (off : Z) (n : expr) 
 
 Lemma kzero_xB_eqf : forall fk, kzero_xB (mkbc fk) = kzero_x fk.
 Proof.
-  intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n. 
+  intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n.
   revert b off n. induction k as [|K rest IH]; intros; bcfe; [reflexivity|].
   cbn [kzero_xB kzero_x]. rewrite IH. autorewrite with bceq. reflexivity.
 Qed.
 #[local] Hint Rewrite kzero_xB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Fixpoint kfill_x (allkn k : list kentry) (b : expr) (off : Z) (n : expr) (c : Z) : bool :=
   match k with
   | [] => false
@@ -978,15 +912,12 @@ Fixpoint kfill_xB (bc : bctx) (k : list kentry) (b : expr) (off : Z) (n : expr) 
 
 Lemma kfill_xB_eqf : forall fk, kfill_xB (mkbc fk) = kfill_x fk.
 Proof.
-  intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n. apply functional_extensionality; intros c. 
+  intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n. apply functional_extensionality; intros c.
   revert b off n c. induction k as [|K rest IH]; intros; bcfe; [reflexivity|].
   cbn [kfill_xB kfill_x]. rewrite IH. autorewrite with bceq. reflexivity.
 Qed.
 #[local] Hint Rewrite kfill_xB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition off_image_x (k : list kentry) (b : expr) (off : Z) (n : expr) : bool :=
   ranges_apart_x k b off n (ELit 0) (img_lo A) (ELit (img_hi A - img_lo A)).
 
@@ -997,11 +928,6 @@ Lemma off_image_xB_eqf : forall fk, off_image_xB (mkbc fk) = off_image_x fk.
 Proof. intros. bcfe. unfold off_image_xB, off_image_x. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite off_image_xB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition flat_x (k : list kentry) (b : expr) (off : Z) (n : expr) : bool :=
   match base_range k b, xlo k n, xhi k n with
   | Some (lo, hi), Some nl, Some nh => (Z.leb 0 (lo + off) && Z.leb (hi + off + nh) two64 && Z.ltb 0 nl)%bool
@@ -1018,13 +944,9 @@ Lemma flat_xB_eqf : forall fk, flat_xB (mkbc fk) = flat_x fk.
 Proof. intros. bcfe. unfold flat_xB, flat_x. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite flat_xB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition ehi (k : list kentry) (e : expr) : option Z := xhi k e.
 Definition elo (k : list kentry) (e : expr) : option Z := xlo k e.
 
-(* [comment removed for export] *)
 Definition len_eqb (k : list kentry) (n m : expr) : bool :=
   expr_eqb n m || (lin_ge0 k [(n, 0%Z)] [(m, 0%Z)] && lin_ge0 k [(m, 0%Z)] [(n, 0%Z)]).
 
@@ -1035,13 +957,9 @@ Lemma len_eqbB_eqf : forall fk, len_eqbB (mkbc fk) = len_eqb fk.
 Proof. intros. bcfe. unfold len_eqbB, len_eqb. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite len_eqbB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition lit_diff (e f : expr) : option Z :=
   match esub e f with ELit z => Some (z mod two64) | _ => None end.
 
-(* [comment removed for export] *)
 Definition page_aligned (k : list kentry) (e : expr) : bool :=
   match e with
   | ELit z => Z.eqb (z mod 4096) 0
@@ -1058,9 +976,6 @@ Lemma page_alignedB_eqf : forall fk, page_alignedB (mkbc fk) = page_aligned fk.
 Proof. intros. bcfe. unfold page_alignedB, page_aligned. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite page_alignedB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition kn_contra (k : list kentry) : bool :=
   existsb (fun K => match K with
                     | KRange e lo hi =>
@@ -1080,11 +995,6 @@ Definition kn_contra (k : list kentry) : bool :=
                     | _ => false
                     end) k.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition caller_saved : list nat := [1; 5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 28; 29; 30; 31]%nat.
 
 Fixpoint sr_fresh (sr : list expr) (ixs : list nat) (nx : nat) : list expr :=
@@ -1101,7 +1011,6 @@ Definition ret_lit (cs : acs) : option Z :=
   | _ => None
   end.
 
-(* [comment removed for export] *)
 Definition after_call (cs : acs) (ret : Z) (rv : option expr) (k' : list kentry) : option acs :=
   let ss := a_ss cs in
   let nx := s_next ss in
@@ -1110,7 +1019,7 @@ Definition after_call (cs : acs) (ret : Z) (rv : option expr) (k' : list kentry)
   if (fresh_ok cs && kn_vars_lt nx k' && match rv with Some e => expr_vars_lt nx e | None => true end)%bool
   then Some (with_ss cs (mk_ss ret sr2 k' (nx + NCS)))
   else None.
-(* [comment removed for export] *)
+
 Definition after_call2 (cs : acs) (ret : Z) (rv : option expr) (k' : list kentry) (extra : nat) : option acs :=
   let ss := a_ss cs in
   let nx := s_next ss in
@@ -1119,10 +1028,6 @@ Definition after_call2 (cs : acs) (ret : Z) (rv : option expr) (k' : list kentry
   if (fresh_ok cs && kn_vars_lt (nx + NCS + extra) k' && match rv with Some e => expr_vars_lt nx e | None => true end)%bool
   then Some (with_ss cs (mk_ss ret sr2 k' (nx + NCS + extra)))
   else None.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Definition page_up (len : Z) : Z := ((len + 4095) / 4096) * 4096.
 
@@ -1133,9 +1038,6 @@ Definition is_ecall_at (cs : acs) : bool :=
   | None => false
   end)%bool.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition xlo1 (k : list kentry) (e : expr) : option Z :=
   match e with
   | ELit z => Some (zlit64 z)
@@ -1143,7 +1045,7 @@ Definition xlo1 (k : list kentry) (e : expr) : option Z :=
          | Some (lo, _), Some (lo', _) => Some (Z.max lo lo')
          | Some (lo, _), None => Some lo
          | None, Some (lo', _) => Some lo'
-         | None, None => match lin_srange k e with Some (lo, _) => Some lo | None => None end   (* [comment removed for export] *)
+         | None, None => match lin_srange k e with Some (lo, _) => Some lo | None => None end
          end
   end.
 
@@ -1154,14 +1056,13 @@ Definition xlo1B (bc : bctx) (e : expr) : option Z :=
          | Some (lo, _), Some (lo', _) => Some (Z.max lo lo')
          | Some (lo, _), None => Some lo
          | None, Some (lo', _) => Some lo'
-         | None, None => match lin_srangeB bc e with Some (lo, _) => Some lo | None => None end   (* [comment removed for export] *)
+         | None, None => match lin_srangeB bc e with Some (lo, _) => Some lo | None => None end
          end
   end.
 
 Lemma xlo1B_eqf : forall fk, xlo1B (mkbc fk) = xlo1 fk.
 Proof. intros. bcfe. unfold xlo1B, xlo1. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite xlo1B_eqf : bceq.
-
 
 Definition xhi1 (k : list kentry) (e : expr) : option Z :=
   match e with
@@ -1170,7 +1071,7 @@ Definition xhi1 (k : list kentry) (e : expr) : option Z :=
          | Some (_, hi), Some (_, hi') => Some (Z.min hi hi')
          | Some (_, hi), None => Some hi
          | None, Some (_, hi') => Some hi'
-         | None, None => match lin_srange k e with Some (_, hi) => Some hi | None => None end   (* [comment removed for export] *)
+         | None, None => match lin_srange k e with Some (_, hi) => Some hi | None => None end
          end
   end.
 
@@ -1181,7 +1082,7 @@ Definition xhi1B (bc : bctx) (e : expr) : option Z :=
          | Some (_, hi), Some (_, hi') => Some (Z.min hi hi')
          | Some (_, hi), None => Some hi
          | None, Some (_, hi') => Some hi'
-         | None, None => match lin_srangeB bc e with Some (_, hi) => Some hi | None => None end   (* [comment removed for export] *)
+         | None, None => match lin_srangeB bc e with Some (_, hi) => Some hi | None => None end
          end
   end.
 
@@ -1189,9 +1090,6 @@ Lemma xhi1B_eqf : forall fk, xhi1B (mkbc fk) = xhi1 fk.
 Proof. intros. bcfe. unfold xhi1B, xhi1. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite xhi1B_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Fixpoint deand (e : expr) : expr * Z :=
   match e with
   | EAlu ALU_AND x (ELit m) =>
@@ -1238,7 +1136,6 @@ Lemma xb2B_eqf : forall fk, xb2B (mkbc fk) = xb2 fk.
 Proof. intros. bcfe. unfold xb2B, xb2. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite xb2B_eqf : bceq.
 
-
 Definition xlo2 (k : list kentry) (e : expr) : option Z := match xb2 k e with Some (lo, _) => Some lo | None => None end.
 
 Definition xlo2B (bc : bctx) (e : expr) : option Z := match xb2B bc e with Some (lo, _) => Some lo | None => None end.
@@ -1246,7 +1143,6 @@ Definition xlo2B (bc : bctx) (e : expr) : option Z := match xb2B bc e with Some 
 Lemma xlo2B_eqf : forall fk, xlo2B (mkbc fk) = xlo2 fk.
 Proof. intros. bcfe. unfold xlo2B, xlo2. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite xlo2B_eqf : bceq.
-
 
 Definition xhi2 (k : list kentry) (e : expr) : option Z := match xb2 k e with Some (_, hi) => Some hi | None => None end.
 
@@ -1256,9 +1152,6 @@ Lemma xhi2B_eqf : forall fk, xhi2B (mkbc fk) = xhi2 fk.
 Proof. intros. bcfe. unfold xhi2B, xhi2. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite xhi2B_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition fact_ok (k : list kentry) (K : kentry) : bool :=
   match K with
   | KRange e lo hi =>
@@ -1271,7 +1164,6 @@ Definition fact_ok (k : list kentry) (K : kentry) : bool :=
   | _ => false
   end.
 
-(* [comment removed for export] *)
 Fixpoint kread_bytes (fuel : nat) (k : list kentry) (b : expr) (off : Z) : option (list Z) :=
   match fuel with
   | O => Some []
@@ -1299,7 +1191,6 @@ Lemma kread_bytesB_eqf : forall fk, kread_bytesB (mkbc fk) = (fun fuel => kread_
 Proof. intros fk. apply functional_extensionality; intros fuel. apply kread_bytesB_eqf'. Qed.
 #[local] Hint Rewrite kread_bytesB_eqf' kread_bytesB_eqf : bceq.
 
-
 Definition node_join (cs : acs) (b : expr) (off : Z) (n : nat) : option acs :=
   if (Nat.leb 1 n && Nat.leb n 8 && flat_x (kn cs) b off (ELit (Z.of_nat n)))%bool then
     match kread_bytes n (kn cs) b off with
@@ -1314,7 +1205,6 @@ Fixpoint drop_ixs (ixs : list nat) (i : nat) (k : list kentry) : list kentry :=
   | K :: r => if existsb (Nat.eqb i) ixs then drop_ixs ixs (S i) r else K :: drop_ixs ixs (S i) r
   end.
 
-(* [comment removed for export] *)
 Definition residue_fact (k : list kentry) (e ne : expr) : list kentry :=
   let '(e', s) := deand e in
   if Z.ltb 0 s then
@@ -1341,22 +1231,18 @@ Definition node_fresh (cs : acs) (r : nat) (logc : Z) (base : option expr) : opt
     end
   else None.
 
-(* [comment removed for export] *)
 Definition node_droprange (cs : acs) (b n : expr) : acs :=
   let '(bb, bk) := split_lit b in set_kn cs (kn_havoc (kn cs) bb bk n).
 
-(* [comment removed for export] *)
 Definition node_bump (cs : acs) (m : nat) : option acs :=
   if Nat.leb (nxt cs) m then Some (bump cs (m - nxt cs)) else None.
 
-(* [comment removed for export] *)
 Definition node_havoc (cs : acs) (rs : list nat) : option acs :=
   if (fresh_ok cs && forallb (fun r => Nat.ltb 0 r && Nat.ltb r 32) rs)%bool then
     let ss := a_ss cs in
     Some (with_ss cs (mk_ss (s_pc ss) (sr_fresh (s_regs ss) rs (s_next ss)) (s_know ss) (s_next ss + length rs)))
   else None.
 
-(* [comment removed for export] *)
 Fixpoint esize (e : expr) : nat :=
   match e with
   | EAlu _ a b | EAluw _ a b | EMd _ a b | EMdw _ a b => S (esize a + esize b)
@@ -1384,9 +1270,6 @@ Definition node_havocbig (cs : acs) (K : nat) : option acs :=
   | None => None
   end.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition find_containing (k : list kentry) (ms : list amap) (kinds : list mkind) (b : expr) (off : Z) (n : expr) : option amap :=
   List.find (fun m => negb (is_fog m) && existsb (mkind_eqb (am_kind m)) kinds && xinside k b off n (am_base m) 0 (am_len m)) ms.
 
@@ -1397,9 +1280,6 @@ Lemma find_containingB_eqf : forall fk, find_containingB (mkbc fk) = find_contai
 Proof. intros. bcfe. unfold find_containingB, find_containing. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite find_containingB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition shadow_of (k : list kentry) (b n : expr) : expr * Z * expr :=
   let '(sb, sk) := split_lit (eadd (mkSrl k b 3) (ELit (shadow_off A))) in (sb, sk, mkSrl k n 3).
 
@@ -1410,9 +1290,6 @@ Lemma shadow_ofB_eqf : forall fk, shadow_ofB (mkbc fk) = shadow_of fk.
 Proof. intros. bcfe. unfold shadow_ofB, shadow_of. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite shadow_ofB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition lit_lazy_covers (lo hi : Z) (m : amap) : bool :=
   (negb (is_fog m) && mkind_eqb (am_kind m) KRWLAZY &&
    match am_base m, am_len m with
@@ -1444,7 +1321,6 @@ Lemma appmem_shadow_okB_eqf : forall fk, appmem_shadow_okB (mkbc fk) = appmem_sh
 Proof. intros. bcfe. unfold appmem_shadow_okB, appmem_shadow_ok. unfold ehi, elo. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite appmem_shadow_okB_eqf : bceq.
 
-(* [comment removed for export] *)
 Definition shadow_facts (app : bool) (k : list kentry) (ms : list amap) (b n : expr) : list kentry :=
   let '(sb, sk, sn) := shadow_of k b n in
   if match find_containing k ms [KRWLAZY] sb sk sn with
@@ -1465,12 +1341,8 @@ Lemma shadow_factsB_eqf : forall app fk, shadow_factsB app (mkbc fk) = shadow_fa
 Proof. intros. bcfe. unfold shadow_factsB, shadow_facts. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite shadow_factsB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition vis_cost (nhi : Z) : Z := nhi + nhi / 8 + 16384.
 
-(* [comment removed for export] *)
 Definition vis_add_ref (cs : acs) (b n : expr) (k : list kentry) : option (acs) :=
   let k0 := kn cs in
   let '(bb, bk) := split_lit b in
@@ -1482,7 +1354,7 @@ Definition vis_add_ref (cs : acs) (b n : expr) (k : list kentry) : option (acs) 
       && forallb (fun p => let '(pb, pk) := split_lit (fst p) in
                            flat_x k0 pb pk (snd p)
                            && ranges_apart_x k0 bb bk n pb pk (snd p) && ranges_apart_x k0 sb sk sn pb pk (snd p)) (a_vis cs)
-      (* [comment removed for export] *)
+
       && forallb (fun p => let '(pb, pk) := split_lit (fst p) in
                            flat_x k0 pb pk (snd p) && ranges_apart_x k0 sb sk sn pb pk (snd p)) (a_ghost cs)
       && Z.leb (a_eager cs + a_abytes cs + vis_cost nhi) LIMIT)%bool
@@ -1492,9 +1364,9 @@ Definition vis_add_ref (cs : acs) (b n : expr) (k : list kentry) : option (acs) 
   else None
   | None => None
   end.
-(* [comment removed for export] *)
+
 Definition vis_add (cs : acs) (b n : expr) (k : list kentry) : option (acs) :=
-  let k0 := kn cs in let bc := mkbc k0 in   (* [comment removed for export] *)
+  let k0 := kn cs in let bc := mkbc k0 in
   let '(bb, bk) := split_lit b in
   let '(sb, sk, sn) := shadow_ofB bc b n in
   match xhiB bc n with
@@ -1504,7 +1376,7 @@ Definition vis_add (cs : acs) (b n : expr) (k : list kentry) : option (acs) :=
       && forallb (fun p => let '(pb, pk) := split_lit (fst p) in
                            flat_xB bc pb pk (snd p)
                            && ranges_apart_xB bc bb bk n pb pk (snd p) && ranges_apart_xB bc sb sk sn pb pk (snd p)) (a_vis cs)
-      (* [comment removed for export] *)
+
       && forallb (fun p => let '(pb, pk) := split_lit (fst p) in
                            flat_xB bc pb pk (snd p) && ranges_apart_xB bc sb sk sn pb pk (snd p)) (a_ghost cs)
       && Z.leb (a_eager cs + a_abytes cs + vis_cost nhi) LIMIT)%bool
@@ -1518,8 +1390,6 @@ Definition vis_add (cs : acs) (b n : expr) (k : list kentry) : option (acs) :=
 Lemma vis_add_eq : forall cs b n k, vis_add cs b n k = vis_add_ref cs b n k.
 Proof. intros. unfold vis_add, vis_add_ref. unfold ehi, elo. rewrite ?ealignB_eqf, ?flat_xB_eqf, ?ranges_apart_xB_eqf, ?shadow_factsB_eqf, ?shadow_ofB_eqf, ?xhiB_eqf. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
 Fixpoint find_disj (k : list kentry) (b1 b2 : expr) : option (expr * Z * expr * expr * Z * expr) :=
   match k with
   | [] => None
@@ -1529,7 +1399,7 @@ Fixpoint find_disj (k : list kentry) (b1 b2 : expr) : option (expr * Z * expr * 
       else find_disj r b1 b2
   | _ :: r => find_disj r b1 b2
   end.
-(* [comment removed for export] *)
+
 Definition disj_side_fact (k : list kentry) (cA : expr) (oA : Z) (nA : expr) (cB : expr) (oB : Z) : option kentry :=
   match xlo2 k nA, base_range k cB with
   | Some n, Some (_, bhi) => if (Z.leb 0 n && Z.leb n (bhi + oB))%bool then Some (KRange (esub (eaddz cB oB) (eaddz cA oA)) n (bhi + oB)) else None
@@ -1546,7 +1416,6 @@ Definition node_casedisj (cs : acs) (b1 b2 : expr) : option (acs * acs) :=
   | None => None
   end.
 
-(* [comment removed for export] *)
 Definition node_shdisj_ref (cs : acs) (b1 n1 b2 n2 : expr) : option acs :=
   let k := kn cs in
   let '(c1, o1) := split_lit b1 in let '(c2, o2) := split_lit b2 in
@@ -1559,9 +1428,9 @@ Definition node_shdisj_ref (cs : acs) (b1 n1 b2 n2 : expr) : option acs :=
       && ranges_apart_x k c1 o1 n1 c2 o2 n2)%bool
   then Some (add_kn cs [KDisj (SA sb1 sk1) sn1 (SA sb2 sk2) sn2])
   else None.
-(* [comment removed for export] *)
+
 Definition node_shdisj (cs : acs) (b1 n1 b2 n2 : expr) : option acs :=
-  let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
+  let k := kn cs in let bc := mkbc k in
   let '(c1, o1) := split_lit b1 in let '(c2, o2) := split_lit b2 in
   let '(sb1, sk1, sn1) := shadow_ofB bc b1 n1 in let '(sb2, sk2, sn2) := shadow_ofB bc b2 n2 in
   if (Z.leb 3 (ealignB bc b1) && Z.leb 3 (ealignB bc n1) && Z.leb 3 (ealignB bc b2) && Z.leb 3 (ealignB bc n2)
@@ -1576,10 +1445,6 @@ Definition node_shdisj (cs : acs) (b1 n1 b2 n2 : expr) : option acs :=
 Lemma node_shdisj_eq : forall cs b1 n1 b2 n2, node_shdisj cs b1 n1 b2 n2 = node_shdisj_ref cs b1 n1 b2 n2.
 Proof. intros. unfold node_shdisj, node_shdisj_ref. unfold ehi, elo. rewrite ?ealignB_eqf, ?flat_xB_eqf, ?ranges_apart_xB_eqf, ?shadow_ofB_eqf, ?xhiB_eqf. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition mmap_len_ref (cs : acs) : option (expr * Z * Z) :=
   match reg_lit cs 11 with
   | Some len => if Z.ltb 0 len then Some (ELit (page_up len), page_up len, page_up len) else None
@@ -1591,12 +1456,12 @@ Definition mmap_len_ref (cs : acs) : option (expr * Z * Z) :=
       | _, _ => None
       end
   end.
-(* [comment removed for export] *)
+
 Definition mmap_len (cs : acs) : option (expr * Z * Z) :=
   match reg_lit cs 11 with
   | Some len => if Z.ltb 0 len then Some (ELit (page_up len), page_up len, page_up len) else None
   | None =>
-      let le := reg cs 11 in let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
+      let le := reg cs 11 in let k := kn cs in let bc := mkbc k in
       match xloB bc le, xhiB bc le with
       | Some lo, Some hi =>
           if (Z.ltb 0 lo && Z.leb 12 (ealignB bc le) && Z.leb hi (2 ^ 46))%bool then Some (le, lo, hi) else None
@@ -1607,8 +1472,6 @@ Definition mmap_len (cs : acs) : option (expr * Z * Z) :=
 Lemma mmap_len_eq : forall cs, mmap_len cs = mmap_len_ref cs.
 Proof. intros. unfold mmap_len, mmap_len_ref. unfold ehi, elo. rewrite ?ealignB_eqf, ?xhiB_eqf, ?xloB_eqf. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
 Fixpoint inside_maps (k : list kentry) (ms : list amap) (b : expr) (off : Z) (len : expr) : bool :=
   match ms with
   | [] => false
@@ -1623,15 +1486,12 @@ Fixpoint inside_mapsB (bc : bctx) (ms : list amap) (b : expr) (off : Z) (len : e
 
 Lemma inside_mapsB_eqf : forall fk, inside_mapsB (mkbc fk) = inside_maps fk.
 Proof.
-  intros fk. apply functional_extensionality; intros ms. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros len. 
+  intros fk. apply functional_extensionality; intros ms. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros len.
   revert b off len. induction ms as [|m rest IH]; intros; bcfe; [reflexivity|].
   cbn [inside_mapsB inside_maps]. rewrite IH. autorewrite with bceq. reflexivity.
 Qed.
 #[local] Hint Rewrite inside_mapsB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition lit_entries (ms : list amap) : list (Z * Z) :=
   flat_map (fun m => if is_fog m then [] else
                      match am_base m, am_len m with
@@ -1651,25 +1511,24 @@ Definition zone_tiled (ms : list amap) : bool :=
   let lits := lit_entries ms in
   (Z.ltb (z_lo A) (z_hi A) && zone_chain (S (length lits)) lits (z_lo A) (z_hi A))%bool.
 
-(* [comment removed for export] *)
 Definition safe_range (k : list kentry) (ms : list amap) (b : expr) (off : Z) (len : expr) : bool :=
-  (xinside k b off len e_psp0 (-8388608) (ELit STACKWIN)                         (* [comment removed for export] *)
+  (xinside k b off len e_psp0 (-8388608) (ELit STACKWIN)
    || (match xhi k len, base_range k b with
        | Some lh, Some (lo, hi) =>
-           (Z.leb (img_lo A) (lo + off) && Z.leb (hi + off + lh) (img_hi A))    (* [comment removed for export] *)
+           (Z.leb (img_lo A) (lo + off) && Z.leb (hi + off + lh) (img_hi A))
        | _, _ => false
        end) || inside_maps k ms b off len
-   (* [comment removed for export] *)
+
    || (zone_tiled ms && match xhi k len, base_range k b with
                         | Some lh, Some (lo, hi) => (Z.leb (z_lo A) (lo + off) && Z.leb (hi + off + lh) (z_hi A))
                         | _, _ => false
                         end))%bool.
 
 Definition safe_rangeB (bc : bctx) (ms : list amap) (b : expr) (off : Z) (len : expr) : bool :=
-  (xinsideB bc b off len e_psp0 (-8388608) (ELit STACKWIN)                       (* [comment removed for export] *)
+  (xinsideB bc b off len e_psp0 (-8388608) (ELit STACKWIN)
    || (match xhiB bc len, base_rangeB bc b with
        | Some lh, Some (lo, hi) =>
-           (Z.leb (img_lo A) (lo + off) && Z.leb (hi + off + lh) (img_hi A))    (* [comment removed for export] *)
+           (Z.leb (img_lo A) (lo + off) && Z.leb (hi + off + lh) (img_hi A))
        | _, _ => false
        end) || inside_mapsB bc ms b off len
    || (zone_tiled ms && match xhiB bc len, base_rangeB bc b with
@@ -1680,8 +1539,6 @@ Definition safe_rangeB (bc : bctx) (ms : list amap) (b : expr) (off : Z) (len : 
 Lemma safe_rangeB_eqf : forall fk, safe_rangeB (mkbc fk) = safe_range fk.
 Proof. intros. bcfe. unfold safe_rangeB, safe_range. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite safe_rangeB_eqf : bceq.
-
-
 
 Definition grant_keep_b (k : list kentry) (ms : list amap) (K : kentry) : bool :=
   match K with
@@ -1715,8 +1572,6 @@ Lemma grant_keep_bB_eqf : forall fk, grant_keep_bB (mkbc fk) = grant_keep_b fk.
 Proof. intros. bcfe. unfold grant_keep_bB, grant_keep_b. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite grant_keep_bB_eqf : bceq.
 
-
-
 Definition kn_grant_filter (k : list kentry) (ms : list amap) : list kentry :=
   kimg_clip (List.filter (grant_keep_b k ms) k).
 
@@ -1727,27 +1582,24 @@ Lemma kn_grant_filterB_eqf : forall fk, kn_grant_filterB (mkbc fk) = kn_grant_fi
 Proof. intros. bcfe. unfold kn_grant_filterB, kn_grant_filter. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite kn_grant_filterB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition gap_ok (cs : acs) (nhi : Z) : bool :=
-  let cnt := Z.of_nat (n_res A + length (a_maps cs))%nat in
+
+  let cnt := Z.of_nat (n_res A + n_resx A + length (a_maps cs))%nat in
   Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) CEIL.
 
 Definition budget_ok (cs : acs) (extra : Z) : bool :=
   Z.leb (a_eager cs + a_abytes cs + extra) LIMIT.
 
-(* [comment removed for export] *)
 Definition kdisj_new (ms : list amap) (nb : expr) (ne : expr) : list kentry :=
   flat_map (fun m => if is_fog m then [] else [KDisj (SA (am_base m) 0) (am_len m) (SA nb 0) ne]) ms.
-(* [comment removed for export] *)
+
 Definition kdisj_frame (nb : expr) (ne : expr) : list kentry :=
   [KDisj (SA (ELit 0) (img_lo A)) (ELit (img_hi A - img_lo A)) (SA nb 0) ne;
    KDisj (SA e_psp0 (-8388608)) (ELit STACKWIN) (SA nb 0) ne].
-(* [comment removed for export] *)
+
 Definition kdisj_zone (ms : list amap) (nb : expr) (ne : expr) : list kentry :=
   if zone_tiled ms then [KDisj (SA nb 0) ne (SA (ELit 0) (z_lo A)) (ELit (z_hi A - z_lo A))] else [].
-(* [comment removed for export] *)
+
 Definition ksh_disj (k : list kentry) (b1 n1 b2 n2 : expr) : list kentry :=
   let '(s1, o1, m1) := shadow_of k b1 n1 in
   let '(s2, o2, m2) := shadow_of k b2 n2 in
@@ -1759,11 +1611,9 @@ Definition kdisj_frame_sh (k : list kentry) (nb : expr) (ne : expr) : list kentr
 Definition kdisj_new_sh (k : list kentry) (ms : list amap) (nb : expr) (ne : expr) : list kentry :=
   flat_map (fun m => if is_fog m then [] else ksh_disj k (am_base m) (am_len m) nb ne) ms.
 
-(* [comment removed for export] *)
 Definition with_maps0 (cs : acs) (ms : list amap) : acs :=
   ACS (a_ss cs) ms (a_totsz cs) (a_ylo cs) (a_eager cs) (a_vis cs) (a_ghost cs) (a_abytes cs) (a_brk cs) (a_fd cs) (a_tidset cs).
 
-(* [comment removed for export] *)
 Definition add_entry (cs : acs) (sr : list expr) (k' : list kentry) (nx' : nat)
            (m : amap) (nhi : Z) (eager : bool) (ylo' : Z) : acs :=
   ACS (mk_ss (pc cs + 4) sr k' nx')
@@ -1771,9 +1621,6 @@ Definition add_entry (cs : acs) (sr : list expr) (k' : list kentry) (nx' : nat)
       (if eager then a_eager cs + nhi else a_eager cs)
       (a_vis cs) (a_ghost cs) (a_abytes cs) (a_brk cs) (a_fd cs) (a_tidset cs).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition null_vlo (nlo : Z) : Z := if Z.ltb (img_lo A - 4096) nlo then img_hi A / 4096 else 1.
 Definition null_kend (base ne : expr) (nlo : Z) : list kentry :=
   match ne with
@@ -1781,16 +1628,15 @@ Definition null_kend (base ne : expr) (nlo : Z) : list kentry :=
   | _ => [KRange (eadd base ne) (4096 * null_vlo nlo + nlo) TOPMAX]
   end.
 
-(* [comment removed for export] *)
 Definition mmap_null (cs : acs) (kind : mkind) (eager visible : bool) : option acs :=
   match mmap_len cs with
   | Some (ne, nlo, nhi) =>
       if (fresh_ok cs && expr_vars_lt (nxt cs) ne
           && gap_ok cs nhi && (negb eager || budget_ok cs nhi)
-          && no_holes (a_maps cs) && Z.leb (a_ylo cs) 0)%bool then   (* [comment removed for export] *)
+          && no_holes (a_maps cs) && Z.leb (a_ylo cs) 0)%bool then
         let v := nxt cs in
         let base := escale 4096 (EVar v) in
-        let kv := KRange (EVar v) (null_vlo nlo) ((TOPMAX - nlo) / 4096) :: kn cs in   (* [comment removed for export] *)
+        let kv := KRange (EVar v) (null_vlo nlo) ((TOPMAX - nlo) / 4096) :: kn cs in
         let kfacts := KRange (EVar v) (null_vlo nlo) ((TOPMAX - nlo) / 4096) :: null_kend base ne nlo
                       ++ kdisj_frame base ne ++ kdisj_zone (a_maps cs) base ne ++ kdisj_new (a_maps cs) base ne
                       ++ kdisj_frame_sh kv base ne ++ kdisj_new_sh kv (a_maps cs) base ne in
@@ -1802,8 +1648,6 @@ Definition mmap_null (cs : acs) (kind : mkind) (eager visible : bool) : option a
   | None => None
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition fixed_args (cs : acs) (hullchk : bool) (top : Z) : option (expr * Z * expr * Z * Z) :=
   let k := kn cs in let a := reg cs 10 in
   let '(b, off) := split_lit a in
@@ -1815,12 +1659,10 @@ Definition fixed_args (cs : acs) (hullchk : bool) (top : Z) : option (expr * Z *
   | _, _, _ => None
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition same_val (k : list kentry) (a b : expr) : bool :=
   if expr_eqb a b then true
   else (if lin_ge0 k [(a, 0%Z)] [(b, 0%Z)] then lin_ge0 k [(b, 0%Z)] [(a, 0%Z)] else false).
-(* [comment removed for export] *)
+
 Definition mmap_fixed_grant (cs : acs) (ms0 : list amap) (b : expr) (off : Z) (ne : expr) (nhi : Z)
            (kind : mkind) (eager visible : bool) : option acs :=
   let k := kn cs in
@@ -1832,11 +1674,12 @@ Definition mmap_fixed_grant (cs : acs) (ms0 : list amap) (b : expr) (off : Z) (n
   let cs1 := add_entry (with_maps0 cs ms0) (s_regs (a_ss cs)) k' (nxt cs) m nhi eager (a_ylo cs) in
   if visible then vis_add cs1 a ne (kmem ++ kn cs1) else Some cs1.
 
-(* [comment removed for export] *)
+(* LPS 08b1429: a MAP_FIXED grant into free space must end at or below KHI, which the
+   launch's vDSO/vvar reservation lies above (resx_entry_ok); the model's resx_clear bound. *)
 Definition mmap_fixed_free (cs : acs) (kind : mkind) (eager visible : bool) : option acs :=
   let k := kn cs in
   let a := reg cs 10 in
-  match fixed_args cs true CEIL with
+  match fixed_args cs true KHI with
   | Some (b, off, ne, nlo, nhi) =>
       if (no_fog (a_maps cs)
           && forallb (fun m => ranges_apart_x k b off ne (am_base m) 0 (am_len m)) (a_maps cs)
@@ -1847,7 +1690,6 @@ Definition mmap_fixed_free (cs : acs) (kind : mkind) (eager visible : bool) : op
   | None => None
   end.
 
-(* [comment removed for export] *)
 Definition kn_rezero (k : list kentry) (ub : expr) (uk : Z) (un : expr) : list kentry :=
   let sp := mk_sprep k ub uk un in
   List.filter (fun K => match K with
@@ -1869,21 +1711,16 @@ Proof. intros. bcfe. unfold kn_rezeroB, kn_rezero. autorewrite with bceq. reflex
 Definition kn_rezeroM (k : list kentry) := kn_rezeroB (mkbc k).
 Lemma kn_rezeroM_eq : kn_rezeroM = kn_rezero. Proof. apply functional_extensionality; intros k. unfold kn_rezeroM. apply kn_rezeroB_eqf. Qed.
 
-
-
-(* [comment removed for export] *)
 Definition rekind (ms : list amap) (m : amap) : list amap :=
-  map (fun m' => if amap_eqb m' m then AM (am_base m') (am_len m') (rekind_k (am_kind m')) else m') ms.   (* [comment removed for export] *)
+  map (fun m' => if amap_eqb m' m then AM (am_base m') (am_len m') (rekind_k (am_kind m')) else m') ms.
 
-(* [comment removed for export] *)
 Inductive fixed_in_arm := ArmE | ArmF | ArmG.
 
-(* [comment removed for export] *)
 Definition fixed_in_args_ref (cs : acs) (arm : fixed_in_arm) : option (expr * Z * expr * Z * Z * amap) :=
   match fixed_args cs false TOPMAX with
   | Some (b, off, ne, nlo, nhi) =>
       let k := kn cs in
-      let kinds := match arm with ArmE => [KRW; KNONE; KNONELAZY; KMIX] | ArmF => [KRWLAZY] | ArmG => [KRW; KNONE; KNONELAZY; KMIX] end in   (* [comment removed for export] *)
+      let kinds := match arm with ArmE => [KRW; KNONE; KNONELAZY; KMIX] | ArmF => [KRWLAZY] | ArmG => [KRW; KNONE; KNONELAZY; KMIX] end in
       match find_containing k (a_maps cs) kinds b off ne with
       | Some m =>
           if (expr_vars_lt (nxt cs) ne && expr_vars_lt (nxt cs) (reg cs 10))%bool then Some (b, off, ne, nlo, nhi, m) else None
@@ -1891,12 +1728,12 @@ Definition fixed_in_args_ref (cs : acs) (arm : fixed_in_arm) : option (expr * Z 
       end
   | None => None
   end.
-(* [comment removed for export] *)
+
 Definition fixed_in_args (cs : acs) (arm : fixed_in_arm) : option (expr * Z * expr * Z * Z * amap) :=
   match fixed_args cs false TOPMAX with
   | Some (b, off, ne, nlo, nhi) =>
-      let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
-      let kinds := match arm with ArmE => [KRW; KNONE; KNONELAZY; KMIX] | ArmF => [KRWLAZY] | ArmG => [KRW; KNONE; KNONELAZY; KMIX] end in   (* [comment removed for export] *)
+      let k := kn cs in let bc := mkbc k in
+      let kinds := match arm with ArmE => [KRW; KNONE; KNONELAZY; KMIX] | ArmF => [KRWLAZY] | ArmG => [KRW; KNONE; KNONELAZY; KMIX] end in
       match find_containingB bc (a_maps cs) kinds b off ne with
       | Some m =>
           if (expr_vars_lt (nxt cs) ne && expr_vars_lt (nxt cs) (reg cs 10))%bool then Some (b, off, ne, nlo, nhi, m) else None
@@ -1908,8 +1745,6 @@ Definition fixed_in_args (cs : acs) (arm : fixed_in_arm) : option (expr * Z * ex
 Lemma fixed_in_args_eq : forall cs arm, fixed_in_args cs arm = fixed_in_args_ref cs arm.
 Proof. intros. unfold fixed_in_args, fixed_in_args_ref. unfold ehi, elo. rewrite ?find_containingB_eqf. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
 Definition mmap_fixed_in_ref (cs : acs) (arm : fixed_in_arm) : option acs :=
   match fixed_in_args cs arm with
   | Some (b, off, ne, nlo, nhi, m) =>
@@ -1930,11 +1765,11 @@ Definition mmap_fixed_in_ref (cs : acs) (arm : fixed_in_arm) : option acs :=
       else None
   | None => None
   end.
-(* [comment removed for export] *)
+
 Definition mmap_fixed_in (cs : acs) (arm : fixed_in_arm) : option acs :=
   match fixed_in_args cs arm with
   | Some (b, off, ne, nlo, nhi, m) =>
-      let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
+      let k := kn cs in let bc := mkbc k in
       if match arm with ArmE => budget_ok cs nhi | _ => true end then
         let k' := match arm with
                   | ArmE => kimg_clip (kn_unfillB bc b off ne)
@@ -1955,20 +1790,13 @@ Definition mmap_fixed_in (cs : acs) (arm : fixed_in_arm) : option acs :=
 Lemma mmap_fixed_in_eq : forall cs arm, mmap_fixed_in cs arm = mmap_fixed_in_ref cs arm.
 Proof. intros. unfold mmap_fixed_in, mmap_fixed_in_ref. unfold ehi, elo. rewrite ?kn_cutoutB_eqf, ?kn_rezeroB_eqf, ?kn_unfillB_eqf. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
 Definition ENOMEM_RET : Z := two64 - 12.
 
-(* [comment removed for export] *)
 Definition refuse (cs : acs) : acs := set_pc (set_reg cs 10 (ELit ENOMEM_RET)) (pc cs + 4).
 
-(* [comment removed for export] *)
 Definition replace_entry (ms : list amap) (m : amap) (pieces : list amap) : list amap :=
   flat_map (fun m' => if amap_eqb m' m then pieces else [m']) ms.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition mmap_gate (cs : acs) : option (Z * Z * bool) :=
   match reg_lit cs 17, reg_lit cs 12, reg_lit cs 13, reg_lit cs 14, reg_lit cs 15 with
   | Some 222, Some prot, Some flags, Some m1, Some 0 =>
@@ -1977,32 +1805,30 @@ Definition mmap_gate (cs : acs) : option (Z * Z * bool) :=
   | _, _, _, _, _ => None
   end.
 
-(* [comment removed for export] *)
 Definition node_mmapG (cs : acs) : option acs :=
   match mmap_gate cs with
   | Some (prot, flags, isnull) =>
       if isnull then
         match prot, flags with
-        | 3, 0x22 => mmap_null cs KRW true true               (* [comment removed for export] *)
-        | 3, 0x4022 => mmap_null cs KRWLAZY false true        (* [comment removed for export] *)
-        | 0, 0x22 => mmap_null cs KNONE false false           (* [comment removed for export] *)
-        | 0, 0x4022 => mmap_null cs KNONELAZY false false     (* [comment removed for export] *)
+        | 3, 0x22 => mmap_null cs KRW true true
+        | 3, 0x4022 => mmap_null cs KRWLAZY false true
+        | 0, 0x22 => mmap_null cs KNONE false false
+        | 0, 0x4022 => mmap_null cs KNONELAZY false false
         | _, _ => None
         end
       else
         match prot, flags with
-        | 3, 0x4032 => mmap_fixed_free cs KRWLAZY false false  (* [comment removed for export] *)
-        | 3, 0x32 => mmap_fixed_free cs KRW true true          (* [comment removed for export] *)
-        | 0, 0x4032 => mmap_fixed_free cs KNONELAZY false false (* [comment removed for export] *)
-        | 0, 0x32 => mmap_fixed_free cs KNONE false false      (* [comment removed for export] *)
-        | 3, 0x104022 => mmap_fixed_free cs KRWLAZY false false   (* [comment removed for export] *)
-        | 0, 0x104022 => mmap_fixed_free cs KNONELAZY false false (* [comment removed for export] *)
+        | 3, 0x4032 => mmap_fixed_free cs KRWLAZY false false
+        | 3, 0x32 => mmap_fixed_free cs KRW true true
+        | 0, 0x4032 => mmap_fixed_free cs KNONELAZY false false
+        | 0, 0x32 => mmap_fixed_free cs KNONE false false
+        | 3, 0x104022 => mmap_fixed_free cs KRWLAZY false false
+        | 0, 0x104022 => mmap_fixed_free cs KNONELAZY false false
         | _, _ => None
         end
   | None => None
   end.
 
-(* [comment removed for export] *)
 Definition node_mmapin (cs : acs) : option acs :=
   match mmap_gate cs with
   | Some (prot, flags, false) =>
@@ -2019,9 +1845,6 @@ Definition node_mmapin (cs : acs) : option acs :=
   | _ => None
   end.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition node_mprotect_ref (cs : acs) : option acs :=
   match reg_lit cs 17, reg_lit cs 12, fixed_args cs false TOPMAX with
   | Some 226, Some 3, Some (b, off, ne, nlo, nhi) =>
@@ -2040,11 +1863,11 @@ Definition node_mprotect_ref (cs : acs) : option acs :=
       end
   | _, _, _ => None
   end.
-(* [comment removed for export] *)
+
 Definition node_mprotect (cs : acs) : option acs :=
   match reg_lit cs 17, reg_lit cs 12, fixed_args cs false TOPMAX with
   | Some 226, Some 3, Some (b, off, ne, nlo, nhi) =>
-      let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
+      let k := kn cs in let bc := mkbc k in
       match find_containingB bc (a_maps cs) [KNONE; KNONELAZY] b off ne with
       | Some m =>
           if (budget_ok cs nhi && expr_vars_lt (nxt cs) ne && expr_vars_lt (nxt cs) (reg cs 10))%bool then
@@ -2062,11 +1885,6 @@ Definition node_mprotect (cs : acs) : option acs :=
 Lemma node_mprotect_eq : forall cs, node_mprotect cs = node_mprotect_ref cs.
 Proof. intros. unfold node_mprotect, node_mprotect_ref. unfold ehi, elo. rewrite ?find_containingB_eqf, ?kn_unfillB_eqf. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
 Definition amap_match (k : list kentry) (b : expr) (n : expr) (m : amap) : bool :=
   (negb (is_fog m) && expr_eqb b (am_base m) && len_eqb k n (am_len m))%bool.
 
@@ -2077,9 +1895,6 @@ Lemma amap_matchB_eqf : forall fk, amap_matchB (mkbc fk) = amap_match fk.
 Proof. intros. bcfe. unfold amap_matchB, amap_match. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite amap_matchB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition node_munmap_ref (cs : acs) : option acs :=
   match reg_lit cs 17, mmap_len cs with
   | Some 215, Some (ne, nlo, nhi) =>
@@ -2102,11 +1917,11 @@ Definition node_munmap_ref (cs : acs) : option acs :=
       else None
   | _, _ => None
   end.
-(* [comment removed for export] *)
+
 Definition node_munmap (cs : acs) : option acs :=
   match reg_lit cs 17, mmap_len cs with
   | Some 215, Some (ne, nlo, nhi) =>
-      let b := reg cs 10 in let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
+      let b := reg cs 10 in let k := kn cs in let bc := mkbc k in
       let '(bb, bk) := split_lit b in
       let gone := List.filter (fun p => let '(pb, pk) := split_lit (fst p) in negb (ranges_apart_xB bc pb pk (snd p) bb bk ne)) (a_vis cs) in
       let kept := List.filter (fun p => let '(pb, pk) := split_lit (fst p) in ranges_apart_xB bc pb pk (snd p) bb bk ne) (a_vis cs) in
@@ -2129,17 +1944,12 @@ Definition node_munmap (cs : acs) : option acs :=
 Lemma node_munmap_eq : forall cs, node_munmap cs = node_munmap_ref cs.
 Proof. intros. unfold node_munmap, node_munmap_ref. unfold ehi, elo. rewrite ?amap_matchB_eqf, ?ealignB_eqf, ?flat_xB_eqf, ?kn_unfillB_eqf, ?kzero_xB_eqf, ?page_alignedB_eqf, ?ranges_apart_xB_eqf, ?shadow_ofB_eqf, ?xhiB_eqf, ?xinsideB_eqf, ?kn_unfillM_eq. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition brk_req (cs : acs) : option Z :=
   match lit_diff (reg cs 10) (a_brk cs) with
   | Some d => if (Z.ltb 0 d && Z.eqb (d mod 4096) 0 && Z.leb d (2 ^ 40))%bool then Some d else None
   | None => None
   end.
 
-(* [comment removed for export] *)
 Definition brk_base_ok (cs : acs) (d : Z) : bool :=
   let k := kn cs in let b := a_brk cs in
   (page_aligned k b
@@ -2148,23 +1958,20 @@ Definition brk_base_ok (cs : acs) (d : Z) : bool :=
       | _, _ => false
       end)%bool.
 
-(* [comment removed for export] *)
 Definition brk_grow_possible (cs : acs) (d : Z) : bool :=
   let k := kn cs in let '(bb, bk) := split_lit (a_brk cs) in
   (brk_base_ok cs d && no_fog (a_maps cs)
-   && forallb (fun m => ranges_apart_x k bb bk (ELit (d + 4096)) (am_base m) 0 (am_len m)) (a_maps cs)  (* [comment removed for export] *)
+   && forallb (fun m => ranges_apart_x k bb bk (ELit (d + 4096)) (am_base m) 0 (am_len m)) (a_maps cs)
    && budget_ok cs d)%bool.
 
-(* [comment removed for export] *)
 Definition brk_grow_blocked (cs : acs) (d : Z) : bool :=
   let k := kn cs in let b := a_brk cs in
   (brk_base_ok cs d
    && existsb (fun m => negb (is_fog m)
-                        && lin_ge0 k [(am_base m, -1); (am_len m, 0)] [(b, 0)]      (* [comment removed for export] *)
-                        && lin_ge0 k [(b, d - 1)] [(am_base m, 0)])               (* [comment removed for export] *)
+                        && lin_ge0 k [(am_base m, -1); (am_len m, 0)] [(b, 0)]
+                        && lin_ge0 k [(b, d - 1)] [(am_base m, 0)])
               (a_maps cs))%bool.
 
-(* [comment removed for export] *)
 Definition node_brk1 (cs : acs) : option acs :=
   match reg_lit cs 17 with
   | Some 214 =>
@@ -2176,14 +1983,13 @@ Definition node_brk1 (cs : acs) : option acs :=
   | _ => None
   end.
 
-(* [comment removed for export] *)
 Definition node_brk2 (cs : acs) : option (acs * acs) :=
   match reg_lit cs 17, brk_req cs with
   | Some 214, Some d =>
       if (brk_base_ok cs d && no_fog (a_maps cs) && budget_ok cs d && Z.leb (a_ylo cs) 0 && expr_vars_lt (nxt cs) (reg cs 10))%bool then
         let k := kn cs in let b := a_brk cs in let '(bb, bk) := split_lit b in
         let csA := set_pc (set_reg cs 10 b) (pc cs + 4) in
-        (* [comment removed for export] *)
+
         let k' := kdisj_new (a_maps cs) b (ELit (d + 4096)) ++ kdisj_zone (a_maps cs) b (ELit d) ++ kdisj_new_sh k (a_maps cs) b (ELit d)
                   ++ kn_grant_filter k (a_maps cs) in
         let ss := a_ss cs in
@@ -2197,8 +2003,6 @@ Definition node_brk2 (cs : acs) : option (acs * acs) :=
       else None
   | _, _ => None
   end.
-
-(* [comment removed for export] *)
 
 Definition node_settid (cs : acs) : option acs :=
   match reg_lit cs 17 with
@@ -2218,8 +2022,6 @@ Definition node_exit (cs : acs) : option Z :=
   | _, _ => None
   end.
 
-(* [comment removed for export] *)
-
 Fixpoint list_set_nth {T} (i : nat) (x : T) (l : list T) : list T :=
   match l, i with
   | [], _ => []
@@ -2238,25 +2040,22 @@ Definition fog_token (sz : Z) : amap := AM (ELit 0) (ELit sz) KFOG.
 Definition with_maps (cs : acs) (ms : list amap) : acs :=
   ACS (a_ss cs) ms (a_totsz cs) (a_ylo cs) (a_eager cs) (a_vis cs) (a_ghost cs) (a_abytes cs) (a_brk cs) (a_fd cs) (a_tidset cs).
 
-(* [comment removed for export] *)
 Definition node_fog (cs : acs) (i : nat) (sz : Z) : option acs :=
   match nth_error (a_maps cs) i with
   | Some m =>
       if (negb (is_fog m) && Z.leb 0 sz && Z.ltb sz two64
           && match xhi (kn cs) (am_len m) with Some h => Z.leb h sz | None => false end
-          && negb (lz_kind (am_kind m)))%bool   (* [comment removed for export] *)
+          && negb (lz_kind (am_kind m)))%bool
       then Some (with_maps cs (list_set_nth i (fog_token sz) (a_maps cs)))
       else None
   | None => None
   end.
 
-(* [comment removed for export] *)
 Definition node_fognew (cs : acs) (i : nat) (sz : Z) : option acs :=
   if (Nat.leb i (length (a_maps cs)) && Z.leb 0 sz && Z.ltb sz two64)%bool
   then Some (with_maps cs (list_insert_nth i (fog_token sz) (a_maps cs)))
   else None.
 
-(* [comment removed for export] *)
 Definition node_ghost (cs : acs) (b n : expr) : option acs :=
   match xhi (kn cs) n with
   | Some nhi =>
@@ -2267,7 +2066,6 @@ Definition node_ghost (cs : acs) (b n : expr) : option acs :=
   | None => None
   end.
 
-(* [comment removed for export] *)
 Definition vis_here (b n : expr) (p : expr * expr) : bool := (expr_eqb (fst p) b && expr_eqb (snd p) n)%bool.
 
 Definition node_unvis_ref (cs : acs) (b n : expr) : option acs :=
@@ -2290,9 +2088,9 @@ Definition node_unvis_ref (cs : acs) (b n : expr) : option acs :=
       else None
   | _, _ => None
   end.
-(* [comment removed for export] *)
+
 Definition node_unvis (cs : acs) (b n : expr) : option acs :=
-  let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
+  let k := kn cs in let bc := mkbc k in
   let '(bb, bk) := split_lit b in
   let '(sb, sk, sn) := shadow_ofB bc b n in
   match xhiB bc b, xhiB bc n with
@@ -2315,8 +2113,6 @@ Definition node_unvis (cs : acs) (b n : expr) : option acs :=
 Lemma node_unvis_eq : forall cs b n, node_unvis cs b n = node_unvis_ref cs b n.
 Proof. intros. unfold node_unvis, node_unvis_ref. unfold ehi, elo. rewrite ?ealignB_eqf, ?flat_xB_eqf, ?kn_unfillB_eqf, ?kzero_xB_eqf, ?shadow_ofB_eqf, ?xhiB_eqf, ?kn_unfillM_eq. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
 Definition node_havocbrk (cs : acs) (lo hi : Z) : option acs :=
   match xlo (kn cs) (a_brk cs), xhi (kn cs) (a_brk cs) with
   | Some l, Some h =>
@@ -2328,14 +2124,12 @@ Definition node_havocbrk (cs : acs) (lo hi : Z) : option acs :=
   | _, _ => None
   end.
 
-(* [comment removed for export] *)
 Definition node_intro (cs : acs) (lo hi : Z) : option acs :=
   if (fresh_ok cs && Z.leb 0 lo && Z.leb lo hi && Z.ltb hi two64)%bool then
     let v := nxt cs in let ss := a_ss cs in
     Some (with_ss cs (mk_ss (s_pc ss) (s_regs ss) (KRange (EVar v) lo hi :: s_know ss) (S v)))
   else None.
 
-(* [comment removed for export] *)
 Definition SPIN_WORD : Z := 0x6f.
 Definition node_spin (cs : acs) : bool :=
   (Z.leb 0 (pc cs) && Z.ltb (pc cs + 4) two64 &&
@@ -2344,9 +2138,6 @@ Definition node_spin (cs : acs) : bool :=
   | None => false
   end)%bool.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition summary_fill_ref (cs : acs) (entry : Z) (cmax : Z) : option acs :=
   let k := kn cs in
   if negb (Z.eqb (pc cs) entry) then None else
@@ -2376,9 +2167,9 @@ Definition summary_fill_ref (cs : acs) (entry : Z) (cmax : Z) : option acs :=
       end
   | _, _ => None
   end.
-(* [comment removed for export] *)
+
 Definition summary_fill (cs : acs) (entry : Z) (cmax : Z) : option acs :=
-  let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
+  let k := kn cs in let bc := mkbc k in
   if negb (Z.eqb (pc cs) entry) then None else
   match ret_lit cs, reg_lit cs 11 with
   | Some ret, Some c =>
@@ -2410,8 +2201,6 @@ Definition summary_fill (cs : acs) (entry : Z) (cmax : Z) : option acs :=
 Lemma summary_fill_eq : forall cs entry cmax, summary_fill cs entry cmax = summary_fill_ref cs entry cmax.
 Proof. intros. unfold summary_fill, summary_fill_ref. unfold ehi, elo. rewrite ?kwritable_xB_eqf, ?kzero_xB_eqf, ?off_image_xB_eqf, ?xhiB_eqf, ?xloB_eqf, ?kn_havocM_eq. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
 Fixpoint copy_facts (fuel : nat) (k : list kentry) (sb : expr) (sk : Z) (db : expr) (dk : Z) (n : Z)
   : option (list kentry) :=
   match fuel with
@@ -2429,7 +2218,7 @@ Fixpoint copy_facts (fuel : nat) (k : list kentry) (sb : expr) (sk : Z) (db : ex
         | Some v, Some rest => Some (KWord (SA db dk) 8 v :: rest)
         | _, _ => None
         end
-      else if Z.leb 1 n then (* [comment removed for export] *)
+      else if Z.leb 1 n then
         match know_lookup segs k sb sk 1 false [] [], copy_facts f k sb (sk + 1) db (dk + 1) (n - 1) with
         | LHit v [] _, Some rest => Some (KWord (SA db dk) 1 v :: rest)
         | _, _ => None
@@ -2454,7 +2243,7 @@ Fixpoint copy_factsB (bc : bctx) (fuel : nat) (sb : expr) (sk : Z) (db : expr) (
         | Some v, Some rest => Some (KWord (SA db dk) 8 v :: rest)
         | _, _ => None
         end
-      else if Z.leb 1 n then (* [comment removed for export] *)
+      else if Z.leb 1 n then
         match know_lookupB segs bc sb sk 1 false [] [], copy_factsB bc f sb (sk + 1) db (dk + 1) (n - 1) with
         | LHit v [] _, Some rest => Some (KWord (SA db dk) 1 v :: rest)
         | _, _ => None
@@ -2471,10 +2260,6 @@ Lemma copy_factsB_eqf : forall fk, copy_factsB (mkbc fk) = (fun fuel => copy_fac
 Proof. intros fk. apply functional_extensionality; intros fuel. apply copy_factsB_eqf'. Qed.
 #[local] Hint Rewrite copy_factsB_eqf' copy_factsB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition kblob_prefix (k : list kentry) (sb : expr) (sk : Z) (db : expr) (dk : Z) (nlo : Z) : list kentry :=
   match List.find (fun K => match K with
                              | KBlob (SA b o) (ELit n0) _ => expr_eqb b sb && Z.eqb o sk && Z.ltb 0 n0 && Z.leb n0 nlo
@@ -2501,7 +2286,7 @@ Definition summary_copy_ref (cs : acs) (entry : Z) : option acs :=
             | Some k0 =>
             if (kwritable_x k k db dk ne && ranges_apart_x k db dk ne sb sk ne)%bool then
               let k1 := kn_havoc k0 db dk ne in
-              (* [comment removed for export] *)
+
               let nx := nxt cs in
               let words := if (Z.eqb nlo nhi && Z.eqb (nhi mod 8) 0 && Z.leb nhi 256 && Z.ltb 0 nhi)%bool then Z.to_nat (nhi / 8) else 0%nat in
               let kfresh := map (fun i => KWord (SA db (dk + 8 * Z.of_nat i)) 8 (EVar (nx + NCS + i)%nat)) (seq 0 words) in
@@ -2525,9 +2310,9 @@ Definition summary_copy_ref (cs : acs) (entry : Z) : option acs :=
       end
   | None => None
   end.
-(* [comment removed for export] *)
+
 Definition summary_copy (cs : acs) (entry : Z) : option acs :=
-  let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
+  let k := kn cs in let bc := mkbc k in
   if negb (Z.eqb (pc cs) entry) then None else
   match ret_lit cs with
   | Some ret =>
@@ -2543,7 +2328,7 @@ Definition summary_copy (cs : acs) (entry : Z) : option acs :=
             | Some k0 =>
             if (kwritable_xB bc k db dk ne && ranges_apart_xB bc db dk ne sb sk ne)%bool then
               let k1 := kn_havocM k0 db dk ne in
-              (* [comment removed for export] *)
+
               let nx := nxt cs in
               let words := if (Z.eqb nlo nhi && Z.eqb (nhi mod 8) 0 && Z.leb nhi 256 && Z.ltb 0 nhi)%bool then Z.to_nat (nhi / 8) else 0%nat in
               let kfresh := map (fun i => KWord (SA db (dk + 8 * Z.of_nat i)) 8 (EVar (nx + NCS + i)%nat)) (seq 0 words) in
@@ -2571,8 +2356,6 @@ Definition summary_copy (cs : acs) (entry : Z) : option acs :=
 Lemma summary_copy_eq : forall cs entry, summary_copy cs entry = summary_copy_ref cs entry.
 Proof. intros. unfold summary_copy, summary_copy_ref. unfold ehi, elo. rewrite ?copy_factsB_eqf, ?flat_xB_eqf, ?kwritable_xB_eqf, ?kzero_xB_eqf, ?off_image_xB_eqf, ?ranges_apart_xB_eqf, ?xhiB_eqf, ?xloB_eqf, ?kn_havocM_eq. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
 Definition summary_miz_ref (cs : acs) : option acs :=
   let k := kn cs in
   if negb (Z.eqb (pc cs) (x_memiszero A)) then None else
@@ -2593,9 +2376,9 @@ Definition summary_miz_ref (cs : acs) : option acs :=
       end
   | None => None
   end.
-(* [comment removed for export] *)
+
 Definition summary_miz (cs : acs) : option acs :=
-  let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
+  let k := kn cs in let bc := mkbc k in
   if negb (Z.eqb (pc cs) (x_memiszero A)) then None else
   match ret_lit cs with
   | Some ret =>
@@ -2618,8 +2401,6 @@ Definition summary_miz (cs : acs) : option acs :=
 Lemma summary_miz_eq : forall cs, summary_miz cs = summary_miz_ref cs.
 Proof. intros. unfold summary_miz, summary_miz_ref. unfold ehi, elo. rewrite ?kn_havocB_eqf, ?kwritableB_eqf, ?kzero_xB_eqf, ?ranges_apart_xB_eqf, ?xhiB_eqf, ?xloB_eqf. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
 Definition img_cov (k : list kentry) (a b : Z) : bool :=
   existsb (fun K => match K with KImg lo hi => Z.leb lo a && Z.leb b hi | _ => false end) k.
 
@@ -2629,12 +2410,8 @@ Lemma img_covB_eqf : forall fk, img_covB (mkbc fk) = img_cov fk.
 Proof. intros. bcfe. unfold img_covB, img_cov. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite img_covB_eqf : bceq.
 
-
-
-(* [comment removed for export] *)
 Definition SEALED_W : Z := 0x3e64656c6165733c.
 
-(* [comment removed for export] *)
 Definition summary_istrncpy_ref (cs : acs) : option acs :=
   let k := kn cs in
   if negb (Z.eqb (pc cs) (x_istrncpy A)) then None else
@@ -2660,9 +2437,9 @@ Definition summary_istrncpy_ref (cs : acs) : option acs :=
       end
   | _, _, _ => None
   end.
-(* [comment removed for export] *)
+
 Definition summary_istrncpy (cs : acs) : option acs :=
-  let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
+  let k := kn cs in let bc := mkbc k in
   if negb (Z.eqb (pc cs) (x_istrncpy A)) then None else
   match ret_lit cs, reg_lit cs 11, reg_lit cs 12 with
   | Some ret, Some src, Some n =>
@@ -2690,8 +2467,6 @@ Definition summary_istrncpy (cs : acs) : option acs :=
 Lemma summary_istrncpy_eq : forall cs, summary_istrncpy cs = summary_istrncpy_ref cs.
 Proof. intros. unfold summary_istrncpy, summary_istrncpy_ref. unfold ehi, elo. rewrite ?kwritable_xB_eqf, ?off_image_xB_eqf, ?ranges_apart_xB_eqf, ?xhiB_eqf, ?kn_havocM_eq. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
 Definition popfree_facts (lb : expr) (lk : Z) (cnt c s : Z) (K : nat) : list kentry :=
   map (fun t => KWord (SA lb (lk + 4 * (cnt - 1 - Z.of_nat t))) 4 (ELit ((c + Z.of_nat t * s) / 16))) (seq 0 K).
 Definition summary_popfree (cs : acs) (args : list expr) : option acs :=
@@ -2720,8 +2495,6 @@ Definition summary_popfree (cs : acs) (args : list expr) : option acs :=
   | _, _, _, _, _ => None
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition kn_readable_x (k : list kentry) (rb : expr) (rk : Z) (ne : expr) : bool :=
   existsb (fun K => match K with
                     | KUnk (SA kb kk) len | KZero (SA kb kk) len | KFill (SA kb kk) len _ | KBlob (SA kb kk) len _ =>
@@ -2746,7 +2519,7 @@ Definition summary_sniff_ref (cs : acs) : option acs :=
           && ranges_apart_x k qb qk (ELit 8) bb bk (ELit 8)
           && ranges_apart_x k qb qk (ELit 8) (ELit 0) (sniff_cell A) (ELit 8)
           && (Z.eqb m 0 || (flat_x k bb bk (ELit m) && kn_readable segs k k bb bk (Z.to_nat m))
-              || kn_readable_x k bb bk ne)             (* [comment removed for export] *)
+              || kn_readable_x k bb bk ne)
           && img_cov k (sniff_tab A) (sniff_tab A + 16)
           && (Z.leb nhi 2 ||
               (Z.leb 3 (ealign k buf) && flat_x k (ELit 0) (sniff_cell A) (ELit 8)
@@ -2761,11 +2534,11 @@ Definition summary_sniff_ref (cs : acs) : option acs :=
                      && ranges_apart_x k qb qk (ELit 8) hb hk (ELit 1)
                      && match know_lookup segs k hb hk 1 false [] [] with
                         | LHit v0 [] _ =>
-                                        (* [comment removed for export] *)
+
                                         let v := extK k v0 in
                                         match erange k v with
                                         | Some (lo, hi) => Z.eqb hi 0 || (Z.leb m lo && Z.leb hi 127)
-                                                           (* [comment removed for export] *)
+
                                                            || (Z.leb hi 127 && lin_ge0 k [(v, 0%Z)] [(ne, 0%Z)])
                                         | None => false
                                         end
@@ -2781,9 +2554,9 @@ Definition summary_sniff_ref (cs : acs) : option acs :=
     end
   | None => None
   end.
-(* [comment removed for export] *)
+
 Definition summary_sniff (cs : acs) : option acs :=
-  let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
+  let k := kn cs in let bc := mkbc k in
   if negb (Z.eqb (pc cs) (x_sniff A)) then None else
   match ret_lit cs with
   | Some ret =>
@@ -2799,7 +2572,7 @@ Definition summary_sniff (cs : acs) : option acs :=
           && ranges_apart_xB bc qb qk (ELit 8) bb bk (ELit 8)
           && ranges_apart_xB bc qb qk (ELit 8) (ELit 0) (sniff_cell A) (ELit 8)
           && (Z.eqb m 0 || (flat_xB bc bb bk (ELit m) && kn_readableB segs bc k bb bk (Z.to_nat m))
-              || kn_readable_x k bb bk ne)             (* [comment removed for export] *)
+              || kn_readable_x k bb bk ne)
           && img_covB bc (sniff_tab A) (sniff_tab A + 16)
           && (Z.leb nhi 2 ||
               (Z.leb 3 (ealignB bc buf) && flat_xB bc (ELit 0) (sniff_cell A) (ELit 8)
@@ -2814,11 +2587,11 @@ Definition summary_sniff (cs : acs) : option acs :=
                      && ranges_apart_xB bc qb qk (ELit 8) hb hk (ELit 1)
                      && match know_lookupB segs bc hb hk 1 false [] [] with
                         | LHit v0 [] _ =>
-                                        (* [comment removed for export] *)
+
                                         let v := extKB bc v0 in
                                         match erangeB bc v with
                                         | Some (lo, hi) => Z.eqb hi 0 || (Z.leb m lo && Z.leb hi 127)
-                                                           (* [comment removed for export] *)
+
                                                            || (Z.leb hi 127 && lin_ge0B bc [(v, 0%Z)] [(ne, 0%Z)])
                                         | None => false
                                         end
@@ -2838,34 +2611,83 @@ Definition summary_sniff (cs : acs) : option acs :=
 Lemma summary_sniff_eq : forall cs, summary_sniff cs = summary_sniff_ref cs.
 Proof. intros. unfold summary_sniff, summary_sniff_ref. unfold ehi, elo. rewrite ?ealignB_eqf, ?erangeB_eqf, ?extKB_eqf, ?flat_xB_eqf, ?img_covB_eqf, ?kn_havocB_eqf, ?kn_readableB_eqf, ?know_lookupB_eqf, ?kwritableB_eqf, ?lin_ge0B_eqf, ?mkSrlB_eqf, ?ranges_apart_xB_eqf, ?xhiB_eqf, ?xloB_eqf. reflexivity. Qed.
 
+Definition rseq_z (b : bool) : Z := if b then 1 else 0.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+Lemma rseq_z_range : forall b, 0 <= rseq_z b <= 1.
+Proof. intros [|]; cbn; lia. Qed.
+
+Definition AUXSZ (r : Z) : Z := 432 + 32 * r.
+Lemma AUXSZ_of : forall b, AUXSZ (rseq_z b) = Z.of_nat (StackLayout.auxv_size b).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma AUXSZ_eq : AUXSZ 1 = Z.of_nat (StackLayout.auxv_size (kb_rseq default_kernel)).
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma kb_rseq_mkProcInput : forall argv envp fs stdin uid gid groups net
+    nofile sigmask hwcap abort va,
+  kb_rseq (in_kernel (mkProcInput argv envp fs stdin uid gid groups net
+                        nofile sigmask hwcap abort va)) = true.
+Proof. reflexivity. Qed.
+
+Example auxsz_admits_the_default_build :
+  AUXSZ (rseq_z (kb_rseq (in_kernel
+           (mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000)
+              (Z_to_bv 64 1000) [] net_silent default_nofile
+              (Z_to_bv 64 0) StackLayout.hwcap_rv64gc false Sv48))))
+  = Z.of_nat (StackLayout.auxv_size
+                      (kb_rseq (in_kernel
+                        (mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000)
+                           (Z_to_bv 64 1000) [] net_silent default_nofile
+                      (Z_to_bv 64 0) StackLayout.hwcap_rv64gc false Sv48))))
+  /\ AUXSZ (rseq_z (kb_rseq (in_kernel
+              (mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000)
+                 (Z_to_bv 64 1000) [] net_silent default_nofile
+                 (Z_to_bv 64 0) StackLayout.hwcap_rv64gc false Sv48)))) = 464.
+Proof.
+  split; [apply AUXSZ_of|]. rewrite kb_rseq_mkProcInput. vm_compute. reflexivity.
+Qed.
+
+Definition auxsz_rseq_off_input : ProcInput :=
+  mkProcInput_full [[]] [] [] IEof (Z_to_bv 64 1000) (Z_to_bv 64 1000) []
+    net_silent default_nofile (Z_to_bv 64 0) StackLayout.hwcap_rv64gc false
+    Sv48 default_urandom []
+    (mkKernelBuild false 1%N true 256%N 0%N false 0%N cache_view_absent
+                   224%N 212992%N 212992%N 4194304%N 4194304%N)
+    default_execfn true true false.
+
+Example auxsz_refuses_a_build_without_rseq :
+  kb_rseq (in_kernel auxsz_rseq_off_input) = false
+  /\ AUXSZ (rseq_z (kb_rseq (in_kernel auxsz_rseq_off_input)))
+     = Z.of_nat (StackLayout.auxv_size (kb_rseq (in_kernel auxsz_rseq_off_input)))
+  /\ Z.of_nat (StackLayout.auxv_size (kb_rseq (in_kernel auxsz_rseq_off_input)))
+     = 432%Z
+  /\ AUXSZ 1 <> Z.of_nat (StackLayout.auxv_size
+                          (kb_rseq (in_kernel auxsz_rseq_off_input))).
+Proof.
+  split; [reflexivity|]. split; [apply AUXSZ_of|].
+  split; [vm_compute; reflexivity|]. vm_compute. discriminate.
+Qed.
 Definition e_envp : expr := eadd e_sp0 (eadd (escale 8 (EVar V_ARGC)) (ELit 16)).
 Definition e_auxv : expr := eadd e_envp (eadd (escale 8 (EVar V_ENVC)) (ELit 8)).
-Definition e_str0 : expr := eaddz e_auxv 160.
-Definition e_str1 : expr := eadd e_str0 (eaddz (EVar V_L0) 1).
-Definition e_atrandom : expr := eadd e_str0 (escale 8 (EVar V_W)).
-(* [comment removed for export] *)
+Definition e_atrandom (r : Z) : expr := eadd (eaddz e_auxv (AUXSZ r)) (escale 8 (EVar V_G)).
+Definition e_str0 (r : Z) : expr := eadd (eaddz (e_atrandom r) 16) (EVar V_W).
+Definition e_str1 (r : Z) : expr := eadd (e_str0 r) (eaddz (EVar V_L0) 1).
+
 Definition e_atr8 : expr :=
-  eadd (eadd (eadd (escale 4096 (EVar V_S1)) (escale 512 (EVar V_PG))) (escale 2 (EVar V_S2))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W))).
+  eadd (eadd (eadd (escale 4096 (EVar V_S1)) (escale 512 (EVar V_PG))) (escale 2 (EVar V_S2))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_G))).
 
-(* [comment removed for export] *)
-Definition e_argv1w : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) e_str1.
+Definition e_argv1w (r : Z) : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) (e_str1 r).
 
-(* [comment removed for export] *)
 Definition node_envscan (cs : acs) : option acs :=
   let k := kn cs in
   if (Z.eqb (pc cs) (x_envscan A) && len_eqb k (reg cs 9) e_envp)%bool then
     Some (set_pc (set_reg (set_reg cs 9 (eadd (reg cs 9) (eadd (escale 8 (EVar V_ENVC)) (ELit 8)))) 10 (ELit 0)) (x_envscan_k A))
   else None.
 
-(* [comment removed for export] *)
-Definition node_pnscan (cs : acs) : option acs :=
+Definition node_pnscan (r : Z) (cs : acs) : option acs :=
   let k := kn cs in
   match reg_lit cs 10, reg_lit cs 12 with
   | Some p, Some 47 =>
-      if (Z.eqb (pc cs) (x_pnscan A) && len_eqb k (reg cs 11) (eaddz e_str0 1)
+      if (Z.eqb (pc cs) (x_pnscan A) && len_eqb k (reg cs 11) (eaddz (e_str0 r) 1)
           && kwritable k k (ELit 0) p 8 && Z.leb (img_lo A) p && Z.leb (p + 8) (img_hi A) && fresh_ok cs)%bool then
         let v := nxt cs in
         let k' := kn_havoc (kimg_cut k p 8) (ELit 0) p (ELit 8) in
@@ -2875,16 +2697,15 @@ Definition node_pnscan (cs : acs) : option acs :=
   | _, _ => None
   end.
 
-(* [comment removed for export] *)
 Definition kw_argv1 (v : expr) : kentry := KWord (SA e_sp0 16) 8 v.
 
-Definition node_layout (cs : acs) (args : list expr) : option acs :=
+Definition node_layout (r : Z) (cs : acs) (args : list expr) : option acs :=
   let k := kn cs in
-  if negb (existsb (kentry_eqb (kw_argv1 e_argv1w)) k) then None else
-  let k' := List.filter (fun K => negb (kentry_eqb (kw_argv1 e_argv1w) K)) k in
+  if negb (existsb (kentry_eqb (kw_argv1 (e_argv1w r))) k) then None else
+  let k' := List.filter (fun K => negb (kentry_eqb (kw_argv1 (e_argv1w r)) K)) k in
   match args with
   | [ELit 1] => match xlo k (EVar V_ARGC) with
-                | Some lo => if Z.leb 2 lo then Some (set_kn cs (kw_argv1 e_str1 :: k')) else None
+                | Some lo => if Z.leb 2 lo then Some (set_kn cs (kw_argv1 (e_str1 r) :: k')) else None
                 | None => None
                 end
   | [ELit 0] => match xhi k (EVar V_ARGC) with
@@ -2893,9 +2714,6 @@ Definition node_layout (cs : acs) (args : list expr) : option acs :=
                 end
   | _ => None
   end.
-
-
-(* [comment removed for export] *)
 
 Definition entails (cs : acs) (ch : acs) : bool :=
   (Z.eqb (pc cs) (pc ch)
@@ -2911,9 +2729,6 @@ Definition entails (cs : acs) (ch : acs) : bool :=
    && Z.leb (a_totsz cs) (a_totsz ch) && Z.leb (a_ylo ch) (a_ylo cs)
    && Z.leb (a_eager cs) (a_eager ch) && Z.leb (a_abytes cs) (a_abytes ch))%bool.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Fixpoint esubst (J : nat) (e : expr) (x : expr) : expr :=
   match x with
   | ELit _ => x
@@ -2925,7 +2740,7 @@ Fixpoint esubst (J : nat) (e : expr) (x : expr) : expr :=
   | EExt sx lo n a => EExt sx lo n (esubst J e a)
   | EBlob _ _ _ _ => x
   end.
-(* [comment removed for export] *)
+
 Definition asubst (J : nat) (e : expr) (a : saddr) : saddr := SA (esubst J e (a_base a)) (a_off a).
 Definition ksubst (J : nat) (e : expr) (K : kentry) : kentry :=
   match K with
@@ -2944,15 +2759,13 @@ Definition psubst (J : nat) (e : expr) (p : expr * expr) : expr * expr := (esubs
 Definition msubst (J : nat) (e : expr) (m : amap) : amap := AM (esubst J e (am_base m)) (esubst J e (am_len m)) (am_kind m).
 Definition fsubst (J : nat) (e : expr) (f : afd) : afd :=
   match f with FdFile k l o => FdFile k (esubst J e l) (esubst J e o) | _ => f end.
-(* [comment removed for export] *)
+
 Definition inst (inv : acs) (J : nat) (e : expr) : acs :=
   ACS (mk_ss (pc inv) (map (esubst J e) (s_regs (a_ss inv))) (map (ksubst J e) (kn inv)) (nxt inv))
       (map (msubst J e) (a_maps inv)) (a_totsz inv) (a_ylo inv) (a_eager inv)
       (map (psubst J e) (a_vis inv)) (map (psubst J e) (a_ghost inv)) (a_abytes inv)
       (esubst J e (a_brk inv)) (fsubst J e (a_fd inv)) (a_tidset inv).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Fixpoint nt_set (t : list (option nat)) (i : nat) (d : nat) {struct i} : list (option nat) :=
   match i, t with
   | O, [] => [Some d]
@@ -2968,7 +2781,7 @@ Proof.
   - rewrite IH. destruct (Nat.eqb j i); destruct j; reflexivity.
   - apply IH.
 Qed.
-(* [comment removed for export] *)
+
 Fixpoint mk_fwd (m : list (nat * nat)) : option (list (option nat)) :=
   match m with
   | [] => Some []
@@ -2978,7 +2791,7 @@ Fixpoint mk_fwd (m : list (nat * nat)) : option (list (option nat)) :=
       | None => None
       end
   end.
-(* [comment removed for export] *)
+
 Fixpoint mk_bwd (m : list (nat * nat)) : option (list (option nat)) :=
   match m with
   | [] => Some []
@@ -3019,7 +2832,6 @@ Definition mrename (t : list (option nat)) (m : amap) : amap := AM (erename t (a
 Definition frename (t : list (option nat)) (f : afd) : afd :=
   match f with FdFile k l o => FdFile k (erename t l) (erename t o) | _ => f end.
 
-(* [comment removed for export] *)
 Fixpoint evars_all (ok : nat -> bool) (e : expr) : bool :=
   match e with
   | ELit _ => true
@@ -3044,7 +2856,6 @@ Definition csvars_all (ok : nat -> bool) (cs : acs) : bool :=
    && evars_all ok (a_brk cs)
    && match a_fd cs with FdFile _ l o => evars_all ok l && evars_all ok o | _ => true end)%bool.
 
-(* [comment removed for export] *)
 Fixpoint emaxv (e : expr) (acc : nat) : nat :=
   match e with
   | ELit _ => acc
@@ -3076,7 +2887,6 @@ Definition rename_cs (t : list (option nat)) (cs : acs) (nx : nat) : acs :=
       (map (prename t) (a_vis cs)) (map (prename t) (a_ghost cs)) (a_abytes cs)
       (erename t (a_brk cs)) (frename t (a_fd cs)) (a_tidset cs).
 
-(* [comment removed for export] *)
 Definition node_rename (gb : nat) (cs : acs) (m : list (nat * nat)) : option acs :=
   if forallb (fun p => Nat.leb gb (fst p) && Nat.leb gb (snd p)) m then
     match mk_fwd m, mk_bwd m with
@@ -3090,7 +2900,6 @@ Definition node_rename (gb : nat) (cs : acs) (m : list (nat * nat)) : option acs
     end
   else None.
 
-(* [comment removed for export] *)
 Fixpoint bt_set (t : list bool) (i : nat) {struct i} : list bool :=
   match i, t with
   | O, [] => [true]
@@ -3099,7 +2908,7 @@ Fixpoint bt_set (t : list bool) (i : nat) {struct i} : list bool :=
   | S j, x :: rest => x :: bt_set rest j
   end.
 Definition bt_get (t : list bool) (i : nat) : bool := nth i t false.
-(* [comment removed for export] *)
+
 Fixpoint evars_fo (gb : nat) (e : expr) (acc : list nat * list bool) : list nat * list bool :=
   match e with
   | ELit _ => acc
@@ -3130,7 +2939,6 @@ Fixpoint number_from (i : nat) (l : list nat) : list (nat * nat) :=
 Definition compact_map (gb : nat) (cs : acs) : list (nat * nat) := number_from gb (csvars_fo gb cs).
 Definition node_compact (gb : nat) (cs : acs) : option acs := node_rename gb cs (compact_map gb cs).
 
-(* [comment removed for export] *)
 Fixpoint regs_match_h (lo hi : nat) (seen : list nat) (rs ts : list expr) : bool :=
   match rs, ts with
   | [], [] => true
@@ -3143,11 +2951,10 @@ Fixpoint regs_match_h (lo hi : nat) (seen : list nat) (rs ts : list expr) : bool
       end
   | _, _ => false
   end.
-(* [comment removed for export] *)
+
 Definition saddr_eqb_h (x y : saddr) : bool :=
   saddr_eqb x y || expr_eqb (eaddz (a_base x) (a_off x)) (eaddz (a_base y) (a_off y)).
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+
 Fixpoint cover1 (k : list kentry) (b : expr) (i : Z) : option Z :=
   match k with
   | [] => None
@@ -3170,7 +2977,7 @@ Fixpoint cover_x (fuel : nat) (k : list kentry) (b : expr) (i : Z) (stop : Z) : 
            | None => false
            end
   end.
-(* [comment removed for export] *)
+
 Definition kunk_covered (k : list kentry) (K : kentry) : bool :=
   match K with
   | KUnk (SA b o) (ELit n) =>
@@ -3189,15 +2996,14 @@ Definition kentry_eqb_h (x y : kentry) : bool :=
   | KUnk a n, KUnk a' n' => saddr_eqb_h a a' && expr_eqb n n'
   | _, _ => false
   end.
-(* [comment removed for export] *)
+
 Definition kflat_h (k : list kentry) (K : kentry) : bool :=
   match K with
   | KWord (SA b o) w _ => flat_x k b o (ELit (Z.of_nat w))
   | KZero (SA b o) n | KBlob (SA b o) n _ | KWr (SA b o) n | KFill (SA b o) n _ | KUnk (SA b o) n => flat_x k b o n
   | _ => true
   end.
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+
 Definition kimg_sub_covered (k : list kentry) (K : kentry) : bool :=
   match K with
   | KImg lo hi => existsb (fun X => match X with KImg lo' hi' => Z.leb lo' lo && Z.leb hi hi' | _ => false end) k
@@ -3227,13 +3033,11 @@ Definition entails_h (lo hi : nat) (cs : acs) (ch : acs) : bool :=
    && Z.leb (a_totsz cs) (a_totsz ch) && Z.leb (a_ylo ch) (a_ylo cs)
    && Z.leb (a_eager cs) (a_eager ch) && Z.leb (a_abytes cs) (a_abytes ch))%bool.
 
-(* [comment removed for export] *)
 Inductive loopctx : Type :=
 | LC (lc_head : Z) (lc_next : acs) (lc_lo lc_hi : nat)
 | JC (jc_id : nat) (jc_st : acs) (jc_sh : shape) (jc_b jc_lo : nat).
 Definition lc_bnd (c : loopctx) : nat := match c with LC _ _ _ hi => hi | JC _ _ _ b _ => b end.
 
-(* [comment removed for export] *)
 Definition loop_ok (cs0 : acs) (J : nat) (N : expr) (inv : acs) : option Z :=
   let lo := S J in let hi := nxt inv in
   if (fresh_ok cs0 && Nat.leb (nxt cs0) J && Nat.ltb J hi && fresh_ok inv
@@ -3247,13 +3051,9 @@ Definition loop_ok (cs0 : acs) (J : nat) (N : expr) (inv : acs) : option Z :=
   then match xhi (kn cs0) N with Some nhi => if Z.ltb nhi two64 then Some nhi else None | None => None end
   else None.
 
-(* [comment removed for export] *)
 Definition loop_body_state (J : nat) (N : expr) (nhi : Z) (inv : acs) : acs :=
   add_kn inv [KRange (EVar J) 0 (nhi - 1); KRange (esub N (EVar J)) 1 nhi].
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition branch_probe (cs : acs) : option expr :=
   match itab_lookup IT (pc cs) with
   | Some (Branch c rs1 rs2 _) =>
@@ -3261,14 +3061,12 @@ Definition branch_probe (cs : acs) : option expr :=
   | _ => None
   end.
 
-(* [comment removed for export] *)
 Fixpoint diff_regs (i : nat) (ra rb : list expr) : list nat :=
   match ra, rb with
   | a :: ra', b :: rb' => if expr_eqb a b then diff_regs (S i) ra' rb' else i :: diff_regs (S i) ra' rb'
   | _, _ => []
   end.
 
-(* [comment removed for export] *)
 Definition node_diamond_join (nx : nat) (joinpc : Z) (rs : list nat) (ca cb : acs) : option acs :=
   let hv := nodup Nat.eq_dec (diff_regs 0 (s_regs (a_ss ca)) (s_regs (a_ss cb)) ++ rs) in
   let v0 := Nat.max nx (Nat.max (nxt ca) (nxt cb)) in
@@ -3283,25 +3081,20 @@ Definition node_diamond_join (nx : nat) (joinpc : Z) (rs : list nat) (ca cb : ac
       && entails_h v0 hi ca csJ && entails_h v0 hi cb csJ)%bool
   then Some csJ else None.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition via_ok (cs js : acs) (lo : nat) : bool :=
   (match s_log (a_ss js) with [] => true | _ => false end
    && Nat.eqb (length (s_regs (a_ss js))) 32
    && Nat.leb nx0 (nxt cs) && Nat.leb (nxt cs) lo && Nat.leb lo (nxt js))%bool.
 
-(* [comment removed for export] *)
 Definition node_abstractcell (cs : acs) (b : expr) (n : Z) : option acs :=
   let '(bb, bo) := split_lit b in
   let K := KUnk (SA bb bo) (ELit n) in
   if kunk_covered (kn cs) K then Some (set_kn cs (K :: kn_cutout (kn cs) bb bo (ELit n))) else None.
 
-(* [comment removed for export] *)
 Definition respell_ok (k : list kentry) (a e : expr) : bool :=
   match decide_branch k BC_EQ a e with
   | Some true => true
-  | _ => (* [comment removed for export] *)
+  | _ =>
       match erange k (mkAlu ALU_SUB a e) with
       | Some (lo, hi) => Z.eqb lo 0 && Z.eqb hi 0
       | None => false
@@ -3311,7 +3104,6 @@ Definition node_respell (cs : acs) (r : nat) (e : expr) : option acs :=
   if (Nat.ltb 0 r && Nat.ltb r 32 && expr_vars_lt (nxt cs) e && respell_ok (kn cs) (reg cs r) e)%bool
   then Some (set_reg cs r e) else None.
 
-(* [comment removed for export] *)
 Definition sa_of (b : expr) : saddr := let '(bb, bo) := split_lit b in SA bb bo.
 Fixpoint hw_apply (k : list kentry) (a : saddr) (x : nat) (found : bool) : list kentry :=
   match k with
@@ -3321,7 +3113,7 @@ Fixpoint hw_apply (k : list kentry) (a : saddr) (x : nat) (found : bool) : list 
       else KWord a' w v :: hw_apply r a x found
   | K :: r => K :: hw_apply r a x found
   end.
-(* [comment removed for export] *)
+
 Fixpoint hw_val (k : list kentry) (a : saddr) : expr :=
   match k with
   | [] => ELit 0
@@ -3339,14 +3131,9 @@ Definition node_havocwords (cs : acs) (bs : list expr) : option acs :=
     Some (with_ss cs (mk_ss (s_pc ss) (s_regs ss) (hw_go (s_know ss) bs (s_next ss)) (s_next ss + length bs)))
   else None.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Definition STOPS : list Z :=
   [x_imemset A; x_imemcpy A; x_memset A; x_memcpy A; x_memiszero A; x_envscan A; x_pnscan A; x_maxva A] ++ stops_more A.
 
-(* [comment removed for export] *)
 Definition summary_maxva (cs : acs) : option acs :=
   let k := kn cs in
   if (negb (Z.eqb (pc cs) (x_maxva A)) || Z.eqb (x_maxva A) 0)%bool then None else
@@ -3356,17 +3143,16 @@ Definition summary_maxva (cs : acs) : option acs :=
         let v := nxt cs in let ss := a_ss cs in
         let regs := sr_upd (sr_upd (sr_upd (sr_upd (sr_upd (sr_upd (s_regs ss)
                       10 (ELit 140737488355327))
-                      11 (ELit 6148914691236517205))     (* [comment removed for export] *)
-                      12 (ELit 3689348814741910323))     (* [comment removed for export] *)
-                      13 (ELit 1085102592571150095))     (* [comment removed for export] *)
-                      14 (ELit 72340172838076673))       (* [comment removed for export] *)
+                      11 (ELit 6148914691236517205))
+                      12 (ELit 3689348814741910323))
+                      13 (ELit 1085102592571150095))
+                      14 (ELit 72340172838076673))
                       15 (EVar v) in
         Some (with_ss cs (mk_ss (x_maxva_k A) regs k (S v)))
       else None
   | _, _ => None
   end.
 
-(* [comment removed for export] *)
 Fixpoint mk_itab_ranges_acc (rs : list (Z * nat)) (t : itab) : itab :=
   match rs with
   | [] => t
@@ -3376,92 +3162,97 @@ Definition mk_itab_ranges (rs : list (Z * nat)) : itab := mk_itab_ranges_acc rs 
 
 End WithSegs.
 
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition BRK_ASLR : Z := 0x80000000.
-Definition NX0 : nat := 11.   (* [comment removed for export] *)
+Definition NX0 : nat := 13.
 
-(* [comment removed for export] *)
 Definition K_RND : nat := 25.
 
-(* [comment removed for export] *)
 Definition e_auxb : expr * Z := split_lit e_auxv.
-Definition e_atrb : expr * Z := split_lit e_atrandom.
+Definition e_atrb (r : Z) : expr * Z := split_lit (e_atrandom r).
+(** the AT_RANDOM block's literal offset from its base: the auxv's 24 (the
+    pointer vector's NULLs and argc) plus the auxv itself, under both layouts *)
+Lemma e_atrb_off : forall b, snd (e_atrb (rseq_z b)) = 24 + AUXSZ (rseq_z b).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 Definition auxw (i : Z) (ty : Z) (v : expr) : list kentry :=
   [KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit ty); KWord (SA (fst e_auxb) (snd e_auxb + 16 * i + 8)) 8 v].
 
-(* [comment removed for export] *)
-Definition init_kn_with (atr : kentry) (A : atable) : list kentry :=
+Definition init_kn_with (r : Z) (atr : kentry) (A : atable) : list kentry :=
   [KRange (EVar V_S1) 0xFFFF0000 0xFFFFFFFF; KRange (EVar V_S2) 0 255; KRange (EVar V_PG) 0 7;
-   KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE7;
+   KRange (eaddz (e_atrandom r) 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 (0xFFFFFFFFFC5 - 4 * r);
    KRange e_sp0 0x7fff80000000 0x7fffffffff40;
    KRange (eadd (eadd (escale 4096 (EVar V_S1)) (escale 512 (EVar V_PG))) (escale 2 (EVar V_S2))) 0xFFFF0000000 0xFFFFFFFFFE8;
    KRange (EVar V_ARGC) 1 1024; KRange (EVar V_ENVC) 0 256; KRange (EVar V_L0) 0 131071; KRange (EVar V_L1) 0 131071;
-   KRange (EVar V_UID) 0 0xFFFFFFFE;
-   KRange (EVar V_W) 0 280000; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
-   KWr (SA e_sp0 (-8388608)) (ELit 8388608); KZero (SA e_sp0 (-8388608)) (ELit 8388608);
-   KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 e_str0; kw_argv1 e_argv1w]
-  (* [comment removed for export] *)
-  ++ auxw 0 3 (ELit (ph_addr_z A)) ++ auxw 1 4 (ELit (ph_ent_z A)) ++ auxw 2 5 (ELit (ph_num_z A)) ++ auxw 3 16 (EVar V_HW) ++ auxw 4 6 (ELit 4096)
-  ++ auxw 5 11 (EVar V_UID) ++ auxw 6 12 (EVar V_UID) ++ auxw 7 23 (ELit 0) ++ auxw 8 25 e_atrandom ++ auxw 9 0 (ELit 0)
-  ++ [atr;
-      KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))].
+   KRange (EVar V_UID) 0 0xFFFFFFFE; KRange (EVar V_G) 0 1;
+   KRange (EVar V_W) 0 4110; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
+   KWr (SA e_sp0 (-6144513)) (ELit 6144513); KZero (SA e_sp0 (-6144513)) (ELit 6144513);
+   KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 (e_str0 r); kw_argv1 (e_argv1w r)]
 
-(* [comment removed for export] *)
-Definition atr_entry : kentry := KBlob (SA (fst e_atrb) (snd e_atrb)) (ELit 16) K_RND.
-Definition atr_entry_zero : kentry := KZero (SA (fst e_atrb) (snd e_atrb)) (ELit 16).
-(* [comment removed for export] *)
-Definition init_kn (A : atable) : list kentry := init_kn_with atr_entry A.
-(* [comment removed for export] *)
-Definition init_kn_zero (A : atable) : list kentry := init_kn_with atr_entry_zero A.
+  ++ auxw 13 3 (ELit (ph_addr_z A)) ++ auxw 14 4 (ELit (ph_ent_z A)) ++ auxw 15 5 (ELit (ph_num_z A)) ++ auxw 10 16 (EVar V_HW) ++ auxw 11 6 (ELit 4096)
+  ++ auxw 19 11 (EVar V_UID) ++ auxw 20 12 (EVar V_UID) ++ auxw 23 23 (ELit 0) ++ auxw 24 25 (e_atrandom r)
+  ++ auxw (26 + 2 * r) 0 (ELit 0)
+  ++ [atr;
+      KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))]
+  (* LPS 727298f3: musl's __init_libc reads EVERY pair's type word up to AT_NULL and stores the
+     value of each type below AUX_CNT, so the start state also claims the values the launch fixes
+     (AT_CLKTCK, AT_BASE, AT_FLAGS, AT_ENTRY), AT_GID/AT_EGID as V_GID, the whole vector readable,
+     the type words of the pairs whose value stays unknown (ARCH_DLINFO's ten, AT_EXECFN), and the
+     CONFIG_RSEQ pair when r = 1.  Appended after the facts above, so every index a recorded
+     plan's PForget names keeps its fact; the r-dependent pair is last.  The form of
+     projects/cjson/cjson_read_fuzzer/proofs/lib/AS/AsanPlanCore.v's init_kn_with. *)
+  ++ auxw 12 17 (ELit 100) ++ auxw 16 7 (ELit 0) ++ auxw 17 8 (ELit 0) ++ auxw 18 9 (ELit (a_entry A))
+  ++ auxw 21 13 (EVar V_GID) ++ auxw 22 14 (EVar V_GID)
+  ++ [KUnk (SA (fst e_auxb) (snd e_auxb)) (ELit (AUXSZ r));
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 0)) 8 (ELit 33); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 1)) 8 (ELit 40);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 2)) 8 (ELit 41); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 3)) 8 (ELit 42);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 4)) 8 (ELit 43); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 5)) 8 (ELit 44);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 6)) 8 (ELit 45); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 7)) 8 (ELit 46);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 8)) 8 (ELit 47); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 9)) 8 (ELit 51);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 25)) 8 (ELit 31)]
+  ++ (if Z.eqb r 1 then auxw 26 27 (ELit 28) ++ auxw 27 28 (ELit 32) else []).
+
+
+Definition atr_entry (r : Z) : kentry := KBlob (SA (fst (e_atrb r)) (snd (e_atrb r))) (ELit 16) K_RND.
+Definition atr_entry_zero (r : Z) : kentry := KZero (SA (fst (e_atrb r)) (snd (e_atrb r))) (ELit 16).
+
+Definition init_kn (r : Z) (A : atable) : list kentry := init_kn_with r (atr_entry r) A.
+Definition init_kn_zero (r : Z) (A : atable) : list kentry := init_kn_with r (atr_entry_zero r) A.
 
 Definition init_regs : list expr := sr_upd (repeat (ELit 0) 32) 2 e_sp0.
-(* [comment removed for export] *)
+
 Definition init_vis (A : atable) : list (expr * expr) :=
   [(ELit (img_lo A), ELit (img_hi A - img_lo A)); (e_top, e_stackwin)].
 
 Definition init_acs_of_with (kn0 : list kentry) (A : atable) : acs :=
-  ACS (mk_ss (a_entry A) init_regs kn0 NX0) [] (img_hi A - img_lo A) 0 0 (init_vis A) []   (* [comment removed for export] *)
-      (vis_cost (img_hi A - img_lo A) + vis_cost STACKWIN + 4096) (escale 4096 (EVar V_BRK)) FdStd false.   (* [comment removed for export] *)
-Definition init_acs_of (A : atable) : acs := init_acs_of_with (init_kn A) A.        (* [comment removed for export] *)
-Definition init_acs_of_zero (A : atable) : acs := init_acs_of_with (init_kn_zero A) A.  (* [comment removed for export] *)
+  ACS (mk_ss (a_entry A) init_regs kn0 NX0) [] (img_hi A - img_lo A + resx_bytes A) 0 0 (init_vis A) []
+      (vis_cost (img_hi A - img_lo A) + vis_cost STACKWIN + 4096) (escale 4096 (EVar V_BRK)) FdStd false.
+Definition init_acs_of (r : Z) (A : atable) : acs := init_acs_of_with (init_kn r A) A.
+Definition init_acs_of_zero (r : Z) (A : atable) : acs := init_acs_of_with (init_kn_zero r A) A.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition ASAN : atable :=
-  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x4ba64; rw_lo := 0x142000; rw_len := 0x52f000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0xe1ea4; x_imemcpy := 0xe1e28; x_memset := 0x116934; x_memcpy := 0x116530; x_memiszero := 0xe2508;
      x_istrncpy := 0xe23b8; x_sealed := 0x1205f; x_popfree := 0x52a70;
      x_sniff := 0x1414dc; sniff_tab := 0x24f40; sniff_cell := 0x14bf00;
      x_envscan := 0x10d5e4; x_envscan_k := 0x10d5f0; x_pnscan := 0x10d6a8; x_pnscan_k := 0x10d6b4;
      x_maxva := 0; x_maxva_k := 0; z_lo := 0x7fff7000; z_hi := 0x10007fff8000;
-     stops_more := [0x506e4; 0x51d08; 0xddd88; 0xee070; 0xee200]  (* [comment removed for export] *) |}.
+     stops_more := [0x506e4; 0x51d08; 0xddd88; 0xee070; 0xee200]   |}.
 
-(* [comment removed for export] *)
 Definition ASAN_TEXT_LO : Z := 0x4ba64.
 Definition ASAN_TEXT_N : nat := 252263.
-Definition asan_init : acs := init_acs_of ASAN.
+Definition asan_init (r : Z) : acs := init_acs_of r ASAN.
 
-(* [comment removed for export] *)
 Definition BOTH : atable :=
-  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x4ba54; rw_lo := 0x142000; rw_len := 0x52f000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0xe1e94; x_imemcpy := 0xe1e18; x_memset := 0x116924; x_memcpy := 0x116520; x_memiszero := 0xe24f8;
      x_istrncpy := 0xe23a8; x_sealed := 0x1205f; x_popfree := 0x52a60;
-     x_sniff := 0x1414cc; sniff_tab := 0x24f40; sniff_cell := 0x14bf80;   (* [comment removed for export] *)
+     x_sniff := 0x1414cc; sniff_tab := 0x24f40; sniff_cell := 0x14bf80;
      x_envscan := 0x10d5d4; x_envscan_k := 0x10d5e0; x_pnscan := 0x10d698; x_pnscan_k := 0x10d6a4;
      x_maxva := 0; x_maxva_k := 0; z_lo := 0x7fff7000; z_hi := 0x10007fff8000;
      stops_more := [0x506d4; 0x51cf8; 0xddd78; 0xee060; 0xee1f0] |}.
 Definition BOTH_TEXT_LO : Z := 0x4ba54.
 Definition BOTH_TEXT_N : nat := 252267.
-Definition both_init : acs := init_acs_of BOTH.
+Definition both_init (r : Z) : acs := init_acs_of r BOTH.
 
 End APC.

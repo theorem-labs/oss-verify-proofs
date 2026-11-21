@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: fuzz_reply.asan's __asan_memmove (0x52e04), its site contract
    W_sites.v amemmove_realizes, as an instance of the Bz walk Bz/A/I_amemmovew.v amemmove_spec.
    The pieces composed:
-   - the walk: lib/A/Bz/A/I_amemmovew.v (pcap's walk, a working branch eabce720039, relocated to
+   - the walk: lib/A/Bz/A/I_amemmovew.v (pcap's walk, a working branch, relocated to
      fuzz_reply.asan: the 220 words differ only in auipc/ld/jal) with its section hypothesis RIP =
      Bz/A/R_isPoisoned.v rip_proof, and the internal memmove lib/A/Bz/A/I_imemmove.v it calls;
    - the transport and the post: lib/A/RT_post.v (aentry_post_of_walk, bz_transport, chk_norm, stk_norm_high,
@@ -13,6 +13,7 @@
    The program calls __asan_memmove directly (jal 0x52e04), so there is no trampoline.
    No refusal exit: the walk proves both range checks pass (the quick check, or __asan_region_is_poisoned returning
    0), so it never reaches an error branch, the fatal stack trace or libunwind. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

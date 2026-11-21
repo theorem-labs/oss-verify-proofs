@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO): changed injected_arm_215, injected_arm_64, sstep_cfg_of_sstep; added refusal_b_munmap, refusal_b_write. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 
@@ -32,12 +33,29 @@ Proof. reflexivity. Qed.
 Lemma injected_arm_29 : injected_arm 29 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_57 : injected_arm 57 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_63 : injected_arm 63 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_64 : injected_arm 64 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
+Lemma injected_arm_64 : injected_arm 64 = Some (mkInjectedArm 64 FamFs [ENOMEM]).   Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_66 : injected_arm 66 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_93 : injected_arm 93 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_94 : injected_arm 94 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_96 : injected_arm 96 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_215 : injected_arm 215 = None. Proof. reflexivity. Qed.  (* [comment removed for export] *)
+Lemma injected_arm_215 : injected_arm 215 = Some (mkInjectedArm 215 FamAlloc [ENOMEM]). Proof. reflexivity. Qed.  (* [comment removed for export] *)
+
+(* The revision's [injected_table] registers write and munmap, so an answer is
+   a refusal exactly when it is -ENOMEM.  [refusal_b] reads the arm's errno
+   list, and both arms list [ENOMEM] alone. *)
+Lemma refusal_b_write : forall i m r,
+  bv_unsigned (in_sysno i) = 64%Z -> refusal_b i m r = bv_eqb r (errno_ret ENOMEM).
+Proof.
+  intros i m r H. unfold refusal_b. rewrite H.
+  exact (Bool.orb_false_r (bv_eqb r (errno_ret ENOMEM))).
+Qed.
+
+Lemma refusal_b_munmap : forall i m r,
+  bv_unsigned (in_sysno i) = 215%Z -> refusal_b i m r = bv_eqb r (errno_ret ENOMEM).
+Proof.
+  intros i m r H. unfold refusal_b. rewrite H.
+  exact (Bool.orb_false_r (bv_eqb r (errno_ret ENOMEM))).
+Qed.
 
 Lemma ret_in_errnos_1 : forall e r, ret_in_errnos [e] r = bv_eqb r (errno_ret e).
 Proof. intros e r. unfold ret_in_errnos. cbn [existsb]. apply orb_false_r. Qed.
@@ -227,6 +245,9 @@ Proof.
     [ eapply sstep_cfg_instr; eassumption
     | eapply sstep_cfg_instr_fault; eassumption
     | eapply sstep_cfg_instr_unmodeled; eassumption
+    | eapply sstep_cfg_vdso_call; eassumption
+    | eapply sstep_cfg_vdso_materialization_fault; eassumption
+    | eapply sstep_cfg_vdso_unmodeled; eassumption
     | eapply sstep_cfg_syscall; try eassumption; apply not_spurious_on; apply Hon; assumption
     | eapply sstep_cfg_syscall_materialization_fault; try eassumption;
         apply not_spurious_on; apply Hon; assumption

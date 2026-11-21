@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sstep_scfg_eqv_ms covers the model's vDSO arms (a vDSO call, its materialization fault and an unmodeled vDSO call) and the vdso_entry_fn premise of an unmodeled instruction, and realizes_cfg_eqv carries the node's sys_rob robustness to an equivalent state). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -11,6 +12,7 @@ From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common Require Import ShapeAlgCf
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common Require Import ShapeAlg.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import PropExec MState Frame.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.AS5 Require Import RegsEquiv0.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common.Cfg Require Import RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -25,7 +27,7 @@ Lemma sstep_scfg_eqv_ms : forall ms ms' mo evs X, ms_eqv ms ms' ->
 Proof.
   intros ms ms' mo evs X Heqv Hst.
   pose proof (mi_account_step_eqv segs ms ms' mo Heqv) as Hres.
-  pose proof Heqv as (_ & _ & _ & Hsvc & _ & _ & _ & _).
+  pose proof Heqv as (_ & _ & Hpc & Hsvc & _ & _ & _ & _).
   inversion Hst; subst.
   - (* [comment removed for export] *)
     match goal with H : mi_account_step segs ms mo = _ |- _ => rewrite H in Hres end.
@@ -37,7 +39,30 @@ Proof.
     exists SError. split; [apply sstep_cfg_instr_fault; auto; congruence| exact I].
   - match goal with H : mi_account_step segs ms mo = _ |- _ => rewrite H in Hres end.
     destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
-    exists SError. split; [apply sstep_cfg_instr_unmodeled; auto; congruence| exact I].
+    exists SError. split; [|exact I].
+    apply sstep_cfg_instr_unmodeled; [assumption | congruence | exact E |].
+    match goal with Hx : vdso_entry_fn _ (ms_pc ms) = None |- _ =>
+      unfold ms_pc in *; rewrite <- Hpc; exact Hx end.
+  - (* LPS 08b1429: the vDSO arms *)
+    match goal with Hx : mi_account_step segs ms mo = _ |- _ => rewrite Hx in Hres end.
+    destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
+    unfold ms_pc in *. rewrite Hpc in *.
+    repeat match goal with Hx : context [sys_input segs ms ?x] |- _ => rewrite (sys_input_eqv segs ms ms' x Heqv) in Hx end.
+    eexists. split.
+    + eapply sstep_cfg_vdso_call; eauto; congruence.
+    + cbn [to_eqv cfg_eqv cfg_ms cfg_model]. split; [apply vdso_post_eqv, Heqv | reflexivity].
+  - match goal with Hx : mi_account_step segs ms mo = _ |- _ => rewrite Hx in Hres end.
+    destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
+    unfold ms_pc in *. rewrite Hpc in *.
+    repeat match goal with Hx : context [sys_input segs ms ?x] |- _ => rewrite (sys_input_eqv segs ms ms' x Heqv) in Hx end.
+    exists SError. split; [eapply sstep_cfg_vdso_materialization_fault; eauto; congruence | exact I].
+  - match goal with Hx : mi_account_step segs ms mo = _ |- _ => rewrite Hx in Hres end.
+    destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
+    exists SError. split; [|exact I].
+    match goal with Hx : vdso_call_unmodeled _ ms mo _ |- _ =>
+      pose proof (vdso_call_unmodeled_eqv segs ms ms' mo _ Heqv Hx) as Hun' end.
+    unfold ms_pc in *. rewrite Hpc in *.
+    eapply sstep_cfg_vdso_unmodeled; eauto; congruence.
   - (* [comment removed for export] *)
     exists (SNext (mkCfg (advance_past_svc (apply_effect ms' eff)) model'')). split.
     + apply (sstep_cfg_syscall segs cfg ms' mo x8 eff model' model'' evs);
@@ -115,7 +140,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma realizes_cfg_eqv : forall c T, realizes_cfg cfg segs c T -> forall c', cfg_eqv c c' -> realizes_cfg cfg segs c' T.
 Proof.
-  intros c T H. induction H as [c I evs nx T i0 [Hcomp Hsound] Hnx IH | c Hh | c T T' H IH Heq]; intros c' Heqv.
+  intros c T H. induction H as [c I evs nx T i0 [Hcomp Hsound] Hrob Hnx IH | c Hh | c T T' H IH Heq]; intros c' Heqv.
   - (* [comment removed for export] *)
     set (J := { p : I * config | sstep_cfg segs cfg c' (evs (fst p)) (SNext (snd p)) /\ cfg_eqv (nx (fst p)) (snd p) }).
     assert (Hex : forall i, exists c2, sstep_cfg segs cfg c' (evs i) (SNext c2) /\ cfg_eqv (nx i) c2).
@@ -132,6 +157,11 @@ Proof.
            destruct (Hsound e X HstX) as (i & -> & ->).
            destruct st as [c2|]; simpl in HX; [|contradiction].
            exists (exist _ (i, c2) (conj Hst (cfg_eqv_sym _ _ HX))). split; reflexivity.
+      * (* LPS 08b1429: the node's robustness ([RomBase.sys_rob]) moves with the state *)
+        destruct Heqv as [(E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8) Em].
+        apply (sys_rob_transfer segs c c'); [exact E8 | exact E4 | exact Em | | exact Hrob].
+        intros r x8. apply sys_input_eqv. unfold ms_eqv.
+        split; [|split; [|split; [|split; [|split; [|split; [|split]]]]]]; first [assumption | reflexivity].
       * intros [[i c2] [Hs He]]. cbn [fst snd proj1_sig]. exact (IH i c2 He).
     + (* [comment removed for export] *)
       intros tr. unfold t_alt. split.

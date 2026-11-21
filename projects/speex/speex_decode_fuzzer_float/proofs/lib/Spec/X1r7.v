@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (prog_model_ok passes the brk window's 2^40 bound down, which the launch's reserved ledger needs for the vDSO/vvar pair). *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.Lib Require Import X1bs X1c2 X1bn.
@@ -23,7 +24,7 @@ leaves_unreachable_m nstep (prog segs rs (ceil_of en) (in_argv inp)) (mo0 segs l
 /\ tsafe nstep nsafe (prog segs rs (ceil_of en) (in_argv inp)) (mo0 segs lim en inp).
 Proof.
 intros segs rs pc ph lim en inp Hpos Hceil H40 Hlim VE VI.
-apply (X1qw.prog_model_ok segs rs pc ph lim en inp Hpos Hceil VE VI).
+apply (X1qw.prog_model_ok segs rs pc ph lim en inp Hpos Hceil H40 VE VI).
 exact (X1ot.prog_no_enomem segs rs pc ph lim en inp Hpos Hceil H40 Hlim VE VI).
 Qed.
 

@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/check_clamp_c.v, with its module paths changed; 12 of its 27 lines of code are new or changed and 18 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/Prog/check_width_c.v; 10 of its 26 lines of code are new or changed and 11 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/Prog/check_meter_c.v, with its module paths and addresses changed; 2 of its 28 lines of code are new or changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Lib Require Import PropExec MState Mem Exec Frame.
@@ -26,7 +27,7 @@ Open Scope Z_scope.
    }
    fuzz_wire ubsan 6e91fe0b5555 at 0x1311c (280 bytes): a 48-byte frame (ra, s0, s1, s2 and ctr at sp + 14), one call
    of rp_meter_counter (0x13848) with &ctr.
-   The form is libreac/fuzz_decode's check_braid_c.v (25e3d17bdb5): the check RETURNS NORMALLY from every entry state
+   The form is libreac/fuzz_decode's check_braid_c.v: the check RETURNS NORMALLY from every entry state
    LLVMFuzzerTestOneInput gives it (fuzz_wire.c:268), so its abort() is unreachable; the property it checks is no
    premise.
    Premises: f readable for its n bytes (bs, the fuzz_dup copy of fuzz_wire.c:263), the frame's room on the stack, f

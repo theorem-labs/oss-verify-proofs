@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGjy.v (a working branch 86aa4177b94, file sha256 d40e0d1bd22a) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 29 image addresses moved by code-verified function pairs (64 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGjy.v (a working branch, file sha256 d40e0d1bd22a) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 29 image addresses moved by code-verified function pairs (64 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: fs's depot invariant (FS-INSTANCE.md 1.3, L): the depot id bound reads `depot_ids_bound S _ (wf_depot ..)` (AGju's depot_inv form) in place of the NoDup / incl pair, through the abbreviation `(@AGju.depot_ids_bound B TS)` (fs's AFjy.v:463: the depot_inv form abstracts only B and TS); the section's trace premise Htr is areq_ok S (KDepot tr), as AGju's (fs's own form, AFjy.v:762); the case split over fs's Tfib_zero_shadow (12 ranges in fs's image, 5 in cgif's) is `repeat destruct Hr as [<-|Hr]`, fs's own text (AFjy.v:1597). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

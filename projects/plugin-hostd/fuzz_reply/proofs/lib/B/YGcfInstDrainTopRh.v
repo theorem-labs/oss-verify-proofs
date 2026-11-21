@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstDrainTop.v, with its module paths and module names changed; 33 of its 69 lines of code are new or changed and 27 lines of the source are left out. *)
-(* Theorem Labs, 2026-10-30 (lane F2b, CfF2b): the lib/B twin of lib/A/YGcfInstDrainTopRh.v by path (a working branch 67deba317dfb), with lib.A -> lib.B in the Require lines and image B's names (the rows _reply_B, YGcfInstCdeallocB; CfParams_reply stays lib/A/CfParamsReply's, the one record the B files use). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (lane F2b, CfF2b): the lib/B twin of lib/A/YGcfInstDrainTopRh.v by path (a working branch), with lib.A -> lib.B in the Require lines and image B's names (the rows _reply_B, YGcfInstCdeallocB; CfParams_reply stays lib/A/CfParamsReply's, the one record the B files use). *)
 (* Theorem Labs, 2026-10-30 (lane F2b, CfF2b; drain-rh split row (c), route P): the seam's PRIMED drain field at reply's
    image B - DIfaceRh.de_drain_m_rh_t at the cf instance (ARX := ARX_cf, ARXr := ARXr_cf, AOX := aowned,
    L24 := L24MAX_cf, QB := QB_cf kQuarantineMax, DRq := DRq_cf kQuarantineMax, RMAXD := RMAXD_cf), as ONE application

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the proof of sstep_mstep_inv no longer depends on the number of step cases. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -320,12 +321,12 @@ Lemma sstep_mstep_inv : forall ms mo ms' evs X,
   evs = [] /\ X = SNext (mkCfg ms' mo).
 Proof.
   intros ms mo ms' evs X Hl [Hsvc Hstep] Hss.
-  inversion Hss; subst; try congruence;
-  match goal with H : mi_account_step segs ms mo = ?r |- _ =>
-    pose proof (mi_account_step_inv ms mo r Hl H) as K; cbn in K end.
-  - destruct K as [K ->]. rewrite Hstep in K. inversion K; subst. split; reflexivity.
-  - rewrite Hstep in K. discriminate K.
-  - rewrite Hstep in K. discriminate K.
+  inversion Hss; subst; try congruence.
+  all: match goal with H : mi_account_step segs _ _ = ?r |- _ =>
+    pose proof (mi_account_step_inv _ _ r Hl H) as K; cbn in K end.
+  all: first
+    [ rewrite Hstep in K; discriminate K
+    | destruct K as [K ->]; rewrite Hstep in K; inversion K; subst; split; reflexivity ].
 Qed.
 
 (* [comment removed for export] *)

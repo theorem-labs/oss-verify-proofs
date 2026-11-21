@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: the composition step of proofs/reac-pw/fuzz_role/lib/A/RPgParse.v at afaa3cb55c1
+(* Modified by Theorem Labs, 2026-10: the composition step of proofs/reac-pw/fuzz_role/lib/A/RPgParse.v
    (rl_parse_A: the walk's segment theorems applied to the composition lemma) for reac-pw/fuzz_headamp's image B. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94): the two tops of the parse.
@@ -11,7 +11,7 @@
    Proves function reac_headamp_prop_parse_result and reac_headamp_prop_parse of image B, under the Section hypotheses
    below, each discharged where its owner proves it: the symbol record's .got / shadow-cell / errno fields and api_env
    at image B's start-up symbol record (lib/AU/YF0m.v; errno: ts_errno, TFIB_ERRNO = 0x5d812c), the meter laws at the
-   meter of record, the three wrapper contracts in hole form (lib/A/HPgHole.v:480 / :524 / :573) by the wrapper port
+   meter of record, the three wrapper contracts in hole form (lib/A/HPgHole.v:481 / :525 / :574) by the wrapper port
    lanes at image B's trampolines 0x41c24 / 0x41ca8 / 0x41c20. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

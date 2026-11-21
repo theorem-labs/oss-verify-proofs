@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segment list; the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Import Realize SafeReach Br
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require AssembleP0.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Spec Require Import MSafe.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.B0.T7 Require Import TSimS RealizeS RealizeS2 A0Prog TopA0 DriverModelA.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require RomBase.
 Import ListNotations.
 Import ITree.Exc.
 Open Scope Z_scope.
@@ -109,6 +111,8 @@ Section AssembleA0.
         exists mo', V a mo' = moE' /\ m_halted mo' = Some code
           /\ sstep_cfg asegs ACFG (mkCfg ms mo) [ExitEv code (m_fs moE')] (SNext (mkCfg ms mo')))
     /\ ((exists rsp moE' evs, nstep n (V a mo) rsp moE' evs) \/ (exists code moE', nexit n (V a mo) code moE')).
+  Hypothesis ROB : forall n ms mo a,
+    fdn n -> ATN n ms a -> INV (mkCfg ms mo) a -> RomBase.sys_rob asegs (mkCfg ms mo).
   Local Notation implS := (RealizeS.implS asegs AS V INV ATN GOOD).
 
   Hypothesis V_ok : forall ms mo a, INV (mkCfg ms mo) a -> exists mo', meq (V a mo) mo' /\ minv mo' /\ m_halted mo' = None.
@@ -129,7 +133,7 @@ Section AssembleA0.
     eapply Forall_impl; [| exact HL]. intros a Ha. cbn in Ha |- *. rewrite length_map. lia.
   Qed.
 
-  #[using="AS V INV ATN GOOD V_meq V_fs NODE V_ok QLEAF DRIVER LEAF"] Theorem main_realizes : MAIN H_MAIN_A0 RS_A.
+  #[using="AS V INV ATN GOOD V_meq V_fs NODE ROB V_ok QLEAF DRIVER LEAF"] Theorem main_realizes : MAIN H_MAIN_A0 RS_A.
   Proof.
     intros inp en [ms mo] VI VE HM. unfold at_main in HM. cbn [cfg_ms cfg_model] in HM |- *.
     destruct (DRIVER inp en ms mo VI VE HM) as (a & HINV & HI).
@@ -151,7 +155,7 @@ Section AssembleA0.
       - apply (drv_preA_twf RS_A (m_fs (V a mo)) (argv_Z (in_argv inp)) stdout_init mo1); [apply argvZ_small; exact (proj1 VI)|].
         split; [exact MV|]. split; [exact HV|]. split; [symmetry; exact (proj2 HM1)| cbn; lia].
       - intros [|[ap so]] mo2; cbn [fst snd]; [intros F; exact F|]. intros ((_ & _ & EFS & HB) & HF). auto. }
-    apply (implS_realizes_twf asegs AS V INV ATN GOOD V_fs NODE _ (QLEAF inp en) _ KLEAF_A ms a mo (fdtree_drv_preA _ _ _) HI HINV TWF).
+    apply (implS_realizes_twf asegs AS V INV ATN GOOD V_fs NODE ROB _ (QLEAF inp en) _ KLEAF_A ms a mo (fdtree_drv_preA _ _ _) HI HINV TWF).
     - intros [|[ap so]] m1 m2 [EF ES]; cbn [fst snd]; [intros F; exact F|]. intros (E1 & HB & HF). rewrite <- ES. auto.
     - intros [|[ap so]] ms' a' mo' HQ HINV' HP; cbn [KLEAF_A fst snd] in HP |- *; [destruct HP|].
       destruct HP as (_ & HB & HF).

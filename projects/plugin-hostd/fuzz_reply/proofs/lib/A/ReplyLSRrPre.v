@@ -7,10 +7,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/U/Prog/SlotPass5A.v, with its module paths and module names changed; 957 of its 1013 lines of code are new or changed and 183 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Prog/CF/SlotPass5Check.v; 192 of its 256 lines of code are new or changed and 949 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Prog/CF/SlotPass5M.v, with its module paths and module names changed; 190 of its 243 lines of code are new or changed and 203 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* a Theorem Labs lane's FREE-PIECES row B1c (a Theorem Labs lane): conjunct 2 of the remove arm's LS_rm_rr_pre,
    `tr_max (rm_rr_tr m h) < MMAX`, at the instance LS := fr_LS B, RINV := fr_RINV, MT := ameter_triv,
-   MMAX := WR_MMAX.  The text is a working branch 30d91cacb63
-   lib/A/W_LLVMFuzzerTestOneInput_remove.v:1971-1978; rm_rr_tr is that file's :334-335, and
+   MMAX := WR_MMAX.  The text is a working branch
+   lib/A/W_LLVMFuzzerTestOneInput_remove.v:1972-1979; rm_rr_tr is that file's :334-335, and
    W_contract.v's rr_tr / dr_tr / dr_fin / dr_live / tr_max and Prog/drain_b_c.v, gestures_end_b_c.v,
    gesture_end_b_c.v, send_line_b_c.v, RelayKeys.v, RelayModel.v, HarnessRep.v, SlotInv.v have the arm head's text
    in this tree.
@@ -79,7 +80,7 @@ Import ListNotations.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
-(* the instance (ReplyATop.v:93 MT := ameter_triv; W_LLVMFuzzerTestOneInput_write.v:132 WR_MMAX) *)
+(* the instance (ReplyATop.v:93 MT := ameter_triv; W_LLVMFuzzerTestOneInput_write.v:133 WR_MMAX) *)
 Local Notation MT := ameter_triv.
 Local Notation MMAX := WR_MMAX.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (stdio_call_sound and stdio_call_sound_post carry the channel-reader premise m_channel_reader; the post form is generalised as stdio_call_sound_post_gen over any walk list, so it serves the run's RSEGS ++ rt_tail). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -268,6 +269,7 @@ Theorem stdio_call_sound :
   rdn RSEGS M (Z_to_bv 64 wb) (length pending) = Some pending ->
   rdn RSEGS M s (length extra) = Some extra ->
   fd_lookup (m_fds model) (Z_to_bv 64 (sc_fd res)) = Some (FdChannel (Z_to_bv 64 (sc_fd res))) ->
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   K [] ->
   (forall R' M',
@@ -294,7 +296,7 @@ Proof.
   match type of Hc with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
   lazymatch type of Hc with Some ?x = Some _ => assert (Eres : res = x) by congruence end. clear Hc. subst res.
   cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn].
-  intros Hwbwp Hwphi Hlenp Hlene H30 Dw Ds Hsl Rpend Rextra Hfdlk Hh Hlz HKnil HCONT.
+  intros Hwbwp Hwphi Hlenp Hlene H30 Dw Ds Hsl Rpend Rextra Hfdlk Hrdr Hh Hlz HKnil HCONT.
   set (wb := bv_unsigned (edenot E wbe)) in *. set (wp := bv_unsigned (edenot E wpe)) in *.
   set (s := edenot E (nth 11 sr (ELit 0))) in *. set (l := edenot E (nth 12 sr (ELit 0))) in *.
   set (su := bv_unsigned (edenot E (nth 2 sr (ELit 0)))) in *.
@@ -379,6 +381,7 @@ Proof.
     rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. unfold two64 in Hcgv. rewrite Hcgv. reflexivity.
   - apply orb_prop in Hfd12 as [H|H]; apply Z.eqb_eq in H; subst fd; lia.
   - exact Hfdlk.
+  - exact Hrdr.
   - exact Hh.
   - exact Hlz.
   - lia.
@@ -460,7 +463,16 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Theorem stdio_call_sound_post :
+(* [stdio_call_sound_post] over a walk list [W] that serves every step, fetch and read the
+   binary's segments serve ([UbStdioWrite.ref_stdio_write_gen]): the binary's own
+   ([stdio_call_sound_post] below) or the run's ([RSEGS ++ RunTail.rt_tail]). *)
+Section Walk.
+  Variable W : list Segment.
+  Hypothesis HWm : forall ms ms', msteps RSEGS ms ms' -> msteps W ms ms'.
+  Hypothesis HWf : forall a, fetch_word W a = fetch_word RSEGS a.
+  Hypothesis HWr : forall m a n bs, rdn RSEGS m a n = Some bs -> rdn W m a n = Some bs.
+
+Theorem stdio_call_sound_post_gen :
   forall (vals : list word) (ebs : nat -> list byte) (sr : list expr) (kn : list kentry)
          (R : bvmap 5 word) (M : word -> option byte) (model : Model) (res : stdio_res)
          (pending extra : list byte) (K : TSet),
@@ -483,14 +495,15 @@ Theorem stdio_call_sound_post :
   rdn RSEGS M (Z_to_bv 64 wb) (length pending) = Some pending ->
   rdn RSEGS M s (length extra) = Some extra ->
   fd_lookup (m_fds model) (Z_to_bv 64 (sc_fd res)) = Some (FdChannel (Z_to_bv 64 (sc_fd res))) ->
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   K [] ->
   (forall R' M',
      regs_ok (Env (vals_ev (vals ++ junk_vals R')) ebs) (sc_sr res) R' ->
      know_ok RSEGS (Env (vals_ev (vals ++ junk_vals R')) ebs) M' (sc_kn res) ->
      sw_post M su (sc_f res) (edenot E (sc_bufp res)) (edenot E (sc_bufsz res)) M' ->
-     realizes RSEGS (mkCfg (mkst R' (Z_to_bv 64 (sc_ret res)) M' (seg_rom RSEGS)) model) K) ->
-  realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x2b9a78) M (seg_rom RSEGS)) model)
+     realizes W (mkCfg (mkst R' (Z_to_bv 64 (sc_ret res)) M' (seg_rom W)) model) K) ->
+  realizes W (mkCfg (mkst R (Z_to_bv 64 0x2b9a78) M (seg_rom W)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 (sc_fd res))) (pending ++ extra)) K).
 Proof.
   intros vals ebs sr kn R M model res pending extra K E HR HK Hc.
@@ -510,7 +523,7 @@ Proof.
   match type of Hc with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
   lazymatch type of Hc with Some ?x = Some _ => assert (Eres : res = x) by congruence end. clear Hc. subst res.
   cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn].
-  intros Hwbwp Hwphi Hlenp Hlene H30 Dw Ds Hsl Rpend Rextra Hfdlk Hh Hlz HKnil HCONT.
+  intros Hwbwp Hwphi Hlenp Hlene H30 Dw Ds Hsl Rpend Rextra Hfdlk Hrdr Hh Hlz HKnil HCONT.
   set (wb := bv_unsigned (edenot E wbe)) in *. set (wp := bv_unsigned (edenot E wpe)) in *.
   set (s := edenot E (nth 11 sr (ELit 0))) in *. set (l := edenot E (nth 12 sr (ELit 0))) in *.
   set (su := bv_unsigned (edenot E (nth 2 sr (ELit 0)))) in *.
@@ -573,7 +586,7 @@ Proof.
   fold wp in Hwpr. fold wb in Hwbr.
   (* [comment removed for export] *)
   replace (Z_to_bv 64 0x2b9a78) with (0x2b9a78%bv : word) by (apply bv_eq; reflexivity).
-  eapply (ref_stdio_write R M model su f wb wp fd s l (edenot E bufp) (edenot E bufsz) (edenot E canv) (Z_to_bv 64 ret)
+  eapply (ref_stdio_write_gen W HWm HWf HWr R M model su f wb wp fd s l (edenot E bufp) (edenot E bufsz) (edenot E canv) (Z_to_bv 64 ret)
             pending extra K).
   - rewrite R2. symmetry. apply Z_to_bv_bv_unsigned.
   - exact R10.
@@ -595,6 +608,7 @@ Proof.
     rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. unfold two64 in Hcgv. rewrite Hcgv. reflexivity.
   - apply orb_prop in Hfd12 as [H|H]; apply Z.eqb_eq in H; subst fd; lia.
   - exact Hfdlk.
+  - exact Hrdr.
   - exact Hh.
   - exact Hlz.
   - lia.
@@ -675,3 +689,40 @@ Proof.
       * rewrite Xb. exact Pwbase.
     + (* [comment removed for export] *) exact HPOST.
 Qed.
+End Walk.
+
+(* [comment removed for export] *)
+Theorem stdio_call_sound_post :
+  forall (vals : list word) (ebs : nat -> list byte) (sr : list expr) (kn : list kentry)
+         (R : bvmap 5 word) (M : word -> option byte) (model : Model) (res : stdio_res)
+         (pending extra : list byte) (K : TSet),
+  let E := Env (vals_ev vals) ebs in
+  regs_ok E sr R -> know_ok RSEGS E M kn ->
+  stdio_call (length vals) sr kn = Some res ->
+  let wb := bv_unsigned (edenot E (sc_wb res)) in
+  let wp := bv_unsigned (edenot E (sc_wp res)) in
+  let s := edenot E (sc_s res) in
+  let l := edenot E (sc_l res) in
+  let su := bv_unsigned (edenot E (sc_sp res)) in
+  (wb <= wp)%Z ->
+  (wp <= 0x800000000000)%Z ->
+  (wp - wb = Z.of_nat (length pending))%Z ->
+  (bv_unsigned l = Z.of_nat (length extra))%Z ->
+  (Z.of_nat (length pending) + Z.of_nat (length extra) <= 2 ^ 30)%Z ->
+  (wp <= su - 112 \/ su <= wb)%Z ->
+  (bv_unsigned s + bv_unsigned l <= su - 112 \/ su <= bv_unsigned s)%Z ->
+  (bv_unsigned s + bv_unsigned l <= 0x800000000000)%Z ->
+  rdn RSEGS M (Z_to_bv 64 wb) (length pending) = Some pending ->
+  rdn RSEGS M s (length extra) = Some extra ->
+  fd_lookup (m_fds model) (Z_to_bv 64 (sc_fd res)) = Some (FdChannel (Z_to_bv 64 (sc_fd res))) ->
+  m_channel_reader model = true ->
+  m_halted model = None -> m_vm_lazy model = [] ->
+  K [] ->
+  (forall R' M',
+     regs_ok (Env (vals_ev (vals ++ junk_vals R')) ebs) (sc_sr res) R' ->
+     know_ok RSEGS (Env (vals_ev (vals ++ junk_vals R')) ebs) M' (sc_kn res) ->
+     sw_post M su (sc_f res) (edenot E (sc_bufp res)) (edenot E (sc_bufsz res)) M' ->
+     realizes RSEGS (mkCfg (mkst R' (Z_to_bv 64 (sc_ret res)) M' (seg_rom RSEGS)) model) K) ->
+  realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x2b9a78) M (seg_rom RSEGS)) model)
+           (t_emit (map (WriteEv (Z_to_bv 64 (sc_fd res))) (pending ++ extra)) K).
+Proof. exact (stdio_call_sound_post_gen RSEGS (fun _ _ H => H) (fun _ => eq_refl) (fun _ _ _ _ H => H)). Qed.

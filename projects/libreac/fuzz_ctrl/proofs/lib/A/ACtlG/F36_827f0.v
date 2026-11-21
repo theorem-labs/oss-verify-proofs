@@ -42,7 +42,7 @@
        hit:  C_A82964_at [j]: FLSX from RL, rgv 20 (t_want_m) from RL's s4 and f36_want_m_hit.
        miss: C_A828a0_at [j; i]: RL as is, t_blk <> decl_i i, addressable (fr + 64) 32; then glue_seg_F36_827f4.
 
-   ROUTE (C) (L3; the walk shell from a working branch 8ce82d7e310; ACtlCut.v (at head lib/A/ACtlCut.v:243)): ctl_from's runtime premise is
+   ROUTE (C) (L3; the walk shell from a working branch; ACtlCut.v (at head lib/A/ACtlCut.v:243)): ctl_from's runtime premise is
    A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (was ACtlCut.ctl_rt mem3).  Neither run reads a shadow byte and both exits keep
    ly3, S3 and the memory, so each passes the entry's Hrt as it is; VIS0 / OWNED_RO are gone from the Section with
    glue_seg_F36_827f4's switch.
@@ -70,11 +70,11 @@
    OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.<X>, L_<X> for ...lib.Lib.<X>), never by a partial path
    (a Theorem Labs lane 05:28Z: 160 lib/Reusable and 15 lib/Lib modules have twins).
 
-   FRAC's trailer conjunct q64 m (fr + 4088) (flag_addr ..) (Batch3, d36efc6152d): neither run writes memory or a
+   FRAC's trailer conjunct q64 m (fr + 4088) (flag_addr ..) (Batch3): neither run writes memory or a
    register, and the exits are taken at the entry's map and memory, so FRAC is carried as one conjunct (exact HFRAC),
    never restated.
 
-   BUILD STATE: type-check on 5da74c9c931, closure reaches no stand-in (glue base 121bf608343: AE2k / AF0m /
+   BUILD STATE: type-check, closure reaches no stand-in (glue base: AE2k / AF0m /
    AF0l / ACej / ACeh compiled from their own text, no port_core_refused substitution); reac_box_catalogue_match_c.v
    is the base's own ccd3e1f3c75.  No Axiom, no Parameter, no Admitted, no admit. *)
 

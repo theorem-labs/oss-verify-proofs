@@ -1,7 +1,7 @@
-(* Footprint (_F) form of reac_box_model_block_c.v at a working branch d69f7c708f6 (proved v1.9 run of
+(* Footprint (_F) form of reac_box_model_block_c.v at a working branch (proved v1.9 run of
    record): definitions only, as the plain file is, so no proof script is re-run here.
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes: none read (this file holds definitions only; the image
    literals it names, JOIN_0013 = 0x21a20 and JOIN_0014 = 0x21a60, come from reac_box_model_block_c.v and are
    checked in the files whose runs read them). *)
@@ -29,7 +29,7 @@
    check of a field is a load of the shadow byte at (a >> 3) + ASAN_K and a compare, and __asan_memcpy's and
    __asan_memset's quick check loads aligned shadow words.
 
-   The side stack is NOT one region [FS, FS + FS_SIZE) (11571200 bytes; the v1.8 text of 66990ce635c had it): the
+   The side stack is NOT one region [FS, FS + FS_SIZE) (11571200 bytes; the v1.8 text had it): the
    run takes the class-0 frame only (fp [0%nat]), so it reads and writes the header [FS, fs_frame FS 0 0) (the hint
    word at FS, the words at FS + 88 and FS + 96, the class-0 flag bytes fs_flag FS 0 j) and the class-0 area
    fp_w [0%nat] FS (the hint word, the flag bytes, the frames fs_frame FS 0 j and their shadow), nothing of the

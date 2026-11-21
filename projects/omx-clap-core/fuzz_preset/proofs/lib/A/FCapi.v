@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the frame-area API of fuzz_preset's ASan image A, in the form the second allocator
    instance's API record takes (YGcfNames.v: aa_stack_malloc_cf over `In cid cf_fs_classes`, preset's classes
    [0; 1; 3]; aa_set_shadow_f5_cf in cgif_rgb's YG0e.v:48 form at 0xf5). Stated over any ARx that satisfies
@@ -12,10 +13,10 @@
    invariant is NOT cgif's AR (preset's ARcf, fuzz_state's ARU) and for classes with no released cgif walk. A unit
    whose invariant IS cgif's AR should take the released AR-form walk (cgif_file A/AF0s.v, AF0u.v and their kin,
    relocated) and, if it needs this shape, obtain it through FCiface.fs_iface_AR plus
-   FCiface.astack_malloc_realizes_of_x (FCiface.v:168-200, Qed), which yields the same fact. *)
+   FCiface.astack_malloc_realizes_of_x (FCiface.v:169-201, Qed), which yields the same fact. *)
 (* Instance shapes (measured, 2026-10-29): FCiface's fs_iface is discharged by three owners - preset's ARcf
-   (FCifaceCf.fs_iface_ARcf), cgif's AR through AR_nohp (FCiface.fs_iface_AR, FCiface.v:168-200) and fuzz_state's ARU
-   through ARU_nohp (FSifaceU.fs_iface_ARU, cold/port-state-rt-xiface 539b14b7a0e). The stack-window premise of
+   (FCifaceCf.fs_iface_ARcf), cgif's AR through AR_nohp (FCiface.fs_iface_AR, FCiface.v:169-201) and fuzz_state's ARU
+   through ARU_nohp (FSifaceU.fs_iface_ARU). The stack-window premise of
    ecall_pre_x is stated on the raw memory (apresent mem); an instance whose memory view differs from it only on
    shadow bytes (ARU reads unpoison U mem) satisfies it unchanged, because the stack window lies off the shadow range.
    FCiface.v's bytes are frozen (sha256 72b16d2a0987aa9a), so this note lives here. *)

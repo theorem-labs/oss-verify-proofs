@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: fully qualified module paths. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -18,11 +19,11 @@ Open Scope Z_scope.
 Section WithSegs.
 Variable segs : list Segment. Context {bmK : BMode}.
 
-Lemma cj_msteps_cat : forall a b, ExecS8.msteps segs a b -> CatSim.msteps segs a b.
+Lemma cj_msteps_cat : forall a b, ExecS8.msteps segs a b -> S8.CatSim.msteps segs a b.
 Proof.
   intros a b H. induction H as [ms | ms ms1 ms2 [Hsvc Hstep] Hms IH].
-  - apply CatSim.mst_refl.
-  - eapply CatSim.mst_step; [exact Hsvc | exact Hstep | exact IH].
+  - apply S8.CatSim.mst_refl.
+  - eapply S8.CatSim.mst_step; [exact Hsvc | exact Hstep | exact IH].
 Qed.
 
 Lemma impl_bind_inv : forall {A B} (t : itree node A) (f : A -> itree node B) Q ms,
@@ -71,7 +72,7 @@ Lemma nret_eqv : forall ms ms' rsp, ms_eqv ms ms' -> ms_eqv (nret ms rsp) (nret 
 Proof. intros ms ms' rsp H. unfold nret. apply advance_past_svc_eqv, apply_effect_eqv, H. Qed.
 
 Lemma evt_eqv_transfer : forall P ms ms', ms_eqv ms ms' -> evt segs P ms ->
-  exists ms1 ms1', P ms1 /\ ms_eqv ms1 ms1' /\ CatSim.msteps segs ms' ms1'.
+  exists ms1 ms1', P ms1 /\ ms_eqv ms1 ms1' /\ S8.CatSim.msteps segs ms' ms1'.
 Proof.
   intros P ms ms' Heqv (ms1 & Hms & HP).
   destruct (msteps_eqv segs ms ms1 (cj_msteps_cat _ _ Hms) ms' Heqv) as (ms1' & Hms' & Heqv1).

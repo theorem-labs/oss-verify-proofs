@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YEvtSRr.v, with its module paths changed; 15 of its 47 lines of code are new or changed and 90 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/FMbz_bridge.v at origin/ossv/recipes f26f9fbd8777; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); moved from lib/A/FMbz_bridge.v to lib/A/Rt/FMbz_bridge.v, and the Requires of the moved files follow; the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_pin/lib/A/Rt/FMbz_bridge.v at 90722657971; module paths changed to reac-pw/fuzz_headamp; no numeral; the comments are the donor's, verbatim, and name the donor images' addresses. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/FMbz_bridge.v; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); moved from lib/A/FMbz_bridge.v to lib/A/Rt/FMbz_bridge.v, and the Requires of the moved files follow; the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_pin/lib/A/Rt/FMbz_bridge.v; module paths changed to reac-pw/fuzz_headamp; no numeral; the comments are the donor's, verbatim, and name the donor images' addresses. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The comments in this file are libreac/fuzz_boxreg's lib/A/FMbz_bridge.v, through reac-pw/fuzz_pin's lib/A/Rt/FMbz_bridge.v, unchanged apart from names, this unit's image and values, and the note on Hwx, which is this unit's. The generic half of the bridge between a body walk written over the machine state alone
    (lib/A/Bz: `evt asegs Q ms`, that is "some step chain from ms reaches a state in Q") and the
    donor's call-site form (`SRr segs W (cfg_at segs pc regs mem md) POST`).
 
    Three facts make it one short file:
-   - the two trees name the same image: `asegs = tfibsegs` by reflexivity (FMbz_str.v:26);
-   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:16) is
+   - the two trees name the same image: `asegs = tfibsegs` by reflexivity (FMbz_str.v:32);
+   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:17) is
      `ms_svc_pending ms = None /\ RiscvSemantics.step segs ms = MachineOk ms'`, which is what each
      step of the donor's `msteps` (lib/Reusable/YK0i.v:284-290) asks;
-   - the donor already lifts its own `msteps` into `SRr` (`SRr_msteps`, lib/Reusable/YA0n.v:148),
-     and the donor's own walks of library code use it that way (cgif_file A/AE6x.v:190).
+   - the donor already lifts its own `msteps` into `SRr` (`SRr_msteps`, lib/Reusable/YA0n.v:149),
+     and the donor's own walks of library code use it that way (cgif_file A/AE6x.v:191).
 
    The shadow half of the bridge (chk_ok from the donor's range facts) is in FMbz_str.v. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -43,7 +44,7 @@ Qed.
 
 (* a body walk that reaches Q, read at a donor call site: the walk runs on the restricted memory,
    and what it reaches is the configuration the donor continues from *)
-(* Hwx is the image's own W^X fact (lib/A/AF0x.v:25 `Hwx_tfa`, which this file does not Require); it is
+(* Hwx is the image's own W^X fact (lib/A/AF0x.v:26 `Hwx_tfa`, which this file does not Require); it is
    a premise here so that this bridge does not wait for it. *)
 (* `mkst` and `seg_rom` are written qualified: a Bz Lib module defines its own `mkst`, which empties the
    floating-point registers, while the donor's `cfg_at` uses YK11's over fx.  An import order that let the

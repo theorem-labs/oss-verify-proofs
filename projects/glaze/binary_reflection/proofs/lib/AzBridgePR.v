@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the cs_ok destructure takes the channel-reader field co_rdr). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -256,7 +257,7 @@ Lemma cs_ok_pr_weaken : forall E cs fx R M model,
   GPS.cs_ok SEGS PERMc SPTOPc FS0 SHCb VSHf AINV_pr KCAP FTOPc FXOK UINV E cs fx R M model ->
   GPS.cs_ok SEGS PERMc SPTOPc FS0 SHCb VSHf AINV_bt KCAP FTOPc FXOK UINV E cs fx R M model.
 Proof.
-  intros E cs fx R M model HC. destruct HC as [c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14].
+  intros E cs fx R M model HC. destruct HC as [c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c15].
   constructor; try assumption. exact (AINV_pr_bt _ _ _ _ _ _ _ c7).
 Qed.
 

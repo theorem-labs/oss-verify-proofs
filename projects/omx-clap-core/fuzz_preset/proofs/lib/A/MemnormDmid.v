@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormDmid.v (a working branch 29b7505aa27, file sha256 8164a0d31ef3) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file at 3d44582d342f) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch b85bfdee67c4), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 3 numerals changed. *)
-(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's delta to proofs/cgif/cgif_file_fuzzer/lib/MemnormDmid.v (29b7505aa27 -> a working branch 5ad50e61fc6a, file sha256 cf594a16c154) applied at A' by the 3-way merge of record (the internal file p2merge.sh): the call memory MP and DMiface's 0 <= a < 2^64 guard on the qhdr presence clause. 0 conflicts; the added lines equal the source delta's; no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormDmid.v (a working branch, file sha256 8164a0d31ef3) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 3 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's delta to proofs/cgif/cgif_file_fuzzer/lib/MemnormDmid.v (-> a working branch, file sha256 cf594a16c154) applied at A' by the 3-way merge of record (the internal file p2merge.sh): the call memory MP and DMiface's 0 <= a < 2^64 guard on the qhdr presence clause. 0 conflicts; the added lines equal the source delta's; no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM): the two Deallocate arms that call QuarantineCache::Enqueue (the mid arm,
    DGg2, and the drain arm, DGfz), with errno and memnorm kept on the raw memory.
    rule 24: no function proved (kind: arm twins, frame corollaries over the callees' memnorm-kept contracts).
@@ -126,8 +127,8 @@ Qed.
 Lemma xr_raw_em : forall B AOX, DGfz.xr_raw B AOX true (MnEnq.acall_raw_em_x B AOX).
 Proof. intros B AOX inst stk ly S W regs mem md E ly' S' W' regs' mem' md' H _. exact (proj1 H). Qed.
 
-(* copy of DGfz.v:88-103 / DGg2.v:149-163 (the section header), plus the callees' memnorm-kept contracts and the
-   ErrnoApart image facts the copied errno scripts read (DGfz.v:113-116) *)
+(* copy of DGfz.v:89-104 / DGg2.v:150-164 (the section header), plus the callees' memnorm-kept contracts and the
+   ErrnoApart image facts the copied errno scripts read (DGfz.v:114-117) *)
 Section e.
 Variable B : asyms.
 Hypothesis TS : TfibSyms B.
@@ -177,7 +178,7 @@ pose proof (di_view B U ft ARX ARXr AOX rpre lpost fpre dpost dbody L24 QB DRq M
 pose proof (di_inst B U ft ARX ARXr AOX rpre lpost fpre dpost dbody L24 QB DRq MP IF inst ly S W mem md HARX) as HIO.
 destruct (DGg1.FH_m B TS U ARX rpre fpre inst so bp ly S W regs mem md p n tr PRE0 HBLK HIO DV)
   as (hb1 & j1 & j2 & j3 & Hhb1 & Hhdr & FH).
-(* copy of DGg2.v:619-624 *)
+(* copy of DGg2.v:620-625 *)
 destruct DV as [[LY IMG _ _ _ _ _] _ _ _ _ _ _ (HZp & _ & _ & HNN) _ _].
 assert (Hpa : 0 <= sptr_addr B ly p) by (destruct HZp as [Z0 _]; lia).
 assert (HSP : ly_stk_lo ly + DGbaseC.DFSTACK <= bv_unsigned (getr regs 2))
@@ -189,7 +190,7 @@ eapply amreal_mono; [| exact (amreal_apath_gflag tfibsegs _ _ _ _ MAIN)].
 intros r Wo co [(regsR & memR & mdR & -> & HPOST & HLP & X & regsC & memC & mdC & regsE & memE & mdE & HX & RAWC & DMC & FRT)
   HPATH].
 destruct HX as (HXr & HXe & HXm).
-(* copy of DGg2.v:630-639: errno from Deallocate's entry to Enqueue's call, and from Enqueue's return to Put's ret *)
+(* copy of DGg2.v:631-640: errno from Deallocate's entry to Enqueue's call, and from Enqueue's return to Put's ret *)
 assert (ERRC : ErrnoG.errno_kept B mem memC).
 { intros i Hi. apply DMC; rewrite (EB i Hi); intros Hw.
   - apply (ErrnoApart.errno_apart_dwin_m EAimg EAz3 B ly _ _ _ _ TS LY IMG HSP HZp (proj1 HNN) Hw). lia.
@@ -227,13 +228,13 @@ intros inst so bp ly S W regs mem md p n tr PRE HMP HBLK DRAIN.
 pose proof PRE as PRE0.
 destruct PRE0 as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & Hpres & Hgp & Htp & Hr10 & Hr11 & Hr12 & Hr13 & Hr14 & Hr15 &
 Hso1 & Hso2 & Hso3 & Hbp1 & Hbp2 & Hbp3 & Htrlen & PSO & PLEN & PBUF & Htr & Hp0 & HFP).
-(* copy of DGfz.v:724-728 *)
+(* copy of DGfz.v:725-729 *)
 pose proof (di_view _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ IF inst ly S W mem md p n HARX HRP HFP HBLK) as DV.
 destruct (dv_chunk _ _ _ _ _ _ _ _ DV) as (k & HK & HKS & _ & HKR).
 pose proof (dv_nonnull _ _ _ _ _ _ _ _ DV) as PNN.
 pose proof (di_inst _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ IF inst ly S W mem md HARX) as HIO.
 destruct (DGg1.FH_m B TS U ARX rpre fpre inst so bp ly S W regs mem md p n tr PRE HBLK HIO DV) as (hb1 & j1 & j2 & j3 & Hhb1 & Hhdr & FH).
-(* copy of DGfz.v:730-746 (errno's bytes apart from Put's frame and dmem_m's windows), with sp0 / pa / nn unfolded *)
+(* copy of DGfz.v:731-747 (errno's bytes apart from Put's frame and dmem_m's windows), with sp0 / pa / nn unfolded *)
 pose proof (dv_n _ _ _ _ _ _ _ _ DV) as DN.
 pose proof (dn_ly _ _ _ _ _ DN) as LY. pose proof (dn_img _ _ _ _ _ DN) as IMG.
 destruct (dv_zone _ _ _ _ _ _ _ _ DV) as (Z3 & _ & _ & NN).

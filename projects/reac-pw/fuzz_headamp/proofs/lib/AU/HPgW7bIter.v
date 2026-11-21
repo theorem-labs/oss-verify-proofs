@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bIter.v at 25d4b718638 (w7_iter) for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bIter.v (w7_iter) for
    reac-pw/fuzz_headamp's image B: the turn's registers are image B's (the part in s7, the length so far in s10, t
    in s9, l in s4 after block B), the strlen call by HPgW7bKit.hw7b_strlen_at on the turn's cb_strok string, the
    block B by its statement HPgW7bBase.hw7b_B_stmt, the memcpy by HPgW7bKit.hw7b_memcpy_at; w7_ -> hw7b_, module

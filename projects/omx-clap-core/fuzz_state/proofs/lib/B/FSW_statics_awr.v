@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_statics_awr.v from
-   a working branch 8989ddd6cb6, same lemma names and statement shapes; imports point at lib/B's image files
+   a working branch, same lemma names and statement shapes; imports point at lib/B's image files
    (YB1v, FSH_Base, FSH_Rt, FSPstat, FSW_K, FSW_ret, FSW_statics); the image-agnostic FSupoison, FSupoisonU, FSH_Gen
    stay lib/A's. The proof names no address: the four statics are lib/B/FSH_Base.v's G_COUNT 0x5dab00 (sym g_count),
    G_FAIL 0xa41c0 (sym g_fail_at), G_LIVE 0x5daac0 (sym g_live), G_PEAK 0x5daae0 (sym g_peak), each the first entry of
@@ -7,7 +7,7 @@
    the GOT word 0x9fc10 and the shadow cell 0xa8438 are lib/B/YB1w.v's names through FSW_K's fs_got_region /
    fs_bcell_region. IMG is lib/B/FSH_Rt.v's fs_img_facts (B's FS_RLO / FS_RHI / canary / tables / FS_PSTAT_FP).
    rule 24: proves no function (kind: segment lemma). *)
-(* awr_ok over the entry regions of FSW_statics' fss0TS: kit rule R2 (FSW_K.v:35-37), once, for every fs walk that
+(* awr_ok over the entry regions of FSW_statics' fss0TS: kit rule R2 (FSW_K.v:36-38), once, for every fs walk that
    starts at fsw_entryTS and so carries the four writable static regions of alloc.c (g_count, g_fail_at, g_live,
    g_peak).
 

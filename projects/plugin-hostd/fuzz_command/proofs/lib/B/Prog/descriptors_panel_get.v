@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of descriptors_panel_get (plugin-hostd/fuzz_command.asan-ubsan, 0x8ccfc, 22 instructions), re-made at B's addresses from the ASan walk lib/A/Prog/descriptors_panel_get.v and its segment _s7.v (a working branch 2db68b2223b): the prologue, the call of record (B's function where A inlined it) composed with its contract, and the moves to the call of arg_s; then the segments of descriptors_panel_get_a.v and descriptors_panel_get_r.v. *)
+(* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of descriptors_panel_get (plugin-hostd/fuzz_command.asan-ubsan, 0x8ccfc, 22 instructions), re-made at B's addresses from the ASan walk lib/A/Prog/descriptors_panel_get.v and its segment _s7.v (a working branch): the prologue, the call of record (B's function where A inlined it) composed with its contract, and the moves to the call of arg_s; then the segments of descriptors_panel_get_a.v and descriptors_panel_get_r.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* descriptors_panel_get (recorder.c:554-560) on B, 0x8ccfc: the prologue stores ra, s0, s1 in a 32-byte frame,
    s0 := uri, record(24) takes the slot (g_rec.calls[n], or record.spill after freeing the spill's arguments),

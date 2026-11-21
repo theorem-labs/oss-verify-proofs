@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the Hown_fds hypothesis, KL_fds and GI_fds also take an unchanged kernel build, which own_after_node and GI_after_node get from nstep_kernel; GI_init takes the launch's channel reader, valid_mmap_base and two bounds on the image's reserved entries (against 2^30 and mmap_base_min), and its launch ledger now ends with the vDSO pair just below min(mbase, sp - 8 MiB); GI_with_vdso added: GI carries over the vDSO draw's with_vdso (the lemma of openssl/ct's Spec/ModelInv.v)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -51,12 +52,13 @@ Hypothesis Hrun : forall X cfg payload, zlength payload <= MAX_INPUT -> mspecP (
 (* [comment removed for export] *)
 Hypothesis Hown_minv : forall X s mo, own X s mo -> minv mo /\ m_halted mo = None.
 Hypothesis Hown_fds : forall X s mo mo', own X s mo ->
-  m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> own X s mo'.
+  m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> own X s mo'.
 
 #[using="Hown_minv Hown_fds"] Lemma own_after_node : forall X s mo n rsp mo' evs,
   own X s mo -> nstep n mo rsp mo' evs -> m_vmmaps mo' = m_vmmaps mo -> own X s mo'.
 Proof.
   intros X s mo n rsp mo' evs Ho Hst Hvm. destruct (Hown_minv _ _ _ Ho) as [Hmi Hh].
+  pose proof (nstep_kernel _ _ _ _ _ Hst) as Hkb.
   destruct (minv_preserved n mo rsp mo' evs Hmi Hh Hst) as [Hh' Hmi']. eapply Hown_fds; eauto.
 Qed.
 
@@ -251,18 +253,19 @@ Proof. intros s s' mo mo' _ Hso _ H. unfold Gso in *. rewrite Hso. exact H. Qed.
 
 Definition GI (X : list bptr) : assn PState := OWN X Gso.
 
+(* LPS 727298f3: the kernel build is carried too, since kl_resv_vdso reads it *)
 Lemma KL_fds : forall L pbrk mo mo',
-  KL L pbrk mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> KL L pbrk mo'.
+  KL L pbrk mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> KL L pbrk mo'.
 Proof.
-  intros L pbrk mo mo' K Hvm Hmi Hh. destruct K. constructor; try (rewrite Hvm); auto.
+  intros L pbrk mo mo' K Hvm Hkb Hmi Hh. destruct K. constructor; try (rewrite Hvm); try (rewrite Hkb); auto.
 Qed.
 
 Lemma GI_minv : forall X s mo, GI X s mo -> minv mo /\ m_halted mo = None.
 Proof. intros X s mo [(L & _ & K & _) _]. split; [exact (kl_minv _ _ _ K)| exact (kl_halt _ _ _ K)]. Qed.
 
-Lemma GI_fds : forall X s mo mo', GI X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> GI X s mo'.
+Lemma GI_fds : forall X s mo mo', GI X s mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> GI X s mo'.
 Proof.
-  intros X s mo mo' [(L & Hc & K & Hi) [Hnd HG]] Hvm Hmi Hh. split; [|split; [exact Hnd| exact HG]].
+  intros X s mo mo' [(L & Hc & K & Hi) [Hnd HG]] Hvm Hkb Hmi Hh. split; [|split; [exact Hnd| exact HG]].
   exists L. split; [exact Hc|]. split; [eapply KL_fds; eauto| exact Hi].
 Qed.
 
@@ -273,6 +276,7 @@ Lemma GI_after_node : forall X s mo n rsp mo' evs,
   GI X s mo -> nstep n mo rsp mo' evs -> m_vmmaps mo' = m_vmmaps mo -> GI X s mo'.
 Proof.
   intros X s mo n rsp mo' evs Ho Hst Hvm. destruct (GI_minv _ _ _ Ho) as [Hmi Hh].
+  pose proof (nstep_kernel _ _ _ _ _ Hst) as Hkb.
   destruct (minv_preserved n mo rsp mo' evs Hmi Hh Hst) as [Hh' Hmi']. eapply GI_fds; eauto.
 Qed.
 
@@ -584,23 +588,46 @@ Lemma GI_init : forall segs brk0 mbase sp lim inp atop,
   sp_window_lo <= bv_unsigned sp <= sp_window_hi ->            (* [comment removed for export] *)
   atop = bv_unsigned sp - stack_max_size ->                     (* [comment removed for export] *)
   reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling_lo ->
+  in_channel_reader inp = true ->
+  (* 08b1429: the launch's vDSO pair sits just below min(mbase, sp - 8 MiB), far above the brk area *)
+  valid_mmap_base mbase ->
+  (live_bytes (segments_reserved segs) + 20 * page_size <= 2^30
+   /\ reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ + 4096 + 20 * page_size <= mmap_base_min) ->
   GI [] (ps_init (reservedZ segs) atop) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof.
-  intros segs brk0 mbase sp lim inp atop (Hlo & Hhi & Hal) Hpos Hsp Eatop Hceil. unfold GI, OWN.
+  intros segs brk0 mbase sp lim inp atop (Hlo & Hhi & Hal) Hpos Hsp Eatop Hceil Hrdr Hmb [_ Hvlow]. unfold GI, OWN.
   pose proof alloc_ceiling_lo_val as Hclo.
   Local Ltac2 Set LiaHints.tbl := fun () => "0040>13807164177.1814152173418.1533668031574.2143368053096.1600000R00]00d00eS3Hlo3Hhi3Hal4Hpos3Hsp5Eatop5HceilS3Hsp5EatopS3Hlo1HS".
 assert (Hat : 0 < atop <= atop_hi) by (unfold atop_hi, sp_window_lo, sp_window_hi, stack_max_size in *; lia).
   split; [|split; [apply List.NoDup_nil| unfold Gso, so_ok; cbn [ps_so ps_init so_buf stdout_init]; unfold zlength, STDOUT_BUFSIZ; cbn; lia]].
   exists (led_init (reservedZ segs) atop). split; [apply creach_init; exact Hat|]. split; [|intros c []].
+  set (VT := page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size))).
   assert (Evm : m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)
-                = mkVmMapsFull (segments_reserved segs) [] [] brk0 brk0 lim mbase sp) by reflexivity.
+                = mkVmMapsFull (segments_reserved segs ++ vdso_reserved (in_kernel inp) VT) [] [] brk0 brk0 lim mbase sp)
+    by reflexivity.
   assert (Eh : m_halted (init_model (segments_reserved segs) brk0 mbase sp lim inp) = None) by reflexivity.
-  constructor; rewrite ?Evm; cbn -[Z.pow Z.mul Z.add Z.sub init_model alloc_top].
-  - apply minv_init. exact Hsp.
+  assert (HVT : mmap_base_min - 4095 <= VT < two_pow_64).
+  { destruct Hmb as (M1 & M2 & M3). destruct Hsp as [S1 S2]. unfold VT, page_round_down_Z, page_size, two_pow_64.
+    unfold mmap_base_min, mmap_base_max, sp_window_lo, sp_window_hi, stack_max_size in *. lia. }
+  (* LPS 727298f3: the launch's reserved ledger is the image's entries, below the break, then the vDSO pair *)
+  assert (EVT : vdso_top (mkVmMapsFull (segments_reserved segs ++ vdso_reserved (in_kernel inp) VT) [] [] brk0 brk0 lim mbase sp) = VT).
+  { rewrite <- Evm. apply vdso_top_init_model. }
+  assert (KVD : exists R0, segments_reserved segs ++ vdso_reserved (in_kernel inp) VT
+                  = R0 ++ vdso_reserved (in_kernel inp) (vdso_top (mkVmMapsFull (segments_reserved segs ++ vdso_reserved (in_kernel inp) VT) [] [] brk0 brk0 lim mbase sp))
+                /\ (forall e, In e R0 -> ehi e <= bv_unsigned brk0)).
+  { exists (segments_reserved segs). rewrite EVT. split; [reflexivity|].
+    intros e Hin. pose proof (reserved_top_ge _ _ Hin). unfold ehi. lia. }
+  clearbody VT.
+  constructor; rewrite ?Evm; cbn -[Z.pow Z.mul Z.add Z.sub init_model alloc_top vdso_reserved].
+  - apply minv_init; [exact Hsp | exact Hrdr].
   - exact Eh.
   - split; [intros e []| apply pwdisj_nil].
-  - reflexivity.
-  - intros e Hin. pose proof (reserved_top_ge _ _ Hin). unfold ehi. lia.
+  - eexists. rewrite map_app. reflexivity.
+  - intros e Hin. apply in_app_or in Hin as [Hin|Hin].
+    + left. pose proof (reserved_top_ge _ _ Hin). unfold ehi. lia.
+    + right. destruct e as [a n]. destruct (vdso_reserved_above (in_kernel inp) VT a n ltac:(lia) Hin) as [V1 _].
+      pose proof (vdso_len_bounds (in_kernel inp)). unfold elo. cbn [fst].
+      unfold PGSZ, page_size in *. lia.
   - unfold PGSZ in *. unfold page_size in Hal. unfold alloc_ceiling_lo, sp_window_lo, stack_max_size in *. lia.
   - intros b l [].
   - intros b l k [].
@@ -608,11 +635,24 @@ assert (Hat : 0 < atop <= atop_hi) by (unfold atop_hi, sp_window_lo, sp_window_h
   - intros b l H. discriminate.
   - split; reflexivity.
   - unfold alloc_top. cbn [vm_init_sp]. exact Eatop.
+  - exact KVD.
+  - intros e [].
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+
+(* LPS 727298f3: the walks start from the run's initial model, [init_model] with the launch's vDSO
+   draw installed ([TopLevel.mo0]); [with_vdso] changes only [m_vdso], which neither [KL] nor [Gso]
+   reads, so each field carries over (the lemma of openssl/ct's Spec/ModelInv.v). *)
+Lemma GI_with_vdso : forall X s v m, GI X s m -> GI X s (with_vdso v m).
+Proof.
+  intros X s v m [(L & Hc & HK & Hi) [Hnd HG]].
+  split; [|split; [exact Hnd| exact HG]].
+  exists L. split; [exact Hc|]. split; [|exact Hi].
+  destruct HK; constructor; assumption.
+Qed.
 
 Lemma argv_Z_short : forall argv, valid_argv argv -> Forall (fun a => zlength a <= ARG_MAX_LEN) (argv_Z argv).
 Proof.

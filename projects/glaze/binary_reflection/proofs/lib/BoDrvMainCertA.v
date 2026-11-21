@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main certificate at both CONFIG_RSEQ values; the shadow windows and argv[1] slot read off the computed hand-off states, and the check that no visible or ghost range covers the strings' shadow; stack_trio over the start state's stack window, the launch's stack window depth under sp). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -148,27 +149,41 @@ Proof.
 Qed.
 
 Lemma stack_trio : forall E E' (M : word -> option byte) (eb0 esh : expr) (s0 : Z),
-  kentry_ok BSEGS E M (KWr (SA eb0 (-8388608)) (ELit 8388608)) ->
+  kentry_ok BSEGS E M (KWr (SA eb0 (-6144513)) (ELit 6144513)) ->
   kentry_ok BSEGS E M (KZero (SA esh 0x7FEF8000) (ELit 1048576)) ->
   u (edenot E eb0) = s0 -> 8 * u (edenot E esh) = s0 -> u (edenot E' SP0) = s0 - 48 ->
   0x7fff80000000 <= s0 <= 2 ^ 47 ->
   know_ok BSEGS E' M [KWr (SA SP0 (- YLO)) (ELit YLO); KUnk (SA SP0 (- YLO)) (ELit YLO); KShOk (SA SP0 (- YLO)) (ELit (YLO + 48))].
 Proof.
   intros E E' M eb0 esh s0 [FW HW] [FZ HZ] Hs0 Hsh Hsp Hr.
-  assert (L1 : elenZ E (ELit 8388608) = 8388608) by (apply elenZ_lit; lia).
+  assert (L1 : elenZ E (ELit 6144513) = 6144513) by (apply elenZ_lit; lia).
   assert (L2 : elenZ E (ELit 1048576) = 1048576) by (apply elenZ_lit; lia).
   assert (L3 : elenZ E' (ELit YLO) = YLO) by (apply elenZ_lit; unfold YLO; lia).
   assert (L4 : elenZ E' (ELit (YLO + 48)) = YLO + 48) by (apply elenZ_lit; unfold YLO; lia).
-  assert (S1 : estart E (SA eb0 (-8388608)) = s0 - 8388608) by (unfold estart; cbn [a_base a_off]; lia).
+  assert (S1 : estart E (SA eb0 (-6144513)) = s0 - 6144513) by (unfold estart; cbn [a_base a_off]; lia).
   assert (S2 : estart E (SA esh 0x7FEF8000) = u (edenot E esh) + 0x7FEF8000) by (unfold estart; cbn [a_base a_off]; lia).
-  assert (S3 : estart E' (SA SP0 (- YLO)) = s0 - 8388608) by (unfold estart; cbn [a_base a_off]; unfold YLO; lia).
+  (* [YLO] shrank with the launch's guaranteed stack window: AsDrvHooksA.v:767 is now
+     [6144000 - 48], against released [8388608 - 48].  With [u (edenot E' SP0) = s0 - 48]
+     the entry therefore starts at [s0 - 6144000].  The write window [HW] is the start
+     state's own, [KWr (SA e_sp0 (-6144513)) (ELit 6144513)] in [BOOTF] (the model's stack
+     window depth below sp), not an 8 MiB one.  The [8388608] below is the KZero's: the
+     shadow of [s0 - 8 MiB, s0), a different fact, and the new window sits inside it.
+     Same repair as the ASan twin, AsDrvMainCertA.stack_trio. *)
+  assert (S3 : estart E' (SA SP0 (- YLO)) = s0 - 6144000) by (unfold estart; cbn [a_base a_off]; unfold YLO; lia).
   rewrite L1, S1 in HW. rewrite L2, S2 in HZ.
-  assert (FL : forall n, 0 <= n <= 8388608 -> flat E' (SA SP0 (- YLO)) n) by (intros n Hn; unfold flat; rewrite S3; lia).
+  assert (FL : forall n, 0 <= n <= 6144000 -> flat E' (SA SP0 (- YLO)) n) by (intros n Hn; unfold flat; rewrite S3; lia).
+  (* [HW] is stated over the window [s0 - 6144513, s0); the entry starts at
+     [s0 - 6144000], 513 bytes INSIDE it: [513 + YLO = 6144465 <= 6144513]. *)
+  assert (HW' : forall (d : Z) (m : nat), 0 <= d -> d + Z.of_nat m <= YLO ->
+                  store_ok BSEGS M (Z_to_bv 64 (s0 - 6144000 + d)) m = true).
+  { intros d m Hd Hdm.
+    replace (s0 - 6144000 + d) with (s0 - 6144513 + (513 + d)) by lia.
+    apply HW; [lia | unfold YLO in Hdm; lia]. }
   unfold know_ok. repeat apply Forall_cons; try apply Forall_nil; cbn [kentry_ok].
-  - rewrite L3, S3. split; [apply FL; unfold YLO; lia|]. intros d m Hd Hdm. apply HW; unfold YLO in *; lia.
+  - rewrite L3, S3. split; [apply FL; unfold YLO; lia|]. intros d m Hd Hdm. apply HW'; unfold YLO in *; lia.
   - rewrite L3, S3. split; [apply FL; unfold YLO; lia|]. intros i Hi. unfold YLO in Hi.
     apply store_ok1_defined; [rewrite u64_lit by lia; cbn [g_img_hi GBOTH]; lia|].
-    exact (HW i 1%nat ltac:(lia) ltac:(lia)).
+    exact (HW' i 1%nat ltac:(lia) ltac:(unfold YLO; lia)).
   - rewrite L4, S3. split; [apply FL; unfold YLO; lia|]. split; [unfold YLO; lia|].
     intros z Hz. exists (Z_to_bv 8 0). split; [|left; reflexivity].
     replace (SB + z / 8) with (u (edenot E esh) + 0x7FEF8000 + (z / 8 - (s0 - 8388608) / 8)).
@@ -186,39 +201,112 @@ Import ListNotations. Import AX2. Import AX2S. Import APC. Import AP.
 Open Scope Z_scope.
 
 Definition hregh (hs : acs) (r : nat) : expr := nth r (s_regs (a_ss hs)) (ELit 0).
-Definition D0th : expr := eadd (escale 8 (EVar 1)) (eadd (escale 8 (EVar 2)) (ELit 232)).
+(* Twin of AsDrvMainCertA.v's [D0th]: the string block's offset from main's SP0 at this
+   revision, [cat_string_off + 48 = 8*argc + 8*envc + 8*GAP + W + 432 + 32 r + 88]. *)
+Definition D0th (r : Z) : expr :=
+  EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 8) (EVar 1))
+    (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 8) (EVar 2))
+      (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 8) (EVar 13))
+        (EAlu Instr.ALU_ADD (EVar 4) (ELit (520 + 32 * r))))).
 (* [comment removed for export] *)
-Definition thA (hs : acs) : list expr :=
-  [ hregh hs 2; EVar 1; D0th; EVar 3; ELit 0; eadd D0th (eaddz (EVar 3) 1); EVar 7; EVar 46; EVar 64;
+Definition thA (r : Z) (hs : acs) : list expr :=
+  [ hregh hs 2; EVar 1; D0th r; EVar 3; ELit 0; EAlu Instr.ALU_ADD (D0th r) (EAlu Instr.ALU_ADD (EVar 3) (ELit 1)); EVar 7; EVar 46; EVar 64;
     ELit 0; hregh hs 5; hregh hs 6; hregh hs 7; ELit 0; ELit 0; hregh hs 13; hregh hs 14; hregh hs 15; hregh hs 16; hregh hs 17;
     ELit 0; hregh hs 28; hregh hs 29; hregh hs 30; hregh hs 31; hregh hs 12; ELit 0; ELit 0; ELit 0 ].
 
-Definition pass1 (hs : acs) (K : kentry) : bool :=
-  let K' := ktsubst (thA hs) K in if kn_incl1_h AT_B (kn hs) K' then true else kpure_entails (kn hs) K'.
-Definition TKsyn : list kentry := Eval vm_compute in filter (pass1 HS_1) (knM ++ knO).
+Definition pass1 (r : Z) (hs : acs) (K : kentry) : bool :=
+  let K' := ktsubst (thA r hs) K in if kn_incl1_h AT_B (kn hs) K' then true else kpure_entails (kn hs) K'.
+(* The hand-off states are per flag value; [TKsyn] is read off the r = 0 one, and the
+   lemmas below check it against both. *)
+Definition TKsyn : list kentry := Eval vm_compute in filter (pass1 0 (HS_1 0)) (knM ++ knO).
 
 (* [comment removed for export] *)
 Definition e_shb : expr := eadd (escale 4096 (EVar 0)) (escale 2 (EVar 6)).                     (* [comment removed for export] *)
 Definition e_b64 : expr :=                                                                       (* [comment removed for export] *)
   EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 0))
     (EAlu Instr.ALU_ADD (EVar 1) (EAlu Instr.ALU_ADD (EVar 2) (EAlu Instr.ALU_ADD (EVar 4) (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 2) (EVar 6)) (EVar 12))))).
-Definition BOOTF : list kentry :=
+(* The hand-off states' own shadow window at this revision (read off the computed HS_1 / HS_2
+   at both flag values and checked by [ent_boot_1] / [ent_boot_2]): the shadow of the 4 MiB below
+   [e_bend64 r], whose base is [e_atr8 + V_R8].  It replaces [e_b64]'s window, the old layout's
+   (whose V_W counted string words below the random bytes). *)
+Definition e_w64 : expr :=
+  EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 0))
+    (EAlu Instr.ALU_ADD (EVar 1) (EAlu Instr.ALU_ADD (EVar 2) (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 2) (EVar 6)) (EAlu Instr.ALU_ADD (EVar 12) (EVar 13))))).
+(* The shadow of the 8 MiB below [e_top] (twin of AsDrvMainCertA.e_tsh). *)
+Definition e_tsh : expr :=
+  EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 0)) (EMd Instr.M_MUL (ELit 512) (EVar 10)).
+(* Twin of AsDrvMainCertA.v:323-332.  [r] threads in because [e_argv1w] is
+   one of AzPlanCore's re-parameterised plan expressions at this revision
+   (AzPlanCore.v:3629).  The As copy carries the same change at
+   AsDrvMainCertA.v:326; a build that stops before this file names only
+   that copy, so the same hunk is here too, as for BoStartupTabs.v:841
+   (a name the Bo twin lacks without its import).  The other entries are flag-free. *)
+Definition BOOTF (r : Z) : list kentry :=
   BOOT_SH ++
-  [ KWr (SA e_sp0 (-8388608)) (ELit 8388608); KZero (SA e_shb 0x7FEF8000) (ELit 1048576);
-    KZero (SA e_b64 2146926617) (ELit 524288); kw_argv1 e_argv1w ].
+  (* 12i: wok_lo sp0 = sp0 - 6144513; the 8388608 window was FALSE.  See
+     AsStartupTabs.v:132.  The KZero rows below are other regions and stand. *)
+  [ KWr (SA e_sp0 (-6144513)) (ELit 6144513); KZero (SA e_shb 0x7FEF8000) (ELit 1048576);
+    KZero (SA e_w64 (2146926651 + 4 * r)) (ELit 524288); kw_argv1 (e_argv1w r);
+    KZero (SA e_tsh 2146402304) (ELit 1048576) ].
+
+(* Twin of AsDrvMainCertA.vis_ok and its parts (the route for the strings' shadow in
+   [cont_fact]; see the comment there). *)
+Definition HSB : Z := 2201439137792.
+Definition HSL : Z := 15392894357504.
+Definition STKL : Z := 140737496743936.
+Definition hsh_map : amap := {| am_base := ELit HSB; am_len := ELit HSL; am_kind := KRWLAZY |}.
+Definition e_usp : expr := EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EMd Instr.M_MUL (ELit 16) (EVar 6)).
+Definition apart_hsh (k : list kentry) (p : expr * expr) : bool :=
+  let '(pb, pk) := split_lit (fst p) in
+  (flat_x k pb pk (snd p) && ranges_apart_x k pb pk (snd p) (ELit 0) HSB (ELit HSL))%bool.
+Definition below_stk (k : list kentry) (p : expr * expr) : bool :=
+  let '(pb, pk) := split_lit (fst p) in ranges_apart_x k pb pk (snd p) e_usp (-8388608) (ELit STKL).
+Definition stk_w1 : expr := EAlu Instr.ALU_ADD e_usp (ELit (-8388608)).
+Definition stk_w2 : expr :=
+  EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EMd Instr.M_MUL (ELit 4096) (EVar 10)))
+    (ELit (-8388608)).
+Definition stk_w3 (r : Z) : expr :=
+  EAlu Instr.ALU_ADD
+    (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0))
+       (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 8) (EVar 1))
+          (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 8) (EVar 2))
+             (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 16) (EVar 6))
+                (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 8) (EVar 12)) (EMd Instr.M_MUL (ELit 8) (EVar 13)))))))
+    (ELit (-4193832 + 32 * r)).
+Definition stk_wins (r : Z) : list (expr * expr) :=
+  [ (stk_w1, ELit 8388608); (stk_w2, ELit 8388608); (stk_w3 r, ELit 4194304) ].
+Definition vis_ok (r : Z) (hs : acs) : bool :=
+  (forallb (fun p => existsb (pair_eqb p) (stk_wins r) || (apart_hsh (kn hs) p && below_stk (kn hs) p)) (a_vis hs)
+   && forallb (apart_hsh (kn hs)) (a_ghost hs)
+   && existsb (amap_eqb hsh_map) (a_maps hs))%bool.
 
 Definition POV (n : nat) : bool := negb (existsb (Nat.eqb n) [4; 13; 14; 26; 27]%nat).
 Definition hull_b (k : list kentry) : bool :=
   forallb (fun K => match K with KImg lo hi => (img_lo AT_B <=? lo) && (hi <=? img_hi AT_B) | _ => true end) k.
 
-Lemma ent_syn_1 : kn_ent AT_B (kn HS_1) (map (ktsubst (thA HS_1)) TKsyn) = true. Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma ent_syn_2 : kn_ent AT_B (kn HS_2) (map (ktsubst (thA HS_2)) TKsyn) = true. Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma ent_boot_1 : kn_ent AT_B (kn HS_1) BOOTF = true. Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma ent_boot_2 : kn_ent AT_B (kn HS_2) BOOTF = true. Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma regs_1 : regs_ent (kn HS_1) 0 (map (tsubst (thA HS_1)) regsM) (s_regs (a_ss HS_1)) = true. Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma regs_2 : regs_ent (kn HS_2) 0 (map (tsubst (thA HS_2)) regsM) (s_regs (a_ss HS_2)) = true. Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hull_1 : hull_b (kn HS_1) = true. Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hull_2 : hull_b (kn HS_2) = true. Proof. vm_cast_no_check (eq_refl true). Qed.
+Lemma ent_syn_1 : forall b : bool, kn_ent AT_B (kn (HS_1 (rseq_z b))) (map (ktsubst (thA (rseq_z b) (HS_1 (rseq_z b)))) TKsyn) = true.
+Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
+Lemma ent_syn_2 : forall b : bool, kn_ent AT_B (kn (HS_2 (rseq_z b))) (map (ktsubst (thA (rseq_z b) (HS_2 (rseq_z b)))) TKsyn) = true.
+Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
+(* TWO CLOSED INSTANTIATIONS, not one -- see AsDrvMainCertA.v:340-347.
+   [Run.valid_input] leaves [kb_rseq] free, so a single pinned [r] would
+   narrow the published claim; a free [r : Z] would leave the term open and
+   [vm_compute] would not reduce it.  [rseq_z] is [if b then 1 else 0], so
+   [intros [|]] leaves two CLOSED goals. *)
+Lemma ent_boot_1 : forall b : bool, kn_ent AT_B (kn (HS_1 (rseq_z b))) (BOOTF (rseq_z b)) = true.
+Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
+Lemma ent_boot_2 : forall b : bool, kn_ent AT_B (kn (HS_2 (rseq_z b))) (BOOTF (rseq_z b)) = true.
+Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
+Lemma regs_1 : forall b : bool, regs_ent (kn (HS_1 (rseq_z b))) 0 (map (tsubst (thA (rseq_z b) (HS_1 (rseq_z b)))) regsM) (s_regs (a_ss (HS_1 (rseq_z b)))) = true.
+Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
+Lemma regs_2 : forall b : bool, regs_ent (kn (HS_2 (rseq_z b))) 0 (map (tsubst (thA (rseq_z b) (HS_2 (rseq_z b)))) regsM) (s_regs (a_ss (HS_2 (rseq_z b)))) = true.
+Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
+Lemma hull_1 : forall b : bool, hull_b (kn (HS_1 (rseq_z b))) = true. Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
+Lemma hull_2 : forall b : bool, hull_b (kn (HS_2 (rseq_z b))) = true. Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
+Lemma vis_ok_1 : forall b : bool, vis_ok (rseq_z b) (HS_1 (rseq_z b)) = true.
+Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
+Lemma vis_ok_2 : forall b : bool, vis_ok (rseq_z b) (HS_2 (rseq_z b)) = true.
+Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
 Lemma okb_syn : forallb (kentry_okb POV) TKsyn = true. Proof. vm_cast_no_check (eq_refl true). Qed.
 Lemma okb_regs : forallb (expr_okb POV) regsM = true. Proof. vm_cast_no_check (eq_refl true). Qed.
 

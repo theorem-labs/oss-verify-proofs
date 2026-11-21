@@ -5,14 +5,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths changed; 166 of its 215 lines of code are new or changed and 3804 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/joined_byte.v; 58 of its 188 lines of code are new or changed and 85 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/joined_byteF.v, with its numbers changed; 406 of its 444 lines of code are new or changed and 150 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The footprint twin of name_field.v (image B): the same run as an ExecF.evtF under a footprint RNG
-   (name_field_contract_F), a mechanical re-run of the plain proof name_field.v@53dc00d331f over StepF's step
+   (name_field_contract_F), a mechanical re-run of the plain proof name_field.v over StepF's step
    (route 2): the same script, step for step, with evtF for evt and each access side goal closed from one rng premise:
    the frame stores and loads (the window), the two loads of the shadow base (the image), the 8-byte load at m + 280
    and its shadow byte, the 1-byte loads of the name bytes and their shadow bytes (inside the byte-exact shadow span
    of the name), and the 1-byte stores at N + i and their shadow bytes (inside the shadow word cover of [N, N + 16)).
    The one callee, __asan_memset, is taken in its owner's footprint form: a Theorem Labs lane's asan_memset_contract_F
-   (lib/B/Prog/asan_memset_cF.v, merged from a working branch 9869f1d1f86), in the place where
+   (lib/B/Prog/asan_memset_cF.v, merged from a working branch), in the place where
    name_field.v takes asan_memset_contract. name_field.v and its theorem are unchanged. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

@@ -1,20 +1,20 @@
 == image B (asan-ubsan): target pin 41113a03c82f
 twins fuzz_command: proved (2 pairs)
-rule 24 compare plugin-hostd/fuzz_command at 781f46bc05cd (pin bbe55d24d096): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 36 pc-relative words differ in the walked ranges, 430 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+rule 24 compare plugin-hostd/fuzz_command (pin bbe55d24d096): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 36 pc-relative words differ in the walked ranges, 430 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
 twins fuzz_boxreg: proved (2 pairs)
-rule 24 compare libreac/fuzz_boxreg at ee71d1fd3fcf (pin 7620eb05e0ad): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 41 pc-relative words differ in the walked ranges, 435 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+rule 24 compare libreac/fuzz_boxreg (pin 7620eb05e0ad): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 41 pc-relative words differ in the walked ranges, 435 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
 twins fuzz_identity: proved (2 pairs)
-rule 24 compare libreac/fuzz_identity at cffeac4df63e (pin baf1a4d065e0): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 41 pc-relative words differ in the walked ranges, 395 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+rule 24 compare libreac/fuzz_identity (pin baf1a4d065e0): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 41 pc-relative words differ in the walked ranges, 395 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
 twins fuzz_disco: proved (2 pairs)
-rule 24 compare libreac/fuzz_disco at b5cf457a8820 (pin cee6f04ad3d4): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 40 pc-relative words differ in the walked ranges, 273 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+rule 24 compare libreac/fuzz_disco (pin cee6f04ad3d4): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 40 pc-relative words differ in the walked ranges, 273 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
 twins fuzz_state: proved (2 pairs)
-rule 24 compare omx-clap-core/fuzz_state at d0e2eea9a341 (pin 5ac5ce0954f8): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 44 pc-relative words differ in the walked ranges, 288 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+rule 24 compare omx-clap-core/fuzz_state (pin 5ac5ce0954f8): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 44 pc-relative words differ in the walked ranges, 288 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
 twins fuzz_preset: proved (2 pairs)
-rule 24 compare omx-clap-core/fuzz_preset at 4cda83dac850 (pin d663f82d7f48): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 40 pc-relative words differ in the walked ranges, 278 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
-== chosen donor plugin-hostd/fuzz_command at 781f46bc05cd
+rule 24 compare omx-clap-core/fuzz_preset (pin d663f82d7f48): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 40 pc-relative words differ in the walked ranges, 278 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+== chosen donor plugin-hostd/fuzz_command
 donor: pinned sha256 bbe55d24d096, twin sha256 658cefbe806b, allocated sections equal (build-id note excepted): True
 target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
-plugin-hostd/fuzz_command at 781f46bc05cd, image B: 9 ranges paired and compared; 54 resolve lines: 7 move a value (0x3fd64 -> 0x3dca0, 0x4045c -> 0x3e000, 0xa5f40 -> 0xa3ce0, 0xa5fa0 -> 0xa3d40, 0xa6c50 -> 0xa49d0, 0xa6c60 -> 0xa49e0, 261476 -> 253088), 0 name the image of a header range, the rest keep the value
+plugin-hostd/fuzz_command, image B: 9 ranges paired and compared; 54 resolve lines: 7 move a value (0x3fd64 -> 0x3dca0, 0x4045c -> 0x3e000, 0xa5f40 -> 0xa3ce0, 0xa5fa0 -> 0xa3d40, 0xa6c50 -> 0xa49d0, 0xa6c60 -> 0xa49e0, 261476 -> 253088), 0 name the image of a header range, the rest keep the value
 closeness: 4 of 9 ranges EQUAL byte for byte; 36 pc-relative words differ in the walked ranges, 430 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
 PASS
 control self B: PASS, 0 values moved

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the FdStream, FdEventfd, FdDgram and FdAnon descriptor kinds in the fd case splits). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -142,7 +143,7 @@ Proof.
   intros fd buf count s mo K a mo' Hmi Hc RO HK. apply trzA_msys_silent; try assumption.
   - left; exact I.
   - unfold read_out in RO. cbn [nstep].
-    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| ]|] eqn:E; try discriminate.
+    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| |sid sside sst|ectx|dfam|aid aaf]|] eqn:E; try discriminate.
     + destruct (fs_lookup (m_fs mo) p) as [data|] eqn:F; [|discriminate].
       eexists _, _, []. split; [reflexivity|]. split; reflexivity.
     + exists (efferr EISDIR), mo, []. auto.
@@ -162,7 +163,7 @@ Proof.
   intros fd buf count mo Hmi Hfd. unfold read_out.
   destruct Hmi as (_ & _ & _ & Hch & Hfile & Hkind & _).
   destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [e|] eqn:E; [|eauto].
-  pose proof (Hkind _ _ E) as HK. destruct e as [ch|p off|p off|p off|p off| |sk|i w|drd dwr| ]; try contradiction; eauto.
+  pose proof (Hkind _ _ E) as HK. destruct e as [ch|p off|p off|p off|p off| |sk|i w|drd dwr| |sid sside sst|ectx|dfam|aid aaf]; try contradiction; eauto.
   - pose proof (Hch _ _ E) as H3. rewrite unsigned_lit in H3 by lia. lia.
   - destruct (fs_lookup (m_fs mo) p) eqn:F; [eauto|]. exfalso. exact (Hfile _ _ _ E F).
 Qed.

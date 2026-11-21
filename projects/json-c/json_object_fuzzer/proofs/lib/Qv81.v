@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: both sections take apc, mbase, kb, execfn and the other QpvH.inp fields, with the launch premise QpvH.launch_ok and the start invariant QpvH.SINV0/argH0 over them; the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run; the heap interface's stack-bottom premise: r8_main, the floor fact BOTJ <= QcGV.stk_floor <= TOPJ, from QcGV.stk_floor_sp). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.json_c.json_object_fuzzer.images Require Asan.
-From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6q3 QCcH Q7UD Qwm6 QZsi QYZ0 Qsn5 Q2ui QCUT QlES QQIi Q6sh QzgH Q7z8 QKTr QgTJ QCrt QU91 QuLP QrOY QWTC QND5 QsSk Qt8n QWtD QDlz QOTP Q1LT QpvH QCoy QLPb QY73 Q72M QDRB Qo4M QrQA QLJz QFop Q5o6 Q0Cb Q92D Qb5q QVyC QkIR QvG1 Qp4j QDw3 QNwL QUil Q7lu Qx84.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6q3 QCcH Q7UD Qwm6 QZsi QYZ0 Qsn5 Q2ui QCUT QlES QQIi Q6sh QzgH Q7z8 QKTr QgTJ QCrt QU91 QuLP QrOY QWTC QND5 QsSk Qt8n QWtD QDlz QOTP Q1LT QpvH QCoy QLPb QY73 Q72M QDRB Qo4M QrQA QLJz QFop Q5o6 Q0Cb Q92D Qb5q QVyC QkIR QvG1 Qp4j QDw3 QNwL QUil Q7lu Qx84 QcGV.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mq0.
@@ -52,24 +53,38 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 Context {RC__ : Q6q3.RunConsts}.
 Hypothesis HCEIL : Q6q3.rc_ceil = atopE E.
-Hypothesis HCAN : Q6q3.rc_canary = ev E 45.
+Hypothesis HCAN : Q6q3.rc_canary = ev E 49.
 #[local] Notation LV := (LV_J E).
 #[local] Notation usp := (bv_unsigned sp).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Instance BANDS : Band := QuLP.Band_RC Q6q3.rc_canary.
-#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HCEIL) (only parsing).
+#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HCEIL) (only parsing).
 
 Definition MTBJ : Z := pg E (fst (META_O w)).
 Definition FR0J : list (Z * Z) := [(MTBJ, MTBJ + 8192)].
@@ -163,6 +178,13 @@ Lemma r6_main : TOPJ + 64 <= BAUXJ.
 Proof. unfold TOPJ, BAUXJ. lia. Qed.
 Lemma r7_main : TOPJ + 64 <= QCrt.ae_stack_top REJ + 4096.
 Proof. pose proof (LA st_main_facts) as (T1 & _). unfold TOPJ. cbn [QCrt.ae_stack_top Qx84.REJ]. lia. Qed.
+(* the interface's stack bottom: the window floor, at or above ASan's stack bottom BOTJ and below TOPJ *)
+Lemma r8_main : BOTJ <= QcGV.stk_floor /\ QcGV.stk_floor <= TOPJ.
+Proof.
+pose proof (MV4 QkIR.BSTAR_facts) as ((B1 & B2) & _). pose proof (MV4 atop_val) as AV.
+pose proof (QcGV.stk_floor_sp usp ltac:(rewrite Q6q3.alloc_ceiling_val, HCEIL, AV; unfold stack_max_size; lia)) as SF.
+rewrite QRjH.Mq3.stack_window_depth_val in SF. unfold BOTJ, TOPJ. lia.
+Qed.
 End Static.
 End Mq0.
 From OSSVerify.json_c.json_object_fuzzer.images Require AsanUbsan.
@@ -213,24 +235,38 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 Context {RC__ : Q6q3.RunConsts}.
 Hypothesis HCEIL : Q6q3.rc_ceil = atopE E.
-Hypothesis HCAN : Q6q3.rc_canary = ev E 45.
+Hypothesis HCAN : Q6q3.rc_canary = ev E 49.
 #[local] Notation LV := (LV_J E).
 #[local] Notation usp := (bv_unsigned sp).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Instance BANDS : Band := QBzu.Band_RC Q6q3.rc_canary.
-#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HCEIL) (only parsing).
+#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HCEIL) (only parsing).
 
 Definition MTBJ : Z := pg E (fst (META_O w)).
 Definition FR0J : list (Z * Z) := [(MTBJ, MTBJ + 8192)].
@@ -324,6 +360,13 @@ Lemma r6_main : TOPJ + 64 <= BAUXJ.
 Proof. unfold TOPJ, BAUXJ. lia. Qed.
 Lemma r7_main : TOPJ + 64 <= QCrt.ae_stack_top REJ + 4096.
 Proof. pose proof (LA st_main_facts) as (T1 & _). unfold TOPJ. cbn [QCrt.ae_stack_top Qx84.Mq0.REJ]. lia. Qed.
+(* the interface's stack bottom: the window floor, at or above ASan's stack bottom BOTJ and below TOPJ *)
+Lemma r8_main : BOTJ <= QcGV.stk_floor /\ QcGV.stk_floor <= TOPJ.
+Proof.
+pose proof (MV4 QkIR.Mq0.BSTAR_facts) as ((B1 & B2) & _). pose proof (MV4 atop_val) as AV.
+pose proof (QcGV.stk_floor_sp usp ltac:(rewrite Q6q3.alloc_ceiling_val, HCEIL, AV; unfold stack_max_size; lia)) as SF.
+rewrite QRjH.Mq3.stack_window_depth_val in SF. unfold BOTJ, TOPJ. lia.
+Qed.
 End Static.
 End Mq1.
 

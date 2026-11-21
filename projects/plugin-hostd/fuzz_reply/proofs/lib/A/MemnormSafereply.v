@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormSafecgif.v (a working branch 30a1993588f, c5 + memnorm; file sha256 6db4365d0a7a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormSafecgif.v (a working branch, c5 + memnorm; file sha256 6db4365d0a7a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: two cgif_file image facts for the memnorm arm twins (task MEMNORM): where a byte may be
    overwritten without breaking YAkMemnorm.memnorm (MemnormT.mn_safe: not read-only, below TASK_SIZE).
    rule 24: no function proved (kind: image lemmas).

@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the CONFIG_RSEQ flag; the reserved-range ledger. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Bool.
@@ -13,7 +13,7 @@ Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Definition ASAN0 : atable :=
-  {| img_lo := 0x10000; img_hi := 0x69c000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x69c000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x523b0; rw_lo := 0x137000; rw_len := 0x565000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x8c60c; x_imemcpy := 0x8c590; x_memset := 0x130034; x_memcpy := 0x12fc30; x_memiszero := 0x8cb58;
      x_istrncpy := 0x8ca38; x_sealed := 0x11b79; x_popfree := 0x58a60;
@@ -22,7 +22,7 @@ Definition ASAN0 : atable :=
      stops_more := [0x566d4; 0x57cf8; 0x7c188; 0x82cd0; 0x82ce4; 0x82cf8; 0x88688; 0x88758; 0x95ca0; 0x96bac; 0x96d3c; 0xa0a94] |}.
 Definition ASAN0_TEXT_LO : Z := 0x523b0.
 Definition ASAN0_TEXT_N : nat := 233721%nat.
-Definition asan0_init : acs := init_acs_of ASAN0.
+Definition asan0_init (rz : Z) : acs := init_acs_of rz ASAN0.
 
 Definition ASEGS0 := AsanUbsan.M.loaded_segments.
 Definition APH0 : PhdrInfo := AsanUbsan.M.phdrs.

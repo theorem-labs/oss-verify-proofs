@@ -22,8 +22,10 @@
     and then a 16-codepoint UTF-32 string derived from the input (plus
     test_font() from test/api/test-ot-face.c, which calls most hb_ot_* /
     hb_font_* getters and discards the results).  The harness makes no check of
-    its own beyond not crashing, so a statement about it says only that the code
-    it calls never crashes, hangs or trips a sanitizer.
+    its own beyond not crashing.  Its halts statements say only that the code it
+    calls never crashes, hangs or trips a sanitizer.  Its agreement statements
+    say only that the code never crashes or trips a sanitizer, and allow a run
+    that never ends.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

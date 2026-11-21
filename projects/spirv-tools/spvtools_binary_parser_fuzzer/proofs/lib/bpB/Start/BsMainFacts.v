@@ -1,27 +1,38 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up invariant at the run's mmap base, the digest's variable numbers renumbered by the map read from the run, and the reserved ledger with the launch's extra intervals). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
 From OSSVerify.spirv_tools.spvtools_binary_parser_fuzzer.images Require Import AsanUbsan.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import BPropExec BxSymExec3 BxSymExec3Sound BxSymExec3B BothAcct BothPlanCore BothPlan BothPlanSound BothInit BsImages BsPlanImages BsHSTab BsStartupHSF BsStartupCerts BsMainVM BsMainState.
-From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import BsMainSyms.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import BsMainSyms BsStartupRegen.
 Import ListNotations. Import AX2. Import AX2S. Import AX2B. Import APC. Import AP. Import APS.
 Open Scope Z_scope.
 #[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
 
-Definition K_TID : nat := 44.
-Definition K_B04 : nat := 94.   Definition K_B05 : nat := 223.  Definition K_B06 : nat := 224.  Definition K_R06 : nat := 225.
-Definition K_B08 : nat := 242.  Definition K_B09 : nat := 243.  Definition K_B10 : nat := 244.  Definition K_B11 : nat := 261.
-Definition K_B12 : nat := 326.  Definition K_B13 : nat := 327.  Definition K_B16 : nat := 392.
-Definition K_META : nat := 409.
-Definition K_B20 (g : bool) : nat := if g then 409 else 410.
+(* LPS 727298f3: the main entry's hand-off states are computed in the build ([BsStartupHSF]), whose
+   fresh variables are the recorded ones moved by [BsStartupRegen.FSH] ([K_map] below). *)
+Definition K_TID : nat := 49.
+Definition K_B04 : nat := 99.   Definition K_B05 : nat := 228.  Definition K_B06 : nat := 229.  Definition K_R06 : nat := 230.
+Definition K_B08 : nat := 247.  Definition K_B09 : nat := 248.  Definition K_B10 : nat := 249.  Definition K_B11 : nat := 266.
+Definition K_B12 : nat := 333.  Definition K_B13 : nat := 334.  Definition K_B16 : nat := 399.
+Definition K_META : nat := 416.
+Definition K_B20 (g : bool) : nat := if g then 416 else 417.
 
-Definition K_B21 (g : bool) : nat := 443.
-Definition K_B22 (g : bool) : nat := 444.
-Definition K_B23 (g : bool) : nat := 461.
-Definition K_X (g : bool) : nat := 5198.
+Definition K_B21 (g : bool) : nat := 450.
+Definition K_B22 (g : bool) : nat := 451.
+Definition K_B23 (g : bool) : nat := 468.
+Definition K_X (g : bool) : nat := 5205.
+(* each constant is the recorded one under [FSH], the start-up plans' renumbering *)
+Lemma K_map :
+  K_TID = FSH 44 /\ K_B04 = FSH 94 /\ K_B05 = FSH 223 /\ K_B06 = FSH 224 /\ K_R06 = FSH 225
+  /\ K_B08 = FSH 242 /\ K_B09 = FSH 243 /\ K_B10 = FSH 244 /\ K_B11 = FSH 261
+  /\ K_B12 = FSH 326 /\ K_B13 = FSH 327 /\ K_B16 = FSH 392 /\ K_META = FSH 409
+  /\ (forall g, K_B20 g = FSH (if g then 409 else 410)) /\ (forall g, K_B21 g = FSH 443)
+  /\ (forall g, K_B22 g = FSH 444) /\ (forall g, K_B23 g = FSH 461) /\ (forall g, K_X g = FSH 5198).
+Proof. repeat split; try (intros []); vm_compute; reflexivity. Qed.
 
 Definition hole_granted (h : nat) : bool := match h with 0 | 1 | 4 => true | _ => false end%nat.
 
@@ -39,9 +50,18 @@ Definition Xof (g : bool) (E : env) : pm_syms :=
       (if g then 0 else 4096 * vE E K_META).
 
 Section Generic.
-  Variables (sp0 brk0 : word) (rdraw : EntryDraw) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs).
+  Variables (sp0 brk0 : word) (rdraw : EntryDraw) (inp : ProcInput) (fs : Fs.Fs).
+  Let argv : list (list byte) := in_argv inp.
+  Let envp : list (list byte) := in_envp inp.
+  Let uid : word := in_uid inp.
+  Let hw : word := in_hwcap inp.
   Variables (E : env) (ch : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH sp0 rdraw brk0 argv envp uid hw) (argH0 APH sp0 rdraw argv envp uid hw) fs E ch R FULL model.
+  (* LPS #38: [AsanInit]/[BothInit] take the run's whole input and the mmap base.
+     [mbase] is IMPLICIT, so every caller infers it by unification from the [cs_ok]
+     hypothesis it already passes and no call site moves. It is declared right before [HC],
+     so a recorded proof passes it as the argument just before [HC]. *)
+  Context {mbase : word}.
+  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH AENTRY sp0 rdraw brk0 mbase inp) (argH0 sp0 rdraw inp) fs E ch R FULL model.
 
   Lemma cs_reg_lin : forall r : Z, 0 < r < 32 ->
     getr R (Z_to_bv 5 r) = Z_to_bv 64 (lden E (lin_of (nth (Z.to_nat r) (s_regs (a_ss ch)) (ELit 0)))).
@@ -117,7 +137,7 @@ Section Generic.
     pose proof (Z.div_mod (bv_unsigned brk0) 4096 ltac:(lia)). lia.
   Qed.
 
-  #[local] Notation MR := (Mr ASAN_H (argH0 APH sp0 rdraw argv envp uid hw) E ch model FULL).
+  #[local] Notation MR := (Mr ASAN_H (argH0 sp0 rdraw inp) E ch model FULL).
 
   Lemma cs_fact : forall K, existsb (kentry_eqb K) (kn ch) = true -> kentry_ok ASEGS E MR K.
   Proof.
@@ -166,8 +186,13 @@ Section Generic.
   Proof. exact (co_halt _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
   Lemma cs_limit : vm_limit (m_vmmaps model) = target_alloc_limit.
   Proof. exact (co_limit _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
-  Lemma cs_reserved : vm_reserved (m_vmmaps model) = segments_reserved ASEGS.
-  Proof. exact (co_res _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
+  (* LPS 727298f3 (#38): a model built by [State.init_model] reserves [segments_reserved segs] and the
+     launch's vDSO/vvar pair, so the reserved list is the image's segments followed by a bounded rest;
+     this re-exports the start-up invariant's own projection ([co_resx]). *)
+  Lemma cs_reserved : exists rx : list (word * word),
+    vm_reserved (m_vmmaps model) = segments_reserved ASEGS ++ rx
+    /\ Forall (resx_entry_ok ASAN_H) rx /\ (length rx <= n_resx ASAN_H)%nat /\ sum_sizes rx <= resx_bytes ASAN_H.
+  Proof. exact (co_resx _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
   Lemma cs_eager : eager_used model <= a_eager ch.
   Proof. exact (co_eager _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 End Generic.
@@ -392,7 +417,10 @@ Section PMDef.
     pm_fds    : m_fds (cfg_model c) = fds_std;
     pm_fs     : m_fs (cfg_model c) = in_fs inp;
     pm_limit  : vm_limit (m_vmmaps (cfg_model c)) = target_alloc_limit;
-    pm_reserved : vm_reserved (m_vmmaps (cfg_model c)) = segments_reserved ASEGS;
+    (* LPS 727298f3 (#38): the image's segments followed by the launch's bounded rest ([cs_reserved]). *)
+    pm_reserved : exists rx : list (word * word),
+      vm_reserved (m_vmmaps (cfg_model c)) = segments_reserved ASEGS ++ rx
+      /\ Forall (resx_entry_ok ASAN_H) rx /\ (length rx <= n_resx ASAN_H)%nat /\ sum_sizes rx <= resx_bytes ASAN_H;
     pm_topz   : TOP (cfg_model c) = pm_top sp0z;
     pm_brk    : vm_brk (m_vmmaps (cfg_model c)) = Z_to_bv 64 (if ps_granted X then brk0z + 0x2000 else brk0z);
     pm_eager  : eager_used (cfg_model c) <= 16515072;
@@ -411,8 +439,10 @@ Section PMOpen.
   Hypothesis Vav : valid_argv (in_argv inp).
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  (* [mbase] is implicit, as in [Generic]: callers infer it from [HC]; declared right before [HC] *)
+  Context {mbase : word}.
+  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH AENTRY sp0 rdraw brk0 mbase inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
 
   Lemma open_facts :
     let g := hole_granted h in let cls := hole_class h in
@@ -433,19 +463,19 @@ Section PMOpen.
     unfold kn_facts in Dkf.
     apply andb_prop in Dkf as [Dkf K0]. apply andb_prop in Dkf as [Dkf KTID]. apply andb_prop in Dkf as [Dkf K10].
     apply andb_prop in Dkf as [Dkf K6]. apply andb_prop in Dkf as [Dkf KREL]. apply andb_prop in Dkf as [KR06 KB06].
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ KR06) as VR06. rewrite uE_var in VR06.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ KB06) as VB06. rewrite uE_var in VB06.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ K6) as V6. rewrite uE_var in V6.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ K10) as V10. rewrite uE_var in V10.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ KTID) as VTID. rewrite uE_var in VTID.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ K0) as V0. rewrite uE_var in V0.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ KREL) as VREL.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ KR06) as VR06. rewrite uE_var in VR06.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ KB06) as VB06. rewrite uE_var in VB06.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ K6) as V6. rewrite uE_var in V6.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ K10) as V10. rewrite uE_var in V10.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ KTID) as VTID. rewrite uE_var in VTID.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ K0) as V0. rewrite uE_var in V0.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ KREL) as VREL.
     pose proof (rel06_sound E ltac:(lia) VR06 ltac:(lia)) as REL.
-    pose proof (cs_sp0 _ _ _ _ _ _ _ _ _ _ _ _ _ HC Vsp) as SP.
-    pose proof (cs_sp0_mod _ _ _ _ _ _ _ _ _ _ _ _ _ HC Vsp) as SPM.
-    pose proof (cs_brk0 _ _ _ _ _ _ _ _ _ _ _ _ _ HC Vbrk) as BRK.
-    pose proof (cs_v1 _ _ _ _ _ _ _ _ _ _ _ _ _ HC Vav) as V1.
-    pose proof (cs_v2 _ _ _ _ _ _ _ _ _ _ _ _ _ HC Vev) as V2.
+    pose proof (cs_sp0 _ _ _ _ _ _ _ _ _ _ HC Vsp) as SP.
+    pose proof (cs_sp0_mod _ _ _ _ _ _ _ _ _ _ HC Vsp) as SPM.
+    pose proof (cs_brk0 _ _ _ _ _ _ _ _ _ _ HC Vbrk) as BRK.
+    pose proof (cs_v1 _ _ _ _ _ _ _ _ _ _ HC Vav) as V1.
+    pose proof (cs_v2 _ _ _ _ _ _ _ _ _ _ HC Vev) as V2.
     pose proof (stack_top_cls (bv_unsigned sp0) (vE E 0) (vE E 6) (vE E 10) cls ltac:(lia) V6 V10 Hcls) as STK.
     assert (TOPm : TOP model = bv_unsigned sp0 - 8388608).
     { rewrite (co_sp0 _ _ _ _ _ _ _ _ _ _ _ HC).
@@ -481,7 +511,7 @@ Section PMOpen.
     -
       cbn [cfg_ms cfg_of mkst ms_regs].
       assert (RG : forall n : nat, (0 < n < 32)%nat -> getr R (Z_to_bv 5 (Z.of_nat n)) = Z_to_bv 64 (lden E (nth n (DG_regs g) (0, [])))).
-      { intros n Hn. rewrite (cs_reg_lin _ _ _ _ _ _ _ _ _ _ _ _ _ HC (Z.of_nat n) ltac:(lia)). rewrite <- Dregs, Nat2Z.id.
+      { intros n Hn. rewrite (cs_reg_lin _ _ _ _ _ _ _ _ _ _ HC (Z.of_nat n) ltac:(lia)). rewrite <- Dregs, Nat2Z.id.
         change (0, []) with (lin_of (ELit 0)). rewrite map_nth. reflexivity. }
       Ltac reg1 RG SP V1 n := etransitivity; [exact (RG n ltac:(lia))|]; cbn [nth DG_regs]; unfold lSP, lENVP, lv, lvx; apply eqm_Z_to_bv; exists 0;
                               unfold lden, pm_envp; cbn [fst snd tden]; rewrite ?uE_var, <- ?SP, <- ?V1; lia.
@@ -492,16 +522,16 @@ Section PMOpen.
       assert (Hr2 : r = Z.of_nat 20 \/ r = Z.of_nat 21 \/ r = Z.of_nat 22 \/ r = Z.of_nat 23 \/ r = Z.of_nat 24 \/ r = Z.of_nat 25
                     \/ r = Z.of_nat 26 \/ r = Z.of_nat 27) by lia.
       destruct Hr2 as [-> |[-> |[-> |[-> |[-> |[-> |[-> | ->]]]]]]]; (rewrite RG; [destruct g; reflexivity | lia]).
-    - exact (cs_halted _ _ _ _ _ _ _ _ _ _ _ _ _ HC).
-    - exact (cs_fds _ _ _ _ _ _ _ _ _ _ _ _ _ HC Dfd).
-    - exact (cs_fs _ _ _ _ _ _ _ _ _ _ _ _ _ HC).
-    - exact (cs_limit _ _ _ _ _ _ _ _ _ _ _ _ _ HC).
-    - exact (cs_reserved _ _ _ _ _ _ _ _ _ _ _ _ _ HC).
+    - exact (cs_halted _ _ _ _ _ _ _ _ _ _ HC).
+    - exact (cs_fds _ _ _ _ _ _ _ _ _ _ HC Dfd).
+    - exact (cs_fs _ _ _ _ _ _ _ _ _ _ HC).
+    - exact (cs_limit _ _ _ _ _ _ _ _ _ _ HC).
+    - exact (cs_reserved _ _ _ _ _ _ _ _ _ _ HC).
     -   cbn [cfg_model cfg_of]. unfold pm_top. exact TOPm.
-    -   cbn [cfg_model cfg_of]. rewrite (cs_brk _ _ _ _ _ _ _ _ _ _ _ _ _ HC), Dbrk.
+    -   cbn [cfg_model cfg_of]. rewrite (cs_brk _ _ _ _ _ _ _ _ _ _ HC), Dbrk.
       apply eqm_Z_to_bv. exists 0. unfold Xof; cbn [ps_granted]. destruct g; unfold lden, pgo, pg; cbn [fst snd tden]; rewrite ?uE_var; lia.
-    -   cbn [cfg_model cfg_of]. pose proof (cs_eager _ _ _ _ _ _ _ _ _ _ _ _ _ HC) as EG. rewrite Deager in EG. destruct g; lia.
-    -   cbn [cfg_model cfg_of]. rewrite (cs_maps _ _ _ _ _ _ _ _ _ _ _ _ _ HC Dnofog).
+    -   cbn [cfg_model cfg_of]. pose proof (cs_eager _ _ _ _ _ _ _ _ _ _ HC) as EG. rewrite Deager in EG. destruct g; lia.
+    -   cbn [cfg_model cfg_of]. rewrite (cs_maps _ _ _ _ _ _ _ _ _ _ HC Dnofog).
       transitivity (map (fun t : lin * lin * mkind => (Z_to_bv 64 (lden E (fst (fst t))), Z_to_bv 64 (lden E (snd (fst t)))))
                        (map (fun m => (lin_of (am_base m), lin_of (am_len m), am_kind m)) (a_maps ch))).
       { rewrite map_map. apply map_ext. intros m. reflexivity. }
@@ -510,10 +540,10 @@ Section PMOpen.
       destruct g; cbn [map fst snd DG_maps]; unfold lMETA, pg, pgo, lden; cbn [fst snd tden]; rewrite ?uE_var;
         repeat first [reflexivity | apply f_equal2]; f_equal; lia.
     -   cbn [cfg_model cfg_of].
-      rewrite (proj1 (cs_noacc_lazy _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ Dled)).
+      rewrite (proj1 (cs_noacc_lazy _ _ _ _ _ _ _ _ _ _ HC _ _ Dled)).
       apply DG_noacc_den; [exact VR06 | exact REL | intros _; exact BRK].
     -   cbn [cfg_model cfg_of].
-      rewrite (proj2 (cs_noacc_lazy _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ Dled)).
+      rewrite (proj2 (cs_noacc_lazy _ _ _ _ _ _ _ _ _ _ HC _ _ Dled)).
       exact (DG_lazy_den E g (bv_unsigned sp0) VR06 REL).
   Qed.
 End PMOpen.

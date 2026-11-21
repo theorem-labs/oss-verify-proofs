@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (place_witness gives Linux's own address, place_ok_linux, by place_ok_linux_of_gap from its free gap, written as plain text; its reserved ledger stated as the image's entries followed by the vDSO/vvar pair, vdso_pair_ok, the gap budget taking the pair's two entries). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -431,18 +432,39 @@ Lemma gw_sizes_segsA : ltac2:(tb__ "0|2|
 S1S0S4S3S19S1aA1M0A1Z636000A3S0SaS7S5S12Q40A1M1G1A2G0A2U4A3A2").
 Proof. rewrite segments_reserved_A. cbn [gw_sizes length snd]. rewrite !u64_of_lit by lia. split; reflexivity. Qed.
 
-Theorem place_witness : ltac2:(tb__ "0|6|
-S16S6S5S12Q40M0A1M1G1A2M2A1M3S4S4S0G3S18S15R4A1A1S19S1aA1A3S0G3S17S15R5A1A1R4A3S1bS15R6A1A1SfZ0M4R5A2S0S4S10R6Z1000A2G4A3ScR7SeZ2M5Z26A2A2ScS3R9A1R7A2ScR8SeG5Z2dA2A2ScS11S7G2RbA2A1Z40A2S2G1G1S1cS13G0G4A2ReS13G0RcA2R1A4La;A2F_;F_;F_;F_;F_;F_;F_;F_;F_;Ftot;Flen;FL;Fmd;").
+(* LPS 727298f3: the witness is Linux's own address ([place_ok_linux], Fw/SysSpec.v), where a granted
+   NULL-hint mmap now goes.  Decoded from this file's [tbs__] table, the conclusion restated; written as
+   plain text.  The reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]): the budget takes the pair's at most 2 entries of at most 16 pages each. *)
+Theorem place_witness : (forall (md : LinuxProcessSemantics.LinuxProcessSem.State.Model), (forall (L : (Corelib.Init.Datatypes.list (Corelib.Init.Datatypes.prod (stdpp.bitvector.definitions.bv 64) (stdpp.bitvector.definitions.bv 64)))), (forall (len : Corelib.Numbers.BinNums.Z), (forall (tot : Corelib.Numbers.BinNums.Z), ((exists V, LinuxProcessSemantics.LinuxProcessSem.State.vm_reserved (LinuxProcessSemantics.LinuxProcessSem.State.m_vmmaps md) = LinuxProcessSemantics.LinuxProcessSem.Run.segments_reserved OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.ImageFacts.segsA ++ V /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.vdso_pair_ok V) -> ((@Corelib.Init.Logic.eq (Corelib.Init.Datatypes.list (Corelib.Init.Datatypes.prod (stdpp.bitvector.definitions.bv 64) (stdpp.bitvector.definitions.bv 64))) (LinuxProcessSemantics.LinuxProcessSem.State.vm_maps (LinuxProcessSemantics.LinuxProcessSem.State.m_vmmaps md)) L) -> ((OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.init_sp_ok (LinuxProcessSemantics.LinuxProcessSem.State.m_vmmaps md)) -> ((Stdlib.ZArith.BinInt.Z.lt 0 len) -> ((@Corelib.Init.Logic.eq Corelib.Numbers.BinNums.Z (Stdlib.ZArith.BinInt.Z.modulo len 4096) 0) -> ((Stdlib.ZArith.BinInt.Z.le len (Stdlib.ZArith.BinInt.Z.pow 2 38)) -> ((Stdlib.ZArith.BinInt.Z.le (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Placement.gw_sizes L) tot) -> ((Stdlib.ZArith.BinInt.Z.le tot (Stdlib.ZArith.BinInt.Z.pow 2 45)) -> ((Stdlib.ZArith.BinInt.Z.le (Stdlib.ZArith.BinInt.Z.of_nat (@Corelib.Init.Datatypes.length (Corelib.Init.Datatypes.prod (stdpp.bitvector.definitions.bv 64) (stdpp.bitvector.definitions.bv 64)) L)) 64) -> (exists a : stdpp.bitvector.definitions.bv 64, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.place_ok_linux md (stdpp.bitvector.definitions.Z_to_bv 64 len) a)))))))))))))).
 Proof.
   intros md L len tot HR HM HT Hpos Hal Hlen Htot Htot2 Hcnt.
   pose proof gw_sizes_segsA as [GS GL].
-  destruct (free_gap_below_top (m_vmmaps md) len 0x10007fff8000 (0x636000 + tot) HT ltac:(lia) ltac:(reflexivity) ltac:(lia)) as (g & Gal & Gfl & Gc & Gtop & Gfree).
-  { rewrite HR, HM, gw_sizes_app, GS. lia. }
-  { rewrite HR, HM, length_app, GL, Nat2Z.inj_add. change (Z.of_nat 4) with 4. unfold alloc_ceiling_lo. nia. }
-  exists (Z_to_bv 64 g). unfold alloc_ceiling_lo in Gc. unfold page_size in Gal.
-  destruct (mmap_nZ_of_pages len Hpos Hal ltac:(lia)) as [NZ Nn].
-  unfold mmap_place_ok_none. rewrite NZ, Nn, u64_of_lit by lia. unfold page_size.
-  split; [exact Gal|]. split; [lia|]. split; [exact Gtop|]. exact Gfree.
+  destruct HR as (V & EV & HVl & HVe).
+  assert (GV : 0 <= gw_sizes V <= 2 * (16 * 4096)).
+  { destruct V as [|e1 [|e2 [|e3 V']]]; cbn [length] in HVl; [cbn [gw_sizes]; lia | | | lia].
+    - pose proof (HVe e1 (or_introl eq_refl)) as E1. cbn [gw_sizes]. lia.
+    - pose proof (HVe e1 (or_introl eq_refl)) as E1. pose proof (HVe e2 (or_intror (or_introl eq_refl))) as E2.
+      cbn [gw_sizes]. lia. }
+  destruct (free_gap_below_top (m_vmmaps md) len 0x10007fff8000 (0x636000 + 2 * (16 * 4096) + tot) HT ltac:(lia) ltac:(reflexivity) ltac:(lia)) as (g & Gal & Gfl & Gc & Gtop & Gfree).
+  { rewrite EV, HM, !gw_sizes_app, GS. lia. }
+  { rewrite EV, HM, !length_app, GL, !Nat2Z.inj_add. change (Z.of_nat 4) with 4. unfold alloc_ceiling_lo.
+    assert (LV : Z.of_nat (length V) <= 2) by lia.
+    assert (LB : (4 + Z.of_nat (length V) + Z.of_nat (length L)) * (len + 4095) <= 70 * (len + 4095))
+      by (apply Z.mul_le_mono_nonneg_r; lia).
+    lia. }
+  unfold alloc_ceiling_lo in Gc.
+  destruct (mmap_nZ_of_pages len Hpos Hal ltac:(lia)) as [NZ _].
+  (* LPS 727298f3: Linux's own address for the request ([place_ok_linux_of_gap], Fw/SysSpec.v), from
+     the free gap [g] in its bottom-up window: [g] lies above 0x10007fff8000 ([Gfl]), so above
+     task_unmapped_base (0x2aaaaab000). *)
+  apply (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.place_ok_linux_of_gap md (Z_to_bv 64 len) (Z_to_bv 64 g)); rewrite ?NZ.
+  - exact Hpos.
+  - exact Hal.
+  - rewrite u64_of_lit by lia. exact Gal.
+  - rewrite u64_of_lit by lia. unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base. lia.
+  - rewrite u64_of_lit by lia. exact Gtop.
+  - exact Gfree.
 Qed.
 End StartWit.
 

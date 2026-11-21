@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 1540 of its 1601 lines of code are new or changed and 390 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pj_string.v, with its module names changed; 1107 of its 1191 lines of code are new or changed and 1517 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The EMIT LOOP of the inlined expected_body of check_as_written (fs.asan A_check_as_written 0x81590), machine code
    0x817c8 .. 0x81908, C source fuzz_state.c:97-101:
 
@@ -22,9 +23,9 @@
 
    RULE 24 (no function proved): there is no released ASan-image proof of any fuzz_state function, check_as_written
    included - second-agent check (internal path) (checker
-   a Theorem Labs lane 2026-10-28 22:40-22:57Z; ossv proof index v5 built 2026-10-28T21:58:24Z, ossv/recipes@566eb6ffa5df):
+   a Theorem Labs lane 2026-10-28 22:40-22:57Z; ossv proof index v5 built 2026-10-28T21:58:24Z, ossv/recipes):
    all 54 functions CONFIRM.  fs's RELEASED plain proof (proofs/omx-clap-core/fuzz_state/lib/Prog/
-   check_as_written.v at c8557374ad2e) is a TEXT INPUT only: the control-flow template and the pure model
+   check_as_written.v) is a TEXT INPUT only: the control-flow template and the pure model
    (lib/Prog/WriterSpec.v six_bytes), never a proof term of this walk.
 
    METHOD (measured with the engine over the pinned fs.asan, image sha256

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/pupnp/FuzzHttp/lib/A0/ICP/M_stpncpy.v, with its module paths, module names and addresses changed; 616 of its 693 lines of code are new or changed and 435 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Bz Require BvWfKernel.
 (* The walk of musl's strncpy (0x9b4fc) and __stpncpy (0x9b524) of reac-pw/fuzz_segconf's ASan+UBSan image B, whose padding
    runs through the memset trampoline 0x55964 into the memset wrapper 0x56048 (I_imemset.v imemset_spec).  It proves
@@ -10,7 +11,7 @@ From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Bz Require BvWfKernel.
    Adapted into the Bz kit from proofs/pupnp/FuzzHttp/lib/A0/ICP/M_stpncpy.v (origin/ossv/recipes), whose proof
    structure (INV, sp_store, sp_tail, src_byte, byte_step, sp_bytes, sp_bentry, src_word, word_step, sp_words, sp_mid,
    sp_head, sp_body) this file keeps; the list and array helpers below are re-proved from
-   proofs/reac-pw/fuzz_segconf/lib/P0/F_stpncpy.v (commit 04999cdbc8ea).
+   proofs/reac-pw/fuzz_segconf/lib/P0/F_stpncpy.v.
    For the case with no NUL in the first n bytes: adapted proofs/coturn/FuzzStunClient/lib/VBothMuslStrncpy.v:1304
    (origin/ossv/recipes) - its one-src form (every read named by its index in a single src, the stop index given by a
    predicate) is what the two cases of ncpy_src are reduced to here, by src_byte / src_room / src_in_str /

@@ -32,7 +32,7 @@
        pin) moved along registers 9 18 22 23 25, rgv R 20 (t_want_m) from x20 = 0 and t_rowsel = false (Seg/F36.v
        f36_want_m_unsel :368); ctl_rt_C unchanged.
 
-   ROUTE (C) (L3; ACtlCut.v (at head lib/A/ACtlCut.v:243; from a working branch 8ce82d7e310)): ctl_from's runtime premise is
+   ROUTE (C) (L3; ACtlCut.v (at head lib/A/ACtlCut.v:243; from a working branch)): ctl_from's runtime premise is
    A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (was ACtlCut.ctl_rt mem3).  The run reads no shadow byte and the exit keeps ly3,
    S3 and the memory, so it passes the entry's Hrt as it is; VIS0 / OWNED_RO are gone from the Section with
    glue_seg_F36_82820's switch (its exit is A.ProgWorldCtlRtC.ctl_rt_C_of_AR, which needs neither).
@@ -63,10 +63,10 @@
    OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.<X>, L_<X> for ...lib.Lib.<X>), never by a partial path
    (a Theorem Labs lane 05:28Z: 160 lib/Reusable and 15 lib/Lib modules have twins).
 
-   FRAC's trailer conjunct q64 m (fr + 4088) (flag_addr ..) (Batch3, d36efc6152d): the run writes no memory, so FRAC
+   FRAC's trailer conjunct q64 m (fr + 4088) (flag_addr ..) (Batch3): the run writes no memory, so FRAC
    moves through Kit.kit_frac_move unchanged (Kit.v eb6f29acab77; Batch3 needed no change to it).
 
-   BUILD STATE: type-check on 5da74c9c931, closure reaches no stand-in (glue base 121bf608343: AE2k / AF0m /
+   BUILD STATE: type-check, closure reaches no stand-in (glue base: AE2k / AF0m /
    AF0l / ACej / ACeh compiled from their own text, no port_core_refused substitution); reac_box_catalogue_match_c.v
    is the base's own ccd3e1f3c75.  No Axiom, no Parameter, no Admitted, no admit. *)
 

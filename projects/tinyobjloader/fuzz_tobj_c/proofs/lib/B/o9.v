@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger stated as the image's entries followed by the vDSO/vvar pair: the section hypothesis Hres, apart_mE and grow_facts written as plain text over the whole ledger; the shadow band covered without the pair, which lies above it; the break's page alignment taken by mg_shape and the lemmas that read it, as n5's mg_vmmaps needs, whose brk grow records a page range, LPS b07fadb). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -537,8 +538,8 @@ Qed.
 Section Seg8M.
 
 Variables (m : Model) (a1 a2 : word) (B : Z).
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S16S1eS1dS1Q40A1M0G0A2A1SdS3Vm;A1A1S5bS53A1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
 Hypothesis Hmaps : ltac2:(tb__ "0|3|
 S16S1eS1dS1Q40M0A1M1G1A2M2A1S7S3Vm;A1A1S1cG2S1bG1G1Va2;S0G0Z38e000A2A4S1cG2S1bG1G1Va1;S0G0Z10000A2A4S1cG2S1bG1G1S0G0Z2008fff7000A2S0G0Zdfff0001000A2A4S1cG2S1bG1G1S0G0Z8fff7000A2S0G0Z20000000000A2A4S1cG2S1bG1G1S0G0Z7fff7000A2S0G0Z10000000A2A4S1fG2A1A3A3A3A3A3A3").
 Hypothesis Hna : ltac2:(tb__ "0|3|
@@ -666,8 +667,9 @@ Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hmaps Hres Htop Hxto
   destruct Hin as [E|[E|[E|[E|[E|[E|[E|[E|[E|[E|[E|[E|[]]]]]]]]]]]]]; injection E as <- <-; unfold n17, n9, n7 in *; rewrite ?u64_of_lit by lia; lia.
 Qed.
 
-Lemma apart_mE : ltac2:(tb__ "0|1|
-S4fS20S1dS1Q40A1M0G0A2S5bS53A1S3dA3A1").
+(* LPS 727298f3: the whole ledger (the image, the vDSO/vvar pair, then [LmE]) is apart; statement
+   written as plain text. *)
+Lemma apart_mE : ranges_apart (vm_reserved (m_vmmaps m) ++ LmE).
 Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hmaps Hres Htop Hxtop Hapart0.
   clear Hna Hlz Ha1 Ha2 HBlim Hsb Hbrk Hbal OKF OKP.
   pose proof P_facts as (_ & _ & F7 & _). pose proof b4_facts as (_ & _ & _ & _ & F4). pose proof b5_facts as (_ & _ & _ & _ & _ & F5).
@@ -676,12 +678,11 @@ Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hmaps Hres Htop Hxtop Hapart
   pose proof (m8_ledger m P) as (R8 & M8 & _). pose proof (m9_ledger m P b4) as (R9 & M9 & _). pose proof (m10_ledger m P b4 b5) as (R10 & M10 & _).
   pose proof (mE_ledger m P b4 b5 b6) as (R11 & M11 & _). pose proof (m12_ledger m P b4 b5 b6 b7) as (R12 & M12 & _).
   pose proof (m16_fields x) as (R16 & M16 & _). pose proof mE_fields as (_ & MM & _).
-  rewrite R8, M8, Hres in F4. rewrite R9, M9, Hres in F5. rewrite R10, M10, Hres in F6. rewrite R11, M11, Hres in F7b. rewrite R12, M12, M11, Hres in F8.
-  rewrite Hres in F7. rewrite Hres in Hapart0.
+  rewrite R8, M8 in F4. rewrite R9, M9 in F5. rewrite R10, M10 in F6. rewrite R11, M11 in F7b. rewrite R12, M12, M11 in F8.
 
   assert (M16' : vm_maps (m_vmmaps (m16 m P b4 b5 b6 b7 b8 b9 x)) = [(b8, Z_to_bv 64 4096); (b7, Z_to_bv 64 4096); (b6, Z_to_bv 64 65536); (b5, Z_to_bv 64 4096); (b4, n9); (P, n7)] ++ vm_maps (m_vmmaps m)).
   { pose proof maps_mE_eq as E. rewrite MM in E. unfold LmE in E. cbn [List.app] in E. injection E as E'. exact E'. }
-  rewrite R16, M16', Hres in F10.
+  rewrite R16, M16' in F10.
   unfold LmE. cbn [List.app].
   apply ranges_apart_insert; [|intros e He; exact (apart_of_region_free _ _ _ e F10 He)].
   apply ranges_apart_insert; [|intros e He; exact (apart_of_region_free _ _ _ e F8 He)].
@@ -750,8 +751,14 @@ Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hlz Hna Hmaps Hres H
   - exact ML.
   - exact MB.
   - exact init_sp_ok_mE.
-  - rewrite <- Hres, <- MR, <- maps_mE_eq. exact band_mE.
-  - exact apart_mE.
+  - (* LPS 727298f3: a pair entry starts at or above [VDSO_FLOOR] = [SHADOW_BAND_HI], so it covers no
+       byte of the band. *)
+    pose proof Hres as (V & EV & _ & HV).
+    apply (band_covered_transfer _ _ _ _ band_mE). intros b s z Hin Hz Hbs.
+    rewrite MR, EV, maps_mE_eq in Hin. apply in_app_iff in Hin as [Hin|Hin]; apply in_app_iff; [|right; exact Hin].
+    apply in_app_iff in Hin as [Hin|Hin]; [left; exact Hin|].
+    exfalso. destruct (HV _ Hin) as (F & _). cbn [fst] in F. unfold VDSO_FLOOR, SHADOW_BAND_LO, SHADOW_BAND_HI in *. lia.
+  - rewrite MR. exact apart_mE.
   - exact LmE_pos.
   - exact LmE_wf.
   - exact low_lazy_mE.
@@ -786,19 +793,25 @@ Qed.
 
 Lemma mg_shape : ltac2:(tb__ "0|5|
 S17S16S8S3S34S29Vm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;AaM0A1M1A1S12SdS3G0A1M2A1S1cS1dS1Q40A1M3G3A2M4S1bG3G3S31G0A1S33A4S7G2A1A3S9G2A1S11G2A1S3cG0A1S5G2A1S13G2A1S6G2A1A8A3S16S1eG4A1S4G1A1S4G0A1A3A2").
-Proof using Hbrk Hx H16 Hxtop. clear - Hbrk Hx H16 Hxtop. pose proof brk_mE as (H1 & H2 & _). split; [exact (mg_vmmaps mE H1 H2) | unfold mg; apply m_vm_lazy_with_vmmaps]. Qed.
+Proof using Hbrk Hbal Hx H16 Hxtop.
+  clear - Hbrk Hbal Hx H16 Hxtop. pose proof brk_mE as (H1 & H2 & _ & B4).
+  (* LPS 727298f3 (the model's b07fadb): a brk grow records the pages it installs, so n5's [mg_vmmaps]
+     takes the break's page alignment ([Hbal]). *)
+  assert (AL : bv_unsigned (brk0w mE) mod 4096 = 0) by (destruct Hbal as [kb Hkb]; rewrite B4, Hkb; apply Z_mod_mult).
+  split; [exact (mg_vmmaps mE AL H1 H2) | unfold mg; apply m_vm_lazy_with_vmmaps].
+Qed.
 
 Lemma mg_ok_shape : ltac2:(tb__ "0|4|
 S17S16S8S3S38S29Vm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;AaM0A1M1A1S45S3S34G0A1A1S31G0A1S30A3A3S16S1eS1dS1Q40A1M2G2A2A1S4G1A1ScS4G0A1S32G0A1M3S25G3Z1000A2A3A3A2").
 Proof using Hbrk Hx H16 Hxtop.
   clear - Hbrk Hx H16 Hxtop. unfold mg_ok. rewrite m_vmmaps_vm_forget_range, m_vmmaps_with_vmmaps, m_vm_lazy_vm_forget_range, m_vm_lazy_with_vmmaps.
-  split; [reflexivity|]. rewrite (proj2 mg_shape). reflexivity.
+  split; [reflexivity|]. assert (LZm : m_vm_lazy (mg mE) = m_vm_lazy mE) by (unfold mg; apply m_vm_lazy_with_vmmaps). rewrite LZm. reflexivity.
 Qed.
 Lemma mg_dead_shape : ltac2:(tb__ "0|4|
 S17S16S8S3S37S29Vm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;AaM0A1M1A1S44S3S34G0A1A1S31G0A1S30A3A3S16S1eS1dS1Q40A1M2G2A2A1S4G1A1ScS4G0A1S32G0A1M3S25G3Z1000A2A3A3A2").
 Proof using Hbrk Hx H16 Hxtop.
   clear - Hbrk Hx H16 Hxtop. unfold mg_dead. rewrite m_vmmaps_vm_forget_range, m_vmmaps_with_vmmaps, m_vm_lazy_vm_forget_range, m_vm_lazy_with_vmmaps.
-  split; [reflexivity|]. rewrite (proj2 mg_shape). reflexivity.
+  split; [reflexivity|]. assert (LZm : m_vm_lazy (mg mE) = m_vm_lazy mE) by (unfold mg; apply m_vm_lazy_with_vmmaps). rewrite LZm. reflexivity.
 Qed.
 Lemma mf_res_shape : ltac2:(tb__ "0|3|
 S1Q40A1M0S17S16S8S3S36S29Vm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;AaM1R1A2M2A1S43S3G1A1S2fR1A3A3S16S1eS1dG0G0A2A1S4G2A1S4G1A1A3A2Fa;").
@@ -813,17 +826,25 @@ Lemma mgrant_shape : ltac2:(tb__ "0|2|
 SeS1Q40A1M0S17S16S8S3S3aR2R1A2M1A1S46S3R2A1S30R1A3A3S16S1eS1dG0G0A2A1S4G1A1S4R2A1A3A2Fg;Fmx;").
 Proof. clear. intros. unfold mgrant. rewrite m_vmmaps_with_vmmaps, m_vm_lazy_with_vmmaps. split; reflexivity. Qed.
 
-Lemma grow_facts : ltac2:(tb__ "0|4|
-S47S48S29Vm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;AaM0R1A2S47OLo1;R2S17S16S21S15S20S1dS1Q40A1M1G1A2S5bS53A1S3dA3S31G0A1S3bA3S22A3S17S24S25S32G0A1Z2000A2M2S50A2S24G2S2cVx;A1A2A2A2M3G3G3G1S19La;X47x4F_;Fo1;").
+(* LPS 727298f3: the grown region is free of the whole ledger, the vDSO/vvar pair included; statement
+   written as plain text. *)
+Lemma grow_facts : forall o1 : out1, out1_ok mE o1 ->
+  match o1 with
+  | O1_kept | O1_ok | O1_dead =>
+      State.region_free (vm_reserved (m_vmmaps mE) ++ LmE) (brk0w mE) n3w = true
+      /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n5.MuslMalloc40Nodes.brk0 mE + 8192 <= SHADOW_BAND_LO
+      /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n5.MuslMalloc40Nodes.brk0 mE + 8192 <= TOPz
+  | O1_fail _ => True
+  end.
 Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hbrk Hmaps Hres Htop Hx H16 Hxtop.
   clear Hna Hlz Ha1 Ha2 HBlim Hsb Hbal OKF OKP Hapart0.
   intros o1 Ho. pose proof mE_fields as (MR & _). pose proof brk_mE as (B1 & B2 & B3 & _).
   assert (GEN : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n5.MuslMalloc40Nodes.brk0 mE + 8192 <= alloc_top (m_vmmaps mE) /\ State.region_free (vm_reserved (m_vmmaps mE) ++ vm_maps (m_vmmaps mE)) (brk0w mE) n3w = true ->
-                State.region_free (segments_reserved segsA ++ LmE) (brk0w mE) n3w = true
+                State.region_free (vm_reserved (m_vmmaps mE) ++ LmE) (brk0w mE) n3w = true
                 /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n5.MuslMalloc40Nodes.brk0 mE + 8192 <= SHADOW_BAND_LO /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n5.MuslMalloc40Nodes.brk0 mE + 8192 <= TOPz).
   { intros [A1 A2]. rewrite top_mE in A1.
     pose proof (grant_avoids_band _ SHADOW_BAND_LO SHADOW_BAND_HI (brk0w mE) n3w band_mE ltac:(unfold SHADOW_BAND_LO, SHADOW_BAND_HI; lia) A2 ltac:(rewrite n3w_val; lia)) as A4.
-    rewrite n3w_val, B3 in A4. rewrite MR, Hres, maps_mE_eq in A2. unfold SHADOW_BAND_LO, SHADOW_BAND_HI in *.
+    rewrite n3w_val, B3 in A4. rewrite maps_mE_eq in A2. unfold SHADOW_BAND_LO, SHADOW_BAND_HI in *.
     split; [exact A2|]. split; lia. }
   destruct o1; cbn [out1_ok] in Ho; [apply GEN; exact Ho | apply GEN; exact Ho | apply GEN; exact Ho | exact I].
 Qed.
@@ -837,10 +858,10 @@ Local Notation ispv := (vm_init_sp (m_vmmaps m)).
 
 Lemma minv8_mg : ltac2:(tb__ "0|4|
 S47S48S29Vm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;AaM0R1A2S47OLo1;R2S4eS1cS1dS1Q40A1M1G1A2S1bG1G1S31G0A1S33A4S3dA3S5S3Vm;A1M2A1S6G2A1S2aVx;A1S34G0A1A5M3G3G3G1S19La;X47x4F_;Fo1;").
-Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
-  clear HBlim Hsb Hbal OKF OKP.
+Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hbal Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
+  clear HBlim Hsb OKF OKP.
   intros o1 Ho. pose proof (grow_facts o1 Ho) as GF. pose proof mg_shape as [SH LZ]. pose proof pgw_n as (_ & _ & _ & _ & N2 & _). pose proof brk_mE as (B1 & B2 & B3 & _).
-  assert (GEN : State.region_free (segments_reserved segsA ++ LmE) (brk0w mE) n3w = true /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n5.MuslMalloc40Nodes.brk0 mE + 8192 <= SHADOW_BAND_LO /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n5.MuslMalloc40Nodes.brk0 mE + 8192 <= TOPz ->
+  assert (GEN : State.region_free (vm_reserved (m_vmmaps mE) ++ LmE) (brk0w mE) n3w = true /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n5.MuslMalloc40Nodes.brk0 mE + 8192 <= SHADOW_BAND_LO /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n5.MuslMalloc40Nodes.brk0 mE + 8192 <= TOPz ->
                 minv8 ((brk0w mE, n2w) :: LmE) limv ispv Q18 (mg mE)).
   { intros (G1 & G2 & G3).
     apply (minv8_cons_low LmE limv ispv Q18 mE (mg mE) (brk0w mE) n2w n3w minv8_mE G1).
@@ -850,8 +871,8 @@ Qed.
 
 Lemma minv8_mg_ok : ltac2:(tb__ "0|3|
 S48S29Vm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;AaM0S4bA2S4eS1cS1dS1Q40A1M1G1A2S1bG1G1S31G0A1S33A4S3dA3S5S3Vm;A1M2A1S6G2A1S2aVx;A1S38G0A1A5F_;").
-Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
-  clear HBlim Hsb Hbal OKF OKP.
+Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hbal Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
+  clear HBlim Hsb OKF OKP.
   intros Ho. pose proof (grow_facts O1_ok Ho) as GF. cbv beta iota in GF. destruct GF as (G1 & G2 & G3).
   pose proof (minv8_mg O1_ok Ho) as MI. cbv beta iota in MI.
   pose proof mg_ok_shape as [SH LZ]. pose proof mg_shape as [SHg LZg]. pose proof pgw_n as (_ & PG & _ & _ & N2 & _). pose proof brk_mE as (B1 & B2 & B3 & _).
@@ -864,8 +885,8 @@ Qed.
 
 Lemma minv8_mg_dead : ltac2:(tb__ "0|5|
 S48S29Vm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;AaM0S4aA2S4eS1cS1dS1Q40M1A1M2G2A2S1bG2G2S0G1S25S32G0A1Z1000M3A2A2S0G1G3A2A4S3dA3S5S3Vm;A1M4A1S6G4A1S2aVx;A1S37G0A1A5F_;").
-Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
-  clear HBlim Hsb Hbal OKF OKP.
+Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hbal Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
+  clear HBlim Hsb OKF OKP.
   intros Ho. pose proof (grow_facts O1_dead Ho) as GF. cbv beta iota in GF. destruct GF as (G1 & G2 & G3).
   pose proof (minv8_mg O1_dead Ho) as MI. cbv beta iota in MI.
   pose proof mg_dead_shape as [SH LZ]. pose proof mg_shape as [SHg LZg]. pose proof pgw_n as (_ & PG & _ & _ & N2 & _). pose proof brk_mE as (B1 & B2 & B3 & _).
@@ -900,8 +921,8 @@ Qed.
 
 Lemma minv8_out1 : ltac2:(tb__ "0|3|
 S47S48S29Vm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;AaM0R1A2S4eS20S1dS1Q40A1M1G1A2S3eR2A1S3dA3S5S3Vm;A1M2A1S6G2A1S2aVx;A1S4cG0R2A2A5F_;Fo1;").
-Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
-  clear HBlim Hsb Hbal OKF OKP.
+Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hbal Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
+  clear HBlim Hsb OKF OKP.
   intros o1 Ho. destruct o1 as [| | |a]; cbn [out1_model X1_18 List.app].
   - pose proof (minv8_mg O1_kept Ho) as MI. exact MI.
   - exact (minv8_mg_ok Ho).
@@ -911,8 +932,8 @@ Qed.
 
 Theorem minv8_out18 : ltac2:(tb__ "0|1|
 S2bS2dVm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;R1AbS4eS3fR2A1S5S3Vm;A1M0A1S6G0A1S2aVx;A1S2eVm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;R2AbA5F_;Fo;").
-Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
-  clear HBlim Hsb Hbal OKF OKP.
+Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hbal Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
+  clear HBlim Hsb OKF OKP.
   intros o Ho. unfold L18. destruct o as [[|a]|o1|o1 g]; cbn [Start7.out18_model Start7.out18_ok out0_model X18 List.app] in Ho |- *.
   - exact minv8_mE.
   - exact (minv8_mf_res a Ho).
@@ -928,8 +949,8 @@ Qed.
 
 Lemma X18_facts : ltac2:(tb__ "0|6|
 S2bS1Q40M0A1M1G1S2dVm;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;R3AbS5cS1dG1G1A2S1bG1G1R3R2A4S40R4A1A3S17S18S16S4dS2G0R3A2M2Z2000A3S16S4dG2Z1000M3A3A2S17S24G3S2G0R4A2M4A2S17S24S25G4G2A2M5S2cVx;A1A2S17S18S24G5Z10000A2S24Z643000G4A2A2S18S24G5S50A2S24S51G4A2A2A2A2A2A2F_;F_;Fs;Fb;Fo;").
-Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
-  clear HBlim Hsb Hbal OKF OKP.
+Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hbrk Hbal Hlz Hna Hmaps Hres Htop Hx H16 Hxtop Hapart0.
+  clear HBlim Hsb OKF OKP.
   intros o b s Ho Hin. pose proof (out18_Wok o Ho) as W. pose proof pgw_n as (_ & PG & _ & N8 & N2 & _). pose proof brk_mE as (B1 & B2 & B3 & _).
   assert (W1 : forall o1, out1_ok mE o1 -> In (b, s) (X1_18 o1) ->
             (bv_unsigned s = 8192 \/ bv_unsigned s = 4096) /\ 0x1000 <= bv_unsigned b /\ bv_unsigned b + bv_unsigned s <= TOPz

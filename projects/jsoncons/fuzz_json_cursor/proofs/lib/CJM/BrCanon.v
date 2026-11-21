@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed interp_eff_accesses_canon, step_canon. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -101,7 +102,7 @@ Lemma interp_eff_accesses_canon : forall t, eff_canon t -> forall m,
   end.
 Proof.
   intros t H. induction H; intros m; cbn [interp_eff_accesses]; auto.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (H0 (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k _) m) as [[[c1 m1] acc1]| |]; cbn in *; exact H0.
   - destruct (store_ok segs m a (width_bytes n)); [| exact I].
@@ -134,7 +135,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)).
   { pose proof (decode_exec_accesses_canon ms b HR) as K.
     destruct (decode_exec_accesses segs ms b) as [a| |]; cbn in Hs; try discriminate. injection Hs as <-. exact K. }
-  unfold fetch_failure in Hs. destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
+  unfold fetch_failure in Hs. cbv zeta in Hs. repeat match type of Hs with context [if ?b then _ else _] => destruct b end; discriminate.
 Qed.
 
 Lemma msteps_canon : forall ms ms', CatSim.msteps segs ms ms' -> rcanon (ms_regs ms) -> rcanon (ms_regs ms').

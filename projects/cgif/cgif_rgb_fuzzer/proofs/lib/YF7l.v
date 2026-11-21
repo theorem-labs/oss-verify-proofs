@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (grant_ok_na_pin takes its new hint argument, 0; the Model record is destructed with the VmState's kernel and vDSO fields; sec_grant_exists_AR, grant_parts and grant_na_pin_not_errno take the size and page-alignment premises). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -495,7 +496,7 @@ vm_reserved (m_vmmaps (grant_md true (Z_to_bv 64 34) a n md)) = vm_reserved (m_v
 vm_limit (m_vmmaps (grant_md true (Z_to_bv 64 34) a n md)) = vm_limit (m_vmmaps md) /\
 vm_mmap_base (m_vmmaps (grant_md true (Z_to_bv 64 34) a n md)) = vm_mmap_base (m_vmmaps md) /\
 grant_md true (Z_to_bv 64 34) a n md = mmap_model a n md.
-Proof. clear. intros a n md. unfold grant_md, with_mmap_backing, mmap_model. rewrite nores34. destruct md as [fd [maps lazy mat] io fs pr lim tm sg sc]. cbn. destruct maps; cbn. repeat split; img_refl. Qed.
+Proof. clear. intros a n md. unfold grant_md, with_mmap_backing, mmap_model. rewrite nores34. destruct md as [fd [maps lazy mat kb_md vd_md] io fs pr lim tm]. cbn. destruct maps; cbn. repeat split; img_refl. Qed.
 Lemma Hcut_out : forall (Hh : word -> bool) lo hi (a : word), ~ (lo <= bv_unsigned a < hi) -> Hcut Hh lo hi a = Hh a.
 Proof.
 clear. intros Hh lo hi a Ha. unfold Hcut. destruct (Z.leb_spec lo (bv_unsigned a)); destruct (Z.ltb_spec (bv_unsigned a) hi); cbn [andb negb]; try (exfalso; zlia);
@@ -544,7 +545,7 @@ ALedger tfxsegs ly S (cfg_model c1) -> amwf (cfg_model c1) -> same_io md0 (cfg_m
 amrealE tfxsegs (K 0) W c' Q) ->
 (forall (a : word) (W3 : world tfxsegs) (ms : machine_state) (E' : env),
 let A := bv_unsigned a in let md2 := mmap_model a (w64 MSv) (cfg_model c1) in
-grant_ok_na_pin (cfg_model c1) a MSv = true ->
+grant_ok_na_pin (Z_to_bv 64 0) (cfg_model c1) a MSv = true ->
 ALedger tfxsegs ly S (cfg_model c1) -> amwf (cfg_model c1) ->
 wle W W3 -> hsub (w_H W3) (w_H W) -> (forall x : word, w_H W x = false -> w_H W3 x = false) ->
 w_A W3 = (SHLO A, SHHI A) :: (A, A + MSv) :: w_A W ->
@@ -590,15 +591,15 @@ assert (R13 : getr regs 13 = Z_to_bv 64 34) by (img_try (rewrite (Hregs 13%bv), 
 assert (R14 : getr regs 14 = Z_to_bv 64 (-1)) by (img_try (rewrite (Hregs 14%bv), H14; cbn [sv_denot]; img_apply lit_m1)).
 assert (R15 : getr regs 15 = Z_to_bv 64 0) by (img_try (rewrite (Hregs 15%bv), H15; img_refl)).
 assert (MSB : 0 < MSv <= MALLOC_MAX + 4 * 4096) by (img_try (clear - Z8 Z1 Z2 Z3; unfold MALLOC_MAX in *; zlia)).
-destruct (sec_grant_exists_AR B ly S _ mdN MSv HARm LN MWN ltac:(img_try (clear - MSB; unfold YF06.NOB, MALLOC_MAX in *; zlia))) as [a0 Ha0].
+destruct (sec_grant_exists_AR B ly S _ mdN MSv HARm LN MWN ltac:(img_try (clear - MSB; unfold YF06.NOB, MALLOC_MAX in *; zlia)) ltac:(img_try (rewrite <- pru_MS; apply LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.page_round_up_Z_aligned))) as [a0 Ha0].
 assert (SL0 : eager_used mdN + A_bytes (w_A W) + 2 ^ 36 <= vm_limit (m_vmmaps mdN)).
 { img_apply (slackS mdN W 0 HAR Hev L0); [img_try (unfold mdN; rewrite m_vmmaps_wvb; img_refl) | img_try (unfold mdN; rewrite eager_used_wvb; clear; zlia) | img_try (clear; zlia) | img_try (clear; zlia)]. }
-assert (PER : forall a : word, grant_ok_na_pin mdN a MSv = true ->
+assert (PER : forall a : word, grant_ok_na_pin (Z_to_bv 64 0) mdN a MSv = true ->
 (AI tfxsegs (w_H W) (w_A W) (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) /\ MWF (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN)) /\
 mmap_noreserve_backed_ok (Z_to_bv 64 34) mdN MSv = true /\
 eager_used (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) <= eager_used mdN + MSv /\
 maps_nonempty (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN)).
-{ intros a Ha. pose proof (YF48.grant_parts mdN a MSv Ha) as (Pal & Ppos & Pce & Prf & Ppl).
+{ intros a Ha. pose proof (YF48.grant_parts mdN a MSv MSB Z9 Ha) as (Pal & Ppos & Pce & Prf & Ppl).
 assert (CE : bv_unsigned a + page_round_up_Z MSv <= alloc_top (m_vmmaps mdN)) by (img_try (rewrite pru_MS; img_exact Pce)).
 assert (PL' : region_free (vm_reserved (m_vmmaps mdN) ++ vm_maps (m_vmmaps mdN)) a (Z_to_bv 64 (page_round_up_Z MSv)) = true) by (img_try (rewrite pru_MS; img_exact Prf)).
 assert (SL1 : eager_used mdN + A_bytes (w_A W) + page_round_up_Z MSv <= vm_limit (m_vmmaps mdN)) by (img_try (rewrite pru_MS; clear - SL0 MSB; unfold MALLOC_MAX in MSB; zlia)).
@@ -632,7 +633,7 @@ img_apply (fo_dead_node tfxsegs (pend_at regs (Z_to_bv 64 (0x64c88 + D_2c4)) mem
 (injected_family_off_mmap tfxsegs _ _ H222)).
 - rewrite NX0. img_refl.
 - rewrite NX0. cbn [cfg_ms ms_regs mkst]. rewrite A0, (refusal_b_mmap tfxsegs _ _ mdN _ H222).
-img_exact (grant_na_pin_not_errno mdN (ga i0) MSv ltac:(img_try (clear - MSB; zlia)) Hg0).
+img_exact (grant_na_pin_not_errno (Z_to_bv 64 0) mdN (ga i0) MSv ltac:(img_try (clear - MSB; zlia)) ltac:(img_try (rewrite <- pru_MS; apply LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.page_round_up_Z_aligned)) Hg0).
 - rewrite NX. img_refl.
 - rewrite NX. cbn [cfg_ms ms_regs mkst]. rewrite A0. img_exact (mmap_enomem_refusal tfxsegs _ _ mdN H222). }
 intros i _. destruct (OUT i) as (md_i & Hh_i & IO_i & [[Bv [NX MD]] | (Bv & Hg & NX & MD)]); rewrite Bv, NX; cbn [Z.eqb Pos.eqb]; rewrite MD in IO_i |- *.
@@ -650,7 +651,7 @@ set (a := ga i) in *. set (A := bv_unsigned a) in *.
 destruct (PER a Hg) as ([AIg MWFg] & _ & EG & NZg).
 pose proof (grant_anon_shape a (w64 MSv) mdN) as (SH1 & SH2 & SH3 & SH4 & SH5).
 set (md2 := grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) in *.
-pose proof (YF48.grant_parts mdN a MSv Hg) as (Pal & Ppos & Pce & Prf & Ppl).
+pose proof (YF48.grant_parts mdN a MSv MSB Z9 Hg) as (Pal & Ppos & Pce & Prf & Ppl).
 fold A in Pal, Ppos, Pce.
 pose proof (SH_hull A) as (U1' & U2 & U3 & U4 & U5 & U6).
 assert (AL1 : A <= A + MSv) by (img_try (clear - MSB; zlia)).

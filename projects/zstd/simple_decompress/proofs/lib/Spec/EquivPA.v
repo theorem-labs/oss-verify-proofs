@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact at the launch; OWN_vm takes an unchanged kernel build (m_kernel), which startup_pair and startup_startup pass on from startup_STOT, and OWN_fds gives it to KL_fds; GI_init gets the entry's mmap-base fact and resv_plain; the start model is with_vdso of init_model (GI_with_vdso)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -110,7 +111,7 @@ Proof. intros [(L & _ & HK & _) _]. split; [exact (kl_minv _ _ _ HK)| exact (kl_
 Lemma OWN_fds X s mo f : OWN X GT s mo -> minv (with_fds f mo) -> m_halted (with_fds f mo) = None -> OWN X GT s (with_fds f mo).
 Proof.
   intros [(L & Hc & HK & Hi) [Hnd _]] Hmi Hh. split; [|split; [exact Hnd| exact I]].
-  exists L. split; [exact Hc|]. split; [| exact Hi]. eapply KL_fds; [exact HK| apply m_vmmaps_with_fds| exact Hmi| exact Hh].
+  exists L. split; [exact Hc|]. split; [| exact Hi]. eapply KL_fds; [exact HK| apply m_vmmaps_with_fds| reflexivity| exact Hmi| exact Hh].
 Qed.
 
 Lemma RX_perm : forall X Y s1 mo1 s2 mo2, Permutation X Y -> RX X s1 mo1 s2 mo2 -> RX Y s1 mo1 s2 mo2.
@@ -271,10 +272,10 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma OWN_vm X s mo mo' : OWN X GT s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> OWN X GT s mo'.
+Lemma OWN_vm X s mo mo' : OWN X GT s mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> OWN X GT s mo'.
 Proof.
-  intros [(L & Hc & HK & Hi) [Hnd _]] Hvm Hmi Hh. split; [|split; [exact Hnd| exact I]].
-  exists L. split; [exact Hc|]. split; [| exact Hi]. eapply KL_fds; [exact HK| exact Hvm| exact Hmi| exact Hh].
+  intros [(L & Hc & HK & Hi) [Hnd _]] Hvm Hkb Hmi Hh. split; [|split; [exact Hnd| exact I]].
+  exists L. split; [exact Hc|]. split; [| exact Hi]. eapply KL_fds; [exact HK| exact Hvm| exact Hkb| exact Hmi| exact Hh].
 Qed.
 
 Section Pre.
@@ -301,10 +302,10 @@ Lemma RX_init : forall en inp sA0 moA0,
   RX [] (ps_init (reservedZ psegs) (entry_atop en)) (mo0 psegs source_alloc_limit en inp) sA0 moA0.
 Proof.
   intros [sp brk0 mbase rnd] inp sA0 moA0 Hve Hvi HA Hso Hfd Hfs.
-  rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hvi) in Hve. destruct Hve as ((Hsp1 & Hsp2 & _) & Hbrk & _ & _).
+  rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hvi) in Hve. destruct Hve as ((Hsp1 & Hsp2 & _) & Hbrk & Hmb & _).
   split; [| split; [exact HA| split; [cbn; symmetry; exact Hso| split; [rewrite m_fds_mo0; symmetry; exact Hfd| rewrite m_fs_mo0; symmetry; exact Hfs]]]].
   unfold mo0, entry_atop. cbn [en_brk en_mmap_base en_sp].
-  eapply OWN_weakG; [apply (GI_init psegs brk0 mbase sp source_alloc_limit inp _ Hbrk ltac:(rewrite reserved_top_plain; lia) ltac:(split; [exact Hsp1| exact Hsp2]) eq_refl ceil_plain)|]. intros _; exact I.
+  eapply OWN_weakG; [apply GI_with_vdso; apply (GI_init psegs brk0 mbase sp source_alloc_limit inp _ Hbrk ltac:(rewrite reserved_top_plain; lia) ltac:(split; [exact Hsp1| exact Hsp2]) eq_refl ceil_plain (valid_input_either_reader _ Hvi) Hmb resv_plain)|]. intros _; exact I.
 Qed.
 
 Lemma argv_Z_pieces' : forall argv, valid_argv argv -> Forall (fun a => zlength a <= PIECE_MAX) (argv_Z argv).
@@ -317,7 +318,8 @@ Lemma tglob_prog : forall en inp,
   tglob nstep PhiP (prog psegs rsP inp en) (mo0 psegs source_alloc_limit en inp).
 Proof.
   intros en inp He Hi. apply tglob_PhiP_intro.
-  - unfold mo0. apply minv_init. destruct en as [sp ? ? ?]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He.
+  - unfold mo0. apply minv_init; [| exact (valid_input_either_reader _ Hi)].
+    destruct en as [sp ? ? ?]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He.
     destruct He as ((Hsp1 & Hsp2 & _) & _). cbn [en_sp]. split; [exact Hsp1| exact Hsp2].
   - destruct en; reflexivity.
   - exact (proj2 (prog_model_ok_plain rsP en inp He Hi)).
@@ -379,8 +381,8 @@ Proof.
   intros X. apply rsim_silent. intros s1 mo1 s2 mo2 (HO & HA & Hso & Hfd & Hfs) G1 G2.
   destruct (OWN_minv _ _ _ HO) as [Hmi Hh].
   eexists _, _. split; [apply (startup_STOT s1 mo1 Hmi Hh)| split; [apply STOT_ret|]].
-  intros [] s1' mo1' [] s2' mo2' (-> & Hvm & Hfd1 & Hfs1 & Hmi' & Hh') (_ & -> & ->).
-  split; [exact (OWN_vm _ _ _ _ HO Hvm Hmi' Hh')|]. split; [exact HA|]. split; [exact Hso|]. split; congruence.
+  intros [] s1' mo1' [] s2' mo2' (-> & Hvm & Hfd1 & Hfs1 & Hmi' & Hh' & Hkb) (_ & -> & ->).
+  split; [exact (OWN_vm _ _ _ _ HO Hvm Hkb Hmi' Hh')|]. split; [exact HA|]. split; [exact Hso|]. split; congruence.
 Qed.
 
 Theorem equiv_core : forall en inp sA0 moA0,
@@ -498,8 +500,8 @@ Proof.
   intros X. apply rsim_silent. intros s1 mo1 s2 mo2 (HO & HA & Hso & Hfd & Hfs) G1 G2.
   destruct (OWN_minv _ _ _ HO) as [Hmi1 Hh1]. destruct (OWN_minv _ _ _ HA) as [Hmi2 Hh2].
   eexists _, _. split; [apply (startup_STOT s1 mo1 Hmi1 Hh1)| split; [apply (startup_STOT s2 mo2 Hmi2 Hh2)|]].
-  intros [] s1' mo1' [] s2' mo2' (-> & Hvm1 & Hfd1 & Hfs1 & Hmi1' & Hh1') (-> & Hvm2 & Hfd2 & Hfs2 & Hmi2' & Hh2').
-  split; [exact (OWN_vm _ _ _ _ HO Hvm1 Hmi1' Hh1')|]. split; [exact (OWN_vm _ _ _ _ HA Hvm2 Hmi2' Hh2')|]. split; [exact Hso|]. split; congruence.
+  intros [] s1' mo1' [] s2' mo2' (-> & Hvm1 & Hfd1 & Hfs1 & Hmi1' & Hh1' & Hkb1) (-> & Hvm2 & Hfd2 & Hfs2 & Hmi2' & Hh2' & Hkb2).
+  split; [exact (OWN_vm _ _ _ _ HO Hvm1 Hkb1 Hmi1' Hh1')|]. split; [exact (OWN_vm _ _ _ _ HA Hvm2 Hkb2 Hmi2' Hh2')|]. split; [exact Hso|]. split; congruence.
 Qed.
 
 (* [comment removed for export] *)
@@ -511,8 +513,8 @@ Proof.
   intros rs rs' en en' inp He He' Hi. apply trees_equiv_of_ttrace.
   change (prog psegs rs' inp en') with (treeA PasA rs' startup (ps_init (reservedZ psegs) (entry_atop en')) (argv_Z (in_argv inp))).
   apply (equiv_core_pre PasA nstep PhiP minv rs rs' KP startup startup_startup en inp _ _ He Hi).
-  - destruct en' as [sp brk0 mbase rnd]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He'. destruct He' as ((Hsp1 & Hsp2 & _) & Hbrk & _ & _). unfold mo0, entry_atop. cbn [en_brk en_mmap_base en_sp AI KP]. unfold AIP. cbn [map].
-    eapply OWN_weakG; [apply (GI_init psegs brk0 mbase sp source_alloc_limit inp _ Hbrk ltac:(rewrite reserved_top_plain; lia) ltac:(split; [exact Hsp1| exact Hsp2]) eq_refl ceil_plain)|]. intros _; exact I.
+  - destruct en' as [sp brk0 mbase rnd]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He'. destruct He' as ((Hsp1 & Hsp2 & _) & Hbrk & Hmb & _). unfold mo0, entry_atop. cbn [en_brk en_mmap_base en_sp AI KP]. unfold AIP. cbn [map].
+    eapply OWN_weakG; [apply GI_with_vdso; apply (GI_init psegs brk0 mbase sp source_alloc_limit inp _ Hbrk ltac:(rewrite reserved_top_plain; lia) ltac:(split; [exact Hsp1| exact Hsp2]) eq_refl ceil_plain (valid_input_either_reader _ Hi) Hmb resv_plain)|]. intros _; exact I.
   - reflexivity.
   - apply m_fds_mo0.
   - apply m_fs_mo0.
@@ -528,7 +530,8 @@ Lemma tglob_prog_lim : forall rs lim en inp, 2^31 <= lim ->
   tglob nstep PhiP (prog psegs rs inp en) (mo0 psegs lim en inp).
 Proof.
   intros rs lim en inp Hlim He Hi. apply tglob_PhiP_intro.
-  - unfold mo0. apply minv_init. destruct en as [sp ? ? ?]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He.
+  - unfold mo0. apply minv_init; [| exact (valid_input_either_reader _ Hi)].
+    destruct en as [sp ? ? ?]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He.
     destruct He as ((Hsp1 & Hsp2 & _) & _). cbn [en_sp]. split; [exact Hsp1| exact Hsp2].
   - destruct en; reflexivity.
   - exact (proj2 (prog_model_ok psegs rs p_init_pc p_phdrs lim en inp top_pos_plain ceil_plain floor_plain resv_plain Hlim He Hi)).
@@ -543,8 +546,8 @@ Proof.
   intros lim' rs rs' en en' inp Hlim He He' Hi. apply trees_equiv_of_ttrace.
   change (prog psegs rs' inp en') with (treeA PasA rs' startup (ps_init (reservedZ psegs) (entry_atop en')) (argv_Z (in_argv inp))).
   apply (equiv_core_pre PasA nstep PhiP minv rs rs' KP startup startup_startup en inp _ _ He Hi).
-  - destruct en' as [sp brk0 mbase rnd]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He'. destruct He' as ((Hsp1 & Hsp2 & _) & Hbrk & _ & _). unfold mo0, entry_atop. cbn [en_brk en_mmap_base en_sp AI KP]. unfold AIP. cbn [map].
-    eapply OWN_weakG; [apply (GI_init psegs brk0 mbase sp lim' inp _ Hbrk ltac:(rewrite reserved_top_plain; lia) ltac:(split; [exact Hsp1| exact Hsp2]) eq_refl ceil_plain)|]. intros _; exact I.
+  - destruct en' as [sp brk0 mbase rnd]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He'. destruct He' as ((Hsp1 & Hsp2 & _) & Hbrk & Hmb & _). unfold mo0, entry_atop. cbn [en_brk en_mmap_base en_sp AI KP]. unfold AIP. cbn [map].
+    eapply OWN_weakG; [apply GI_with_vdso; apply (GI_init psegs brk0 mbase sp lim' inp _ Hbrk ltac:(rewrite reserved_top_plain; lia) ltac:(split; [exact Hsp1| exact Hsp2]) eq_refl ceil_plain (valid_input_either_reader _ Hi) Hmb resv_plain)|]. intros _; exact I.
   - reflexivity.
   - apply m_fds_mo0.
   - apply m_fs_mo0.

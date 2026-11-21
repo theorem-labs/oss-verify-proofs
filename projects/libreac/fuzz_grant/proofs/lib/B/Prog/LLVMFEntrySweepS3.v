@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySweepS3), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySweepS3.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment 3 of the sweep phase of fuzz_grant's entry function on IMAGE B:
    0x815d0 .. 0x81618 (fuzz_grant.c:321-322) — the two bcmp against HEAD_ACK (object 4,
    the call at 0x815e0) and HEAD_MARK (object 5, the call at 0x81604), and the three
@@ -12,7 +13,7 @@
    the trap 0x81f48 (0x815ec, a0 = -137), because the sweep buffer lies below the
    allocator's ceiling. The ground this walk stands on is LLVMFEntrySweepS3c.v.
 
-   Adapted from lib/A/Prog/GrantEntrySweepS3.v (a working branch afd75724b5b, blob
+   Adapted from lib/A/Prog/GrantEntrySweepS3.v (a working branch, blob
    d462a5d0c, 332 lines), which carries no licence header of its own.
    Image B holds the sweep buffer in s11 (image A: s5),
    adds the overflow guard at 0x815ec between the two calls, sets s2 = 34 before the

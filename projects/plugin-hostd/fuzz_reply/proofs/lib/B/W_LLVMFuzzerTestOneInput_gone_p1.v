@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B,
    PHASE p1 (lib/B/W_LLVMFuzzerTestOneInput_gone.v's GP1): the join 0x84aa8 to the reads[] loop's head 0x84af8
    (fuzz_reply.asan-ubsan 0x84aa8-0x84af4, fuzz_reply.c:635-639), the image-B twin of
-   lib/A/W_LLVMFuzzerTestOneInput_gone_p1.v (a working branch 32b23a20c3e), read from B's objdump:
+   lib/A/W_LLVMFuzzerTestOneInput_gone_p1.v (a working branch), read from B's objdump:
      0x84aa8-0x84abc  six `sb zero,4..9(s8)` (s8 = SB + FF / 8): prefix[48]'s shadow 0xf8 -> 0
      0x84ac0          sd zero,208(s1)  (size_t at = 0)
      0x84ac4-0x84adc  a2 = .str.9 "%s %d " (A_OBJ 17, 0x20f80), a3 = .str.5 "param_gesture" (A_OBJ 18 = A_lit_gesture,
@@ -13,6 +13,7 @@
      0x84ae4-0x84af4  ld s6,48(s1) (= &g_s[0]); addi s4,s6,4; li s7,4; addi s8,s1,192; ld s9,152(s1) (= Shadow(&g_s[0].open))
    The helper lemmas (printf text, memory views, the model kept off the fake frame) are A's, with image B's top
    0x5fc000 (W_kit.v pa_img_range) in place of A's 0x5fb000. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -95,10 +96,10 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 (* ---- this phase's Section hypotheses ---- *)
 (* the allocator instance (W_kit.v): errno's 4 bytes lie in the image (pal_env, Reusable/YCbq.v api_env) *)
 Hypothesis TL : PALib B.
-(* snprintf at the interceptor's entry: W_sites.v:308's contract, at image B's two stack-protector cells
-   (FR_GOT_GUARD 0x9ebd8, FR_GUARD 0x5f9a30, W_sites.v:301-302); a callee contract *)
+(* snprintf at the interceptor's entry: W_sites.v:309's contract, at image B's two stack-protector cells
+   (FR_GOT_GUARD 0x9ebd8, FR_GUARD 0x5f9a30, W_sites.v:302-303); a callee contract *)
 Hypothesis SNP : asnprintf_realizes B (SIGMA WS_snprintf) FR_GOT_GUARD FR_GUARD.
-(* INSTANCE FACT, A's HGOTG text (W6's, lib/A/W_relay_instance_gone_cx.v on 6a1bcf9f403 :201-217) at B's cells: the
+(* INSTANCE FACT, A's HGOTG text (W6's, lib/A/W_relay_instance_gone_cx.v :201-217) at B's cells: the
    GOT word FR_GOT_GUARD holds &__stack_chk_guard in every AR state (a pinned const cell of the instance, read through
    am_const); it cannot come through the journal (the GOT word is an owned static).  B is a Section variable here. *)
 Hypothesis HGOTG : forall ly S W mem md, AR segs B ly S W mem md ->

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed Hp, Zify; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagArmUsage.v, lines 94, 262. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -92,7 +93,7 @@ Section Arm.
     Hypothesis HW : L5Defs.L5.writable ASEGS MV (S - 5440) 5440.
     Hypothesis HD : L5Defs.L5.defined MV (S - 5440) 5440.
     Hypothesis HIMG : L5Defs.L5.img_clear MV 65536 1282048.
-    Hypothesis Hp : S <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+    Hypothesis Hp : S <= p /\ p + n + 1 + 9 <= 2 ^ 47.
     Hypothesis HSTR : Ba0DiagStrnlen_b.DSN.cstr MV p bs t8.
     Hypothesis HSH : forall x : word, Ba0RegionPoisoned_b.SB + p / 8 - 7 <= bv_unsigned x < Z.min (Ba0RegionPoisoned_b.SB + (p + n) / 8 + 8) (Ba0RegionPoisoned_b.SB + 2 ^ 44) -> MV x = Some (Z_to_bv 8 0).
     Hypothesis HSTK : L5KnA.L5KA.zeros_at MV (Ba0RegionPoisoned_b.SB + S / 8 - 680) 688.
@@ -260,7 +261,7 @@ Section Arm.
     pose proof (str_hull L ar IL HI sp0 Hsp DL M0 _ _ _ _ _ _ (bv_unsigned p0) (Z.of_nat (length a0s)) D SAH (proj1 PLO) ltac:(lia)) as HSH.
     destruct (str_statics scfg L ar C IL HI HIok sp0 Hsp DL Hdg Hdgs M0 _ _ _ _ _ _ D HIMG) as (HSN & HMC).
     assert (G12 : getr R 12%bv = Z_to_bv 64 (bv_unsigned p0)) by (rewrite G12p; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Hp : S <= bv_unsigned p0 /\ bv_unsigned p0 + Z.of_nat (length a0s) + 1 + 16 <= 2 ^ 47) by (unfold S; lia).
+    assert (Hp : S <= bv_unsigned p0 /\ bv_unsigned p0 + Z.of_nat (length a0s) + 1 + 9 <= 2 ^ 47) by (unfold S; lia).
     set (mm := fun k => bv_unsigned (fr k)).
     assert (Hm : (0 <= mm 64 < 2 ^ 64 /\ 0 <= mm 72 < 2 ^ 64 /\ 0 <= mm 80 < 2 ^ 64 /\ 0 <= mm 88 < 2 ^ 64) /\ (0 <= mm 96 < 2 ^ 64 /\ 0 <= mm 104 < 2 ^ 64 /\ 0 <= mm 112 < 2 ^ 64 /\ 0 <= mm 120 < 2 ^ 64))
       by (unfold mm; repeat split; apply u64_range).

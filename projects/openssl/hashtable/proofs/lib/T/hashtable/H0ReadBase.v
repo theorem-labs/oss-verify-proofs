@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (lemmas on the launch's reserved ledger ([res_vm]: the binary's reservations and the vDSO/vvar pair below the mmap base) and on [munmap_model]'s cut of it by [maps_subtract]; the stack window is the launch's 1500 pages, not 8 MiB). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -103,8 +104,8 @@ Qed.
 
 (* [comment removed for export] *)
 Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop :=
-  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
-    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true.
+  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 6144000)%Z ->
+    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 6144000 + d)) m = true.
 
 (* [comment removed for export] *)
 Definition group_writable (M : word -> option byte) (gm : word) : Prop :=
@@ -217,6 +218,117 @@ Definition model_pre (path : list byte) (VM : VmMaps) (stdin0 : AmbIn) (fs0 : Fs
 Definition model_post (VM : VmMaps) (stdin0 : AmbIn) (fs0 : Fs) (tid : word) : Model :=
   mkModelA fds_std VM stdin0 fs0 None (Some tid) None.
 
+(* LPS 727298f3: the reserved ledger is the binary's reservations followed by the launch's
+   vDSO/vvar pair ([State.init_reserved]): four vvar pages and the vDSO text's two pages (one
+   measured image, so for every kernel build), ending at [vdso_top] of the ledger.  [vdso_top] reads
+   only the mmap base and the initial stack pointer, which no call changes; it lies at or above the
+   lowest mmap base less a page. *)
+Definition vpair (t : Z) : list (word * word) :=
+  [(Z_to_bv 64 (t - 24576)%Z, Z_to_bv 64 16384%Z); (Z_to_bv 64 (t - 8192)%Z, Z_to_bv 64 8192%Z)].
+Definition res_vm (VM : VmMaps) : Prop :=
+  vm_reserved VM = segments_reserved RSEGS ++ vpair (vdso_top VM)
+  /\ (mmap_base_min - 4095 <= vdso_top VM <= 2 ^ 47)%Z /\ (vdso_top VM mod 4096 = 0)%Z.
+
+Lemma vpair_vdso : forall kb t, (mmap_base_min - 4095 <= t)%Z -> vdso_reserved kb t = vpair t.
+Proof.
+  intros kb t Ht. unfold vdso_reserved, vpair. cbv zeta.
+  replace (vdso_len kb) with 24576%Z by (vm_compute; reflexivity).
+  replace (vdso_vvar_pages * page_size)%Z with 16384%Z by (vm_compute; reflexivity).
+  replace (vdso_text_pages kb * page_size)%Z with 8192%Z by (vm_compute; reflexivity).
+  replace (t - 24576 <? page_size)%Z with false
+    by (symmetry; apply Z.ltb_ge; unfold page_size, mmap_base_min in *; lia).
+  replace (t - 24576 + 16384)%Z with (t - 8192)%Z by lia. reflexivity.
+Qed.
+
+Lemma res_vm_vdso : forall VM kb, res_vm VM ->
+  vm_reserved VM = segments_reserved RSEGS ++ vdso_reserved kb (vdso_top VM).
+Proof. intros VM kb (Hr & Ht & _). rewrite vpair_vdso by lia. exact Hr. Qed.
+
+Lemma res_vm_vdso_incl : forall VM kb, res_vm VM -> incl (vdso_reserved kb (vdso_top VM)) (vm_reserved VM).
+Proof. intros VM kb H. rewrite (res_vm_vdso VM kb H). apply incl_appr, incl_refl. Qed.
+
+(* the ledger keeps its reserved list, mmap base and initial stack pointer from call to call *)
+Lemma res_vm_transport : forall VM VM',
+  vm_reserved VM' = vm_reserved VM -> vm_mmap_base VM' = vm_mmap_base VM -> vm_init_sp VM' = vm_init_sp VM ->
+  res_vm VM -> res_vm VM'.
+Proof.
+  intros VM VM' Er Eb Es H.
+  assert (Et : vdso_top VM' = vdso_top VM) by (unfold vdso_top, mmap_top, alloc_top; rewrite Eb, Es; reflexivity).
+  unfold res_vm in *. rewrite Et, Er. exact H.
+Qed.
+
+Lemma region_free_app0 : forall l1 l2 (a n : word),
+  region_free (l1 ++ l2) a n = (region_free l1 a n && region_free l2 a n)%bool.
+Proof.
+  induction l1 as [|[b s] l1 IH]; intros l2 a n; cbn [app region_free]; [reflexivity|].
+  rewrite IH, andb_assoc. reflexivity.
+Qed.
+
+(* a range the binary's reservations leave free, and that ends below the pair, is free of the
+   whole ledger *)
+Lemma res_vm_rf_add : forall VM (a n : word), res_vm VM ->
+  region_free (segments_reserved RSEGS) a n = true ->
+  (bv_unsigned a + bv_unsigned n <= mmap_base_min - 4095 - 24576)%Z ->
+  region_free (vm_reserved VM) a n = true.
+Proof.
+  intros VM a n (Hr & Ht & _) Hs Hlt. rewrite Hr, region_free_app0, Hs. cbn [vpair region_free andb].
+  unfold iv_overlap. rewrite !u_small by (unfold mmap_base_min in *; lia).
+  pose proof (u64_range a). pose proof (u64_range n).
+  unfold mmap_base_min in *.
+  replace (bv_unsigned a <? vdso_top VM - 24576 + 16384)%Z with true by (symmetry; apply Z.ltb_lt; lia).
+  replace (vdso_top VM - 24576 <? bv_unsigned a + bv_unsigned n)%Z with false by (symmetry; apply Z.ltb_ge; lia).
+  replace (bv_unsigned a <? vdso_top VM - 8192 + 8192)%Z with true by (symmetry; apply Z.ltb_lt; lia).
+  replace (vdso_top VM - 8192 <? bv_unsigned a + bv_unsigned n)%Z with false by (symmetry; apply Z.ltb_ge; lia).
+  reflexivity.
+Qed.
+
+(* the whole reserved ledger, the binary's four reservations and the pair *)
+Lemma res_vm_list : forall VM, res_vm VM -> vm_reserved VM =
+  [(Z_to_bv 64 65536%Z, Z_to_bv 64 835584%Z); (Z_to_bv 64 901120%Z, Z_to_bv 64 1699840%Z);
+   (Z_to_bv 64 2600960%Z, Z_to_bv 64 380928%Z); (Z_to_bv 64 2981888%Z, Z_to_bv 64 221184%Z);
+   (Z_to_bv 64 (vdso_top VM - 24576)%Z, Z_to_bv 64 16384%Z); (Z_to_bv 64 (vdso_top VM - 8192)%Z, Z_to_bv 64 8192%Z)].
+Proof.
+  intros VM [Hr _].
+  assert (E : segments_reserved RSEGS =
+    [(Z_to_bv 64 65536%Z, Z_to_bv 64 835584%Z); (Z_to_bv 64 901120%Z, Z_to_bv 64 1699840%Z);
+     (Z_to_bv 64 2600960%Z, Z_to_bv 64 380928%Z); (Z_to_bv 64 2981888%Z, Z_to_bv 64 221184%Z)]) by (vm_compute; reflexivity).
+  rewrite Hr, E. reflexivity.
+Qed.
+
+Lemma res_vm_top : forall VM, res_vm VM -> (0x154555557000 - 4095 <= vdso_top VM <= 2 ^ 47)%Z.
+Proof. intros VM (_ & Ht & _). unfold mmap_base_min in Ht. exact Ht. Qed.
+
+(* the launch's ledger: the binary's reservations and the pair [State.init_reserved] places below
+   the lower of the mmap base and the stack's lowest page *)
+Lemma res_vm_init : forall VM (mbase sp0 : word) kb,
+  valid_mmap_base mbase -> valid_sp sp0 ->
+  vm_reserved VM = init_reserved (segments_reserved RSEGS) mbase sp0 kb ->
+  vm_mmap_base VM = mbase -> vm_init_sp VM = sp0 -> res_vm VM.
+Proof.
+  intros VM mbase sp0 kb (M1 & M2 & M3) Hsp Er Eb Es.
+  assert (Et : vdso_top VM = page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp0 - stack_max_size))).
+  { unfold vdso_top, mmap_top, alloc_top. rewrite Eb, Es. apply page_round_down_Z_min_r. }
+  assert (Ht : (mmap_base_min - 4095 <= vdso_top VM <= 2 ^ 47)%Z /\ (vdso_top VM mod 4096 = 0)%Z).
+  { rewrite Et. unfold page_round_down_Z, page_size.
+    assert (Hx : (mmap_base_min <= Z.min (bv_unsigned mbase) (bv_unsigned sp0 - stack_max_size) <= mmap_base_max)%Z).
+    { destruct Hsp as (S1 & S2 & _). unfold stack_max_size, sp_window_lo, sp_window_hi, mmap_base_min, mmap_base_max in *. lia. }
+    set (x := Z.min (bv_unsigned mbase) (bv_unsigned sp0 - stack_max_size)) in *.
+    pose proof (Z.div_mod x 4096 ltac:(lia)) as Dx. pose proof (Z.mod_pos_bound x 4096 ltac:(lia)) as Bx.
+    split.
+    - unfold mmap_base_max, sp_window_hi in Hx. lia.
+    - apply Z_mod_mult. }
+  split; [|exact Ht]. rewrite Er. unfold init_reserved. rewrite <- Et. rewrite vpair_vdso by lia. reflexivity.
+Qed.
+
+(* what a range the whole ledger and the maps leave free says about the binary's reservations
+   and the maps alone *)
+Lemma res_vm_rf_drop : forall VM l (a n : word), res_vm VM ->
+  region_free (vm_reserved VM ++ l) a n = true -> region_free (segments_reserved RSEGS ++ l) a n = true.
+Proof.
+  intros VM l a n (Hr & _) H. rewrite Hr, <- app_assoc, !region_free_app0 in H. rewrite region_free_app0.
+  apply andb_prop in H as [H1 H2]. apply andb_prop in H2 as [_ H3]. rewrite H1, H3. reflexivity.
+Qed.
+
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition vm_exact (VM : VmMaps) (sp0 mb bw B : word) (nb : Z) : Prop :=
@@ -226,12 +338,12 @@ Definition vm_exact (VM : VmMaps) (sp0 mb bw B : word) (nb : Z) : Prop :=
   /\ bv_unsigned bw = (bv_unsigned mb + 8192)%Z
   /\ (reserved_top (segments_reserved RSEGS) <= bv_unsigned mb)%Z
   /\ (bv_unsigned B mod 4096 = 0)%Z /\ (0 < bv_unsigned B)%Z /\ (bv_unsigned B + nb <= bv_unsigned sp0 - 8388608)%Z
-  /\ region_free (segments_reserved RSEGS) B (Z_to_bv 64 nb) = true
+  /\ region_free (vm_reserved VM) B (Z_to_bv 64 nb) = true
   /\ (bv_unsigned mb + 8192 <= bv_unsigned B \/ bv_unsigned B + nb <= bv_unsigned mb)%Z
   /\ (bv_unsigned mb <= reserved_top (segments_reserved RSEGS) + brk_aslr_max)%Z.   (* [comment removed for export] *)
 
 Definition vm_pre (VM : VmMaps) (sp0 mb bw gm : word) : Prop :=
-  vm_reserved VM = segments_reserved RSEGS
+  res_vm VM
   /\ (LIM <= vm_limit VM)%Z             (* [comment removed for export] *)
   /\ vm_init_sp VM = sp0                (* [comment removed for export] *)
   /\ map_has (vm_maps VM) gm (Z_to_bv 64 69632) = true
@@ -245,6 +357,92 @@ Definition vm_pre (VM : VmMaps) (sp0 mb bw gm : word) : Prop :=
   /\ seps (vm_maps VM)    (* [comment removed for export] *)
   /\ vm_ledger mb bw VM    (* [comment removed for export] *)
   /\ vm_exact VM sp0 mb bw gm 69632.   (* [comment removed for export] *)
+
+(* LPS 75d69e00+: [munmap_model] cuts the ledger with [maps_subtract]; on a separated
+   ledger where the unmapped entry is exact, the cut is [map_remove]. *)
+Lemma vm_seps_pair : forall l, seps l -> forall p q, In p l -> In q l -> p <> q -> iv_disjoint p q.
+Proof.
+  induction 1 as [|p0 l Hd Hs IH]; intros p q Hp Hq Hne; [destruct Hp|].
+  destruct Hp as [<-|Hp]; destruct Hq as [<-|Hq].
+  - contradiction.
+  - exact (proj1 (Forall_forall _ _) Hd q Hq).
+  - pose proof (proj1 (Forall_forall _ _) Hd p Hp) as D. unfold iv_disjoint in *. lia.
+  - exact (IH p q Hp Hq Hne).
+Qed.
+
+Lemma munmap_stage_ledger1 : forall l (B a n : word) (nb lo hi : Z),
+  lo = bv_unsigned a -> hi = (bv_unsigned a + bv_unsigned n)%Z ->
+  seps l -> In (a, n) l -> Forall (fun p => 0 < bv_unsigned (snd p))%Z l ->
+  (0 < nb < 2 ^ 64)%Z ->
+  (bv_unsigned B + nb <= bv_unsigned a \/ bv_unsigned a + bv_unsigned n <= bv_unsigned B)%Z ->
+  maps_subtract ((B, Z_to_bv 64 nb) :: l) lo hi = (B, Z_to_bv 64 nb) :: map_remove l a.
+Proof.
+  intros l B a n nb lo hi -> -> Hs Hin Hpos Hnb Hd.
+  assert (U : bv_unsigned (Z_to_bv 64 nb) = nb) by (apply Z_to_bv_small; unfold bv_modulus; lia).
+  pose proof (proj1 (Forall_forall _ _) Hpos (a, n) Hin) as Hn. cbn [snd] in Hn.
+  rewrite (OSSVerify.Proofs.openssl.hashtable.lib.Common.MmapSim.maps_subtract_exact _ a n Hn).
+  - assert (Hne : B <> a) by (intros ->; lia).
+    unfold map_remove. cbn [List.filter fst]. rewrite (bv_eqb_neq B a Hne). cbn [negb]. reflexivity.
+  - intros b s [E|Hb]; [injection E as <- <-; rewrite U; lia | exact (proj1 (Forall_forall _ _) Hpos (b, s) Hb)].
+  - intros b s [E|Hb] Hba.
+    + injection E as <- <-. exfalso. rewrite Hba in Hd. lia.
+    + destruct (decide (s = n)) as [E|Ne]; [exact E|exfalso].
+      pose proof (vm_seps_pair l Hs (b, s) (a, n) Hb Hin ltac:(intros E; injection E as _ E; exact (Ne E))) as D.
+      pose proof (proj1 (Forall_forall _ _) Hpos (b, s) Hb) as P.
+      unfold iv_disjoint in D. cbn [fst snd] in D, P. rewrite Hba in D. lia.
+  - intros b s [E|Hb] Hba.
+    + injection E as <- <-. rewrite U. lia.
+    + pose proof (vm_seps_pair l Hs (b, s) (a, n) Hb Hin ltac:(intros E; injection E as E _; exact (Hba E))) as D.
+      unfold iv_disjoint in D. cbn [fst snd] in D. exact D.
+Qed.
+
+Lemma munmap_stage_ledger2 : forall rest (B' B : word) (nb' nb lo hi : Z),
+  lo = bv_unsigned B -> hi = (bv_unsigned B + bv_unsigned (Z_to_bv 64 nb))%Z ->
+  (0 < nb' < 2 ^ 64)%Z -> (0 < nb < 2 ^ 64)%Z ->
+  (bv_unsigned B' + nb' <= bv_unsigned B \/ bv_unsigned B + nb <= bv_unsigned B')%Z ->
+  Forall (fun p => 0 < bv_unsigned (snd p))%Z rest ->
+  Forall (fun p => bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned B
+                   \/ bv_unsigned B + nb <= bv_unsigned (fst p))%Z rest ->
+  maps_subtract ((B', Z_to_bv 64 nb') :: (B, Z_to_bv 64 nb) :: rest) lo hi
+  = (B', Z_to_bv 64 nb') :: map_remove rest B.
+Proof.
+  intros rest B' B nb' nb lo hi -> -> H1 H2 Hd Hpos Hdisj.
+  assert (U' : bv_unsigned (Z_to_bv 64 nb') = nb') by (apply Z_to_bv_small; unfold bv_modulus; lia).
+  assert (U : bv_unsigned (Z_to_bv 64 nb) = nb) by (apply Z_to_bv_small; unfold bv_modulus; lia).
+  rewrite (OSSVerify.Proofs.openssl.hashtable.lib.Common.MmapSim.maps_subtract_exact _ B (Z_to_bv 64 nb)).
+  - assert (Hne : B' <> B) by (intros ->; lia).
+    unfold map_remove. cbn [List.filter fst].
+    rewrite (bv_eqb_neq B' B Hne), bv_eqb_refl. cbn [negb]. reflexivity.
+  - rewrite U. lia.
+  - intros b s [E|[E|Hin]].
+    + injection E as <- <-. rewrite U'. lia.
+    + injection E as <- <-. rewrite U. lia.
+    + exact (proj1 (Forall_forall _ _) Hpos (b, s) Hin).
+  - intros b s [E|[E|Hin]] Hba.
+    + injection E as <- <-. exfalso. rewrite Hba in Hd. lia.
+    + injection E as <- <-. reflexivity.
+    + exfalso. pose proof (proj1 (Forall_forall _ _) Hdisj (b, s) Hin) as D.
+      pose proof (proj1 (Forall_forall _ _) Hpos (b, s) Hin) as P. cbn [fst snd] in D, P. rewrite Hba in D. lia.
+  - intros b s [E|[E|Hin]] Hba.
+    + injection E as <- <-. rewrite U, U'. lia.
+    + injection E as <- <-. contradiction.
+    + pose proof (proj1 (Forall_forall _ _) Hdisj (b, s) Hin) as D. cbn [fst snd] in D. rewrite U. exact D.
+Qed.
+
+(* an entry outside the cut survives it *)
+Lemma maps_subtract_keep_in : forall l (p : word * word) (lo hi : Z),
+  (lo < hi)%Z -> (0 < bv_unsigned (snd p))%Z -> In p l ->
+  (bv_unsigned (fst p) + bv_unsigned (snd p) <= lo \/ hi <= bv_unsigned (fst p))%Z ->
+  In p (maps_subtract l lo hi).
+Proof.
+  induction l as [|[a sz] l IH]; intros [b s] lo hi Hlh Hs Hin Hd; [destruct Hin|].
+  cbn [fst snd] in *. change (maps_subtract ((a, sz) :: l) lo hi) with (iv_subtract a sz lo hi ++ maps_subtract l lo hi).
+  apply in_or_app. destruct Hin as [E|Hin].
+  - left. injection E as <- <-.
+    rewrite (OSSVerify.Proofs.openssl.hashtable.lib.Common.MmapSim.iv_subtract_outside a sz lo hi Hs Hlh Hd).
+    left. reflexivity.
+  - right. exact (IH (b, s) lo hi Hlh Hs Hin Hd).
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -300,7 +498,7 @@ Definition sr_RE : list expr :=
 (* [comment removed for export] *)
 Definition kn_RE_base : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144000)) 6144000;
    KAlign (EVar 3) 4096; KRange (EVar 3) 0x30e000 0x7fffff7ef000;
    KWr (SA (EVar 3) 0) 69632;
    KDisj (SA (EVar 0) (-8388608)) 8388608 (SA (EVar 3) 0) 69632;
@@ -378,7 +576,7 @@ Section EntrySym.
     - split; [lia | exact (proj2 Hsp)].
     - lia.
     - split; [lia|]. intros d m Hd Hm. unfold adenot, v_addi. cbn [a_base a_off edenot]. change (ev E 0) with sp0.
-      replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia. apply Hst; lia.
+      replace (bv_unsigned sp0 + -6144000 + d)%Z with (bv_unsigned sp0 - 6144000 + d)%Z by lia. apply Hst; lia.
     - split; [lia | exact (proj2 (proj2 Hgm))].
     - lia.
     - split; [lia|]. intros d m Hd Hm. unfold adenot, v_addi. cbn [a_base a_off edenot]. change (ev E 3) with gm.

@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFfy.v, with its module paths changed; its ADDRESS literals moved to omx-clap-core/fuzz_preset's ASan build where h-mani-a2's maps/reloc-cgif-preset.A.tsv (hex) and reloc-cgif-preset.A.dec.tsv (decimal) classify and map them; every other literal is still cgif_file_fuzzer.asan's (listed in the commits that moved them). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/AFfy.v, with its module paths and module names changed; 297 of its 352 lines of code are new or changed and 504 lines of the source are left out. *)
-(* The any-U twins of free(NULL) (donor lib/A/AFg3.v:399 afree_null_arm, :416 afree_null) and of free with room in the last batch and no drain (donor lib/A/AFfy.v:442 afree_common_arm, lib/A/AFfu.v:710 afree_common): afree_nullU, afree_commonU. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
+(* The any-U twins of free(NULL) (donor lib/A/AFg3.v:399 afree_null_arm, :416 afree_null) and of free with room in the last batch and no drain (donor lib/A/AFfy.v:442 afree_common_arm, lib/A/AFfu.v:711 afree_common): afree_nullU, afree_commonU. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
 (* The donor walk text is kept: the facts (AFg3.FH_ok, AFfu.FH_ok and the lemmas they rest on) are applied UNCHANGED
    at mu = FSupoison.unpoison UP mem, the runs (AFh1.segN; AFga.segA, AFgc.segB, the depot call, AFge.segC) are
@@ -138,7 +139,7 @@ eapply SRr_mono.
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* free of a block with room in the last batch and no drain, any UP (donor lib/A/AFfy.v:442, lib/A/AFfu.v:710).     *)
+(* free of a block with room in the last batch and no drain, any UP (donor lib/A/AFfy.v:442, lib/A/AFfu.v:711).     *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 Theorem afree_commonU : forall B, AR_laws tfibsegs B -> TfibSyms B ->
   forall ly S UP W regs mem md p n ch lastb initr,

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -179,6 +180,7 @@ Section Refused.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.   (* LPS 727298f3: the stderr write's channel reader (LibStdioCall.stdio_call_sound) *)
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -244,7 +246,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segG : forall vals R M,
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segG : forall vals R M,
     length vals = 199%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV BL vals) srG0 R -> know_ok RSEGS (ENV BL vals) M knG0 ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x9b818) M (seg_rom RSEGS)) model) T.
@@ -293,6 +295,7 @@ Section Refused.
       change 38%nat with ((8 + (4 + 2)) + (8 + (8 + 8)))%nat. exact MSG.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -350,7 +353,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segF : forall vals R M,
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segF : forall vals R M,
     length vals = 167%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV BL vals) srF0 R -> know_ok RSEGS (ENV BL vals) M knF0 ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x9b818) M (seg_rom RSEGS)) model) T.
@@ -408,7 +411,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segE : forall vals R M,
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segE : forall vals R M,
     length vals = 135%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV BL vals) srE0 R -> know_ok RSEGS (ENV BL vals) M knD ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x9b818) M (seg_rom RSEGS)) model) T.
@@ -505,7 +508,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segD : forall vals R M,
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segD : forall vals R M,
     length vals = 103%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV BL vals) srD0 R -> know_ok RSEGS (ENV BL vals) M knC ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x9b818) M (seg_rom RSEGS)) model) T.
@@ -529,7 +532,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segC : forall vals R M,
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segC : forall vals R M,
     length vals = 71%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV BL vals) srC0 R -> know_ok RSEGS (ENV BL vals) M knC0 ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x9b818) M (seg_rom RSEGS)) model) T.
@@ -553,7 +556,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segB : forall vals R M,
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segB : forall vals R M,
     length vals = 39%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV BL vals) srRF0 R -> know_ok RSEGS (ENV BL vals) M knRE0 ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x327bc) M (seg_rom RSEGS)) model) T.
@@ -651,7 +654,7 @@ Section Refused.
     destruct i as [|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|i]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]; [ lia | .. | lia]; reg_caseRF.
   Qed.
 
-  #[using="sp0 BL Hvsp Hh Hlazy Hfd2 SPlo SPhi T tid Rsp Rgp Rtp Mstack Mimg Mtid Htid Mself can Hcan Mcanary Mpagesz E"] Theorem ref_refused_tail :
+  #[using="sp0 BL Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi T tid Rsp Rgp Rtp Mstack Mimg Mtid Htid Mself can Hcan Mcanary Mpagesz E"] Theorem ref_refused_tail :
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x327bc) M (seg_rom RSEGS)) model)
                (t_die msg_refused (m_fs model)).
   Proof.

@@ -7,6 +7,7 @@
    libreac/fuzz_decode's calloc wrapper in image A (fuzz_decode.asan); module paths changed, and every address,
    cell and offset below is decode's own. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_decode/lib/A/DecodeCallocWrap.v (donor image sha256 5973b76807d8), with its module paths changed, names decodesegs0 -> tfibsegs and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The middle of the calloc walk of image A: from the wrapper's first call (lib/A/DecodeCallocSeed.v's at_C1,
    pc 0x5239c) to the call of __asan::asan_calloc at 0x524a4, whose target 0x31bd4 the reached state sits at.
 
@@ -116,7 +117,7 @@ Definition DEC_A_calloc_ret : Z := 0x57178.
    `lbu s4, 0x22(a1)`, a1 = 0x1328e8). *)
 Definition DEC_A_cf_fast : Z := DEC_A_common_flags + CF_FAST_UNWIND_ON_MALLOC.
 (* __asan::malloc_context_size at the call: ASan's default, the value cgif's own image carries at its
-   counterpart cell (A/AF0m.v:86 `z4 (ANum 0xa6cfc) 0x1e`).  The unwinder contract's a5 premise is 30. *)
+   counterpart cell (A/AF0m.v:87 `z4 (ANum 0xa6cfc) 0x1e`).  The unwinder contract's a5 premise is 30. *)
 Definition DEC_A_MCS : Z := 30.
 
 (* A read-only region of the symbolic state over an image cell: cgif's A/AFhy.v:23-25 lit8 / lit1.  Its base is

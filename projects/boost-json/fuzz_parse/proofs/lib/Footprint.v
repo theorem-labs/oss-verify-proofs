@@ -1,13 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, lemmas added for the revision. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase.
-From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import Nd.
-Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
-Local Ltac2 zQ s := CDef.cdeft "37Corelib4Init9Datatypes03nat37Corelib7Numbers7BinNumshd4Npos69OSSVerify6Proofsaboost_jsonafuzz_parse3lib9Footprint~~~~~~jd6region35stdpp9bitvectorbdefinitionso22bv46Stdlib6ZArith6BinInt1Zq42leo2bbv_unsigned37Corelib4Init5Logicsf3andjd5rg_hijd5rg_loq43addq46of_nat" s.   (* [comment removed for export] *)
 Import ListNotations.
 Local Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
@@ -18,30 +16,73 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for expor
 
 Record region : Type := Rg { rg_lo : Z; rg_hi : Z }.
 
-(* [comment removed for export] *)
-Definition covers : ltac2:(zQ "40!h8!j6!n9!pf>1r$2>1a@1$3@1$1#k0>1n$0P") := ltac2:(zQ "b0!j6!rc!s1!h8!u3!n9!u9!v1!v9!vf!pf\1r$5\1a@1$a@1$0#k0\1n$3@2$4@2$1@1$7^3@2$2@1$0#k0^2@2$1@2$8@2$2@1$0#k0^2@1$9^1@1$6^3").
+Definition rg_wf (r : region) : Prop :=
+  0 <= rg_lo r /\ rg_lo r <= rg_hi r /\ rg_hi r <= 2 ^ 64.
 
 (* [comment removed for export] *)
+Definition covers (r : region) (a : word) (n : nat) : Prop :=
+  rg_lo r <= bv_unsigned a /\ bv_unsigned a + Z.of_nat n <= rg_hi r.
+
+Definition rg_disj (r1 r2 : region) : Prop :=
+  rg_hi r1 <= rg_lo r2 \/ rg_hi r2 <= rg_lo r1.
+
+Lemma rg_disj_sym : forall r1 r2, rg_disj r1 r2 -> rg_disj r2 r1.
+Proof. intros r1 r2 [H|H]; [right|left]; exact H. Qed.
 
 (* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
+Lemma covers_mono : forall r r' a n,
+  covers r a n -> rg_lo r' <= rg_lo r -> rg_hi r <= rg_hi r' -> covers r' a n.
+Proof. intros r r' a n [H1 H2] Hl Hh. split; lia. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Lemma covers_nowrap : forall r a n,
+  rg_wf r -> covers r a n -> bv_unsigned a + Z.of_nat n <= 2 ^ 64.
+Proof. intros r a n (_ & _ & Hhi) (_ & H). lia. Qed.
+
+(* [comment removed for export] *)
+Lemma covers_disj : forall r1 r2 a1 n1 a2 n2,
+  rg_disj r1 r2 -> covers r1 a1 n1 -> covers r2 a2 n2 ->
+  bv_unsigned a1 + Z.of_nat n1 <= bv_unsigned a2
+  \/ bv_unsigned a2 + Z.of_nat n2 <= bv_unsigned a1.
+Proof. intros r1 r2 a1 n1 a2 n2 [H|H] [H1 H2] [H3 H4]; [left|right]; lia. Qed.
+
+(* [comment removed for export] *)
+Lemma covers_same_disj : forall r a1 n1 a2 n2,
+  covers r a1 n1 -> covers r a2 n2 ->
+  bv_unsigned a1 + Z.of_nat n1 <= bv_unsigned a2
+  \/ bv_unsigned a2 + Z.of_nat n2 <= bv_unsigned a1 ->
+  bv_unsigned a1 + Z.of_nat n1 <= bv_unsigned a2
+  \/ bv_unsigned a2 + Z.of_nat n2 <= bv_unsigned a1.
+Proof. auto. Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Definition stack_rg (sp : word) (below above : Z) : region :=
+  Rg (bv_unsigned sp - below) (bv_unsigned sp + above).
+
+(* [comment removed for export] *)
+Definition seg_rg (lo hi : Z) : region := Rg lo hi.
+
+(* [comment removed for export] *)
+Definition heap_rg (base : word) (cur : Z) : region :=
+  Rg (bv_unsigned base) (bv_unsigned base + cur).
+
+Lemma heap_rg_bump : forall base cur cur' a n,
+  cur <= cur' -> covers (heap_rg base cur) a n -> covers (heap_rg base cur') a n.
+Proof.
+  intros base cur cur' a n Hle H.
+  apply (covers_mono (heap_rg base cur)); [exact H | cbn; lia | cbn; lia].
+Qed.
+
+(* [comment removed for export] *)
+Definition layout_wf (rs : list region) : Prop :=
+  Forall rg_wf rs /\
+  forall i j, (i < j)%nat -> (j < length rs)%nat ->
+              rg_disj (nth i rs (Rg 0 0)) (nth j rs (Rg 0 0)).

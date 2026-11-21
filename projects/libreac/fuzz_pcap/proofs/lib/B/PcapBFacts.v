@@ -7,7 +7,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    are image facts and law instances of B := lib/Reusable/YD2l.v PcapB, each closing one Section hypothesis of
    lib/B/PcapCloseB.v (a working branch) at the type it states there.
    - The A file's names (PcapB_segs_low, PcapB_lib, PcapB_env, PcapB_ML, PcapB_LAWS, PcapB_AMALLOC4, PcapB_AFREE4,
-     PcapB_AFREEN4), from cgif c8557374ad2e lib/YCed.v:33-97 (the asan-ubsan twin of lib/A/ACed.v:40-104), at PcapB
+     PcapB_AFREEN4), from cgif lib/YCed.v:33-97 (the asan-ubsan twin of lib/A/ACed.v:40-104), at PcapB
      and tfibsegs (lib/Reusable/YB1v.v, = AsanUbsan.M.loaded_segments); TfibLib / tl_env are lib/Reusable/YCeh.v's.
      The allocator closures are lib/Reusable/YF0w.v tfib_amalloc_realizes / YF0q.v afree_realizes_closed at
      TfibB_syms, as PcapCloseB.v rows 8 / 9 use them.
@@ -44,6 +44,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    - The PALib cells: __asan_shadow_memory_dynamic_address 0xa17b8 (size 8), __asan_option_detect_stack_use_after_return
      0xa17c0 (size 4), __interceptor_trampoline_free / _malloc 0x52c24 / 0x52c28, __asan_stack_malloc_0 / _1 0x3c588 /
      0x3c6fc: the values of PcapAddr.v pcap_obj 15 / 16 / pcap_sigma and YF0l.v Tfib_code. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.

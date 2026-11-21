@@ -1,9 +1,9 @@
 (* fuzz_preset, image A' (asan 1be0f53d96cb, unstripped twin bff8519bbe3e; #102): the program walk of grow
-   (preset_file.c:42-64; 103 instructions) against the kit's announced cut (7cdbb61b5fa0, owner
-   06:11Z); its kit texts and engine are those of the cut 7cdbb61b5fa0: tgrow_specX (lib/A/PRH_FnReader.v
+   (preset_file.c:42-64; 103 instructions) against the kit's announced cut (owner
+   06:11Z); its kit texts and engine are those of the cut: tgrow_specX (lib/A/PRH_FnReader.v
    blob f1ae32e3b2cd, :812-1057, the POST-IMPLICATION form), tfuzz_realloc_specX (PRH_FnAlloc 4d8aeba047e5), PRH_Base
    ef7c8ca98529 (fpre carries FRM0-ENTRY; prh_univ_closure without DW; prh_live_evs; prh_cons_from).
-   RELOCATED from the old-pin walk (ecde1e0fbcd6, image A asan d83eb25d) by alreloc
+   RELOCATED from the old-pin walk (image A asan d83eb25d) by alreloc
    c4338d099cfb8025 (audited AGREE), then RE-FITTED (this lane): the ledger's g_most / g_own_ran_out fields, the
    PST's two new cells, the position as the text's post-implication (each arm moves any position at S by the arm's
    events E), the live requests after each arm (Permutation .. (hlive_from .. E), PwGrowLive.v), the inner calls' live
@@ -20,7 +20,7 @@
    exclusion is PwGrowG.grow_excl_of_leaf of the kids call's OUTCOME; gr_Q / gr_KR are the kit's named posts tgrP_Q / tfrP_Q.
    FORM: cgif's per-function walk form over the CONCRETE listing of the whole target range,
    A_prog_listing with its instances PL_prog_A / PI_prog_A (lib/A/PAImg_prog.v 505a51ff7d08, listing v3
-   lib/A/Listing_prog.v 7ed1529926bd, listing-pins102 74dcda1eda12, as the cut carries them);
+   lib/A/Listing_prog.v 7ed1529926bd, listing-pins102, as the cut carries them);
    every image value is read from a GENERATED name (A_prog_slot / A_entry_grow / A_prog_obj0 / A_prog_obj12), never
    typed. The image-generic facts are lib/A/Prog/PwGrowG.v (shared with image B's twin), the after-call step kit is
    lib/A/Prog/PRW_StepKit.v, the window call rule is the engine's YCbqGcallW.v, and the runners are
@@ -312,7 +312,7 @@ Definition gr_pk_24 (S : astate) (ty n cap : Z) : Prop :=
   Z.of_nat (PresetRun.pkR (PresetRoom.in_cls YG00.kBatchClass) (PresetRoom.rs_live (YGcfRoom.room_of_cf S))
     (prhPg_evs (ty =? 6) n cap [])) <= PresetLiveBounds.L24 + PresetLiveBounds.DRV.
 
-(* tgrow_specX's premises (lib/A/PRH_FnReader.v blob f1ae32e3b2cd at the cut 7cdbb61b5fa0, :812-861: the
+(* tgrow_specX's premises (lib/A/PRH_FnReader.v blob f1ae32e3b2cd at the cut, :812-861: the
    post-implication form, the E sweep's ledger fields most / own, no run-word list DW, the live room at each event),
    at one record, in the text's order *)
 Definition gr_pre (CTX0 : list (list Z)) (D : gr_in) : Prop :=
@@ -354,7 +354,7 @@ Definition gr_post (D : gr_in) : world SEGS -> config -> Prop :=
        (gi_keys D) (gi_n D) (gi_cap D) (gi_kb D) (gi_yb D) (gi_Lam D) (gi_peak D) (gi_cnt D) (gi_fail D) (gi_ran D)
        (gi_most D) (gi_own D)).
 
-(* ---- THE CALLEE. tfuzz_realloc_specX (PRH_FnAlloc.v blob 4d8aeba047e5 at the cut 7cdbb61b5fa0) is a LEAF in the post-implication form: no
+(* ---- THE CALLEE. tfuzz_realloc_specX (PRH_FnAlloc.v blob 4d8aeba047e5 at the cut) is a LEAF in the post-implication form: no
    position at its entry; its post states, per outcome, the position step for ANY model run and position the caller
    picks (E = [] on a NULL, [HMal (n + cf_head)] at p = 0, [HRe (k + cf_head) (n + cf_head)] at p <> 0). So grow needs
    NO agreement between the model's grants and the instance's (AGREE-PREFIX, which the entry-keyed texts needed, is
@@ -3087,7 +3087,7 @@ intros CTX0. split.
 Qed.
 
 (* THE WHOLE FUNCTION (rule-24 CONFIRM for grow in hand on both images, telemetry 2026-10-30 00:40Z): the kit's tgrow_specX
-   EXACTLY (PRH_FnReader.v f1ae32e3b2cd at 7cdbb61b5fa0), from the per-record walk and the record form above; a caller
+   EXACTLY (PRH_FnReader.v f1ae32e3b2cd), from the per-record walk and the record form above; a caller
    that names `tgrow_specX B ARx SK CTX0` as a hypothesis closes it by citing this *)
 Theorem grow_holds : forall CTX0, tgrow_specX B ARx SK CTX0.
 Proof. intros CTX0. apply (proj2 (tgrow_specX_records CTX0)). exact (grow_K0_of_args CTX0). Qed.

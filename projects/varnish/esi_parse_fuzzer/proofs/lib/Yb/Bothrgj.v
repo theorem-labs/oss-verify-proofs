@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the conversions take the new AsanInit arguments, the main-entry facts read argv's strings and their slack at the top of the launch's block (with the launch premise), the 6144512-byte mapped stack below sp and the launch's argument layout, and the main-entry checks are stated of the main-entry states computed at each value of the run's CONFIG_RSEQ flag. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -21,7 +22,7 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanAcct AxSyioe.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanPlan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanz3l AsanPlan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanPlan.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm Bothny9 AsanInit Starr0h Stargqr Bothgt0.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm Bothny9 AsanInit BothRegen2 Bothgt0.
 
 Module Bothoo5.
 (* [comment removed for export] *)
@@ -35,8 +36,8 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanAcct AxSyioe.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanPlan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanz3l AsanPlan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanPlan.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm Bothny9 AsanInit Starr0h Bothgt0.
-Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.PropExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm.AgentLib OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanAcct OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.AxSyetn OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothny9 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Starr0h OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothgt0.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm Bothny9 AsanInit Bothgt0.
+Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.PropExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm.AgentLib OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanAcct OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.AxSyetn OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothny9 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothgt0.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Mem.
 Import ListNotations.
@@ -58,13 +59,18 @@ Section Conv.
   Variable brk0 : word.
   Variable argv envp : list (list byte).
   Variables uid hw : word.
+  (* LPS 727298f3: AsanInit's [SINV0]/[argH0] read the mmap base, AT_GID, the kernel build
+     and the exec file name *)
+  Variables mbase gid : word.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
   Variable fs : Fs.Fs.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
-  #[local] Notation SINV := (SINV0 BPH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 BPH sp rdraw argv envp uid hw).
+  #[local] Notation SINV := (SINV0 BOTH BPH sp rdraw brk0 mbase argv envp uid gid hw kb execfn).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kb execfn).
   Context {BL : AsanInit.BootLim}.   (* [comment removed for export] *)
   #[local] Notation LIM := (@AsanInit.blim BL).
   Variable cs : acs.
@@ -87,7 +93,7 @@ Section Conv.
   (* [comment removed for export] *)
   Lemma cells_bytes : forall l, cells_okb cs l = true -> Forall (fun c => Lbytes_at FULL (fst c) (snd c)) l.
   Proof.
-    intros l H. pose proof (cells_okb_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva cs E R FULL model CS l H) as F.
+    intros l H. pose proof (cells_okb_sound sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs Hsp Hva cs E R FULL model CS l H) as F.
     apply Forall_forall. intros c Hc. pose proof (proj1 (Forall_forall _ _) F c Hc) as (X1 & X2 & X3).
     apply bytes_at_of_mb; assumption.
   Qed.
@@ -102,7 +108,7 @@ Section Conv.
     Lbytes_at FULL a (word_to_le_bytes w (edenot E ve)).
   Proof.
     intros a w ve H Hlo Hhi. cbn [img_lo img_hi BOTH] in Hlo, Hhi.
-    pose proof (pre_word_img_at sp rdraw brk0 argv envp uid hw fs Hsp Hva cs E R FULL model CS (ELit 0) 0 (ub_lit E) a w ve H
+    pose proof (pre_word_img_at sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs Hsp Hva cs E R FULL model CS (ELit 0) 0 (ub_lit E) a w ve H
                   ltac:(cbn [img_lo BOTH]; lia) ltac:(cbn [img_hi BOTH]; lia)) as RD.
     rewrite Z.add_0_l in RD.
     apply bytes_at_of_mb; [lia| rewrite length_word_to_le_bytes; lia|].
@@ -121,7 +127,7 @@ Section Conv.
     assert (ROM : forall j, (j < w)%nat -> seg_rom BSEGS (Z_to_bv 64 (B + off + Z.of_nat j)) = None).
     { intros j Hj. unfold seg_rom, memory_read. rewrite u_lit64a, Z.mod_small by lia.
       rewrite (find_segment1_none_outside BSEGS (img_lo BOTH) (img_hi BOTH)); [reflexivity| exact both_segs_in_hull| cbn [img_lo img_hi BOTH]; lia]. }
-    pose proof (pre_word_at sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS b B Ub off w ve H ltac:(lia) Hhi ROM) as X.
+    pose proof (pre_word_at sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs cs E R FULL model CS b B Ub off w ve H ltac:(lia) Hhi ROM) as X.
     apply bytes_at_of_mb; [lia| rewrite length_word_to_le_bytes; lia|].
     intros i Hi. rewrite length_word_to_le_bytes in Hi. unfold mb. rewrite (X i Hi). symmetry. apply nth_error_nth'. rewrite length_word_to_le_bytes. exact Hi.
   Qed.
@@ -129,7 +135,7 @@ Section Conv.
   (* [comment removed for export] *)
   Lemma zero_sym : forall b B off n, bv_unsigned (edenot E b) = B -> KH (KZero (SA b off) (ELit n)) = true -> 0 <= n < 2^64 ->
     forall i, 0 <= i < n -> FULL (Z_to_bv 64 (B + off + i)) = Some (Z_to_bv 8 0).
-  Proof. intros b B off n Ub H Hn. exact (pre_zero_at sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS b B Ub off n H Hn). Qed.
+  Proof. intros b B off n Ub H Hn. exact (pre_zero_at sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs cs E R FULL model CS b B Ub off n H Hn). Qed.
 
   Lemma fill_bytes : forall a n c, 0 <= a -> 0 <= n -> a + n <= 2^64 ->
     (forall i, 0 <= i < n -> FULL (Z_to_bv 64 (a + i)) = Some (Z_to_bv 8 c)) ->
@@ -146,7 +152,7 @@ Section Conv.
     forall i, 0 <= i < n -> FULL (Z_to_bv 64 (B + off + i)) <> None.
   Proof.
     intros b B off n Ub H H0 Hlo Hn Hhi. cbn [img_lo img_hi BOTH] in Hlo.
-    apply (pre_wr_at sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS b B Ub off n H ltac:(lia) Hn Hhi).
+    apply (pre_wr_at sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs cs E R FULL model CS b B Ub off n H ltac:(lia) Hn Hhi).
     intros i Hi. apply (find_segment1_none_outside BSEGS (img_lo BOTH) (img_hi BOTH)); [exact both_segs_in_hull| cbn [img_lo img_hi BOTH]; lia].
   Qed.
 
@@ -159,7 +165,7 @@ Section Conv.
     intros lo' hi' lo n KI H1 H2 Hn Hlo Hhi HZ. cbn [img_lo img_hi BOTH] in Hlo, Hhi.
     apply bytes_at_of_mb; [lia| rewrite repeat_length; lia|].
     intros i Hi. rewrite repeat_length in Hi.
-    destruct (kimg_zero_range sp rdraw brk0 argv envp uid hw fs Hsp Hva cs E R FULL model CS lo' hi' lo (lo + n) KI H1 H2
+    destruct (kimg_zero_range sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs Hsp Hva cs E R FULL model CS lo' hi' lo (lo + n) KI H1 H2
                 ltac:(cbn [img_lo BOTH]; lia) ltac:(cbn [img_hi BOTH]; lia) HZ (lo + Z.of_nat i) ltac:(lia)) as [_ X].
     rewrite X. symmetry. rewrite nth_error_repeat; [reflexivity| exact Hi].
   Qed.
@@ -179,8 +185,8 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.Riscv Require Import Instr.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require PropExec AxSyioe Asanz3l AsanPlan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanPlan.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm Bothny9 AsanInit Starr0h Stargqr Bothgt0.
-Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.PropExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothny9 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Starr0h OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Stargqr OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothgt0.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm Bothny9 AsanInit BothRegen2 Bothgt0.
+Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.BothRegen2 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.PropExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothny9 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothgt0.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zd Require DA_Entry.
 Import ListNotations. Import AX2. Import APC. Import AP. Import APS.
@@ -192,10 +198,9 @@ Open Scope Z_scope.
 Definition e_pgsh : expr := EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 0)) (EMd Instr.M_MUL (ELit 512) (EVar 10)).
 Definition e_shlen : expr :=
   EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-4096)) (EVar 0)) (EMd Instr.M_MUL (ELit (-512)) (EVar 10))) (ELit 17592187092992).
-Definition e_rnd : expr :=
-  EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 8) (EVar 1))
-    (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 8) (EVar 2)) (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 8) (EVar 4)) (EMd Instr.M_MUL (ELit 16) (EVar 6))))).
-Definition K_RNDBLOB : nat := 25%nat.
+(* LPS 727298f3: the slack after argv[0]/argv[1] is read from the strings area at the top of
+   the launch's block, no longer from the sixteen AT_RANDOM bytes, so the old AT_RANDOM blob
+   key and its [usp + 8*argc + 8*envc + 8*W]-based address are gone. *)
 
 (* [comment removed for export] *)
 Definition entry_keys : list kentry :=
@@ -204,21 +209,31 @@ Definition entry_keys : list kentry :=
     KRange (EVar 44) 1 4194303;
     KImg 65536 0xaaa58;
     KZero (SA e_pgsh 2146402304) e_shlen;
-    KRange (EVar 10) 0 7;
-    KBlob (SA e_rnd 184) (ELit 16) K_RNDBLOB ].
+    KRange (EVar 10) 0 7 ].
 Definition chk_entry (cs : acs) : bool := forallb (fun K => existsb (kentry_eqb K) (kn cs)) entry_keys.
-
-Lemma chk_entry_1 : chk_entry HS_both2_1 = true. Proof. vm_compute. reflexivity. Qed.
-Lemma chk_entry_2 : chk_entry HS_both2_2 = true. Proof. vm_compute. reflexivity. Qed.
-Lemma chk_entry_3 : chk_entry HS_both2b_1 = true. Proof. vm_compute. reflexivity. Qed.
-Lemma chk_entry_4 : chk_entry HS_both2b_2 = true. Proof. vm_compute. reflexivity. Qed.
-Lemma main_cells_1 : cells_okb HS_both2_1 DA_Entry.MAIN_CELLS = true. Proof. vm_compute. reflexivity. Qed.
-Lemma main_cells_2 : cells_okb HS_both2_2 DA_Entry.MAIN_CELLS = true. Proof. vm_compute. reflexivity. Qed.
-Lemma main_cells_3 : cells_okb HS_both2b_1 DA_Entry.MAIN_CELLS = true. Proof. vm_compute. reflexivity. Qed.
-Lemma main_cells_4 : cells_okb HS_both2b_2 DA_Entry.MAIN_CELLS = true. Proof. vm_compute. reflexivity. Qed.
+(* LPS 727298f3: the main-entry states [BothRegen2] computes, at each value [r] of the run's
+   CONFIG_RSEQ flag.  [entry_keys] name the recorded states' variable numbers (the thread id at
+   [EVar 44]), because [BothRegen] renames the root hand-off states' fresh variables back to the
+   recorded numbers; the vm decides each check at Qed on the computed states. *)
+Lemma chk_entry_1 : forall r, 0 <= r <= 1 -> chk_entry (HS_both2_1r r) = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.
+Lemma chk_entry_2 : forall r, 0 <= r <= 1 -> chk_entry (HS_both2_2r r) = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.
+Lemma chk_entry_3 : forall r, 0 <= r <= 1 -> chk_entry (HS_both2b_1r r) = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.
+Lemma chk_entry_4 : forall r, 0 <= r <= 1 -> chk_entry (HS_both2b_2r r) = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.
+Lemma main_cells_1 : forall r, 0 <= r <= 1 -> cells_okb (HS_both2_1r r) DA_Entry.MAIN_CELLS = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.
+Lemma main_cells_2 : forall r, 0 <= r <= 1 -> cells_okb (HS_both2_2r r) DA_Entry.MAIN_CELLS = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.
+Lemma main_cells_3 : forall r, 0 <= r <= 1 -> cells_okb (HS_both2b_1r r) DA_Entry.MAIN_CELLS = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.
+Lemma main_cells_4 : forall r, 0 <= r <= 1 -> cells_okb (HS_both2b_2r r) DA_Entry.MAIN_CELLS = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.
 End Both1js.
 
-Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.PropExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.MmapSim.CatExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.MmapSim.FileSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm.AgentLib OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanAcct OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.AxSyetn OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothny9 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Starr0h OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Stargqr OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothgt0 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothrgj.Bothoo5 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothrgj.Both1js.
+Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.BothRegen2 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.PropExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.MmapSim.CatExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.MmapSim.FileSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm.AgentLib OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanAcct OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.AxSyetn OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothny9 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothgt0 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothrgj.Bothoo5 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothrgj.Both1js.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require AndN.   (* [comment removed for export] *)
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Ym Require Import Asanljo.
@@ -243,26 +258,39 @@ Section Entry.
   Variable brk0 : word.
   Variable argv envp : list (list byte).
   Variables uid hw : word.
+  (* LPS 727298f3: as [Bothgt0.Extract] *)
+  Variables mbase gid : word.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
   Variable fs : Fs.Fs.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
-  #[local] Notation SINV := (SINV0 BPH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 BPH sp rdraw argv envp uid hw).
+  (* LPS 727298f3: [Run.valid_entry]'s fifth conjunct, over the stack's view of the input:
+     it bounds the block by the stack VMA's end, so argv's strings lie below 2^47 *)
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInit.stk_inp argv envp uid gid hw kb execfn).
+  #[local] Notation SINV := (SINV0 BOTH BPH sp rdraw brk0 mbase argv envp uid gid hw kb execfn).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kb execfn).
   Context {BL : AsanInit.BootLim}.   (* [comment removed for export] *)
   #[local] Notation LIM := (@AsanInit.blim BL).
   Variable cs : acs.
   Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
   Hypothesis CS : cs_ok BSEGS BOTH LIM SINV argH fs E cs R FULL model.
-  Hypothesis CHK : chk_all cs = true.
+  Hypothesis CHK : chk_all (rseq_z (kb_rseq kb)) cs = true.
   Hypothesis CHKE : chk_entry cs = true.
   Hypothesis CC : cells_okb cs DA_Entry.MAIN_CELLS = true.
   #[local] Notation usp := (bv_unsigned sp).
-  #[local] Notation bsb := (build_stack_bytes BPH sp argv envp uid hw rdraw).
+  #[local] Notation inp0 := (AsanInit.stk_inp argv envp uid gid hw kb execfn).
+  #[local] Notation bsb := (entry_stack_image inp0 mbase BPH (Z_to_bv 64 (a_entry BOTH)) sp rdraw).
+  (* argv[0]'s first byte: sp + C + W ([AsanInit]'s STR0) *)
+  #[local] Notation STR0 := (usp + Z.of_nat (block_head_size (kb_rseq kb) argv envp)
+                              + Z.of_nat (block_pad_len (kb_rseq kb) sp (ed_top rdraw) argv envp execfn)).
+  (* the launch's argument layout, as [DA_Entry] reads it *)
+  #[local] Notation LAYa := (DA_Entry.launch_lay sp (ed_top rdraw) (kb_rseq kb) argv envp execfn).
 
-  Let MP : main_pre sp rdraw brk0 argv envp uid hw fs R FULL model :=
-    main_pre_of_cs_ok sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve cs E R FULL model CHK CS.
+  Let MP : main_pre sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs R FULL model :=
+    main_pre_of_cs_ok sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs Hsp Hva Hve Hfit Hlau cs E R FULL model CHK CS.
 
   (* [comment removed for export] *)
   Lemma khas_entry : forall K, In K entry_keys -> khas cs K = true.
@@ -292,7 +320,6 @@ Section Entry.
   Proof.
     intros [|a [|b l]] H; try (cbn in H; lia). cbn [nth]. rewrite !tab_cons. pose proof (tab_nonneg l). lia.
   Qed.
-
   Lemma tab_firstn_gen : forall (l : list (list byte)) k, (k < length l)%nat ->
     total_arg_bytes (firstn k l) + Z.of_nat (length (nth k l [])) + 1 <= total_arg_bytes l.
   Proof.
@@ -300,24 +327,38 @@ Section Entry.
     destruct k as [|k]; [cbn [firstn nth]; rewrite tab_cons; change (total_arg_bytes []) with 0; pose proof (tab_nonneg l); lia|].
     cbn [firstn nth]. rewrite !tab_cons. specialize (IH k ltac:(cbn in Hk; lia)). lia.
   Qed.
-
-  (* [comment removed for export] *)
-  Lemma strings_fit :
-    DA_Entry.e_p0a usp argv envp + DA_Entry.e_L0 argv + 1 <= usp + Z.of_nat (length bsb) - 16 - total_arg_bytes envp
-    /\ ((2 <= length argv)%nat ->
-        DA_Entry.e_p1a usp argv envp + DA_Entry.e_L1 argv + 1 <= usp + Z.of_nat (length bsb) - 16 - total_arg_bytes envp)
-    /\ usp + Z.of_nat (length bsb) <= usp + entry_stack_span argv envp
-    /\ 0 <= total_arg_bytes envp.
+  Lemma tab_firstn1 : forall l : list (list byte), (2 <= length l)%nat -> total_arg_bytes (firstn 1 l) = Z.of_nat (length (nth 0 l [])) + 1.
   Proof.
-    pose proof (length_bsb_eq BPH sp rdraw argv envp uid hw) as LB. pose proof (build_stack_bytes_within_span BPH sp argv envp uid hw rdraw) as SB.
-    unfold stack_image_size in LB. cbv zeta in LB.
-    unfold DA_Entry.e_p1a, DA_Entry.e_p0a, DA_Entry.e_L0, DA_Entry.e_L1, DA_Entry.e_argc, DA_Entry.e_envc.
-    pose proof (tab_nonneg envp) as TE. pose proof (tab_ge1 argv argc_ge1) as G1.
-    match type of LB with _ = ?len + (8 - ?len mod 8) mod 8 + 16 =>
-      assert (PD : 0 <= (8 - len mod 8) mod 8 < 8) by (apply Z.mod_pos_bound; lia) end.
-    split; [lia|]. split; [| split; [lia| exact TE]].
-    intros H2. pose proof (tab_ge2 argv H2) as G2. lia.
+    intros [|a l] H; [cbn in H; lia|]. cbn [firstn nth]. rewrite tab_cons.
+    change (firstn 0 l) with (@nil (list byte)). change (total_arg_bytes []) with 0. lia.
   Qed.
+
+  (* LPS 727298f3: THE BLOCK AT THE REVISION.  The launch puts argv's strings, then envp's,
+     the exec file name with its NUL and the eight-byte slot at the TOP of the block, above
+     the AT_RANDOM bytes and the [arch_align_stack] pad ([StackLayout.build_stack_bytes]);
+     [Bothgt0.lau_block] reads the end and the unclamped pad off [Hlau]. *)
+  Lemma lau_facts : bv_unsigned (ed_top rdraw) <= 2 ^ 47
+    /\ STR0 + Z.of_nat (launch_string_bytes argv envp execfn) + 8 = bv_unsigned (ed_top rdraw).
+  Proof. pose proof (lau_block sp brk0 mbase rdraw argv envp uid gid hw kb execfn Hlau) as (L1 & L2 & _). split; lia. Qed.
+
+  Lemma lstr_eq : Z.of_nat (launch_string_bytes argv envp execfn)
+    = total_arg_bytes argv + total_arg_bytes envp + Z.of_nat (length execfn) + 1.
+  Proof. unfold launch_string_bytes. rewrite !length_flatten_strings, !total_arg_bytes_Z. lia. Qed.
+
+  (* [DA_Entry]'s argv[0] under the launch's layout is [Bothgt0.p0a] *)
+  Lemma P0E : DA_Entry.e_p0a (LAY:=LAYa) usp argv envp = Bothgt0.p0a sp rdraw argv envp kb execfn.
+  Proof.
+    unfold DA_Entry.e_p0a, DA_Entry.e_argc, DA_Entry.e_envc, DA_Entry.launch_lay, Bothgt0.p0a, Bothgt0.usp. cbn [DA_Entry.al_pad].
+    assert (HB : (8 * length argv + 8 * length envp + 184 <= block_head_size (kb_rseq kb) argv envp)%nat).
+    { generalize (kb_rseq kb) as b. intros b. unfold block_head_size, block_items, auxv_size, auxv_count. cbv zeta.
+      generalize ((length argv + length envp + 3) mod 2)%nat as q. intros q. destruct b; cbv beta iota; lia. }
+    lia.
+  Qed.
+  Lemma SPN : DA_Entry.e_span (LAY:=LAYa) argv envp = Bothgt0.p0a sp rdraw argv envp kb execfn - usp + total_arg_bytes argv + 8.
+  Proof. rewrite <- P0E. unfold DA_Entry.e_span, DA_Entry.e_p0a. lia. Qed.
+  Lemma TOPS : Bothgt0.p0a sp rdraw argv envp kb execfn + total_arg_bytes argv + total_arg_bytes envp + Z.of_nat (length execfn) + 9
+    = bv_unsigned (ed_top rdraw).
+  Proof. pose proof lau_facts as (_ & T2). pose proof lstr_eq. unfold Bothgt0.p0a, Bothgt0.usp. lia. Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -336,149 +377,91 @@ Section Entry.
     destruct (hid BOTH argH E cs model a); destruct (FULL a); try exact H; discriminate.
   Qed.
 
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  Section Str.
-    Variable k : nat.
-    Hypothesis Hk : (k < length argv)%nat.
-    Hypothesis Hk2 : (k <= 1)%nat.
-    Let pk : Z := usp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184 + total_arg_bytes (firstn k argv).
-    Let sk : list byte := nth k argv [].
-
-    Lemma tab_firstn_le : total_arg_bytes (firstn k argv) + Z.of_nat (length sk) + 1 <= total_arg_bytes argv.
-    Proof. subst sk. exact (tab_firstn_gen argv k Hk). Qed.
-
-    Lemma pk_range : usp <= pk /\ pk + Z.of_nat (length sk) + 1 <= usp + Z.of_nat (length bsb) - 16 /\ usp + Z.of_nat (length bsb) <= 2^47.
-    Proof.
-      pose proof (length_bsb_eq BPH sp rdraw argv envp uid hw) as LB. pose proof (build_stack_bytes_within_span BPH sp argv envp uid hw rdraw) as SB.
-      unfold stack_image_size in LB. cbv zeta in LB. pose proof usp_facts as (U1 & U2 & U3).
-      pose proof (tab_nonneg envp). pose proof (tab_nonneg (firstn k argv)). pose proof tab_firstn_le.
-      match type of LB with _ = ?len + (8 - ?len mod 8) mod 8 + 16 =>
-        assert (PD : 0 <= (8 - len mod 8) mod 8 < 8) by (apply Z.mod_pos_bound; lia) end.
-      subst pk. lia.
-    Qed.
-
-    Lemma cat_argv_ptr_val : cat_argv_ptr sp argv envp k = Z_to_bv 64 pk.
-    Proof.
-      pose proof pk_range as (P1 & P2 & P3). pose proof usp_facts as (U1 & _). unfold sp_window_lo in U1.
-      rewrite (cat_argv_ptr_offset sp argv envp k Hk). unfold cat_string_base, cat_struct_size.
-      apply bv_eq. rewrite !bv_add_unsigned. unfold nat_to_word. rewrite !Z_to_bv_unsigned. unfold bv_wrap.
-      change (bv_modulus 64) with (2^64).
-      rewrite <- !total_arg_bytes_Z. pose proof (tab_nonneg (firstn k argv)) as T0.
-      rewrite !Nat2Z.inj_add, !Nat2Z.inj_mul. unfold auxv_size.
-      change (Z.of_nat 8) with 8. change (Z.of_nat 1) with 1. change (Z.of_nat 160) with 160.
-      subst pk. Z.div_mod_to_equations. lia.
-    Qed.
-
-    (* [comment removed for export] *)
-    Lemma str_argH : forall j, (j < length sk + 1)%nat -> argH0 BPH sp rdraw argv envp uid hw E (Z_to_bv 64 (pk + Z.of_nat j)) = true.
-    Proof.
-      intros j Hj. pose proof pk_range as (P1 & P2 & P3). pose proof usp_facts as (U1 & _). unfold sp_window_lo in U1.
-      pose proof (W_range BPH sp rdraw argv envp uid hw Hva Hve) as (W1 & W2 & W3).
-      pose proof (tab_nonneg (firstn k argv)).
-      unfold argH0. cbv zeta. rewrite u_lit64a, Z.mod_small by lia.
-      apply orb_true_iff. right. apply andb_true_iff. split; [apply Z.leb_le| apply Z.ltb_lt]; subst pk; lia.
-    Qed.
-
-    Lemma str_bytes : Lbytes_at FULL pk (sk ++ [Z_to_bv 8 0]).
-    Proof.
-      pose proof pk_range as (P1 & P2 & P3). pose proof usp_facts as (U1 & _). unfold sp_window_lo in U1.
-      assert (LEN : length (sk ++ [Z_to_bv 8 0]) = (length sk + 1)%nat) by (rewrite length_app; reflexivity).
-      apply bytes_at_pointwise; [lia| rewrite LEN; lia|]. rewrite LEN.
-      (* [comment removed for export] *)
-      assert (RD : rdn BSEGS FULL (Z_to_bv 64 pk) (length sk + 1) = Some (sk ++ [Z_to_bv 8 0])).
-      { rewrite (rdn_ext FULL (wrap_mem BPH sp argv envp uid hw rdraw)).
-        - rewrite (rdn_wrap_stack_above BSEGS BPH sp argv envp (Z_to_bv 64 pk) (length sk + 1) uid hw rdraw)
-            by (rewrite u_lit64a, Z.mod_small; lia).
-          rewrite <- cat_argv_ptr_val. subst sk. apply (read_argv_cstr_k BPH BSEGS sp argv envp k uid hw rdraw Hk). lia.
-        - intros j Hj. rewrite u_lit64a, Z.mod_small by lia.
-          exact (proj2 (pre_sinv sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS) _ (str_argH j Hj)). }
-      assert (SEG : forall i, (i < length sk + 1)%nat -> seg_rom BSEGS (Z_to_bv 64 (bv_unsigned (Z_to_bv 64 pk) + Z.of_nat i)) = None).
-      { intros i Hi. apply (seg_rom_off_hull BSEGS BOTH both_in_hull). unfold in_hull.
-        rewrite u_lit64a, Z.mod_small, u_lit64a, Z.mod_small by (rewrite ?u_lit64a, ?Z.mod_small; lia).
-        cbn [img_lo img_hi BOTH]. apply andb_false_iff. right. apply Z.ltb_ge. lia. }
-      intros j Hj. pose proof (rdn_bytes FULL (length sk + 1) (Z_to_bv 64 pk) _ SEG RD j Hj) as X.
-      rewrite u_lit64a, Z.mod_small in X by lia. exact X.
-    Qed.
-
-    (* [comment removed for export] *)
-    Lemma U_rnd : bv_unsigned (edenot E e_rnd) = usp + Z.of_nat (length bsb) - 16 - 184.
-    Proof.
-      pose proof (W_range BPH sp rdraw argv envp uid hw Hva Hve) as (W1 & W2 & W3).
-      pose proof usp_facts as (U1 & U2 & U3). unfold sp_window_lo in U1. pose proof pk_range as (_ & _ & P3).
-      assert (AR : 1 <= Z.of_nat (length argv) <= 1024) by (pose proof Hva as [H _]; exact H).
-      assert (ER : 0 <= Z.of_nat (length envp) <= 256) by (pose proof Hve as [H _]; lia).
-      pose proof (pre_v0 sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS) as V0.
-      pose proof (pre_v6 sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS) as V6.
-      pose proof (pre_v1 sp rdraw brk0 argv envp uid hw fs Hva cs E R FULL model CS) as V1.
-      assert (V2 : bv_unsigned (ev E 2%nat) = Z.of_nat (length envp)).
-      { rewrite (pre_ev_lt9 sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS 2%nat) by (unfold NX0; lia). unfold E0. cbn [ev vals0 nth].
-        rewrite u_lit64a. apply Z.mod_small. lia. }
-      assert (V4 : bv_unsigned (ev E 4%nat) = (Z.of_nat (length bsb) - 16 - (8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184)) / 8).
-      { rewrite (pre_ev_lt9 sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS 4%nat) by (unfold NX0; lia). unfold E0. cbn [ev vals0 nth].
-        rewrite u_lit64a. apply Z.mod_small. lia. }
-      unfold e_rnd. cbn [edenot]. rewrite !u_add64, !u_mul64_boot, !u_lit64a. rewrite V0, V6, V1, V2, V4.
-      Z.div_mod_to_equations. lia.
-    Qed.
-    Hypothesis KHR : khas cs (KBlob (SA e_rnd 184) (ELit 16) K_RNDBLOB) = true.
-    Lemma rnd_bytes : forall i, 0 <= i < 16 ->
-      FULL (Z_to_bv 64 (usp + Z.of_nat (length bsb) - 16 + i)) = Some (nth (Z.to_nat i) (eb E K_RNDBLOB) (Z_to_bv 8 0)).
-    Proof.
-      intros i Hi.
-      pose proof (khas_ok sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS _ KHR) as KB. cbn [kentry_ok] in KB.
-      destruct KB as (_ & _ & KB). unfold elenZ, estart in KB. cbn [a_base a_off] in KB. rewrite edenot_lit, u_lit64a in KB.
-      specialize (KB i ltac:(change (16 mod 2 ^ 64) with 16; lia)). rewrite U_rnd in KB.
-      replace (usp + Z.of_nat (length bsb) - 16 - 184 + 184 + i) with (usp + Z.of_nat (length bsb) - 16 + i) in KB by lia.
-      exact (Mr_some sp rdraw argv envp uid hw cs E FULL model _ _ KB).
-    Qed.
-
-    (* [comment removed for export] *)
-    Lemma block_byte : forall a, usp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184 <= a < usp + Z.of_nat (length bsb) - 16 ->
-      FULL (Z_to_bv 64 a) = Some (nth (Z.to_nat (a - usp)) bsb (Z_to_bv 8 0)).
-    Proof.
-      intros a Ha. pose proof usp_facts as (U1 & U2 & U3). unfold sp_window_lo in U1. pose proof pk_range as (_ & _ & P3).
-      pose proof (W_range BPH sp rdraw argv envp uid hw Hva Hve) as (W1 & W2 & W3).
-      assert (AH : argH0 BPH sp rdraw argv envp uid hw E (Z_to_bv 64 a) = true).
-      { unfold argH0. cbv zeta. rewrite u_lit64a, Z.mod_small by lia.
+  (* LPS 727298f3: any piece of the strings area [STR0, ed_top) of the block is in memory as
+     the block lays it: [argH0] hides that area and [SINV0] pins it to the launch image. *)
+  Lemma block_bytes : forall pre mid post, bsb = pre ++ mid ++ post ->
+    STR0 <= usp + Z.of_nat (length pre) ->
+    usp + Z.of_nat (length pre) + Z.of_nat (length mid) <= bv_unsigned (ed_top rdraw) ->
+    Lbytes_at FULL (usp + Z.of_nat (length pre)) mid.
+  Proof.
+    intros pre mid post EI L1 L2.
+    pose proof lau_facts as (T1 & T2).
+    pose proof usp_facts as (U1 & U2 & U3). unfold sp_window_lo in U1.
+    pose proof (Nat2Z.is_nonneg (length pre)).
+    assert (NW : usp + Z.of_nat (length bsb) < 2 ^ 64).
+    { rewrite (length_entry_stack_image_launch Sv48 inp0 mbase BPH (Z_to_bv 64 (a_entry BOTH)) sp brk0 rdraw Hlau). lia. }
+    pose proof (read_at_offset_image BSEGS inp0 mbase BPH (Z_to_bv 64 (a_entry BOTH)) sp rdraw pre mid post (length mid) EI eq_refl NW) as RS.
+    rewrite word_add_nat_Z2bv in RS.
+    set (a0 := usp + Z.of_nat (length pre)) in *.
+    assert (RD : rdn BSEGS FULL (Z_to_bv 64 a0) (length mid) = Some mid).
+    { rewrite (rdn_ext FULL (wrap_mem inp0 mbase BPH (Z_to_bv 64 (a_entry BOTH)) sp rdraw)).
+      - rewrite (rdn_wrap_stack_above BSEGS inp0 mbase BPH (Z_to_bv 64 (a_entry BOTH)) sp rdraw (Z_to_bv 64 a0) (length mid))
+          by (rewrite u_lit64a, Z.mod_small; lia).
+        exact RS.
+      - intros j Hj. rewrite u_lit64a, Z.mod_small by lia.
+        apply (proj2 (pre_sinv sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs cs E R FULL model CS)).
+        unfold argH0. cbv zeta. rewrite u_lit64a, Z.mod_small by lia.   (* [argH0]'s string range is [STR0, ed_top) after zeta *)
         apply orb_true_iff. right. apply andb_true_iff. split; [apply Z.leb_le| apply Z.ltb_lt]; lia. }
-      rewrite (proj2 (pre_sinv sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS) _ AH).
-      unfold wrap_mem, stack_to_mem, entry_stack_image. rewrite u_lit64a, Z.mod_small by lia.
-      destruct (Z.leb_spec0 usp a); [| exfalso; lia]. cbn zeta.
-      rewrite length_app.
-      destruct (Z.ltb_spec0 (a - usp) (Z.of_nat (length bsb + length (entry_slack sp bsb (ed_slack rdraw))))); [| exfalso; lia].
-      rewrite nth_error_app1 by lia.
-      rewrite (nth_error_nth' bsb (Z_to_bv 8 0)) by lia. reflexivity.
-    Qed.
+    assert (SEG : forall i, (i < length mid)%nat -> seg_rom BSEGS (Z_to_bv 64 (bv_unsigned (Z_to_bv 64 a0) + Z.of_nat i)) = None).
+    { intros i Hi. apply (seg_rom_off_hull BSEGS BOTH both_in_hull). unfold in_hull.
+      rewrite u_lit64a, Z.mod_small, u_lit64a, Z.mod_small by (rewrite ?u_lit64a, ?Z.mod_small; lia).
+      cbn [img_lo img_hi BOTH]. apply andb_false_iff. right. apply Z.ltb_ge. lia. }
+    apply bytes_at_pointwise; [lia| lia|].
+    intros j Hj. pose proof (rdn_bytes FULL (length mid) (Z_to_bv 64 a0) _ SEG RD j Hj) as X.
+    rewrite u_lit64a, Z.mod_small in X by lia. exact X.
+  Qed.
 
-    Lemma str_slack : exists sl, length sl = 16%nat /\ Lbytes_at FULL (pk + Z.of_nat (length sk) + 1) sl.
-    Proof.
-      pose proof pk_range as (P1 & P2 & P3). pose proof usp_facts as (U1 & _). unfold sp_window_lo in U1.
-      set (q := pk + Z.of_nat (length sk) + 1).
-      set (e16 := usp + Z.of_nat (length bsb) - 16).
-      set (f := fun i : nat => if (q + Z.of_nat i <? e16) then nth (Z.to_nat (q + Z.of_nat i - usp)) bsb (Z_to_bv 8 0)
-                               else nth (Z.to_nat (q + Z.of_nat i - e16)) (eb E K_RNDBLOB) (Z_to_bv 8 0)).
-      exists (map f (seq 0 16)). split; [rewrite length_map, length_seq; reflexivity|].
-      apply bytes_at_pointwise; [subst q; lia| rewrite length_map, length_seq; subst q; cbn; lia|].
-      rewrite length_map, length_seq. intros j Hj.
-      rewrite (nth_indep _ (Z_to_bv 8 0) (f 0%nat)) by (rewrite length_map, length_seq; exact Hj).
-      rewrite map_nth, seq_nth by exact Hj. cbn [Nat.add]. unfold f.
-      destruct (Z.ltb_spec0 (q + Z.of_nat j) e16).
-      - apply block_byte. subst q e16. pose proof (tab_nonneg (firstn k argv)). subst pk. lia.
-      - replace (q + Z.of_nat j) with (e16 + (q + Z.of_nat j - e16)) at 1 by lia. subst e16.
-        apply rnd_bytes. subst q. lia.
-    Qed.
-  End Str.
+  (* LPS 727298f3: argv[k] with its NUL at [STR0 + tab(argv[..k])], and eight more bytes of the
+     block after it (the later strings, the exec file name's NUL and the eight-byte slot are
+     above it).  It WAS read at [usp + 8*argc + 8*envc + 184 + ...], with sixteen bytes of
+     slack reaching into the AT_RANDOM bytes. *)
+  Lemma str_k : forall k, (k < length argv)%nat ->
+    Lbytes_at FULL (STR0 + total_arg_bytes (firstn k argv)) (nth k argv [] ++ [Z_to_bv 8 0])
+    /\ exists sl, length sl = 8%nat
+       /\ Lbytes_at FULL (STR0 + total_arg_bytes (firstn k argv) + Z.of_nat (length (nth k argv [])) + 1) sl.
+  Proof.
+    intros k Hk.
+    pose proof lau_facts as (T1 & T2). pose proof lstr_eq as LS.
+    pose proof (tab_firstn_gen argv k Hk) as TF. pose proof (tab_nonneg envp) as TE. pose proof (tab_nonneg (firstn k argv)) as TK.
+    pose proof (length_entry_stack_image_launch Sv48 inp0 mbase BPH (Z_to_bv 64 (a_entry BOTH)) sp brk0 rdraw Hlau) as LI.
+    destruct (bsb_byte_k inp0 mbase BPH (Z_to_bv 64 (a_entry BOTH)) sp rdraw k Hk) as (pre & post & EI & LP).
+    assert (EI2 : bsb = pre ++ (nth k argv [] ++ [Z_to_bv 8 0]) ++ post) by exact EI.
+    assert (LP2 : length pre = (block_head_size (kb_rseq kb) argv envp
+                                + block_pad_len (kb_rseq kb) sp (ed_top rdraw) argv envp execfn
+                                + total_arg_bytes_nat (firstn k argv))%nat) by exact LP.   (* [cat_string_off] and the [stk_inp] projections, by conversion *)
+    clear EI LP.
+    assert (PRE : usp + Z.of_nat (length pre) = STR0 + total_arg_bytes (firstn k argv)).
+    { rewrite LP2, !Nat2Z.inj_add, total_arg_bytes_Z. lia. }
+    assert (LEN : Z.of_nat (length bsb) = Z.of_nat (length pre) + Z.of_nat (length (nth k argv [])) + 1 + Z.of_nat (length post)).
+    { rewrite EI2, !length_app. cbn [length]. lia. }
+    split.
+    - rewrite <- PRE. apply (block_bytes pre _ post EI2); [lia|]. rewrite length_app. cbn [length]. lia.
+    - assert (PL : (8 <= length post)%nat) by lia.
+      exists (firstn 8 post). split; [rewrite firstn_length_le by exact PL; reflexivity|].
+      assert (EI3 : bsb = (pre ++ (nth k argv [] ++ [Z_to_bv 8 0])) ++ firstn 8 post ++ skipn 8 post).
+      { rewrite EI2, firstn_skipn. apply app_assoc. }
+      replace (STR0 + total_arg_bytes (firstn k argv) + Z.of_nat (length (nth k argv [])) + 1)
+        with (usp + Z.of_nat (length (pre ++ (nth k argv [] ++ [Z_to_bv 8 0])))) by (rewrite !length_app; cbn [length]; lia).
+      apply (block_bytes _ _ _ EI3); rewrite ?length_app, ?firstn_length_le by exact PL; cbn [length]; lia.
+  Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  Theorem entry_raw_of_cs : DA_Entry.entry_raw usp argv envp fs R FULL model.
+  (* LPS 727298f3: [DA_Entry.entry_raw] under the launch's argument layout [LAYa] *)
+  Theorem entry_raw_of_cs : DA_Entry.entry_raw (LAY:=LAYa) usp argv envp fs R FULL model.
   Proof.
     pose proof MP as MP'.
     destruct MP' as [Mra Msp Mgp Mtp Ma0 Ma1 Mhalt Mfs Mfds Mlim Mtid Margb Mp0 Mp1 Mstk Mnone Mwords Mext Mzero Mfill].
-    pose proof usp_facts as (U1 & U2 & U3). pose proof strings_fit as (SF0 & SF1 & SF2 & SF3).
+    pose proof usp_facts as (U1 & U2 & U3). pose proof lau_facts as (T1 & T2). pose proof TOPS as TP.
+    pose proof P0E as PE. pose proof SPN as SN.
+    pose proof (tab_nonneg argv) as TA. pose proof (tab_nonneg envp) as TE. pose proof (tab_ge1 argv argc_ge1) as G1.
     assert (U0 : bv_unsigned (edenot E (ELit 0)) = 0) by (cbn [edenot]; rewrite u_lit64a; reflexivity).
     assert (AR : 1 <= Z.of_nat (length argv) <= 1024) by (pose proof Hva as [H _]; exact H).
     assert (ER : 0 <= Z.of_nat (length envp) <= 256) by (pose proof Hve as [H _]; lia).
+    assert (CH : usp + 480 <= Bothgt0.p0a sp rdraw argv envp kb execfn).
+    { unfold Bothgt0.p0a, Bothgt0.usp. generalize (kb_rseq kb) as b. intros b.
+      unfold block_head_size, block_items, auxv_size, auxv_count. cbv zeta.
+      generalize ((length argv + length envp + 3) mod 2)%nat as q. intros q. destruct b; cbv beta iota; lia. }
     unfold sp_window_lo in U1.
     constructor.
     - exact Mra.
@@ -487,25 +470,27 @@ Section Entry.
     - exact Mtp.
     - exact Ma0.
     - exact Ma1.
-    - unfold DA_Entry.e_span, sp_window_lo. pose proof (entry_stack_span_bound argv envp Hva Hve). OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; lia.
-    - unfold DA_Entry.e_span. lia.
-    - unfold DA_Entry.e_span, DA_Entry.e_argc. intros H2. specialize (SF1 ltac:(lia)). lia.
+    - (* LPS 727298f3: sp to eight bytes past argv's strings, below the stack VMA's end *)
+      rewrite SN. unfold sp_window_lo. OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; lia.
+    - rewrite PE, SN. unfold DA_Entry.e_L0. lia.
+    - unfold DA_Entry.e_p1a, DA_Entry.e_argc. intros H2. rewrite PE, SN. unfold DA_Entry.e_L0, DA_Entry.e_L1.
+      pose proof (tab_ge2 argv ltac:(lia)). lia.
     - exact Mhalt.
     - exact Mfs.
     - exact Mfds.
     - (* [comment removed for export] *)
       exists (bv_unsigned (ev E 44%nat)).
-      pose proof (pre_range sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS 44%nat 1 4194303
+      pose proof (pre_range sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs cs E R FULL model CS 44%nat 1 4194303
                     (khas_entry (KRange (EVar 44%nat) 1 4194303) ltac:(cbn; tauto))) as TR.
       split; [lia|].
-      pose proof (word_lit_img sp rdraw brk0 argv envp uid hw fs Hsp Hva cs E R FULL model CS 0x5e7b30 4%nat (EVar 44%nat)
+      pose proof (word_lit_img sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs Hsp Hva cs E R FULL model CS 0x5e7b30 4%nat (EVar 44%nat)
                     (khas_entry (KWord (SA (ELit 0) 0x5e7b30) 4%nat (EVar 44%nat)) ltac:(cbn; tauto)) ltac:(cbn; lia) ltac:(cbn; lia)) as TW.
       unfold Mem.le4. rewrite u_lit64a, Z.mod_small by lia. exact TW.
     - (* [comment removed for export] *)
-      exact (cells_bytes sp rdraw brk0 argv envp uid hw fs Hsp Hva cs E R FULL model CS _ CC).
+      exact (cells_bytes sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs Hsp Hva cs E R FULL model CS _ CC).
     - (* [comment removed for export] *)
       intros a Ha.
-      pose proof (khas_ok sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS _ (khas_entry (KWr (SA (ELit 0) 0xa8000) (ELit 0x562000)) ltac:(cbn; tauto))) as KW.
+      pose proof (khas_ok sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs cs E R FULL model CS _ (khas_entry (KWr (SA (ELit 0) 0xa8000) (ELit 0x562000)) ltac:(cbn; tauto))) as KW.
       destruct KW as [_ KW].
       rewrite (estart_at E (ELit 0) 0 U0), (elenZ_lit E) in KW by lia.
       specialize (KW (a - 0xa8000) 1%nat ltac:(lia) ltac:(cbn; lia)).
@@ -514,17 +499,17 @@ Section Entry.
       destruct (wview BSEGS (Mr BOTH argH E cs model FULL) (Z_to_bv 64 a)); [discriminate| discriminate].
     - (* [comment removed for export] *)
       intros a Ha. apply (Mnone 65536 0xaaa58 a); [unfold IMG_NONE; left; reflexivity| lia].
-    - (* [comment removed for export] *)
+    - (* LPS 727298f3: the 6144512 bytes below sp *)
       intros a Ha. unfold DA_Entry.STK_LO in Ha.
-      replace a with (Bothgt0.usp sp - 8388608 + (a - (usp - 8388608))) by (unfold Bothgt0.usp; lia).
+      replace a with (Bothgt0.usp sp - 6144512 + (a - (usp - 6144512))) by (unfold Bothgt0.usp; lia).
       apply Mstk. lia.
     - (* [comment removed for export] *)
       intros a Ha. unfold DA_Entry.STKSH_LO, DA_Entry.STKSH_HI, AIface.sh, kShadowOffset in Ha. rewrite HCEIL in Ha.
-      pose proof (khas_ok sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS _ (khas_entry (KZero (SA e_pgsh 2146402304) e_shlen) ltac:(cbn; tauto))) as KZ.
+      pose proof (khas_ok sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs cs E R FULL model CS _ (khas_entry (KZero (SA e_pgsh 2146402304) e_shlen) ltac:(cbn; tauto))) as KZ.
       cbn [kentry_ok] in KZ. destruct KZ as [_ KZ]. unfold elenZ, estart in KZ. cbn [a_base a_off] in KZ.
-      pose proof (pre_v0 sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS) as V0.
+      pose proof (pre_v0 sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs cs E R FULL model CS) as V0.
       assert (V10 : bv_unsigned (ev E 10%nat) = (usp mod 32768) / 4096).
-      { rewrite (pre_ev_lt9 sp rdraw brk0 argv envp uid hw fs cs E R FULL model CS 10%nat) by (unfold NX0; lia). unfold E0. cbn [ev vals0 nth].
+      { rewrite (pre_ev_lt9 sp rdraw brk0 argv envp uid hw mbase gid kb execfn fs cs E R FULL model CS 10%nat) by (unfold NX0; lia). unfold E0. cbn [ev vals0 nth].
         rewrite u_lit64a. apply Z.mod_small. Z.div_mod_to_equations. lia. }
       assert (PG : bv_unsigned (edenot E e_pgsh) = 4096 * (usp / 32768) + 512 * ((usp mod 32768) / 4096)).
       { unfold e_pgsh. cbn [edenot]. rewrite !u_add64, !u_mul64_boot, !u_lit64a. rewrite V0, V10. Z.div_mod_to_equations. lia. }
@@ -533,38 +518,37 @@ Section Entry.
       rewrite PG, LN in KZ.
       specialize (KZ (a - (4096 * (usp / 32768) + 512 * (usp mod 32768 / 4096) + 2146402304)) ltac:(Z.div_mod_to_equations; lia)).
       match type of KZ with ?M (Z_to_bv 64 ?x) = _ => replace x with a in KZ by lia end.
-      exact (Mr_some sp rdraw argv envp uid hw cs E FULL model _ _ KZ).
-    - (* [comment removed for export] *)
-      apply bytes_at_pointwise; rewrite ?Mem.length_le8; [lia| cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia|].
+      exact (Mr_some sp rdraw argv envp kb execfn cs E FULL model _ _ KZ).
+    - (* LPS 727298f3: argv[0]'s pointer is [Bothgt0.p0a] *)
+      rewrite PE. apply bytes_at_pointwise; rewrite ?Mem.length_le8; [lia| cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia|].
       intros j Hj. exact (Mp0 j Hj).
     - (* [comment removed for export] *)
-      intros H2. apply bytes_at_pointwise; rewrite ?Mem.length_le8; [lia| cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia|].
+      intros H2. unfold DA_Entry.e_p1a. rewrite PE.
+      apply bytes_at_pointwise; rewrite ?Mem.length_le8; [lia| cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia|].
       intros j Hj. exact (Mp1 H2 j Hj).
-    - (* [comment removed for export] *)
-      pose proof (str_bytes 0%nat ltac:(lia) ltac:(lia)) as X. cbn [firstn] in X.
+    - (* LPS 727298f3: argv[0]'s bytes at the top of the block *)
+      destruct (str_k 0%nat ltac:(lia)) as [X _]. cbn [firstn] in X.
       replace (total_arg_bytes []) with 0 in X by reflexivity.
-      unfold DA_Entry.e_p0a, DA_Entry.e_argc, DA_Entry.e_envc. rewrite Z.add_0_r in X. exact X.
+      rewrite PE. rewrite Z.add_0_r in X. exact X.
     - (* [comment removed for export] *)
       intros H2. unfold DA_Entry.e_argc in H2.
-      pose proof (str_bytes 1%nat ltac:(lia) ltac:(lia)) as X.
-      unfold DA_Entry.e_p1a, DA_Entry.e_p0a, DA_Entry.e_L0, DA_Entry.e_argc, DA_Entry.e_envc.
-      replace (total_arg_bytes (firstn 1 argv)) with (Z.of_nat (length (nth 0 argv [])) + 1) in X.
-      + match goal with |- Mem.bytes_at _ _ ?a _ => match type of X with Mem.bytes_at _ _ ?b _ => replace a with b by lia end end. exact X.
-      + generalize H2. clear. destruct argv as [|a l]; [cbn; lia| intros _]. cbn [firstn nth]. rewrite tab_cons.
-        change (firstn 0 l) with (@nil (list byte)). change (total_arg_bytes []) with 0. lia.
-    - (* [comment removed for export] *)
-      destruct (str_slack 0%nat ltac:(lia) ltac:(lia) (khas_entry _ ltac:(unfold entry_keys; cbn [In]; do 6 right; left; reflexivity))) as (sl & L & B).
-      exists sl. split; [exact L|]. cbn [firstn nth] in B. replace (total_arg_bytes []) with 0 in B by reflexivity.
-      unfold DA_Entry.e_p0a, DA_Entry.e_L0, DA_Entry.e_argc, DA_Entry.e_envc. rewrite Z.add_0_r in B. exact B.
+      destruct (str_k 1%nat ltac:(lia)) as [X _].
+      rewrite (tab_firstn1 argv ltac:(lia)) in X.
+      unfold DA_Entry.e_p1a. rewrite PE. unfold DA_Entry.e_L0.
+      match goal with |- Mem.bytes_at _ _ ?a _ => match type of X with Mem.bytes_at _ _ ?b _ =>
+        replace a with b by (unfold Bothgt0.p0a, Bothgt0.usp; lia) end end. exact X.
+    - (* LPS 727298f3: eight bytes of the block after argv[0]'s NUL *)
+      destruct (str_k 0%nat ltac:(lia)) as [_ (sl & L & B)]. exists sl. split; [exact L|].
+      cbn [firstn] in B. replace (total_arg_bytes []) with 0 in B by reflexivity.
+      rewrite PE. unfold DA_Entry.e_L0.
+      rewrite Z.add_0_r in B. exact B.
     - (* [comment removed for export] *)
       intros H2. unfold DA_Entry.e_argc in H2.
-      destruct (str_slack 1%nat ltac:(lia) ltac:(lia) (khas_entry _ ltac:(unfold entry_keys; cbn [In]; do 6 right; left; reflexivity))) as (sl & L & B).
-      exists sl. split; [exact L|].
-      unfold DA_Entry.e_p1a, DA_Entry.e_p0a, DA_Entry.e_L0, DA_Entry.e_L1, DA_Entry.e_argc, DA_Entry.e_envc.
-      replace (total_arg_bytes (firstn 1 argv)) with (Z.of_nat (length (nth 0 argv [])) + 1) in B.
-      + match goal with |- Mem.bytes_at _ _ ?a _ => match type of B with Mem.bytes_at _ _ ?b _ => replace a with b by lia end end. exact B.
-      + generalize H2. clear. destruct argv as [|a l]; [cbn; lia| intros _]. cbn [firstn nth]. rewrite tab_cons.
-        change (firstn 0 l) with (@nil (list byte)). change (total_arg_bytes []) with 0. lia.
+      destruct (str_k 1%nat ltac:(lia)) as [_ (sl & L & B)]. exists sl. split; [exact L|].
+      rewrite (tab_firstn1 argv ltac:(lia)) in B.
+      unfold DA_Entry.e_p1a. rewrite PE. unfold DA_Entry.e_L0, DA_Entry.e_L1.
+      match goal with |- Mem.bytes_at _ _ ?a _ => match type of B with Mem.bytes_at _ _ ?b _ =>
+        replace a with b by (unfold Bothgt0.p0a, Bothgt0.usp; lia) end end. exact B.
   Qed.
 End Entry.
 
@@ -577,21 +561,29 @@ Section Inst.
   Variable brk0 : word.
   Variable argv envp : list (list byte).
   Variables uid hw : word.
+  Variables mbase gid : word.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
   Variable fs : Fs.Fs.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInit.stk_inp argv envp uid gid hw kb execfn).
   Context {BL : AsanInit.BootLim}.   (* [comment removed for export] *)
   #[local] Notation CSOK HS E R FULL model :=
-    (cs_ok BSEGS BOTH (@AsanInit.blim BL) (SINV0 BPH sp rdraw brk0 argv envp uid hw) (argH0 BPH sp rdraw argv envp uid hw) fs E HS R FULL model).
+    (cs_ok BSEGS BOTH (@AsanInit.blim BL) (SINV0 BOTH BPH sp rdraw brk0 mbase argv envp uid gid hw kb execfn)
+           (argH0 sp rdraw argv envp kb execfn) fs E HS R FULL model).
+  #[local] Notation LAYa := (DA_Entry.launch_lay sp (ed_top rdraw) (kb_rseq kb) argv envp execfn).
+  (* the run's CONFIG_RSEQ flag as the plan's 0 or 1 *)
+  #[local] Notation RZ := (rseq_z (kb_rseq kb)).
 
-  Theorem entry_raw_1 : forall E R FULL model, CSOK HS_both2_1 E R FULL model -> DA_Entry.entry_raw (bv_unsigned sp) argv envp fs R FULL model.
-  Proof. intros E R FULL model HC. exact (entry_raw_of_cs sp HCEIL rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit HS_both2_1 E R FULL model HC chk_all_1 chk_entry_1 main_cells_1). Qed.
-  Theorem entry_raw_2 : forall E R FULL model, CSOK HS_both2_2 E R FULL model -> DA_Entry.entry_raw (bv_unsigned sp) argv envp fs R FULL model.
-  Proof. intros E R FULL model HC. exact (entry_raw_of_cs sp HCEIL rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit HS_both2_2 E R FULL model HC chk_all_2 chk_entry_2 main_cells_2). Qed.
-  Theorem entry_raw_3 : forall E R FULL model, CSOK HS_both2b_1 E R FULL model -> DA_Entry.entry_raw (bv_unsigned sp) argv envp fs R FULL model.
-  Proof. intros E R FULL model HC. exact (entry_raw_of_cs sp HCEIL rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit HS_both2b_1 E R FULL model HC chk_all_3 chk_entry_3 main_cells_3). Qed.
-  Theorem entry_raw_4 : forall E R FULL model, CSOK HS_both2b_2 E R FULL model -> DA_Entry.entry_raw (bv_unsigned sp) argv envp fs R FULL model.
-  Proof. intros E R FULL model HC. exact (entry_raw_of_cs sp HCEIL rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit HS_both2b_2 E R FULL model HC chk_all_4 chk_entry_4 main_cells_4). Qed.
+  Theorem entry_raw_1 : forall E R FULL model, CSOK (HS_both2_1r RZ) E R FULL model -> DA_Entry.entry_raw (LAY:=LAYa) (bv_unsigned sp) argv envp fs R FULL model.
+  Proof. intros E R FULL model HC. exact (entry_raw_of_cs sp HCEIL rdraw brk0 argv envp uid hw mbase gid kb execfn fs Hsp Hva Hve Hfit Hlau (HS_both2_1r RZ) E R FULL model HC (chk_all_1 _ (rseq_z_range _)) (chk_entry_1 _ (rseq_z_range _)) (main_cells_1 _ (rseq_z_range _))). Qed.
+  Theorem entry_raw_2 : forall E R FULL model, CSOK (HS_both2_2r RZ) E R FULL model -> DA_Entry.entry_raw (LAY:=LAYa) (bv_unsigned sp) argv envp fs R FULL model.
+  Proof. intros E R FULL model HC. exact (entry_raw_of_cs sp HCEIL rdraw brk0 argv envp uid hw mbase gid kb execfn fs Hsp Hva Hve Hfit Hlau (HS_both2_2r RZ) E R FULL model HC (chk_all_2 _ (rseq_z_range _)) (chk_entry_2 _ (rseq_z_range _)) (main_cells_2 _ (rseq_z_range _))). Qed.
+  Theorem entry_raw_3 : forall E R FULL model, CSOK (HS_both2b_1r RZ) E R FULL model -> DA_Entry.entry_raw (LAY:=LAYa) (bv_unsigned sp) argv envp fs R FULL model.
+  Proof. intros E R FULL model HC. exact (entry_raw_of_cs sp HCEIL rdraw brk0 argv envp uid hw mbase gid kb execfn fs Hsp Hva Hve Hfit Hlau (HS_both2b_1r RZ) E R FULL model HC (chk_all_3 _ (rseq_z_range _)) (chk_entry_3 _ (rseq_z_range _)) (main_cells_3 _ (rseq_z_range _))). Qed.
+  Theorem entry_raw_4 : forall E R FULL model, CSOK (HS_both2b_2r RZ) E R FULL model -> DA_Entry.entry_raw (LAY:=LAYa) (bv_unsigned sp) argv envp fs R FULL model.
+  Proof. intros E R FULL model HC. exact (entry_raw_of_cs sp HCEIL rdraw brk0 argv envp uid hw mbase gid kb execfn fs Hsp Hva Hve Hfit Hlau (HS_both2b_2r RZ) E R FULL model HC (chk_all_4 _ (rseq_z_range _)) (chk_entry_4 _ (rseq_z_range _)) (main_cells_4 _ (rseq_z_range _))). Qed.
 End Inst.

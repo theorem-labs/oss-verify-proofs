@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Disp_word.v, with its module paths and module names changed; 116 of its 154 lines of code are new or changed and 465 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Caw102A_Kit.v, with its module paths and module names changed; 281 of its 334 lines of code are new or changed and 101 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_preset, image B' (#102): check_as_written's End segment WB6 (B' 0x82058 -> ret 0x82070: `mv a0, s1`, the four
    restores, `addi sp, sp, 0x50`, `ret`) from cut_end to the text's post caw_post (Caw102B.v). Lane CawB102; re-proved by
    the #102 re-walk, B'; re-fitted to the re-keyed base by that re-walk.
@@ -14,7 +15,7 @@
    lib/Reusable/YCbqG.v 219748197d6b (carried, materialized by ajournal_x_materialize, read by Caw102B.caw_J_keep).
    WHAT CHANGED (on that batch base) and WHY: (1) the batch text has no run-word list DW (the base
    dropped cawB's c_DW; never read here); (2) it takes the ROOM COUNTS as entry premises after room_live_cf
-   (:862-863), so caw_pre now has 27 conjuncts (with the hull budget and HPOS that follow them, Caw102B.v:139-165) and is read BY NAME: fpre is the base's projection caw_pre_fpre (formerly a
+   (:862-863), so caw_pre now has 27 conjuncts (with the hull budget and HPOS that follow them, Caw102B.v:140-166) and is read BY NAME: fpre is the base's projection caw_pre_fpre (formerly a
    positional destruct); (3) THE OUTCOME (:879-888), a new post conjunct of caw_Q right after `exists r, getr regs'
    10 = w64 r /\`: for any run position i at the ENTRY state whose next events are the scratch pair and whose
    allocation is a consumer event (prh_cons_from .. i 2), r = 0 and S' is the position i + 2. cut_end's r = 1 arm

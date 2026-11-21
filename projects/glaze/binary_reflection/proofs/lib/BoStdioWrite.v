@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (both_stdio_write takes the channel-reader premise and passes it to the writev nodes). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -104,6 +105,7 @@ Theorem both_stdio_write :
   ssp_cells mem can ->
   (0 < fd < 2147483648)%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   m_halted model = None ->
   (0 <= wb <= wp)%Z -> (wp <= 0x800000000000)%Z ->
   (wp - wb = Z.of_nat (length pending))%Z ->
@@ -131,7 +133,7 @@ Theorem both_stdio_write :
 Proof.
   intros H A F regs mem model su f wb wp fd s l bufp bufsz can ret pending extra K
          HH Hwx Awf MI0 Hcov0 MC0 AVfr AVf AVp AVe
-         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hh WBP WPhi
+         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hrdr Hh WBP WPhi
          LENP LENE M30 DISJP DISJE SNW RDP RDE Hret HKnil HK.
   assert (MAX : (0 <= Z.of_nat (length pending) + Z.of_nat (length extra))%Z) by lia.
   assert (MK0 : MOK A model model) by (split; [exact MI0 | apply same_but_materialized_refl]).
@@ -195,11 +197,11 @@ Proof.
   pose proof (loop1 R su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 H A F model K
-                HH Hwx Awf HW1 MC1 AVfr SUlo SUhi Flo Fhi FD Hfd Hh Hcov0 Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
+                HH Hwx Awf HW1 MC1 AVfr SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hcov0 Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
   pose proof (loop2 R su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 H A F model K
-                HH Hwx Awf HW1 HW2 MC1 AVfr SUlo SUhi Flo Fhi FD Hfd Hh Hcov0 Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
+                HH Hwx Awf HW1 HW2 MC1 AVfr SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hcov0 Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
   pose proof (LM_refl su mem1) as LM1.
   destruct (Z.eq_dec wb wp) as [EQ|NEQ].
   - (* [comment removed for export] *)
@@ -239,7 +241,7 @@ Proof.
       eapply (HW1 H A F regs1 (0xf3694 : word) mem1 mdlA W_f36a0 fd
                 (Z_to_bv 64 (su - 88)) s l (x0 :: extra') K
                 HH Hwx Awf (proj1 MKA) (MOK_cover H A model Hcov0 mdlA MKA) MC1 F_f36a0 E_f36a0
-                (MOK_halted A model Hh mdlA MKA) ltac:(rewrite (MOK_fds A model mdlA MKA); exact Hfd) FD
+                (MOK_halted A model Hh mdlA MKA) ltac:(rewrite (MOK_fds A model mdlA MKA); exact Hfd) ltac:(rewrite (MOK_rdr A model mdlA MKA); exact Hrdr) FD
                 R17 R10 R11 R12 M88);
         [ | | apply hid_off_range_avoids; [u_norm; lia | u_norm; eapply hid_off_sub; [exact AVfr | lia | lia]]
         | | | | | | exact HKnil | ].
@@ -293,7 +295,7 @@ Proof.
     eapply (HW2 H A F regs1 (0xf3694 : word) mem1 mdlA W_f36a0 fd
               (Z_to_bv 64 (su - 104)) (Z_to_bv 64 wb) (Z_to_bv 64 (wp - wb)) s l pending extra K
               HH Hwx Awf (proj1 MKA) (MOK_cover H A model Hcov0 mdlA MKA) MC1 F_f36a0 E_f36a0
-              (MOK_halted A model Hh mdlA MKA) ltac:(rewrite (MOK_fds A model mdlA MKA); exact Hfd) FD
+              (MOK_halted A model Hh mdlA MKA) ltac:(rewrite (MOK_fds A model mdlA MKA); exact Hfd) ltac:(rewrite (MOK_rdr A model mdlA MKA); exact Hrdr) FD
               R17 R10 R11 R12 M104);
       [ | | | | | apply hid_off_range_avoids; [u_norm; lia | u_norm; eapply hid_off_sub; [exact AVfr | lia | lia]]
       | | | | | | | | exact HKnil | ].

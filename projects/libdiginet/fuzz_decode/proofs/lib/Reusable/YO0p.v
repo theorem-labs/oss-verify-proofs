@@ -2,12 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO0p.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YO0p.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YO0p.v for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run_segments lift (RomStableK, sys_rob in node_ok)); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.Reusable Require Import YK11 YK0s YK0i YK15 YM06 YM02 YP09.
+From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.Reusable Require Import RomBase.
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.Reusable Require Import YO0i YO0f YO0x YO0d.
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.Reusable Require Import YM05.
 Import ListNotations.
@@ -126,11 +128,11 @@ apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i.
 destruct (Hbits i) as [Hi|Hi]; (eapply STEP; [| | apply Hc]); rewrite Hi; auto.
 +   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb).
 apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i. eapply STEP; [exact (Hb i) | rewrite (Hb i); exact Hok | apply Hc].
-+   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; exact Hcut].
++   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; [exact Hcut | exact (proj2 (proj2 Hn))]].
 apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i. eapply STEP; [exact (Hall i) | rewrite (Hall i); exact Ho1 | apply Hc].
-+   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; exact Hcut].
++   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; [exact Hcut | exact (proj2 (proj2 Hn))]].
 apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i. eapply STEP; [exact (Hall i) | rewrite (Hall i); exact Ho1 | apply Hc].
-+   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; exact Hcut].
++   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; [exact Hcut | exact (proj2 (proj2 Hn))]].
 apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i. eapply STEP; [exact (Hall i) | rewrite (Hall i); exact Ho1 | apply Hc].
 +   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb).
 apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i. eapply STEP; [exact (Hb i) | rewrite (Hb i); exact Hok | apply Hc].

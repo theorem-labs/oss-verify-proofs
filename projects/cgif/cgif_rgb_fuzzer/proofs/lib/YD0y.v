@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the post-header section and tra_post_P take the mmap base, break, entry draw, valid_launch and the launch premise entry_launch_ok_va, with the layout environment at the entry draw's top, the run's CONFIG_RSEQ flag and execfn string, and pass them to run_Q; tail_at carries the launch's channel-reader flag, which fdchan asks for at the revision). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -53,14 +54,19 @@ Variable B : asyms.
 Hypothesis HB : TraSyms B.
 Hypothesis ARL : AR_laws trasegs B.
 Hypothesis RUNQ : run_Q_tfa B.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv [a0; p].
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hvfs : valid_fs (in_fs inp).
+Hypothesis Hvl : valid_launch inp.
+(* #38: the entry layout is keyed on the run's draw, so the launch premise is
+   threaded alongside the valid_* group, in the position the ported tfa
+   interfaces take it (YD0h.v:146-153). *)
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
 Hypothesis RUNIV : forall data, fs_lookup (in_fs inp) p = Some data -> rrfc_universe B (payload_len data).
-#[local] Notation EL := (YQ0a.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation EL := (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
 Let HWXi : wx_segs_nowrap trasegs := Hwx_tfa.
@@ -84,14 +90,14 @@ lazymatch type of HS with st_ok _ _ _ (restrict _ ?msx) => exists msx end; eexis
 Qed.
 Theorem tra_post_P_at : forall ws (W : world trasegs) ms md ly S data (pb : sptr) cap,
 fs_lookup (in_fs inp) p = Some data -> 6 + config_len data <= dlen data ->
-tail_at B S_P (edset (havoc EL K_M1 ws) 2 data) sp inp a0 p data W ms md ly S pb cap ->
+tail_at B S_P (edset (havoc EL K_M1 ws) 2 data) sp inp rnd a0 p data W ms md ly S pb cap ->
 srealizes trasegs (mkCfg ms md)
 (if payload_len data =? 0 then RUNS data (in_fs inp)
 else t_alt2 (ex (if count_mode data then 0 else 2) (in_fs inp)) (RUNS data (in_fs inp))).
 Proof.
 intros ws W ms md ly S data pb cap Hlk Hok HT.
-pose proof (tra_to_P B ARL sp inp xw xd a0 p Hsp Hva Hve ws W ms md ly S data pb cap Hok HT) as [HSP E60].
-destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hminv).
+pose proof (tra_to_P B ARL sp inp rnd xw xd a0 p Hsp Hve ws W ms md ly S data pb cap Hok HT) as [HSP E60].
+destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hcr & Hminv).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YN05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (E' := edset (havoc EL K_M1 ws) 2 data) in *. set (buf := sptr_addr B ly pb) in *.
@@ -142,7 +148,7 @@ destruct c0; destruct (Z.lt_ge_cases a (usp - 128)).
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms2) (ss_mem sQ0)); [exact HM4 | right; left; reflexivity | exact E3_0 | lia | lia | cbn; lia].
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms2) (ss_mem sQ1)); [exact HM4 | left; reflexivity | exact E3_0 | lia | lia | cbn; lia].
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms2) (ss_mem sQ1)); [exact HM4 | right; left; reflexivity | exact E3_0 | lia | lia | cbn; lia]. }
-apply (RUNQ sp inp xw xd ws W ms2 _ ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk (RUNIV data Hlk) ltac:(unfold dlen; lia)); [| exact E60].
+apply (RUNQ sp inp mbase brk rnd xw xd ws W ms2 _ ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hvl Hlau Hlk (RUNIV data Hlk) ltac:(unfold dlen; lia)); [| exact E60].
 split; [exact HS4|]. split; [exact E3_41|]. split; [exact E3_42|]. split.
 { eapply (runs_at_frame E3 (ss_facts (sQ c0 (Z.of_nat (calls data)))) (ss_mem (if c0 then ssP0 else ssP1)));
 [exact (st_ok_facts_ok trasegs E3 _ _ HS4) | | exact HFr | rewrite E3_0; lia | exact HR].
@@ -152,12 +158,13 @@ split; [exact HAI2|]. split.
 rewrite E3_0. intros a Ha. exact (apresent_some' _ _ _ (Hwin a Ha)). }
 split; [exact HTOP|]. split; [exact Hbl|]. split; [exact Hnev|]. split; [exact Hcap|]. split; [unfold dlen; lia|]. split.
 { unfold dlen. apply (blk_of_frame_r _ _ _ _ _ buf (Z.of_nat (length data)) data usp HFr WOK E3_0 Ulo); [intros a Ha; apply NIMG; lia | lia | lia | exact HBLK]. }
-split; [rewrite wvb_fs'; exact Hfs |]. split; [rewrite wvb_fds'; exact Hfds | exact Hminv].
+split; [rewrite wvb_fs'; exact Hfs |]. split; [rewrite wvb_fds'; exact Hfds |].
+split; [rewrite YK05.wvb_channel_reader; exact Hcr | exact Hminv].
 Qed.
 End f.
 Theorem tra_post_P (B : asyms) (HB : TraSyms B) (ARL : AR_laws trasegs B) (RUNQ : run_Q_tfa B) : post_P_tfa B.
 Proof.
-intros sp inp xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk HRU Hok HT.
-exact (tra_post_P_at B HB ARL RUNQ sp inp xw xd a0 p Hargv Hsp Hva Hve Hvfs ltac:(intros d Hd; rewrite Hlk in Hd; injection Hd as <-; exact HRU) ws W ms md ly S data pb cap Hlk Hok HT).
+intros sp inp mbase brk rnd xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hvl Hlau Hlk HRU Hok HT.
+exact (tra_post_P_at B HB ARL RUNQ sp inp mbase brk rnd xw xd a0 p Hargv Hsp Hva Hve Hvfs Hvl Hlau ltac:(intros d Hd; rewrite Hlk in Hd; injection Hd as <-; exact HRU) ws W ms md ly S data pb cap Hlk Hok HT).
 Qed.
 End e.

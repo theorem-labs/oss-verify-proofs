@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the tag bound of get_object as a literal for lia). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCt.
 From OSSVerify.Proofs.openssl.ct.lib.Spec Require Import Prelim Malloc Prog LibProg CtSizes CtWire CtModel ApBase ApState ApErr ApParse ApBridge.
@@ -415,6 +416,8 @@ Section Proofs.
     pose proof (go_ret_cases d op len) as RC. cbv zeta in RC. fold g in RC.
     pose proof (go_cls_cases d op len) as CC. cbv zeta in CC. fold g in CC.
     pose proof (go_tag_range d op len) as TG. cbv zeta in TG. fold g in TG. unfold INT_MAX in TG.
+    (* the bound as a literal: [INT_MAX] has two definitions in scope (Spec/ApParse, Spec/PrintfModel) *)
+    assert (TG0 : 0 <= go_tag g <= 2147483647) by exact TG.
     unfold tl_saved in FR. unfold MallocRep.wz in *.
     pose proof (munch_refl (@nil (Z * Z)) mA) as MU. pose proof (wmono_refl ctpsegs mA) as WM.
     (* [comment removed for export] *)
@@ -502,6 +505,8 @@ Section Proofs.
     pose proof (go_ret_cases d op len) as RC. cbv zeta in RC. fold g in RC.
     pose proof (go_cls_cases d op len) as CC. cbv zeta in CC. fold g in CC.
     pose proof (go_tag_range d op len) as TG. cbv zeta in TG. fold g in TG. unfold INT_MAX in TG.
+    (* the bound as a literal: [INT_MAX] has two definitions in scope (Spec/ApParse, Spec/PrintfModel) *)
+    assert (TG0 : 0 <= go_tag g <= 2147483647) by exact TG.
     unfold tl_saved in FR. cbn [app] in FR. unfold MallocRep.wz in *.
     cut_hd HPIC HINF (PIC + 1). cut_hd HPIC HCST (PIC + 2). rename HPIC into HOLEN.
     pose proof (munch_refl [(bv_unsigned sp + OFS - 144, bv_unsigned sp + OFS); (PIC, PIC + 10); (PPC, PPC + 8);
@@ -872,6 +877,8 @@ Section Proofs.
         pose proof (go_ret_cases d op len) as RC. cbv zeta in RC. fold g in RC.
         pose proof (go_cls_cases d op len) as CC. cbv zeta in CC. fold g in CC.
         pose proof (go_tag_range d op len) as TG. cbv zeta in TG. fold g in TG. unfold INT_MAX in TG.
+        (* the bound as a literal: [INT_MAX] has two definitions in scope (Spec/ApParse, Spec/PrintfModel) *)
+        assert (TG0 : 0 <= go_tag g <= 2147483647) by exact TG.
         pose proof (get_object_bounds d op len ltac:(eapply Forall_impl; [| exact DF]; cbv beta; intros; lia) LEN0) as GB1. cbv zeta in GB1. fold g in GB1. rewrite EG in GB1.
         destruct GB1 as (GB1 & GB2 & GB3).
         assert (RB : 0 <= go_ret g < 64) by (destruct RC as [ER|[ER|[ER|ER]]]; rewrite ER; lia).

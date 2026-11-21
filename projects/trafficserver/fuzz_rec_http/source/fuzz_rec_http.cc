@@ -1,3 +1,4 @@
+// Modified by Theorem Labs, 2026-11-14: return -1, not 1, for an input outside the length limits.
 /** @file
 
    fuzzing src/records/HdrsUtils.cc
@@ -29,7 +30,7 @@ extern "C" int
 LLVMFuzzerTestOneInput(const uint8_t *input_data, size_t Size)
 {
   if (Size < kMinInputLength || Size > kMaxInputLength) {
-    return 1;
+    return -1;
   }
 
   std::string alpn_input((char *)input_data, Size);

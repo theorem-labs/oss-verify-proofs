@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the call chain `gch` taken from proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v's `rt_ch`, with fuzz_grant's module paths, for the phases of libreac/fuzz_grant's entry function LLVMFuzzerTestOneInput; the rest of the file is new. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntryDefs.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantEntryDefs.v as it
-   stands on a working branch 552860c636687 and on a working branch 5651bf66924 (blob dd53d45a240 on both, with the
+   stands on a working branch and on a working branch (blob dd53d45a240 on both, with the
    current generation's AB01 1e6f4323d1e; the same bytes the port was first made from). Every definition
    name is image A's, so that the phase files need no
    renaming; every number is image B's own, read from fuzz_grant.asan-ubsan (entry 0x80a3c, 1422 instructions).
@@ -66,7 +67,7 @@ Open Scope Z_scope.
 (* ---- the function's stack, its frame on the side stack, and its event budget ---- *)
 
 (* The machine stack the call needs, the event budget and the live-bytes budget: image
-   B's contract names them (GrantBContracts.v:277-279), so the contract's numbers are
+   B's contract names them (GrantBContracts.v:278-280), so the contract's numbers are
    the ones this walk uses. *)
 Definition GE_STK : Z := STK_LLVMFuzzerTestOneInput.
 Definition GE_EV : Z := EV_LIB_B.
@@ -76,7 +77,7 @@ Definition GE_CID : Z := 4.
 Definition GE_FRAME : Z := 832.
 Definition GE_NSH : nat := 104%nat.
 (* The driver's static empty buffer, which it passes when the input is empty. Image B's
-   is 0x5d7fe0 (GrantBContracts.v:273 A_EMPTY_B), NOT image A's 0x5d71a0. *)
+   is 0x5d7fe0 (GrantBContracts.v:274 A_EMPTY_B), NOT image A's 0x5d71a0. *)
 Definition GE_EMPTY : Z := A_EMPTY_B.
 
 (* ---- the offsets of the frame's objects, from image B's shadow stores at 0x80b2c..0x80cd0 ---- *)
@@ -135,7 +136,7 @@ Definition GP_ret : Z := 0x358.          (* 0x80d94, the `ret`                  
 (* The call sites whose call trace the wrappers' contracts ask for: the return address
    of each call of the memory-checking runtime's wrapper for malloc (0x80db4, 0x813d0,
    0x818b4) and of its wrapper for free (0x81808, 0x81940, 0x81da8), as offsets in
-   image B's listing. GrantBContracts.v:284-285 states them, and
+   image B's listing. GrantBContracts.v:285-286 states them, and
    AF_LLVMFuzzerTestOneInput = 0 (GrantList.v:11), so the contract's offsets from the
    function's first slot and these offsets from the listing's base are the same. *)
 Definition GE_MSITES : list Z := TB_LLVMF_MSITES.
@@ -182,7 +183,7 @@ Definition GE_NEED : Z := GE_A3 + mo_free MT.
 
 (* The call chain this call hands to the functions it calls, as cgif's walk builds it
    (lib/A/ACf5.v:128-131) and as image B's contract states it
-   (GrantBContracts.v:1901): the caller's frame is on the chain when it fits under the
+   (GrantBContracts.v:1902): the caller's frame is on the chain when it fits under the
    layout's top. *)
 Definition gch (cx : ecx) : list (Z * Z * Z) :=
   if spZ (c_regs cx) + 16 <? ly_top (c_ly cx)

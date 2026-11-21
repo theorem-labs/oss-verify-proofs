@@ -2,14 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-10: the addresses, frame shape and inlined-expected_value statement of reac-repacer/fuzz_uci's
-   check_value in image A, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_iface.v and crtA_loop_stmt.v
-   (origin/ossv/recipes 88154566652a); the expected_value statement is the footprint twin of the plain walk's
+   check_value in image A, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_iface.v and crtA_loop_stmt.v;
+   the expected_value statement is the footprint twin of the plain walk's
    continuation form (lib/Prog/check_value.v, Section Ev, ev_block / KFIN). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCvIface.v, with its module paths and addresses changed; 9 of its 101 lines of code are new or changed and 11 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* UciCvBIface: what the pieces of the image-B walk of check_value (fuzz_uci.asan-ubsan 0x7f6b0 = uci_sigma
    US_check_value) share, for the caller-journal statement lib/B/Prog/check_value_cg.v. The image-B twin of
-   lib/A/Prog/UciCvIface.v's form (itself in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_iface.v at recipes
-   commit 88154566652a), with image B's offsets, registers and UBSan checks.
+   lib/A/Prog/UciCvIface.v's form (itself in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_iface.v at recipes),
+   with image B's offsets, registers and UBSan checks.
 
    FORM: check_value's own body runs as footprint runs (lib/Lib/ExecF.v evtF, stepped by lib/Lib/StepF.v), carried
    into SRr by lib/B/Prog/LeafCgFacts.v bridge_evtF_stmt_YA0n; each call is cut by its callee's contract.

@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/TxGlue.v, with its module paths and module names changed; 647 of its 739 lines of code are new or changed and 330 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/U/Prog/WriterRet.v, with its module paths and module names changed; 702 of its 749 lines of code are new or changed and 692 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/pj_write.v, with its module paths and module names changed; 522 of its 562 lines of code are new or changed and 709 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step Tac Bytes ZBridge.
@@ -386,8 +387,8 @@ Lemma rk_auxv_keep : forall sec lo mem mem', auxv_pre B sec lo mem ->
   (forall a, lo <= a < 2 ^ 63 -> mbyte (ms_segs B) mem' a = mbyte (ms_segs B) mem a) ->
   auxv_pre B sec lo mem'.
 Proof.
-  intros sec lo mem mem' (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) KL KH.
-  exists av, ar.
+  intros sec lo mem mem' (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) KL KH. pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
+  exists rs, av, ar. unfold AUXV_RAND_K.
   split; [eapply rk_word_keep; [exact H1|]; intros k Hk; replace (ms_libc B + 8 + k) with (ms_libc B + 8 + k) by lia;
           apply KL; exact Hk|].
   split; [intros k Hk; eapply rk_word_keep; [apply H2; exact Hk|]; intros j Hj; apply KH; lia|].

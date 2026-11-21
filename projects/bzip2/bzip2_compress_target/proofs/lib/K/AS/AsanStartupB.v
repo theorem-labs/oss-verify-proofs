@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up over the launch input ProcInput, the CONFIG_RSEQ flag and the channel-reader premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -34,63 +35,72 @@ Proof. intros ? ? ? ? ? ? ?. intros id args cs csa csb E R FULL model TA TB _ H.
 
 (* [comment removed for export] *)
 Section XAll.
+  Variable apc : N.
   Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variable brk0 : word.
-  Variables argv envp : list (list byte).
+  Variables brk0 mbase : word.
+  Variable inp : ProcInput.
   Variable FS0 : Fs.Fs.
   Hypothesis Hsp : valid_sp sp.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Variables uid hw : word.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hapc : Z.of_N apc = a_entry ASAN_B.
+  Hypothesis Hbrk : valid_brk ASEGS brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Huid : valid_id (in_uid inp).
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hrdr : in_channel_reader inp = true.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
   Variable SINV : env -> (word -> option byte) -> Prop.
-  Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 APH sp rdraw brk0 argv envp uid hw E M.
-  Hypothesis SINV_frame : forall E M M', (forall a, argH0 APH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+  Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 APH apc sp rdraw brk0 mbase inp E M.
+  Hypothesis SINV_frame : forall E M M', (forall a, argH0 sp rdraw inp E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
   Hypothesis SINV_agree : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M.
 
-  Theorem asan_node_x_sound_all : forall x, x_stmt ASEGS ASAN_B NX0 AsanInit.LIMIT SINV (argH0 APH sp rdraw argv envp uid hw) FS0 x.
+  (** #108: the plan's CONFIG_RSEQ flag is the run's own, [rseq_z (kb_rseq (in_kernel inp))] *)
+  Let RZ := rseq_z (kb_rseq (in_kernel inp)).
+
+  Theorem asan_node_x_sound_all : forall x,
+    x_stmt ASEGS ASAN_B NX0 AsanInit.LIMIT RZ SINV (argH0 sp rdraw inp) FS0 x.
   Proof.
-    pose proof (argH0_high APH sp rdraw argv envp uid hw Hsp Hva) as AH. pose proof (argH0_agree APH sp rdraw argv envp uid hw) as AA.
+    assert (AH : forall E a, argH0 sp rdraw inp E a = true -> CEIL <= bv_unsigned a)
+      by (intros E a H; eapply argH0_high; first [eassumption | exact asan_img_facts]).
+    pose proof (argH0_agree sp rdraw inp) as AA.
     intros [ | | | | | | | | | | | ].
-    - exact (asan_node_x_sound_XIMemset NX0 AsanInit.LIMIT SINV _ AH AA SINV_frame SINV_agree FS0).
-    - exact (asan_node_x_sound_XIMemcpy NX0 AsanInit.LIMIT SINV _ AH AA SINV_frame SINV_agree FS0).
-    - exact (asan_node_x_sound_XMemset NX0 AsanInit.LIMIT SINV _ AH AA SINV_frame SINV_agree FS0).
-    - exact (asan_node_x_sound_XMemcpy NX0 AsanInit.LIMIT SINV _ AH AA SINV_frame SINV_agree FS0).
-    - exact (asan_node_x_sound_XMemIsZero NX0 AsanInit.LIMIT SINV _ AH AA SINV_frame SINV_agree FS0).
-    - exact (node_x_sound_XEnvScan_asan_gen sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV SINV_SINV0 SINV_frame).
-    - exact (node_x_sound_XPnScan_asan_gen sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV SINV_SINV0 SINV_frame SINV_agree).
+    - exact (asan_node_x_sound_XIMemset NX0 AsanInit.LIMIT RZ SINV _ AH AA SINV_frame SINV_agree FS0).
+    - exact (asan_node_x_sound_XIMemcpy NX0 AsanInit.LIMIT RZ SINV _ AH AA SINV_frame SINV_agree FS0).
+    - exact (asan_node_x_sound_XMemset NX0 AsanInit.LIMIT RZ SINV _ AH AA SINV_frame SINV_agree FS0).
+    - exact (asan_node_x_sound_XMemcpy NX0 AsanInit.LIMIT RZ SINV _ AH AA SINV_frame SINV_agree FS0).
+    - exact (asan_node_x_sound_XMemIsZero NX0 AsanInit.LIMIT RZ SINV _ AH AA SINV_frame SINV_agree FS0).
+    - eapply node_x_sound_XEnvScan_asan_gen; eassumption.
+    - eapply node_x_sound_XPnScan_asan_gen; eassumption.
     - apply x_sound_layout.
-    - exact (asan_node_x_sound_XIStrncpy NX0 AsanInit.LIMIT SINV _ AH AA SINV_frame SINV_agree FS0).
-    - exact (asan_node_x_sound_XPopFree NX0 AsanInit.LIMIT SINV _ AH AA SINV_frame SINV_agree FS0).
-    - exact (asan_node_x_sound_XSniff NX0 AsanInit.LIMIT SINV _ FS0 asan_wx asan_in_hull asan_hull_ok AH SINV_frame).
+    - exact (asan_node_x_sound_XIStrncpy NX0 AsanInit.LIMIT RZ SINV _ AH AA SINV_frame SINV_agree FS0).
+    - exact (asan_node_x_sound_XPopFree NX0 AsanInit.LIMIT RZ SINV _ AH AA SINV_frame SINV_agree FS0).
+    - exact (asan_node_x_sound_XSniff NX0 AsanInit.LIMIT RZ SINV _ FS0 asan_wx asan_in_hull asan_hull_ok AH SINV_frame).
     - eapply asan_node_x_sound_XHeapSort; eassumption.
   Qed.
 End XAll.
 
 Section Startup.
   (* [comment removed for export] *)
+  Variable apc : N.
   Variable sp : word.
   Variable rdraw : EntryDraw.
   Variables brk0 mbase : word.
-  Variables argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InputStream.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
+  Variable inp : ProcInput.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk ASEGS brk0.
   Hypothesis Hmb : valid_mmap_base mbase.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
-  Hypothesis Huid : valid_id uid.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Huid : valid_id (in_uid inp).
 
-  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
-  #[local] Notation E0a := (E0 APH sp rdraw brk0 argv envp uid hw).
+  #[local] Notation SINV := (SINV0 APH apc sp rdraw brk0 mbase inp).
+  #[local] Notation argH := (argH0 sp rdraw inp).
+  #[local] Notation E0a := (E0 sp rdraw brk0 inp).
   #[local] Notation LIM := AsanInit.LIMIT.
+  #[local] Notation RZ := (rseq_z (kb_rseq (in_kernel inp))).
+  #[local] Notation fs := (in_fs inp).
 
   (* [comment removed for export] *)
   Variable IT0 : itab.
@@ -101,7 +111,7 @@ Section Startup.
   Variable startup_shape : shape.
   Variables KC0 BFUEL FUEL : nat.
   Hypothesis startup_cert :
-    check ASEGS IT0 ASAN_B NX0 LIM XN0 XE0 XB0 HS_asan KC0 BFUEL FUEL None asan_b_init startup_plan = COk startup_shape.
+    check ASEGS IT0 ASAN_B NX0 LIM RZ XN0 XE0 XB0 HS_asan KC0 BFUEL FUEL None (asan_b_init RZ) startup_plan = COk startup_shape.
 
   (* [comment removed for export] *)
   Variable HOLES : nat -> env -> Fs.Fs -> TSet.
@@ -109,10 +119,9 @@ Section Startup.
   Hypothesis HOLES_nil : forall h E fs', HOLES h E fs' [].
   Hypothesis HOLES_sound : holes_stmt ASEGS ASAN_B NX0 LIM HS_asan SINV argH HOLES fs.
 
-  Let AH := argH0_high APH sp rdraw argv envp uid hw Hsp Hva.
-  Let AA := argH0_agree APH sp rdraw argv envp uid hw.
-  Let SF := SINV0_frame APH sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree APH sp rdraw brk0 argv envp uid hw.
+  Let AA := argH0_agree sp rdraw inp.
+  Let SF := SINV0_frame APH apc sp rdraw brk0 mbase inp.
+  Let SA := SINV0_agree APH apc sp rdraw brk0 mbase inp.
 
   (* [comment removed for export] *)
 End Startup.

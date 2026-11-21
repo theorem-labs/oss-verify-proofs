@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ASan malloc invariant's added conjunct named in its destruct patterns and kept; the syscall-frame obligation's new cases closed by RomBase's tactics). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -13,7 +14,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi Syscall.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Madvise.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import SymState SymStep SymSoundA SymSoundB SymSoundL SymSoundM SymSoundR SymComplete SymCall SymExit Glue3 SymHeap.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A Require Import Restrict BackingAlgebra Virt StepA SoundA LedgerA SysCallA MmapA MmapFixedA MmapFixedA2 MmapNodesA MadviseSpecA.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
@@ -286,7 +287,7 @@ Qed.
 Lemma MI_dontneed : ltac2:(tb__ "0|4|
 S3aS13S1Q40M0A1M1A1M2G2G1G1S52Vsegs;R5R4A3S25G1R4A2G1S23G1R1R6A3S23G1R2R8A3F_;Fp;G1S23G1R1R8A3S3S12S38S0G0R7A2M3S9G3S0G0R6A2A2R2A3S14A3S23G1R3R9A3F_;F_;Fp;S52Vsegs;S49R9R6R5A3R7A3F_;F_;F_;F_;Fk;Fa;Ftp';Ftp;Fmd;").
 Proof using .
-  intros md tp tp' a k (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm) HT' Hs Ho.
+  intros md tp tp' a k (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd) HT' Hs Ho.
   apply (MI_intro segs).
   - exact HW.
   - exact HT'.
@@ -297,12 +298,13 @@ Proof using .
   - exact Hivs.
   - exact Hlm.
   - intros p Hp. exact (Htm p (Hs p Hp)).
+  - exact Hrd.
 Qed.
 
 Lemma mat_equiv_dontneed : ltac2:(tb__ "0|4|
 S3aS13S1Q40M0A1M1A1G1G1S52Vsegs;R4R3A3G1S4SaS0G0R4A2M2S0G0R1A2M3A2SbG3S9G2S0G0R3A2A2A2A2S3S12S3bS3cR2A1S39R7A1A2S14A3F_;Fx;S53Vsegs;R5R6S49R6R4R3A3A4F_;F_;Fk;Fa;Ftp;Fmd;").
 Proof using .
-  intros md tp a k HMI Hlz. pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm).
+  intros md tp a k HMI Hlz. pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd).
   split; [|split].
   - eexists. apply dontneed_next_eq.
   - apply paid_dontneed_keep; [exact HT | exact Hmat | exact Hsub | exact (tp_inside_lazy md tp a k Htm Hlz)].
@@ -315,7 +317,7 @@ Proof using .
   intros rho rho' tp tp' A tr ms md tr' a n r e nx Hsp Hal Hnl Hend Hlz HT' Hs Ho Hdisj Hxs Hag' Hnx He Hev.
   pose proof (smatch_pendingA_halted segs _ _ _ _ _ _ Hsp) as Hh.
   pose proof (smatch_pendingA_MI segs _ _ _ _ _ _ Hsp) as HMI.
-  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm).
+  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd).
   pose proof Hsp as (Hspv & _ & Hwf & Hsh & Hhz). rewrite virt_unfold in Hspv.
   pose proof (urange a) as Ra. pose proof (urange n) as Rn. pose proof page_size_pos as Pps.
   set (lo := bv_unsigned a) in *. set (hi := lo + bv_unsigned n) in *.
@@ -463,7 +465,7 @@ Proof using H10 H11 H12 H17 Helen Hmod Hn.
   intros tr ms md Hsp Hk. destruct (madvise_coreA HJ tr ms md Hsp Hk) as (Hoo & Hinv & _ & Hpost).
   pose proof (smatch_pendingA_pending segs _ _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
   split.
-  - eapply Hokp; [exact Hk | exact Hp | exact Hoo].
+  - eapply Hokp; try exact Hk; try exact Hp; try exact Hoo; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]).
   - intros w' Hw. rewrite (Hinv w' Hw). exact Hpost.
 Qed.
 
@@ -539,7 +541,7 @@ Qed.
 Lemma paid_dontneed_forgetA : ltac2:(tb__ "0|6|
 S3aS13S1Q40M0A1M1A1G1G1S52Vsegs;R4R3A3G1S4SaS0G0R4A2M2S0G0R1A2M3A2SbG3S9G2S0G0R3A2A2M4A2A2S3S12S3bS3cR2A1S39R7A1A2S14A3F_;Fx;S3S7S9S51S49R6R4R3A3S5dG2G4R5A3A2SeS37S34G1S19S38S0G0R5A2M5S9G5G2A2R1A3A1Lp;R5A2A2A2S51R6R5A2A3F_;F_;Fk;Fa;Ftp;Fmd;").
 Proof using .
-  intros md tp a k (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm) Hlz.
+  intros md tp a k (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd) Hlz.
   apply paid_dontneed_forget; [exact HT | exact Hmat | exact Hsub | exact (tp_inside_lazy md tp a k Htm Hlz)].
 Qed.
 
@@ -547,7 +549,7 @@ Lemma paid_dontneed_forget_all : ltac2:(tb__ "0|9|
 S3aS13S1Q40M0A1M1A1G1G1S52Vsegs;R4R3A3S3S7ScS0G0R3A2S37A2Z0M2A3M3G3SaS9S0G0R5A2S0G0R4A2A2SdZ2Z40A2A2G1S4SaS0G0R7A2M4S0G0R1A2M5A2SbG5S9G4S0G0R6A2A2A2A2S3S12S3bS3cR2A1S39RaA1A2S14A3F_;Fx;G1S3S7ScG5S37A2G2A3S4SaS0G0R9A2M6S0G0R2A2M7A2SbG7S9G6S0G0R8A2M8A2A2A2S23G1R3RbA3F_;F_;Fp;S3S7S51S49RaR8R7A3S5dG8S9G8G4A2R9A3A2S10S51RaR9A2G4A2A3F_;F_;F_;F_;F_;F_;Fk;Fa;Ftp;Fmd;").
 Proof using .
   intros md tp a k HMI Hal Hkl Hend Hlz Hall. pose proof (paid_dontneed_forgetA md tp a k HMI Hlz) as E.
-  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm).
+  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd).
   rewrite (tp_inside_count tp a k HT (fun p Hp => proj1 (Htm p Hp)) Hal Hkl Hend Hall) in E.
   pose proof page_size_pos as Pps. pose proof (Z.div_mod (bv_unsigned k) page_size ltac:(lia)) as D. rewrite Hkl in D. lia.
 Qed.

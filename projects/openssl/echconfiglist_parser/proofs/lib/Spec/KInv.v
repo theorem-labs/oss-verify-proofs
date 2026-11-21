@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's vDSO/vvar pair is in the reserved ledger: kl_resv states the ledger as a prefix of it, kl_resv_top also admits reserved entries above the brk guard, and new kl_vdso_in, kl_vdso_above and kl_vdso_disj place the pair, as KLink's KLB does). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -190,8 +191,15 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
   kl_minv : minv mo;
   kl_halt : m_halted mo = None;
   kl_wf : vmwf (vm_maps (m_vmmaps mo));
-  kl_resv : ld_resv L = map wwZ (vm_reserved (m_vmmaps mo));
-  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo));
+  (* the revision's [init_model] appends the launch's vDSO/vvar pair to the reserved ledger
+     ([State.vm_reserved_init_model]), so the ledger is a PREFIX of [vm_reserved]; the tail
+     is the pair, placed by [kl_vdso_in], [kl_vdso_above] and [kl_vdso_disj] below *)
+  kl_resv : exists lo hi, vm_reserved (m_vmmaps mo) = lo ++ hi /\ ld_resv L = map wwZ lo;
+  (* see [KLink.kb_resv_top]: the revision's reserved ledger also holds the
+     launch's vDSO/vvar pair, which sits above the brk guard *)
+  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) ->
+      ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo))
+      \/ bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * PGSZ <= elo e;
   kl_start : 0 < bv_unsigned (vm_start_brk (m_vmmaps mo))
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) mod PGSZ = 0
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) <= bv_unsigned (vm_brk (m_vmmaps mo))
@@ -221,7 +229,17 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
           /\ (forall b l k, In (b, l, k) (ld_metas L) -> b + mmap_len l <= cur \/ cur + 2 * PGSZ <= b)
       | BPLive => exists b l, ld_brkreg L = Some (b, l) /\ bv_unsigned (vm_brk (m_vmmaps mo)) = b + l /\ pbrk = b + l
       | BPDead => True
-      end }.
+      end;
+  (* the pair is in the reserved ledger: true at the launch, and no step rewrites
+     [vm_reserved], [m_kernel], [vm_mmap_base] or [vm_init_sp] *)
+  kl_vdso_in : incl (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (vm_reserved (m_vmmaps mo));
+  (* the pair sits above the brk guard *)
+  kl_vdso_above : forall e, In e (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) ->
+      bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * PGSZ <= elo e;
+  (* no tracked mapping meets a reserved entry: every grant tests [region_free] over
+     [vm_reserved ++ vm_maps] *)
+  kl_vdso_disj : forall r, In r (vm_reserved (m_vmmaps mo)) ->
+      forall e, In e (vm_maps (m_vmmaps mo)) -> edisj e r }.
 
 (* [comment removed for export] *)
 Definition frame_ok (G : PState -> Model -> Prop) : Prop :=

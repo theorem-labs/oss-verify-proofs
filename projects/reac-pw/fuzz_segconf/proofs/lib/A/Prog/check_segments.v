@@ -9,11 +9,12 @@
    window, so the memory below the frame stays the entry's (kept_out) and the read-only bytes strcmp reads
    (rt_rom_view) follow from the statement's arodata_okP. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 205 of its 304 lines of code are new or changed and 1392 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk of check_segments on fuzz_segconf.asan (image A, 0x8704c, 79 instructions), part 2: the loop
    0x870f8 .. 0x87114 (a0 := c + 356 i, a1 := m + 256 i, the strcmp wrapper, `bnez a0`, the three cursors,
    `bnez s3`), proved by induction on the segments left, and the theorem check_segments_walk. The entry stretch, the
    exit and the cut points are part 1 (check_segments_s1.v). The call is stepped as fuzz_command's released walk of
-   rec_calls_equal steps its strcmp call (origin/ossv/recipes 501c0d516c69, lib/A/Prog/rec_calls_equal.v:854-882:
+   rec_calls_equal steps its strcmp call (lib/A/Prog/rec_calls_equal.v:854-882:
    PaArt.aj_art_at over the wrapper's contract). The premise SegModel.check_segments rcs mcs returned = true makes
    the i-th names one byte string (check_segments_s1.cs_names), so the wrapper returns 0 and the arm to the
    no-return hook and abort (0x87138 / 0x8713c) at 0x87104 is not taken. *)

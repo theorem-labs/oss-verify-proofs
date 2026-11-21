@@ -3,12 +3,13 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_LLVMFuzzerTestOneInput_top_x.v, with its module paths and module names changed; 753 of its 995 lines of code are new or changed and 985 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyATopX.v, with its module names changed; 22 of its 104 lines of code are new or changed and 913 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ReplyInstFacts.v -- a Theorem Labs lane, 2026-10-30, for a Theorem Labs lane's COMPOSE-A (lib/A/ReplyATopX.v).
    reply_api_env, the runtime environment fact (Reusable/YCbq.v:809 api_env) at tfibsegs / TfibB, which ReplyATopX's
    MT_sec allocator plugs (CfRBridgeRules' *_kf, CfRStrndup.ASTRNDUP_x_kf) pass as errno_low.
    The four ameter_triv rule plugs this file held (reply_AMA_x / reply_AFREE_x / reply_AFREE0_x / reply_ARE_x over
    CfRBridgeRules' AMA_x_cf / AFREE_x_cf / AFREEN_x_cf / ARE_x_cf) are removed: ReplyATopX is at MT_sec since
-   a Theorem Labs lane's 0d4f5b7d311, and those four rules are deleted (a Theorem Labs lane 2026-10-30 19:50Z).
+   a Theorem Labs lane, and those four rules are deleted (a Theorem Labs lane 2026-10-30 19:50Z).
    Fit check (end of the file): api_env's body quoted from YCbq.v, closed by `exact`.
    The imports, options and sink instance are top_x's own (:43-151, the same order, comments dropped).
    proves no function (kind: segment lemma). *)

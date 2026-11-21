@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -38,6 +38,7 @@
    fpostW_x_R_lift: a plain fpostW_x (journal at wle) is fpostW_xR at every R that contains wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqGcallW.v, with its module names changed; 482 of its 526 lines of code are new or changed and 767 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsFree.v, with its module names changed; 1639 of its 1698 lines of code are new or changed and 467 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, slice S4 (parse_string, image A, ASan): THE \u SUB-STRETCH ps_seg_u of S4_PsDecKit.v - from the
    decode loop head PS_DEC when the text at the read cursor is a backslash and a u, through the dispatch (408..443),
    the four-hex-digit loop at PS_HEX (452..551), the tail at 880 (the cp = 0 refusal, the surrogate split by the stack
@@ -58,10 +59,10 @@
    1048 (put_utf8: `PCall AS_put_utf8` at slot 6624, PS_OFF + 1044; PS_OFF = 4 x 6363, PAImg_prog 505a51ff7d08
    A_entry_parse_string; on the old A listing the slots were 6312 / 6326 / 6065),
    below the ceiling by PRW_StepKit.pa_slot_lt_ceil_b on a closed goal.
-   FILE SET: as the kit's cut 7cdbb61b5fa0 carries it (PRH_Base blob ef7c8ca98529, PRH_FnReader f1ae32e3b2cd, PRH_FnAlloc
+   FILE SET: as the kit's cut carries it (PRH_Base blob ef7c8ca98529, PRH_FnReader f1ae32e3b2cd, PRH_FnAlloc
    4d8aeba047e5, PRW_StepKit 0df3991c13f4, listing Listing_prog.v 7ed1529926bd, PAImg_prog.v 505a51ff7d08, YSRrMemnorm.v
    5ffa8525936b), this row's S4_PsBase.v and S4_PsDecKit.v; earlier the kit of record at base
-   dd6bf533e31 (old-pin acceptance kit 4f18c75d4900, engine s1b 459129c18903).
+   (old-pin acceptance kit, engine s1b).
    THE CALLS. hex4 (988) is a CALLER-WINDOW callee: aj_call_xW at e1 = 48, its out slot sp + 36 inside that window.
    put_utf8 (1044) is an fpost callee: fpostW_x_of_apost then aj_call_xW at e1 = 0, its footprint the 1..4 bytes it
    writes at the write cursor, inside the block fuzz_malloc made. NEITHER calls the allocator: no live-count premise,

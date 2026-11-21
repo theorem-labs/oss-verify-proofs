@@ -23,6 +23,7 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 530 of its 593 lines of code are new or changed and 4990 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the RS1 cut of segment
    B11a of reac_segconf_parse_file's walk, b11_rs1_ok : HA_LOWOUT n -> B11_RS1_stmt n (lib/B/Prog/pf_seg_B11a_k.v,
    lib/B/Prog/pf_pieces.v). The B11a segment lane of the image-B G3 walk owner, 2026-10-30 (a sub-lane).
@@ -61,10 +62,10 @@
    holds m in b11_cf1, model_set holds le4 1, model_file T, NUL and the old bytes) and b11ts_cf1_model; the counters'
    room at the next line by pfA_facts.pf_cnt_mono / pf_next_skipn_lt; registers PF_RL ++ PF_RM ++ [(10, -8)].
    ADAPTED from a working branch + U piece walks; templates a lane clone
-   lib/B/Prog/pf_seg_B3_p1.v (the B3 segment lane, f5fd160e1686: seed with a slot chunk, token run to the snprintf call, the
-   call through the journal), a lane clone lib/B/Prog/pf_seg_B8b_s.v (the B8b segment lane,
-   0207861118e1: the snprintf of c->reading into an entry's file field, the return's plain run, the cut at the callee's
-   FP state), a lane clone lib/B/Prog/pf_seg_B11a_m.v (the B11a segment lane, db5280e50cc6: regions
+   lib/B/Prog/pf_seg_B3_p1.v (the B3 segment lane: seed with a slot chunk, token run to the snprintf call, the
+   call through the journal), a lane clone lib/B/Prog/pf_seg_B8b_s.v (the B8b segment lane,:
+   the snprintf of c->reading into an entry's file field, the return's plain run, the cut at the callee's
+   FP state), a lane clone lib/B/Prog/pf_seg_B11a_m.v (the B11a segment lane: regions
    read back, b11_move), a lane clone lib/B/Prog/pf_seg_B11a_h.v (the B11a segment lane,
    b11h_base_fx), lib/B/Prog/trim_f.v (shent_ok_of_range). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

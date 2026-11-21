@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_segX_crt1_head: the head of image B's LLVMFuzzerTestOneInput segment crt1, +0x5cc .. the first
    call (check_round_trip at +0x68c, check_braid at +0x6bc or __asan_memset at +0x6d4): c1h_head proves
    lib/B/Prog/LLVMFuzzerTestOneInput_segX_crt1_defs.v c1_head_stmt.
    The code is one footprint run, lib/B/Prog/LLVMFuzzerTestOneInput_segX_crt1_runs.v c1_run_head, carried into SRr by
    LLVMFuzzerTestOneInput_segX_crt1_fevt.v c1f_run from the state LeafCgKit.ms_of_regs of llvm_b_st_5cc, as
-   a working branch 02bbf1e30df lib/B/Prog/crtB_w_setup.v:92-206 carries crt_seg4_F: the
+   a working branch lib/B/Prog/crtB_w_setup.v:92-206 carries crt_seg4_F: the
    run's premises read off the cut point (its slots as 8-byte loads, crt1_geo.v; the store window 80(s1); the buffer
    addressable; the 0xa5 fill when the decode failed), the journal re-established across the run by
    lib/Reusable/YCbq.v:636 ajournal_exec with Wr = [sp1 + 80, sp1 + 88), the frame invariant and the memory clauses by

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (both copies of implF_twfA_realizes_silent pass node_soundA's nsA_rob, RomBase.sys_rob at the node, to ShapeAlg.rz_node). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.ALib Require Import PropExec MState Exec ITree.
@@ -112,6 +113,7 @@ Proof.
              [| exfalso; exact (Hnx code mo' Hex)].
            destruct (Hk rsp mo' e Hst) as (-> & _).
            exists (exist _ (rsp, mo', mo_') (conj Hst (conj MP Hss))). cbn [fst snd proj1_sig]. split; reflexivity.
+      * exact (nsA_rob _ _ _ _ _ _ _ _ NS n RNG A ms1 mo mo1_ Hat Hh Hinv Hs MR1).
       * exact Hsub.
     + intros tr. unfold t_alt. split.
       * intros [i Hi]. exact (proj1 (ShapeAlg.t_emit_nil_eq K K0 tr) Hi).
@@ -254,6 +256,7 @@ Proof.
              [| exfalso; exact (Hnx code mo' Hex)].
            destruct (Hk rsp mo' e Hst) as (-> & _).
            exists (exist _ (rsp, mo', mo_') (conj Hst (conj MP Hss))). cbn [fst snd proj1_sig]. split; reflexivity.
+      * exact (nsA_rob _ _ _ _ _ _ _ _ NS n RNG A ms1 mo mo1_ Hat Hh Hinv Hs MR1).
       * exact Hsub.
     + intros tr. unfold t_alt. split.
       * intros [i Hi]. exact (proj1 (ShapeAlg.t_emit_nil_eq K K0 tr) Hi).

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgE01M.v at 5d5b79394a1; ported to
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgE01M.v; ported to
    reac-pw/fuzz_headamp image A (module paths; rh_ / rl_ / rm_ names to HPgSegM hq_ / HPgBase hd_ / HPgMem hm_;
    the real frame 0x1e0 below S, the class-4 frame of 1024 bytes and 128 shadow bytes with its flag word at
    F + 0x3f8, the one kept real-frame cell R + 0x40, the malloc trampoline 0x53060 with ra = 0x80e94; C1 in

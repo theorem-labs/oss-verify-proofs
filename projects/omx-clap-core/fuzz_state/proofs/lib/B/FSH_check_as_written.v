@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSH_check_as_written.v
-   (a working branch c799c60f5cf), the same glue over B's own segment lemmas.
+   (a working branch), the same glue over B's own segment lemmas.
    rule 24: proves function check_as_written (B 0x8164c, CONFIRM by a Theorem Labs lane); none ported, written new;
    template lib/A/FSH_check_as_written.v. *)
 (*

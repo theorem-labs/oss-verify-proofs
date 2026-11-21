@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up facts stated over the launch's ProcInput). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -54,18 +55,18 @@ Section Main.
   Hypothesis TRUN : rtarget_run_stmt CS.
 
   (* [comment removed for export] *)
-  Lemma main_from_P1 : forall (sp0 : word) (argv envp : list (list byte)) (uid : word) (arg0 arg1 : list byte) (TID : Z) ms,
-    valid_sp sp0 -> ceil_ok sp0 -> valid_argv argv -> valid_envp envp -> argv = [arg0; arg1] -> 0 < TID < 4194304 ->
-    P1 CS sp0 argv envp uid TID ms ->
+  Lemma main_from_P1 : forall (sp0 : word) (inp : ProcInput) (mbase : word) (arg0 arg1 : list byte) (TID : Z) ms,
+    valid_sp sp0 -> ceil_ok sp0 -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> in_argv inp = [arg0; arg1] -> 0 < TID < 4194304 ->
+    P1 CS sp0 inp mbase TID ms ->
     implM psegs (ra <- read_all io raw_malloc raw_free pstage (map bv_unsigned arg1) ;;
                  match ra with RdExit => mret 2 | RdDone buf content => main_rest buf content end)
           (ps_init (reservedZ psegs)) (fun code s' ms' => at_exit ps_so code s' ms') ms.
   Proof.
-    intros sp0 argv envp uid arg0 arg1 TID ms VSP CEIL VARGV VENVP EARGV HT HP1.
+    intros sp0 inp mbase arg0 arg1 TID ms VSP CEIL VARGV VENVP EARGV HT HP1.
     destruct HP1 as (t0 & t1 & t2 & a3 & a4 & a5 & a6 & a7 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & mm & pad
                      & -> & FR & BA & HP & ERR & SOF & SE & FL & IFL & SG & CL0 & AX0).
     eapply implM_bind.
-    { eapply (main_read_all CS sp0 argv envp uid arg0 arg1 TID pad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL VARGV VENVP EARGV HT MALLOC FREE FPR FWX SWF FWR);
+    { eapply (main_read_all CS sp0 inp mbase arg0 arg1 TID pad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL VARGV EARGV HT MALLOC FREE FPR FWX SWF FWR);
         [exact FR| exact BA| exact HP| | | exact SG| ].
       - split; [exact SOF|]. split; [exact SE|]. split; [exact FL|]. split; [split; [exact IFL| exact AX0]| exact CL0].   (* [comment removed for export] *)
       - unfold RATP in ERR. cbv delta [MallocRep.wz] in ERR. unfold errno_addr in ERR. rewrite (unsigned_lit RMallocRep.RATP) in ERR by (unfold RMallocRep.RATP; lia).
@@ -73,22 +74,26 @@ Section Main.
       - reflexivity. }
     cbv beta. intros ra s' ms' PB. destruct ra as [|buf content]; cbn [POSTB] in PB.
     - apply implM_ret. apply evt_done. exact PB.
-    - eapply (phaseC CS sp0 argv envp uid TID pad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL HT FREE FWR); [exact PB|].
+    - eapply (phaseC CS sp0 inp mbase TID pad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL HT FREE FWR); [exact PB|].
       intros DATA A cap cw L cfg sc s1 ms1 HC R0. rewrite HC.
-      exact (phaseDE CS sp0 argv envp uid TID pad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL HT FREE TRUN buf A cap DATA cw L cfg sc s1 ms1 R0).
+      exact (phaseDE CS sp0 inp mbase TID pad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL HT FREE TRUN buf A cap DATA cw L cfg sc s1 ms1 R0).
   Qed.
 
   Theorem main_proof : rmain_stmt.
   Proof.
-    unfold rmain_stmt. intros sp0 argv envp uid ms VSP CEIL VARGV VENVP FITS AM.
-    destruct (Z.eq_dec (Z.of_nat (length argv)) 2) as [E2|NE2].
-    2:{ unfold main_model. replace (Z.of_nat (length (argv_Z argv)) =? 2) with false by (symmetry; apply Z.eqb_neq; unfold argv_Z; rewrite length_map; exact NE2). cbn [negb].
-        exact (main_usage_proof FPR FWX SWF sp0 argv envp uid ms VSP CEIL VARGV VENVP FITS NE2 AM). }
-    destruct argv as [|arg0 [|arg1 [|x l]]] eqn:EARGV; cbn in E2; try lia. rewrite <- EARGV in *.
-    rewrite (main_model_eq argv arg0 arg1 EARGV).
-    destruct (main_to_P1_proof CS CLI0AT sp0 argv envp uid ms VSP CEIL VARGV VENVP FITS ltac:(rewrite EARGV; reflexivity) AM) as (TID & HT & EV).
+    unfold rmain_stmt. intros sp0 inp mbase ms VSP CEIL VARGV VENVP FITS HSP AM.
+    destruct (Z.eq_dec (Z.of_nat (length (in_argv inp))) 2) as [E2|NE2].
+    2:{ unfold main_model. replace (Z.of_nat (length (argv_Z (in_argv inp))) =? 2) with false by (symmetry; apply Z.eqb_neq; unfold argv_Z; rewrite length_map; exact NE2). cbn [negb].
+        exact (main_usage_proof FPR FWX SWF sp0 inp mbase ms VSP CEIL VARGV VENVP FITS HSP NE2 AM). }
+    pose proof (main_to_P1_proof CS CLI0AT sp0 inp mbase ms VSP CEIL VARGV VENVP FITS HSP E2 AM) as P1H.
+    destruct (in_argv inp) as [|arg0 [|arg1 [|x l]]] eqn:EARGV; cbn in E2; try lia. rewrite <- EARGV.
+    rewrite (main_model_eq inp arg0 arg1 EARGV).
+    destruct P1H as (TID & HT & EV).
     eapply implM_evt; [exact EV|]. cbv beta. intros ms' HP1.
-    exact (main_from_P1 sp0 argv envp uid arg0 arg1 TID ms' VSP CEIL VARGV VENVP EARGV HT HP1).
+    (* The [destruct] on [in_argv inp] above rewrote the list inside VARGV as well, while
+       [main_from_P1] asks for it in the folded [in_argv inp] spelling; fold it back. *)
+    assert (VARGV0 : valid_argv (in_argv inp)) by (rewrite EARGV; exact VARGV).
+    exact (main_from_P1 sp0 inp mbase arg0 arg1 TID ms' VSP CEIL VARGV0 VENVP EARGV HT HP1).
   Qed.
 End Main.
 End WithCeiling0.

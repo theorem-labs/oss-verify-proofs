@@ -1,7 +1,7 @@
 (* reac_segconf_ignored on fuzz_segconf image B (fuzz_segconf.asan-ubsan): the facts of its walk that speak of a
    reader only, so they hold at any image: the 4 bytes of c->seg[i].ignore (offset 0x18) as the reader sees them,
    from SegABase.sa_rconf and seg_spec.rconf_enc (flag_enc: 0 or 1), and the bound on the index find returns.
-   Adapted from image A's lib/A/Prog/reac_segconf_role_lem.v (commit 3e8a17ad1bc0), the
+   Adapted from image A's lib/A/Prog/reac_segconf_role_lem.v, the
    same reading of the neighbouring role_set field. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.

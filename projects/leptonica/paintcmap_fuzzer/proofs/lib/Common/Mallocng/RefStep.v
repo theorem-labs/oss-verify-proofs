@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (minv keeps the vm frame vframe (alloc top, initial sp, mmap base, reservation ledger) and the THP flag ms_thp, with vkey, the vframe lemmas, minv_frame and minv_thp; the vDSO premise vdso_ok with vdso_ok_vframe, vdso_ok_base and vdso_ok_cur; the THP and vDSO side goals of the call, tail and return tactics). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import decidable.
@@ -181,33 +182,91 @@ End StepForms.
 Definition wtop (s : mstate) : Prop :=
   alloc_ceiling <= alloc_top (ms_vm s) /\ alloc_top (ms_vm s) <= TASK_SIZE /\ alloc_top (ms_vm s) <= ms_lo s.
 
+(** The ledger fields every syscall of the model keeps (at 08b1429 every
+    [mkVmMapsFull] in [Sys/Mm] copies [vm_reserved], [vm_mmap_base] and
+    [vm_init_sp]): the frame a call carries across, so that the vDSO pair's
+    place ([vdso_top]) and the reserved ledger stay those of the entry. *)
+Definition vkey (h : VmMaps) : Z * word * word * list (word * word) :=
+  (alloc_top h, vm_init_sp h, vm_mmap_base h, vm_reserved h).
+Definition vframe (h' h : VmMaps) : Prop := vkey h' = vkey h.
+
+Lemma vframe_refl : forall h, vframe h h.
+Proof. intros h. reflexivity. Qed.
+Lemma vframe_trans : forall h1 h2 h3, vframe h1 h2 -> vframe h2 h3 -> vframe h1 h3.
+Proof. unfold vframe. congruence. Qed.
+Lemma vframe_top : forall h' h, vframe h' h -> alloc_top h' = alloc_top h.
+Proof. unfold vframe, vkey. congruence. Qed.
+Lemma vframe_isp : forall h' h, vframe h' h -> vm_init_sp h' = vm_init_sp h.
+Proof. unfold vframe, vkey. congruence. Qed.
+Lemma vframe_mbase : forall h' h, vframe h' h -> vm_mmap_base h' = vm_mmap_base h.
+Proof. unfold vframe, vkey. congruence. Qed.
+Lemma vframe_res : forall h' h, vframe h' h -> vm_reserved h' = vm_reserved h.
+Proof. unfold vframe, vkey. congruence. Qed.
+
+(** The vDSO/vvar pair the launch installed lies in the reserved ledger
+    ([State.init_reserved] appends it); [mprotect_spec] reads it. *)
+Definition vdso_ok (md : Model) : Prop :=
+  incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)).
+
+Lemma vdso_ok_vframe : forall md h h0, vdso_ok (with_vmmaps h0 md) -> vframe h h0 -> vdso_ok (with_vmmaps h md).
+Proof.
+  intros md h h0 H F. pose proof (vframe_top _ _ F) as T. pose proof (vframe_isp _ _ F) as I.
+  pose proof (vframe_mbase _ _ F) as B. pose proof (vframe_res _ _ F) as Rr. unfold vdso_ok in *.
+  change (m_vmmaps (with_vmmaps h md)) with h. change (m_vmmaps (with_vmmaps h0 md)) with h0 in H.
+  change (m_kernel (with_vmmaps h md)) with (m_kernel md). change (m_kernel (with_vmmaps h0 md)) with (m_kernel md) in H.
+  replace (vdso_top h) with (vdso_top h0)
+    by (unfold vdso_top, mmap_top, alloc_top; rewrite ?T, ?B, ?I; reflexivity).
+  rewrite Rr. exact H.
+Qed.
+
 Definition minv (s0 : mstate) (s : mstate) : Prop :=
-  ms_lo s = ms_lo s0 /\ ms_hi s = ms_hi s0 /\ alloc_top (ms_vm s) = alloc_top (ms_vm s0) /\
+  ms_lo s = ms_lo s0 /\ ms_hi s = ms_hi s0 /\ vframe (ms_vm s) (ms_vm s0) /\
+  ms_thp s = ms_thp s0 /\
   0 <= ms_lo s0 /\ ms_lo s0 <= ms_hi s0 /\ ms_hi s0 <= 2^64 /\ wtop s0.
 
 Lemma minv_lo64 : forall s0 s, minv s0 s -> ms_lo s <= 2^64.
-Proof. intros s0 s (A & B & T & C & D & E & F). rewrite A. lia. Qed.
+Proof. intros s0 s (A & B & T & Th & C & D & E & F). rewrite A. lia. Qed.
 Lemma minv_lo : forall s0 s, minv s0 s -> ms_lo s = ms_lo s0.
 Proof. intros s0 s (A & B & C). exact A. Qed.
 Lemma minv_hi : forall s0 s, minv s0 s -> ms_hi s = ms_hi s0.
 Proof. intros s0 s (A & B & C). exact B. Qed.
 Lemma minv_top : forall s0 s, minv s0 s -> alloc_top (ms_vm s) = alloc_top (ms_vm s0).
+Proof. intros s0 s (A & B & T & C). exact (vframe_top _ _ T). Qed.
+Lemma minv_frame : forall s0 s, minv s0 s -> vframe (ms_vm s) (ms_vm s0).
 Proof. intros s0 s (A & B & T & C). exact T. Qed.
+Lemma minv_thp : forall s0 s, minv s0 s -> ms_thp s = ms_thp s0.
+Proof. intros s0 s (A & B & T & Th & C). exact Th. Qed.
 (* [comment removed for export] *)
 Lemma minv_ceil : forall s0 s, minv s0 s -> wtop s.
-Proof. intros s0 s (A & B & T & C & D & E & (F1 & F2 & F3)). unfold wtop. rewrite A, T. repeat split; assumption. Qed.
+Proof. intros s0 s (A & B & T & Th & C & D & E & (F1 & F2 & F3)). unfold wtop. rewrite A, (vframe_top _ _ T). repeat split; assumption. Qed.
 Lemma minv_ceil_num : forall s0 s, minv s0 s ->
   140735332483072 <= alloc_top (ms_vm s) /\ alloc_top (ms_vm s) <= 140737488355328 /\ alloc_top (ms_vm s) <= ms_lo s.
 Proof. intros s0 s HI. pose proof (minv_ceil s0 s HI) as H. unfold wtop, TASK_SIZE in H. rewrite alloc_ceiling_val in H. exact H. Qed.
 Lemma wtop_task : forall s, wtop s -> alloc_top (ms_vm s) <= TASK_SIZE.
 Proof. intros s (A & B & C). exact B. Qed.
 Lemma minv_same : forall s0 s s', minv s0 s -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-  alloc_top (ms_vm s') = alloc_top (ms_vm s) -> minv s0 s'.
-Proof. intros s0 s s' (A & B & T & C & D & E & (F1 & F2 & F3)) H1 H2 H3. unfold minv, wtop. rewrite H1, H2, H3, A, B, T. repeat split; try lia; assumption. Qed.
+  vframe (ms_vm s') (ms_vm s) -> ms_thp s' = ms_thp s -> minv s0 s'.
+Proof.
+  intros s0 s s' (A & B & T & Th & C & D & E & F) H1 H2 H3 H4. unfold minv.
+  rewrite H1, H2, H4, A, B, Th. split; [reflexivity|]. split; [reflexivity|].
+  split; [exact (vframe_trans _ _ _ H3 T)|]. split; [reflexivity|]. exact (conj C (conj D (conj E F))).
+Qed.
+Lemma vdso_ok_base : forall md s0 s, vdso_ok (with_vmmaps (ms_vm s0) md) -> minv s0 s ->
+  vdso_ok (with_vmmaps (ms_vm s) md).
+Proof.
+  intros md s0 s H HI. apply (vdso_ok_vframe md (ms_vm s) (ms_vm s0)); [exact H | exact (minv_frame _ _ HI)].
+Qed.
+
+Lemma vdso_ok_cur : forall md s0 s, vdso_ok md -> ms_vm s0 = m_vmmaps md -> minv s0 s ->
+  vdso_ok (with_vmmaps (ms_vm s) md).
+Proof.
+  intros md s0 s H Hv HI. apply (vdso_ok_vframe md (ms_vm s) (ms_vm s0)); [|exact (minv_frame _ _ HI)].
+  rewrite Hv. exact H.
+Qed.
 Lemma minv_init : forall s0 (sp : word) D,
   0 <= ms_lo s0 -> ms_lo s0 <= bv_unsigned sp - D -> 0 <= D -> bv_unsigned sp <= ms_hi s0 -> ms_hi s0 <= 2^64 ->
   wtop s0 -> minv s0 s0.
-Proof. intros s0 sp D H1 H2 H3 H4 H5 (F1 & F2 & F3). unfold minv, wtop. repeat split; try lia; assumption. Qed.
+Proof. intros s0 sp D H1 H2 H3 H4 H5 (F1 & F2 & F3). unfold minv, wtop. repeat split; try reflexivity; try lia; assumption. Qed.
 
 (* [comment removed for export] *)
 Lemma alloc_top_vm_mmap : forall a n h, alloc_top (vm_mmap a n h) = alloc_top h. Proof. reflexivity. Qed.
@@ -1144,10 +1203,42 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+(* [comment removed for export] *)
+Ltac thp_side HI :=
+  first [ assumption
+        | lazymatch goal with
+          | H : ms_thp _ = kb_thp (m_kernel _) |- _ => exact (eq_trans (minv_thp _ _ HI) H)
+          end ].
+
+(* a nest of [with_vmmaps] collapses first ([with_vmmaps_twice]), so the
+   goal names the model the hypotheses do *)
+Ltac vdso_side HI :=
+  rewrite ?with_vmmaps_twice;
+  first
+    [ assumption
+    | match goal with
+      | H : vdso_ok (with_vmmaps (ms_vm ?s0) ?md) |- vdso_ok (with_vmmaps (ms_vm ?s) ?md) =>
+          exact (vdso_ok_base md s0 s H HI)
+      end
+    | match goal with
+      | H : vdso_ok ?md, Hv : ms_vm ?s0 = m_vmmaps ?md |- vdso_ok (with_vmmaps (ms_vm ?s) ?md) =>
+          exact (vdso_ok_cur md s0 s H Hv HI)
+      end
+    | match goal with
+      | H : vdso_ok ?md, Hv : ms_vm ?s0 = m_vmmaps ?md |- vdso_ok (with_vmmaps (ms_vm ?s0) ?md) =>
+          rewrite Hv, with_vmmaps_same; exact H
+      end
+    | match goal with
+      | H : vdso_ok ?md, Hv : ms_vm ?s0 = m_vmmaps ?md |- vdso_ok ?md' =>
+          replace md' with md by (rewrite <- Hv; symmetry; apply with_vmmaps_same); exact H
+      end ].
+
 Ltac call_side Hp Hag HI HW HS :=
   lazymatch goal with
   | |- md_pure _ => mpure Hp
+  | |- vdso_ok _ => vdso_side HI
   | |- ms_vm _ = m_vmmaps _ => symmetry; apply with_vmmaps_vmmaps
+  | |- ms_thp _ = kb_thp (m_kernel _) => thp_side HI
   | |- magree _ _ => exact Hag
   | |- wtop _ => exact (minv_ceil _ _ HI)
   | |- getr _ _ = _ => regnorm; imm_norm; rewrite ?v_addi_addi', ?v_addi_0; first [reflexivity | klitsg; first [reflexivity | bveq]]
@@ -1165,22 +1256,22 @@ Ltac call_intro Hag HI HW HS :=
   let HP := fresh "HS" in let Hag' := fresh "Hag" in let Hlo' := fresh "Hlo'" in let Hhi' := fresh "Hhi'" in
   let Hr1 := fresh "Hres" in let Hr2 := fresh "Hres" in let Hsp := fresh "Hsp" in
   let Hcs := fresh "Hcs" in let Hpres := fresh "Hpres" in let Hnn := fresh "Hnn" in let HInew := fresh "HI" in
-  let Htop' := fresh "Htop'" in let Hwk := fresh "Hwkeep" in
+  let Htop' := fresh "Htop'" in let Hwk := fresh "Hwkeep" in let Hthp' := fresh "Hthp'" in
   first
-    [ intros r s' mm' R' HP Hag' Hlo' Hhi' Htop' Hr1 Hsp Hcs Hpres Hnn Hwk;
+    [ intros r s' mm' R' HP Hag' Hlo' Hhi' Htop' Hthp' Hr1 Hsp Hcs Hpres Hnn Hwk;
       lazymatch type of Hwk with forall x : reg, wreg _ x = false -> _ => idtac end;
       keep_facts Hwk
-    | intros r s' mm' R' HP Hag' Hlo' Hhi' Htop' Hr1 Hsp Hcs Hpres Hnn;
+    | intros r s' mm' R' HP Hag' Hlo' Hhi' Htop' Hthp' Hr1 Hsp Hcs Hpres Hnn;
       lazymatch type of Hnn with forall a : word, _ -> _ <> None => idtac end
-    | intros r s' mm' R' HP Hag' Hlo' Hhi' Htop' Hr1 Hr2 Hsp Hcs Hpres Hnn;
+    | intros r s' mm' R' HP Hag' Hlo' Hhi' Htop' Hthp' Hr1 Hr2 Hsp Hcs Hpres Hnn;
       lazymatch type of Hnn with forall a : word, _ -> _ <> None => idtac end;
       destruct r as [?r1 ?r2]; cbn [fst snd] in Hr1, Hr2, HP |- * ];
   cbv beta in HP; rewrite with_vmmaps_twice; cbv beta;
-  pose proof (minv_same _ _ _ HI Hlo' Hhi' Htop') as HInew;
+  pose proof (minv_same _ _ _ HI Hlo' Hhi' Htop' Hthp') as HInew;
   cbn [ms_lo ms_hi ms_mem ms_vm upd] in Hsp;
   cbv delta [ALLOC_STACK] in Hpres, Hnn;
   uaddrH Hpres; uaddrH Hnn;
-  clear Hlo' Hhi' Htop'; clear HS Hag HI; rename HP into HS; rename Hag' into Hag; rename HInew into HI;
+  clear Hlo' Hhi' Htop' Hthp'; clear HS Hag HI; rename HP into HS; rename Hag' into Hag; rename HInew into HI;
   note_win HI;
   frame_facts HW mm';
   cs_facts Hcs;   (* [comment removed for export] *)
@@ -1388,7 +1479,8 @@ Ltac tail_intro Hag HI HW HS HK :=
   let HP := fresh "HP" in let Hag' := fresh "Hag" in let Hlo' := fresh "Hlo'" in let Hhi' := fresh "Hhi'" in
   let Hr1 := fresh "Hres" in let Hsp := fresh "Hsp" in let Hcs := fresh "Hcs" in
   let Hpres := fresh "Hpres" in let Hnn := fresh "Hnn" in let Htop' := fresh "Htop'" in
-  intros r s' mm' R' HP Hag' Hlo' Hhi' Htop' Hr1 Hsp Hcs Hpres Hnn;
+  let Hthp' := fresh "Hthp'" in
+  intros r s' mm' R' HP Hag' Hlo' Hhi' Htop' Hthp' Hr1 Hsp Hcs Hpres Hnn;
   rewrite ?with_vmmaps_twice;
   uaddrH Hpres; uaddrH Hnn;
   eapply (HK r s' mm' R');
@@ -1396,9 +1488,11 @@ Ltac tail_intro Hag HI HW HS HK :=
   | exact Hag'
   | rewrite Hlo'; cbn [ms_lo ms_hi ms_vm ms_mem upd]; exact (minv_lo _ _ HI)
   | rewrite Hhi'; cbn [ms_lo ms_hi ms_vm ms_mem upd]; exact (minv_hi _ _ HI)
-  | rewrite Htop'; atop_norm; exact (minv_top _ _ HI)
+  | cbn [ms_lo ms_hi ms_vm ms_mem upd] in Htop' |- *; exact (vframe_trans _ _ _ Htop' (minv_frame _ _ HI))
   | .. ];
-  [ exact Hr1
+  [ first [ exact (eq_trans Hthp' (minv_thp _ _ HI))
+          | cbn [ms_lo ms_hi ms_vm ms_mem ms_thp upd] in Hthp' |- *; exact (eq_trans Hthp' (minv_thp _ _ HI)) ]
+  | exact Hr1
   | rewrite Hsp; first [reflexivity | apply v_addi_k0; reflexivity | apply v_addi_back; reflexivity
                        | rewrite ?v_addi_addi'; first [reflexivity | apply v_addi_k0; reflexivity]]
   | let x := fresh "x" in let Hx := fresh "Hx" in
@@ -1436,7 +1530,8 @@ Ltac mach_ret Hp HS Hag HK HI Hret :=
       [ exact HS | exact Hag
       | cbn [ms_lo ms_hi ms_vm ms_mem upd]; exact (minv_lo _ _ HI)
       | cbn [ms_lo ms_hi ms_vm ms_mem upd]; exact (minv_hi _ _ HI)
-      | atop_norm; exact (minv_top _ _ HI)
+      | cbn [ms_lo ms_hi ms_vm ms_mem upd]; exact (minv_frame _ _ HI)
+      | first [ exact (minv_thp _ _ HI) | cbn [ms_thp upd]; exact (minv_thp _ _ HI) ]
       | .. ];
       (* [comment removed for export] *)
       repeat match goal with

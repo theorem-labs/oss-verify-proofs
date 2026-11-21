@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_disco/lib/A/Rt/StackMalloc3Tbl.v of a working branch 64a4f4538fe (proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4Tbl.v of a working branch a1ee3c81405, cgif_file_fuzzer's lib/A/AF0r.v for class 4) as the tables of stack_malloc_3 at 0x3d98c of libreac/fuzz_disco's asan-ubsan build: the same class-3 constants, the asan-ubsan core (lib/Reusable YB1v YE34 YF0l YF0m YF0x YE2y, the twins of cgif_file_fuzzer's lib/YB1v.. YE2y), asan-ubsan addresses; the Zify division flag is set #[local]. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_disco/lib/A/Rt/StackMalloc3Tbl.v of a working branch (proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4Tbl.v of a working branch, cgif_file_fuzzer's lib/A/AF0r.v for class 4) as the tables of stack_malloc_3 at 0x3d98c of libreac/fuzz_disco's asan-ubsan build: the same class-3 constants, the asan-ubsan core (lib/Reusable YB1v YE34 YF0l YF0m YF0x YE2y, the twins of cgif_file_fuzzer's lib/YB1v.. YE2y), asan-ubsan addresses; the Zify division flag is set #[local]. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

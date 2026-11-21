@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the shared vocabulary of the walk of chain_words (0x8da84, 298 instructions)
    on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan), the B twin of
-   lib/A/Prog/chain_words_d.v (the A walk is a working branch 5e2cdad423e). Same shape as A's: the
+   lib/A/Prog/chain_words_d.v (the A walk is a working branch). Same shape as A's: the
    context record, the entry facts, the post and the "from a cut point" predicates, with the cut points over the
    machine state (each segment file builds its own symbolic state).
 
@@ -27,6 +27,7 @@
    YCbq.v) for number (apost_base), and through the same rule in its FP-existential form for sup_chain and
    sup_resp (apost_baseF): number writes id in the caller's stack window and ids[j] in the caller's own frame,
    sup_chain writes g_rec and record.spill, all of them awr_byte bytes of chain_words' journal. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -105,7 +106,7 @@ Variable MT : ameter_ops.
 Definition cw_FP (c : cwx) : list (Z * Z) := CHAIN_WORDS_PG ++ ablocks_fp (x_O c).
 (* tchain_words_spec's premises over the context (chain_words_c.v:119-145), except the rounding mode (`frm0 fx`,
    which only the two recorder calls take): this record carries no FP state, so a segment proved over it holds at
-   every FP state the walk reaches. Pass 5 (a working branch f490061c104) removed the statement's astack_pres, so it
+   every FP state the walk reaches. Pass 5 (a working branch) removed the statement's astack_pres, so it
    is not a field: a callee's frame chain comes from afn_pre's own chain (PASS4-REFIT.md section B, class B:
    achain_push with the ra and entry-s0 words the prologue stored at sp0 - 8 and sp0 - 16). *)
 Record cw_pre (c : cwx) : Prop := mkCWPre {

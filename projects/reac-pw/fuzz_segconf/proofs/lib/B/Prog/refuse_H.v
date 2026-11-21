@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: number's walk on the ASan build of plugin-hostd/fuzz_command, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v (a walk) and ACa2.v (a class-1 side-stack frame): tnumber_spec of lib/A/Prog/number_c.v, from number's entry (0x8e430) through __asan_stack_malloc_0 and strtol to strtol's return, then numberB.v's n_segB. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberA.v, with its module paths and module names changed; 537 of its 673 lines of code are new or changed and 377 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3...): the head of
    refuse's image-B walk, from the entry (0x892f8) to the two cuts of refuse_K.v: 0x894ac (n_refusals < 8, then
    RB_PRE_stmt) and 0x89544 (n_refusals >= 8, then RB_REL_stmt). The image-B refuse walk lane of the image-B G3 walk owner, 2026-10-30;
-   ADAPTED from plugin-hostd/fuzz_command lib/B/Prog/numberA.v and numberB.v (origin/ossv/recipes 501c0d516c69):
+   ADAPTED from plugin-hostd/fuzz_command lib/B/Prog/numberA.v and numberB.v:
    the entry token run, __asan_stack_malloc_0 (here frame_alloc_0, 0x3e608) through aj_stack_malloc_atS, the
    re-seat and the frame's regions, a plain run, then token runs; re-derived on refuse's image-B code
    (refuse.fuzz_segconf.asan-ubsan.s).

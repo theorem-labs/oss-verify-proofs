@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the image table's launch-extra reservation bounds in the hand-off check). *)
 (* [comment removed for export] *)
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
@@ -1234,9 +1235,12 @@ End Shadow.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Definition hs_rt_ok (A : atable) (ch : acs) : bool :=
+Definition hs_rt_ok0 (A : atable) (ch : acs) : bool :=
   (hs_lay_ok ch && hs_consts_ok ch && hs_zero_ok ch && hs_primsh_ok A ch && hs_fs_ok ch && hs_dep_ok ch && hs_ia_ok ch
    && hs_shadow_ok A ch && hs_vis_ok A ch)%bool.
+
+(* LPS 08b1429: plus the image table's launch-extra bounds ([RT_init.hs_resx_ok]). *)
+Definition hs_rt_ok (A : atable) (ch : acs) : bool := (hs_resx_ok A && hs_rt_ok0 A ch)%bool.
 
 Lemma page_allowed_range : forall l lo hi (x : word), In (pg_dn lo, pg_up hi) l -> lo <= bv_unsigned x < hi ->
   page_allowedb l (page_base x) = true.
@@ -1269,7 +1273,7 @@ Hypothesis HT : hs_rt_ok A ch = true.
 Lemma ri_tests : hs_lay_ok ch = true /\ hs_consts_ok ch = true /\ hs_zero_ok ch = true /\ hs_primsh_ok A ch = true
   /\ hs_fs_ok ch = true /\ hs_dep_ok ch = true /\ hs_ia_ok ch = true /\ hs_shadow_ok A ch = true /\ hs_vis_ok A ch = true.
 Proof.
-  pose proof HT as H. unfold hs_rt_ok in H.
+  pose proof HT as H. unfold hs_rt_ok in H. apply andb_prop in H as [_ H]. unfold hs_rt_ok0 in H.
   apply andb_prop in H as [H T9]. apply andb_prop in H as [H T8]. apply andb_prop in H as [H T7]. apply andb_prop in H as [H T6]. apply andb_prop in H as [H T5].
   apply andb_prop in H as [H T4]. apply andb_prop in H as [H T3]. apply andb_prop in H as [T1 T2].
   repeat split; assumption.
@@ -1357,7 +1361,8 @@ Proof.
   pose proof ri_tests as (T1 & _).
   split; [exact ri_HA'|]. split; [exact (ri_awf A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1)|].
   split; [exact (ri_minv A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1 Hlim)|].
-  split; [exact (ri_artm A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1 Hlim)|].
+  assert (HRX : hs_resx_ok A = true) by (pose proof HT as H; unfold hs_rt_ok in H; apply andb_prop in H as [H _]; exact H).
+  split; [exact (ri_artm A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1 HRX Hlim)|].
   split; [reflexivity|]. split; [exact ri_art|]. exact (ri_sig A nx0 LIMIT SINV argH FS0 E ch R FULL model HC).
 Qed.
 
@@ -2587,9 +2592,12 @@ End Shadow.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Definition hs_rt_ok (A : atable) (ch : acs) : bool :=
+Definition hs_rt_ok0 (A : atable) (ch : acs) : bool :=
   (hs_lay_ok ch && hs_consts_ok ch && hs_zero_ok ch && hs_primsh_ok A ch && hs_fs_ok ch && hs_dep_ok ch && hs_ia_ok ch
    && hs_shadow_ok A ch && hs_vis_ok A ch)%bool.
+
+(* LPS 08b1429: plus the image table's launch-extra bounds ([RT_init.hs_resx_ok]). *)
+Definition hs_rt_ok (A : atable) (ch : acs) : bool := (hs_resx_ok A && hs_rt_ok0 A ch)%bool.
 
 Lemma page_allowed_range : forall l lo hi (x : word), In (pg_dn lo, pg_up hi) l -> lo <= bv_unsigned x < hi ->
   page_allowedb l (page_base x) = true.
@@ -2622,7 +2630,7 @@ Hypothesis HT : hs_rt_ok A ch = true.
 Lemma ri_tests : hs_lay_ok ch = true /\ hs_consts_ok ch = true /\ hs_zero_ok ch = true /\ hs_primsh_ok A ch = true
   /\ hs_fs_ok ch = true /\ hs_dep_ok ch = true /\ hs_ia_ok ch = true /\ hs_shadow_ok A ch = true /\ hs_vis_ok A ch = true.
 Proof.
-  pose proof HT as H. unfold hs_rt_ok in H.
+  pose proof HT as H. unfold hs_rt_ok in H. apply andb_prop in H as [_ H]. unfold hs_rt_ok0 in H.
   apply andb_prop in H as [H T9]. apply andb_prop in H as [H T8]. apply andb_prop in H as [H T7]. apply andb_prop in H as [H T6]. apply andb_prop in H as [H T5].
   apply andb_prop in H as [H T4]. apply andb_prop in H as [H T3]. apply andb_prop in H as [T1 T2].
   repeat split; assumption.
@@ -2710,7 +2718,8 @@ Proof.
   pose proof ri_tests as (T1 & _).
   split; [exact ri_HA'|]. split; [exact (ri_awf A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1)|].
   split; [exact (ri_minv A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1 Hlim)|].
-  split; [exact (ri_artm A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1 Hlim)|].
+  assert (HRX : hs_resx_ok A = true) by (pose proof HT as H; unfold hs_rt_ok in H; apply andb_prop in H as [H _]; exact H).
+  split; [exact (ri_artm A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1 HRX Hlim)|].
   split; [reflexivity|]. split; [exact ri_art|]. exact (ri_sig A nx0 LIMIT SINV argH FS0 E ch R FULL model HC).
 Qed.
 

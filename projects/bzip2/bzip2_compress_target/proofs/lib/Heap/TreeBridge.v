@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the three vDSO step arms and RomBase.sys_rob at the brk, munmap, mmap and mprotect nodes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Spec Require Import Monad 
 From Stdlib Require Lia. Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From Stdlib Require Import Classical_Prop.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common Require CfgStep.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Import OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib.Nodes.ITree.Exc.
 Open Scope Z_scope.
@@ -147,6 +149,9 @@ Proof.
     + (* [comment removed for export] *) congruence.
     + congruence.
     + congruence.
+    + (* the three vDSO arms need no pending syscall *) congruence.
+    + congruence.
+    + congruence.
     + (* [comment removed for export] *)
       match goal with H : ms_svc_pending ms = Some ?x |- _ => rewrite Hsvc in H; injection H as <- end.
       match goal with H : sspec (sys_input segs ms x8) MD _ |- _ => apply Hiff in H; rename H into Hs end.
@@ -218,6 +223,10 @@ Proof.
              (fun p => K (fst (proj1_sig p)) (snd (proj1_sig p)))
              (exist _ (eff0, MD0) (conj H0 Hn0))).
     + apply (node_ok_mm ms MD x8 i); assumption.
+    + (* LPS 08b1429: brk/munmap/mmap/mprotect read no user memory *)
+      eapply RomBase.sys_rob_memfree; [exact Hsvc|].
+      destruct Hag as [_ Hag']. change (in_sysno (sys_input segs ms x8)) with x8 in Hag'.
+      destruct Hag' as [(E & _)|[(E & _)|[(E & _)|(E & _)]]]; rewrite E; RomBase.memfree_lit.
     + intros [[eff MD'] [Hs Hns]]. cbn. apply HK; assumption.
   - intros tr. unfold t_alt, t_emit. split.
     + intros [[[eff MD'] [Hs Hns]] H]. cbn in H. destruct H as [Hp|(tr' & -> & HT)].

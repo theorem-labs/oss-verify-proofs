@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag of the mmap placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -36,7 +37,7 @@ Ltac free_calls Hp HS Hag HI HW t :=
 Theorem free_refines : free_stmt.
 Proof.
   unfold free_stmt.
-  intros md regs mm rom s p sp ret P L Hp Hvm Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 HS HK.
+  intros md regs mm rom s p sp ret P L Hp Hvm Hthp Hvdo Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 HS HK.
   unfold ALLOC_STACK in *.
   pose proof (minv_init s sp 1024 Hlo0 Hlo ltac:(lia) Hhi Hhi64 Hwt) as HI.
   pose proof (mwin_init s mm sp 1024 Hstk) as HW.

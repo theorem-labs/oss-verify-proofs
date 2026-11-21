@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the ledger also holds the vdso/vvar pair (at most two entries and twenty pages), and an mmap gap is found in Linux's bottom-up placement window for any hint. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -206,29 +207,43 @@ Definition RVS : Z := 2 ^ 24.
 Definition resv_small (rv : list (Z * Z)) : Prop :=
   Z.of_nat (length rv) <= RVK /\ zsum (map snd rv) <= RVS.
 
+(* 08b1429: the ledger also holds the vdso/vvar pair, at most two entries and twenty pages ([kl_resv]). *)
 Lemma resv_of_KL L pbrk mo : KL L pbrk mo -> resv_small (ld_resv L) ->
-  Z.of_nat (length (vm_reserved (m_vmmaps mo))) <= RVK /\ live_bytes (vm_reserved (m_vmmaps mo)) <= RVS.
+  Z.of_nat (length (vm_reserved (m_vmmaps mo))) <= RVK + 2 /\ live_bytes (vm_reserved (m_vmmaps mo)) <= RVS + 0x14000.
 Proof.
-  intros HK [R1 R2]. rewrite (kl_resv _ _ _ HK) in R1, R2. rewrite length_map in R1. split; [exact R1|].
-  rewrite live_bytes_zsum. rewrite map_map in R2. exact R2.
+  intros HK [R1 R2]. destruct (kl_resv _ _ _ HK) as (rx & Erx & X1 & X2).
+  assert (ZR : forall l : list (Z * Z), zsum (map snd l) = fold_right (fun e acc => snd e + acc) 0 l).
+  { induction l as [|e l IH]; [reflexivity|]. cbn [map fold_right]. unfold zsum in *. cbn [fold_right]. rewrite IH. reflexivity. }
+  split.
+  - rewrite <- (length_map wwZ), Erx, length_app, Nat2Z.inj_add. lia.
+  - rewrite live_bytes_zsum.
+    replace (map esz (vm_reserved (m_vmmaps mo))) with (map snd (map wwZ (vm_reserved (m_vmmaps mo))))
+      by (rewrite map_map; reflexivity).
+    rewrite Erx, map_app, zsum_app, (ZR rx). lia.
 Qed.
 
-(* [comment removed for export] *)
+(* 08b1429: the gap is found in Linux's bottom-up window [task_unmapped_base, alloc_top), so Linux
+   places the grant whatever the hint and THP setting. *)
 Lemma KL_gap L pbrk mo B nZ :
   KL L pbrk mo -> resv_small (ld_resv L) -> gm L + BB L <= B -> B <= BCAP -> kcnt L + 3 <= KCAP ->
-  0 <= nZ <= B + 3 * PGSZ ->
-  vm_gap_available (m_vmmaps mo) nZ = true.
+  0 < nZ <= B + 3 * PGSZ -> nZ mod page_size = 0 ->
+  forall thp hint, vm_place_available (m_vmmaps mo) thp hint nZ = true.
 Proof.
-  intros HK HR HB HBC HKC HnZ. set (h := m_vmmaps mo).
+  intros HK HR HB HBC HKC HnZ Hnal thp hint. set (h := m_vmmaps mo).
   destruct (resv_of_KL L pbrk mo HK HR) as [RC RS]. fold h in RC, RS.
   pose proof (KL_maps_count L pbrk mo HK) as MC. pose proof (KL_live_bytes L pbrk mo HK) as MB. fold h in MC, MB. unfold vm_live_bytes in MB.
   pose proof (kl_ceil _ _ _ HK) as KC. unfold ceil_ok in KC. fold h in KC. pose proof alloc_ceiling_val as ACV.
-  apply (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.Gap04.vm_gap_available_of_bounds h nZ (RVK + KCAP) (RVS + BCAP + 2 * PGSZ)); [lia| | |].
-  - rewrite length_app, Nat2Z.inj_add. lia.
-  - rewrite OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.Gap04.zsumf_esz_live, live_bytes_app. lia.
-  - rewrite KC. unfold RVK, RVS, KCAP, BCAP, PGSZ in *.
-    assert (P : (16 + 12288) * (nZ + 4095) <= (16 + 12288) * (2 ^ 32 + 3 * 4096 + 4095)) by (apply Z.mul_le_mono_nonneg_l; lia).
-    lia.
+  apply (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.Gap04.vm_place_available_of_sum h thp hint nZ); [lia | exact Hnal |].
+  rewrite OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.Gap04.zsumf_jcost.
+  assert (LC : Z.of_nat (length (vm_reserved h ++ vm_maps h)) <= RVK + 2 + KCAP) by (rewrite length_app, Nat2Z.inj_add; lia).
+  assert (SC : OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.Gap04.zsumf
+                 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.Gap04.esz (vm_reserved h ++ vm_maps h)
+               <= RVS + 0x14000 + BCAP + 2 * PGSZ)
+    by (rewrite OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.Gap04.zsumf_esz_live, live_bytes_app; lia).
+  rewrite KC. unfold task_unmapped_base, RVK, RVS, KCAP, BCAP, PGSZ in *.
+  assert (P : Z.of_nat (length (vm_reserved h ++ vm_maps h)) * (nZ + 4095) <= (16 + 2 + 12288) * (2 ^ 32 + 3 * 4096 + 4095))
+    by (apply Z.mul_le_mono_nonneg; lia).
+  lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -239,7 +254,7 @@ Lemma KL_budget L pbrk mo B nZ :
 Proof.
   intros HK HB HBC HnZ HG. destruct bw_on eqn:EW; [exact (HG eq_refl)|].
   pose proof (KL_live_bytes L pbrk mo HK) as MB.
-  pose proof (vm_backing_used_le_live mo (kl_minv _ _ _ HK) (kl_mat _ _ _ HK)) as BU.
+  pose proof (vm_backing_used_le_live mo (proj1 (kl_minv _ _ _ HK)) (kl_mat _ _ _ HK)) as BU.
   pose proof (bw_limit_off _ EW (kl_limit _ _ _ HK)) as KLim. unfold State.source_alloc_limit in KLim. unfold BCAP, PGSZ in *. lia.
 Qed.
 
@@ -251,11 +266,16 @@ Theorem KL_mmap_nf L pbrk mo B len prot :
 Proof.
   intros HK HR HB HBC HKC Hlen Hmax Hprot HG.
   destruct (rlen_mmap_len len Hlen) as [E1 E2].
-  pose proof (KL_gap L pbrk mo B (mmap_len len) HK HR HB HBC HKC ltac:(lia)) as GAP.
+  assert (Hnal : mmap_len len mod page_size = 0)
+    by (change page_size with 4096; apply OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zk.KLink.mmap_len_aligned).
+  assert (Hpos : 0 < mmap_len len).
+  { pose proof (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zk.KLink.mmap_len_pos_pg len ltac:(lia)) as Hp.
+    unfold PGSZ in Hp. lia. }
+  pose proof (KL_gap L pbrk mo B (mmap_len len) HK HR HB HBC HKC ltac:(lia) Hnal) as GAP.
   cbn -[rlen Z.eqb]. rewrite MAPF_eq, Z.eqb_refl. destruct Hprot as [-> | ->].
-  - change (PROT_NONE =? NPROT_RW) with false. cbv iota. rewrite E1. apply OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.Gap04.mmap_reserve_not_refusable. exact GAP.
+  - change (PROT_NONE =? NPROT_RW) with false. cbv iota. rewrite E1. apply OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.Gap04.mmap_reserve_not_refusable. apply GAP.
   - change (PROT_RW =? NPROT_RW) with true. cbv iota. unfold grant_refusable. rewrite E1.
-    apply OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.Gap04.mmap_grant_not_refusable; [exact GAP|]. apply (KL_budget L pbrk mo B (mmap_len len) HK HB HBC ltac:(lia)).
+    apply OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.Gap04.mmap_grant_not_refusable; [apply GAP|]. apply (KL_budget L pbrk mo B (mmap_len len) HK HB HBC ltac:(lia)).
     intros EW. rewrite <- E1. apply Z.leb_le. apply (bw_gate_n_mmap_rw 0 len mo EW); [| exact HG].
     unfold LEN_MAX in Hlen. intros E0. apply (f_equal bv_unsigned) in E0. unfold w in E0. rewrite !u64_lit in E0 by lia. lia.
 Qed.

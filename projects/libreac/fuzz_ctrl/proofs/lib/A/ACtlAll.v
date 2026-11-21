@@ -2,7 +2,7 @@
    in route (C): A.ACtl.ctl_lib_x_CtrlB applied to a proof of every premise that has one on the integrated tree
    a working branch.  proves no function (kind: merge; rule 24: no function proved here, a composition of
    proved stage glues and callee glues).  Writer: a Theorem Labs lane (brief integ.md (a working note, not in this delivery));
-   shape: image B's twin lib/B/ACtlAll.v at a working branch 51de8d2c1ff.
+   shape: image B's twin lib/B/ACtlAll.v at a working branch.
 
    ctl_lib_x_CtrlB (lib/A/ACtl.v section 9, Section CtlTop) is ctl_lib_x at the core's bundle A.AD2l.CtrlB, the
    trivial meter, XM_LIB = XN_LIB := XL0 and the read-only span [0x9e380, 0xa07c8).  Its arguments are CtlTop's two
@@ -118,7 +118,7 @@ Let MO_MALLOC_OK : forall (S : Reusable.YG00.astate) (n : Z), Reusable.YC5d.mo_o
 Let AIL := A.AD1u.tfib_AIL CtrlB TFIB_SYMS.
 (* a Theorem Labs lane: A.ACtlCutC.ctrl_img_shadow_vis (ACtl.v section 1c's Let IMG_SHADOW_VIS) *)
 Let IMG_SHADOW_VIS : A.Prog.CtrlRo.img_shadow_vis segs CtrlB := A.ACtlCutC.ctrl_img_shadow_vis CtrlB TFIB_SYMS LAWS.
-(* the core's stack-malloc progress (A/ACtlG/A1.v:358's proof, by Reusable.YG05.stack_malloc_progress) *)
+(* the core's stack-malloc progress (A/ACtlG/A1.v:359's proof, by Reusable.YG05.stack_malloc_progress) *)
 Let SMP : Reusable.YCbq.stack_malloc_progressP CtrlB := fun s cid HW Hc Hn0 => Reusable.YG05.stack_malloc_progress _ s cid HW Hc Hn0.
 (* the core: Reusable.YG0t.astack_free_law_ok (YG0t.v:473) *)
 Let ASF := Reusable.YG0t.astack_free_law_ok segs CtrlB.
@@ -126,26 +126,26 @@ Let ASF := Reusable.YG0t.astack_free_law_ok segs CtrlB.
 (* ---------------------------------------------------------------------------------------------------------
    DISCHARGES II: the runtime and allocator lemmas of their owners (taken BY PATH; see the integration log
    takes.tsv (a working note, not in this delivery)). *)
-(* a Theorem Labs lane: A.Rt.StackMalloc6.disco_stack_malloc6 (lib/A/Rt/StackMalloc6.v (an earlier version, blob 011e76fce0c, not in this delivery), a working branch 055c2ebca7f) *)
+(* a Theorem Labs lane: A.Rt.StackMalloc6.disco_stack_malloc6 (lib/A/Rt/StackMalloc6.v (an earlier version, blob 011e76fce0c, not in this delivery), a working branch) *)
 Let ASM6 := A.Rt.StackMalloc6.disco_stack_malloc6 fx CtrlB LAWS TFIB_SYMS.
-(* a Theorem Labs lane: A.Rt.StackMalloc1.ctrl_stack_malloc1 (a working branch 1cf78f2ca9d) *)
+(* a Theorem Labs lane: A.Rt.StackMalloc1.ctrl_stack_malloc1 (a working branch) *)
 Let ASM1 := A.Rt.StackMalloc1.ctrl_stack_malloc1 fx CtrlB LAWS TFIB_SYMS.
-(* a Theorem Labs lane: A.Rt.StackMalloc2.ctrl_stack_malloc2 (a working branch 03746eea99b) *)
+(* a Theorem Labs lane: A.Rt.StackMalloc2.ctrl_stack_malloc2 (a working branch) *)
 Let ASM2 := A.Rt.StackMalloc2.ctrl_stack_malloc2 fx CtrlB LAWS TFIB_SYMS.
-(* a Theorem Labs lane: A.AFrameFlagLaw.frame_flag_law_ok (a working branch dddf4fa8e61) *)
+(* a Theorem Labs lane: A.AFrameFlagLaw.frame_flag_law_ok (a working branch) *)
 Let FFL := A.AFrameFlagLaw.frame_flag_law_ok CtrlB.
-(* a Theorem Labs lane: PALib / PALibF at CtrlB (a working branch 204fa48d73b); its instance A.ACtlTopLink.actl_RO
+(* a Theorem Labs lane: PALib / PALibF at CtrlB (a working branch); its instance A.ACtlTopLink.actl_RO
    (ro_below_ofl tfibsegs 0x9e380 0xa07c8) is found by instance search where the catalogue glue needs it *)
 Let TL := A.ACtlTopLink.actl_PALib.
 Let TLF := A.ACtlTopLink.actl_PALibF.
-(* a Theorem Labs lane: A.ACtlGlobs (a working branch 86f27fff835) *)
+(* a Theorem Labs lane: A.ACtlGlobs (a working branch) *)
 Let GLOBS_A_MARKED : A.Prog.CtrlRo.globs_marked segs CtrlB GLOBS_A := A.ACtlGlobs.ctrl_globs_A_marked.
 Let NAME_GLOB := A.ACtlGlobs.ctrl_name_glob_A.
-(* a Theorem Labs lane: A.ACtlTopFacts.chain_of_cut (a working branch 05ede49c521) *)
+(* a Theorem Labs lane: A.ACtlTopFacts.chain_of_cut (a working branch) *)
 Local Notation CHAIN_OF_CUT := (A.ACtlTopFacts.chain_of_cut CtrlB MT0 XL0 RLO RHI TFIB_LIB).
 
 (* lib/A/ACtlG/A5.v's Section hypothesis seg_A5_run_F (the _F run of segment A5, A5.v:129): a Theorem Labs lane's
-   A.ACtlG.A5Run.seg_A5_run_F_ok (lib/A/ACtlG/A5Run.v, a working branch ad4b0b8b346, blob c72e5a2f281; its statement is
+   A.ACtlG.A5Run.seg_A5_run_F_ok (lib/A/ACtlG/A5Run.v, a working branch, blob c72e5a2f281; its statement is
    script-equal to A5.v:130-152) *)
 Let seg_A5_run_F := @A.ACtlG.A5Run.seg_A5_run_F_ok fx.
 
@@ -156,10 +156,10 @@ Let seg_A5_run_F := @A.ACtlG.A5Run.seg_A5_run_F_ok fx.
 (* the core's api_env at CtrlB (ACtl.v section 9's tl_env term); A.Img0.rsegs is tfibsegs by definition
    (A.ProgBridge.tfibsegs_rsegs, proved by reflexivity) *)
 Let errno_low : Reusable.YCbq.api_env A.Img0.rsegs CtrlB := A.ACeh.tl_env CtrlB TFIB_LIB.
-(* two Theorem Labs lanes: A.Prog.C_reac_ctrl_parseP.pb_reac_ctrl_parse (a working branch 82af66506685; C_reac_ctrl_parseP.v
+(* two Theorem Labs lanes: A.Prog.C_reac_ctrl_parseP.pb_reac_ctrl_parse (a working branch; C_reac_ctrl_parseP.v
    7104412cbc2, C_reac_ctrl_parsePN.v a3d072bf4a2, the other eleven pieces and three chain files by path from a Theorem Labs lane's final pushes;
    reac_ctrl_parseF_rbody.v 70b963c3165 / reac_ctrl_parseF_rpost.v 8e949442472 from a Theorem Labs lane's fix,
-   a working branch 2d60d34eb75b, which builds on bcmp_wrap_c.v 64293314ee8 (the blob this tree had at release c5e779efe8c)) *)
+   a working branch, which builds on bcmp_wrap_c.v 64293314ee8 (the blob this tree had at release)) *)
 Let TPARSE : A.Prog.C_reac_ctrl_parse.treac_ctrl_parse_spec (SK := SK0) CtrlB RLO RHI :=
   A.Prog.C_reac_ctrl_parseP.pb_reac_ctrl_parse CtrlB RLO RHI errno_low ML SMP ASM1 TFIB_SYMS.
 (* a Theorem Labs lane's instance ro_below_ofl tfibsegs 0x9e380 0xa07c8 (A.ACtlTopLink.actl_RO), for the catalogue glue's implicit RO. *)
@@ -172,10 +172,10 @@ Proof.
   destruct Hin as [E|[]]. rewrite <- E. exact A.ACtlGlobs.ctrl_globs_A_cat.
 Qed.
 (* a Theorem Labs lane's reac_box_model_block spec at the catalogue list, TMB_stmt: the binder TMB of a Theorem Labs lane's
-   pb_reac_box_catalogue_match (lib/A/Prog/reac_box_catalogue_match_glue.v:143: `Hypothesis TMB :
+   pb_reac_box_catalogue_match (lib/A/Prog/reac_box_catalogue_match_glue.v:144: `Hypothesis TMB :
    C_reac_box_model_block.treac_box_model_block_spec (SK := SK) B GLOBS (BASE + AF_reac_box_model_block) RLO RHI`).
    OWNER a Theorem Labs lane: its walk theorem pb_reac_box_model_block on the strict C_reac_box_model_block.v 4631d95bcf7 (the blob
-   this tree had at release c5e779efe8c) is proved (lib/A/Prog/reac_box_model_block_thm.v:126); its premises are ready here (a Theorem Labs lane's ACtlTmbFacts, a Theorem Labs lane's IntrinCpySetA). *)
+   this tree had at release) is proved (lib/A/Prog/reac_box_model_block_thm.v:126); its premises are ready here (a Theorem Labs lane's ACtlTmbFacts, a Theorem Labs lane's IntrinCpySetA). *)
 Hypothesis TMB : TMB_stmt fx rc.
 (* The four runtime contracts ctrl_emit_as's glue takes (a Theorem Labs lane's pb_ctrl_emit_as_stmt_on binders HMSF HMCF HBRF HFNF). *)
 (* a Theorem Labs lane: A.Prog.asan_memsetF_on.asan_memset_holds_F_on at A.Prog.memset.memset_holds (as A/ACtlG/P3.v:342 passes it) *)
@@ -187,7 +187,7 @@ Let HBRF := A.Prog.reac_braid_encode_ns0F.reac_braid_encode_ns0_F_holds.
 (* a Theorem Labs lane: A.Prog.ctrl_finishF_on.ctrl_finish_F_holds_on *)
 Let HFNF := A.Prog.ctrl_finishF_on.ctrl_finish_F_holds_on.
 (* The fake-stack classes ctrl_lay_block calls (A.ProgWorld.stack_malloc_classes, ProgWorld.v:418: classes 0 / 1 / 2 / 6):
-   a Theorem Labs lane's A.Rt.StackMalloc0.ctrl_stack_malloc0 (a working branch 46693b3c04c) and ASM1 / ASM2 / ASM6 above. *)
+   a Theorem Labs lane's A.Rt.StackMalloc0.ctrl_stack_malloc0 (a working branch) and ASM1 / ASM2 / ASM6 above. *)
 Let SMC : A.ProgWorld.stack_malloc_classes CtrlB.
 Proof.
   intros cid [E|[E|[E|E]]]; subst cid.
@@ -201,9 +201,9 @@ Qed.
    at the other globals list). *)
 Hypothesis TMB_LAY : TMB_LAY_stmt fx rc.
 (* ctrl_lay_block's spec, the binder TLAY of a Theorem Labs lane's pb_ctrl_emit_as_stmt_on (G_ctrl_emit_as_on.v:82): a Theorem Labs lane's
-   A.Prog.C_ctrl_lay_block_glue.pb_ctrl_lay_block (a working branch 695bdb7fc8c + 43e169975d6's seven pieces) at the image's
-   globals list and RLO / RHI = PI_ctrl's bounds; its frame / catalogue image facts are a Theorem Labs lane's A.ACtlLayImg (a working branch
-   55cdde245e8) and a Theorem Labs lane's BuildAsImg, with registration, alignment and range decided by computation; open only through
+   A.Prog.C_ctrl_lay_block_glue.pb_ctrl_lay_block (a working branch's seven pieces) at the image's
+   globals list and RLO / RHI = PI_ctrl's bounds; its frame / catalogue image facts are a Theorem Labs lane's A.ACtlLayImg (a working branch)
+   and a Theorem Labs lane's BuildAsImg, with registration, alignment and range decided by computation; open only through
    TMB_LAY *)
 Let TLAY : ltac:(let T := type of (A.Prog.G_ctrl_emit_as_on.pb_ctrl_emit_as_on (SK := SK0) CtrlB GLOBS_A RLO RHI TFIB_SYMS
   eq_refl eq_refl TL LAWS ML HMSF HMCF HBRF HFNF) in let T := eval hnf in T in lazymatch T with forall _ : ?A, _ => exact A end) :=
@@ -216,10 +216,10 @@ Let TLAY : ltac:(let T := type of (A.Prog.G_ctrl_emit_as_on.pb_ctrl_emit_as_on (
     (A.ACtlLayImg.lay_img_fr_ro_CtrlB RLO RHI eq_refl eq_refl) (A.ACtlLayImg.lay_img_cat_ro_CtrlB RLO RHI eq_refl eq_refl)
     A.ACtlLayImg.lay_img_fr_rom.
 (* The frame table's rows 3..9 are its read-only bytes (the binder HROWS of pb_ctrl_emit_as_stmt_on, G_ctrl_emit_as_on.v:90-92):
-   a Theorem Labs lane's A.Prog.BuildAsImg.ba_img_rows (a working branch f1ae402bb2c, cbrec v12 ok) at RLO / RHI = PI_ctrl's bounds
+   a Theorem Labs lane's A.Prog.BuildAsImg.ba_img_rows (a working branch, cbrec v12 ok) at RLO / RHI = PI_ctrl's bounds
    (eq_refl, as pb_ctrl_emit_as_on's HRLO / HRHI) *)
 Let HROWS := A.Prog.BuildAsImg.ba_img_rows CtrlB TFIB_SYMS RLO RHI eq_refl eq_refl.
-(* a Theorem Labs lane: A.Prog.G_ctrl_emit_as_on.pb_ctrl_emit_as_on (a working branch 98ea0cb7009) at the image's globals list; RLO / RHI are
+(* a Theorem Labs lane: A.Prog.G_ctrl_emit_as_on.pb_ctrl_emit_as_on (a working branch) at the image's globals list; RLO / RHI are
    PI_ctrl's read-only bounds (eq_refl); the catalogue's three image facts are a Theorem Labs lane's (lib/A/Prog/BuildAsImg.v); the frame
    table's rows are a Theorem Labs lane's HROWS above, and its and the box's registration, alignment and range are decided by computation here: (0x9f7e0, 264) and (0x21140, 6) are rows 56 and 0 of ctrl_globs_A,
    0x9f7e0 mod 8 = 0, and both lie in [IMG_LO + 64, IMG_HI - 64) *)
@@ -234,28 +234,28 @@ Let TEMIT : ltac:(let T := type of (A.Prog.reac_ctrl_build_asTop.pb_reac_ctrl_bu
     ltac:(split; apply Z.leb_le; vm_compute; reflexivity) RELRO_IMG.
 
 (* The callee specs of ACtl.v section 1c. *)
-(* a Theorem Labs lane / a Theorem Labs lane: A.Prog.C_reac_ctrl_identity_reply.pb_reac_ctrl_identity_reply (C_reac_ctrl_identity_reply.v (at head lib/A/Prog/C_reac_ctrl_identity_reply.v:6527; from a working branch fe9a3b3c395))
+(* a Theorem Labs lane / a Theorem Labs lane: A.Prog.C_reac_ctrl_identity_reply.pb_reac_ctrl_identity_reply (C_reac_ctrl_identity_reply.v (at head lib/A/Prog/C_reac_ctrl_identity_reply.v:6528; from a working branch))
    *)
 Let TREPLY : A.Prog.C_reac_ctrl_identity_reply.treac_ctrl_identity_reply_spec (SK := SK0) CtrlB RLO RHI :=
   A.Prog.C_reac_ctrl_identity_reply.pb_reac_ctrl_identity_reply CtrlB RLO RHI RELRO_IMG LAWS TL TLF ML ASM1 SMP ASF FFL TPARSE.
-(* a Theorem Labs lane: A.Prog.reac_ctrl_classify_box_frame_glue.pb_reac_ctrl_classify_box_frame (a working branch b41557cce10) *)
+(* a Theorem Labs lane: A.Prog.reac_ctrl_classify_box_frame_glue.pb_reac_ctrl_classify_box_frame (a working branch) *)
 Let CLS : A.Prog.C_reac_ctrl_classify_box_frame.treac_ctrl_classify_box_frame_spec (SK := SK0) CtrlB RLO RHI :=
   A.Prog.reac_ctrl_classify_box_frame_glue.pb_reac_ctrl_classify_box_frame CtrlB RLO RHI RELRO_IMG LAWS TPARSE TFIB_SYMS.
-(* a Theorem Labs lane: A.Prog.reac_box_catalogue_match_glue.pb_reac_box_catalogue_match (a working branch e0d89a7fb6d; its RO premise is
+(* a Theorem Labs lane: A.Prog.reac_box_catalogue_match_glue.pb_reac_box_catalogue_match (a working branch; its RO premise is
    a Theorem Labs lane's instance actl_RO) *)
 Let CM_SPEC : A.Prog.C_reac_box_catalogue_match.treac_box_catalogue_match_spec (SK := SK0) CtrlB RLO RHI GLOBS_CM :=
   A.Prog.reac_box_catalogue_match_glue.pb_reac_box_catalogue_match CtrlB RLO RHI RELRO_IMG GLOBS_CM LAWS ML ASM2 SMP ASF TL TLF
     GLOBS_CM_MARKED TPARSE TMB TFIB_SYMS.
-(* a Theorem Labs lane: A.Prog.reac_ctrl_build_asTop.pb_reac_ctrl_build_as_top (a working branch 8a72bf2e2fd; its seven image facts from
-   lib/A/Prog/BuildAsImg.v, a working branch b23a4977599, and its globals certificate a Theorem Labs lane's ctrl_globs_A_marked_B, inside);
+(* a Theorem Labs lane: A.Prog.reac_ctrl_build_asTop.pb_reac_ctrl_build_as_top (a working branch; its seven image facts from
+   lib/A/Prog/BuildAsImg.v, a working branch, and its globals certificate a Theorem Labs lane's ctrl_globs_A_marked_B, inside);
    BASE + AF_reac_ctrl_build_as = 0x848ac by computation *)
 Let TBUILD : A.Prog.C_reac_ctrl_build_as.treac_ctrl_build_as_spec (SK := SK0) CtrlB GLOBS_A 0x848ac RLO RHI :=
   A.Prog.reac_ctrl_build_asTop.pb_reac_ctrl_build_as_top CtrlB TFIB_SYMS RLO RHI TL LAWS ML RELRO_IMG TEMIT IMG_SHADOW_VIS.
-(* a Theorem Labs lane: A.Rt.Memchr.memchr_site_0_17 (a working branch a215ef7803b) *)
+(* a Theorem Labs lane: A.Rt.Memchr.memchr_site_0_17 (a working branch) *)
 Let AMEMCHR_SITE := A.Rt.Memchr.memchr_site_0_17 CtrlB LAWS TFIB_SYMS.
 (* two Theorem Labs lanes: A.Rt.Strcmp.ctrl_strcmp_tramp (STRCMP_TRAMP = 0x42964 = ACtl.v's strcmp entry) *)
 Let H_strcmp := A.Rt.Strcmp.ctrl_strcmp_tramp CtrlB LAWS TFIB_SYMS.
-(* a Theorem Labs lane: A.CtrlClose.ctrl_LS_LEAF (a working branch ea55b4292e7), at fuzz_ctrl's shape LSc *)
+(* a Theorem Labs lane: A.CtrlClose.ctrl_LS_LEAF (a working branch), at fuzz_ctrl's shape LSc *)
 Let LS_LEAF := A.CtrlClose.ctrl_LS_LEAF.
 
 (* ---------------------------------------------------------------------------------------------------------

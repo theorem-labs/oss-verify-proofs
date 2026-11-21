@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the string-end bound below USTACK_TOP). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -161,7 +162,7 @@ Definition vsnprintf_lept_icontract : Prop :=
   a0 = Z_to_bv 64 D -> a1 = Z_to_bv 64 2000 -> a2 = Z_to_bv 64 fmt -> a3 = Z_to_bv 64 ap -> tp = Z_to_bv 64 TP_A ->
   In (fmt, kinds) LEPT_FMTS ->
   rw_cells asegs m ap [C8 w1; C8 w2; C8 w3; C8 w4; C8 w5; C8 w6; C8 w7] (* [comment removed for export] *) ->
-  bv_unsigned sp <= ap -> ap + 56 <= USTACK_TOP - 16 ->
+  bv_unsigned sp <= ap -> ap + 56 <= USTACK_TOP - 8 ->
   lept_args Σ m sp lo D kinds [w1; w2; w3; w4; w5; w6; w7] ->
   rw_cells asegs m D [CB 2000 junk] -> checked_dst RT Σ m sp D 2000 -> SEGTOP_A <= D -> D + 2000 <= lo ->
   (D + 2000 <= ap \/ ap + 56 <= D) ->

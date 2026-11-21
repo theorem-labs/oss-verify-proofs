@@ -1,7 +1,7 @@
 (* reac_declared_vlan_add, image B walk (lib/B/Prog/reac_declared_vlan_add.v, fuzz_segconf.asan-ubsan): the pure facts
    it uses, over byte lists, SegModel and Z only (no reader, no image). Written for the image-B G4 + G5 walks: the
-   image-B port of lib/A/Prog/reac_declared_vlan_add_lem.v (commit fcd2fa03dd27), whose text it
-   keeps, with the strcmp bridge of lib/A/Prog/check_declared.v (commit 68125773e710) and the
+   image-B port of lib/A/Prog/reac_declared_vlan_add_lem.v, whose text it
+   keeps, with the strcmp bridge of lib/A/Prog/check_declared.v and the
    integer facts of image B's UBSan tests added.
    - the search loop's model: [vad_match], [vad_existsb_skipn_S], and the three answers of SegModel.vlan_add;
    - one table entry decoded: [vad_entry_fields] (the parent's bytes up to its NUL, the vid's two bytes);

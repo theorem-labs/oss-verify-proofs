@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the system-call table's new rows set_robust_list, clock_getres and pwritev2, and write_file_tail's optional fault handler). *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Sys.SyscallTable.
@@ -181,3 +182,30 @@ Lemma arm_nat_clone3 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "A'3'6&S<r
 Proof. intros L i. sim_auto. Qed.
 Lemma arm_nat_faccessat2 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "G'3'6&S<r2'5r1qW021&I&S1&;(0%2261%411u1%5291u2%72;1u3%92=1%<47531%B6A@@>11pVLD1p:F1").
 Proof. intros L i. sim_auto. Qed.
+(* LPS 727298f3 Sys/SyscallTable.v: [spec_table] gained set_robust_list (99), clock_getres (114)
+   and pwritev2 (287); BudgetBridgeDispatch's walk takes one arm lemma per table row.
+   pwritev2 is a write-family arm: write_file_tail takes its -EFAULT post-state as an
+   [option (Sys _ -> Sys _)], so the producer is unfolded where sim_step would destruct it. *)
+Ltac sim_fault_unfold :=
+  lazymatch goal with
+  | |- Sim _ _ _ (match ?e with Some _ => _ | None => _ end) =>
+      lazymatch type of e with
+      | option (Sys ?A -> Sys ?A) =>
+          let h := headc e in is_const h; unfold h; cbv beta iota zeta
+      end
+  end.
+Ltac sim_auto_w := repeat (first [ sim_fault_unfold | sim_step ]).
+Lemma arm_nat_set_robust_list : forall (L : Z) (i : SyscallInput),
+  Sim L (fun x : SyscallEffect => x)
+    (set_robust_list_spec (in_arg i 1)) (set_robust_list_spec (in_arg i 1)).
+Proof. intros L i. sim_auto. Qed.
+Lemma arm_nat_clock_getres : forall (L : Z) (i : SyscallInput),
+  Sim L (fun x : SyscallEffect => x)
+    (clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1))
+    (clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1)).
+Proof. intros L i. sim_auto. Qed.
+Lemma arm_nat_pwritev2 : forall (L : Z) (i : SyscallInput),
+  Sim L (fun x : SyscallEffect => x)
+    (pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)))
+    (pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5))).
+Proof. intros L i. sim_auto_w. Qed.

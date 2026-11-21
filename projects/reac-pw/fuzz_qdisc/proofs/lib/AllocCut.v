@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YN03.v, with its module paths and module names changed; 425 of its 462 lines of code are new or changed and 499 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode the allocator record carries (a refused munmap leaves a leaked map); segments_reserved's filter of the kernel-installed segments). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -96,9 +97,11 @@ Definition rw_ivl (B : malloc_syms) : list (Z * Z) :=
 [ (ms_lock B, ms_lock B + 4); (ms_libc B + 3, ms_libc B + 4); (ms_libc B + 8, ms_libc B + 16);
 (ms_libc B + 48, ms_libc B + 56); (ms_guard B, ms_guard B + 8);
 (ms_ctx B, ms_ctx B + CTX_SIZE); (errno_addr B, errno_addr B + 4); (vml_lo B, vml_lo B + vml_len B) ].
+(* 727298f3: [Run.segments_reserved] leaves out the kernel-installed (vDSO) segments, so a
+   read-only segment this check accepts must also be the loader's. *)
 Definition ro_apart_b (B : malloc_syms) : bool :=
 forallb (fun s => seg_writable s ||
-((Z.of_N (seg_base s) + Z.of_N (seg_size s) <=? CEIL_MIN) &&
+(negb (seg_kernel_map s) && (Z.of_N (seg_base s) + Z.of_N (seg_size s) <=? CEIL_MIN) &&
 forallb (ivl_disjoint (Z.of_N (seg_base s), Z.of_N (seg_base s) + Z.of_N (seg_size s))) (rw_ivl B)))
 (ms_segs B).
 Lemma ro_apart_sound : forall B a, ro_apart_b B = true -> 0 <= a < 2 ^ 64 ->
@@ -111,11 +114,19 @@ destruct (find_segment (ms_segs B) a 1) as [s|] eqn:F; [|discriminate].
 apply negb_true_iff in Hro.
 pose proof (find_segment_in _ _ _ _ F) as Hin. destruct (find_segment_range _ _ _ _ F) as [R1 R2].
 unfold ro_apart_b in H. rewrite forallb_forall in H. specialize (H s Hin). rewrite Hro in H. cbn [orb] in H.
-apply andb_prop in H as [H1 H2]. apply Z.leb_le in H1. rewrite forallb_forall in H2.
+apply andb_prop in H as [H H2]. apply andb_prop in H as [HK H1]. apply Z.leb_le in H1. rewrite forallb_forall in H2.
 assert (CM : CEIL_MIN < 2 ^ 63) by lia.
 split; [|split; [lia|]].
 - split; [intros E; rewrite E in Hin; destruct Hin|].
-exists (segment_reservation s). split; [apply in_map; exact Hin|].
+exists (segment_reservation s). split.
+{ apply in_map. clear - Hin HK. revert Hin. generalize (ms_segs B) as l. intros l.
+(* the model's [filter] is reduced by [cbn], whichever constant it is (as Reusable/YG0h.v) *)
+induction l as [|x l IH]; intros Hin; cbn; [destruct Hin|].
+destruct Hin as [Ex|Hin].
++ subst x. first [ rewrite HK; left; reflexivity
+                  | destruct (seg_kernel_map s); cbn in HK |- *; [discriminate HK | left; reflexivity] ].
++ first [ destruct (negb (seg_kernel_map x)); [right|]; exact (IH Hin)
+        | destruct (seg_kernel_map x); cbn; [|right]; exact (IH Hin) ]. }
 unfold segment_reservation, page_round_down_Z, page_round_up_Z, page_size. cbn [fst snd].
 set (lo := Z.of_N (seg_base s)) in *. set (hi := lo + Z.of_N (seg_size s)) in *.
 assert (L0 : 0 <= lo) by (unfold lo; lia).
@@ -237,6 +248,9 @@ pose proof (Z.div_mod (o + 16 + stride_of am * idx + 16 * fr_off fr + fr_n fr + 
 pose proof (Z.mod_pos_bound (o + 16 + stride_of am * idx + 16 * fr_off fr + fr_n fr + 7) 8 ltac:(lia)) as MV.
 lia.
 Qed.
+(* 08b1429: at any allocation mode (MRx is stated over YN03.ledger_ok, which carries the mode). *)
+Section ma.
+Context {AM : Cfg.AllocMode}.
 Lemma MRx_block_slack : forall B L A mem md p n a, MRx B L A mem md -> In (p, n) (blocks L A) ->
 p + n <= a < 8 * ((p + n + 7) / 8) -> present mem a.
 Proof using.
@@ -265,6 +279,7 @@ apply (MRc_blocks_img B L A mem md q k (a - ptr_addr L q) Mc Hq ltac:(unfold ptr
 replace (ptr_addr L q + (a - ptr_addr L q)) with a by lia.
 exact (so_ctx_img _ (mc_syms _ _ _ _ _ Mc) a Ha).
 Qed.
+End ma.
 Definition seg_wbyte (segs : list Segment) (a : word) : option byte :=
 match find_segment segs (bv_unsigned a) 1 with
 | Some seg => if seg_writable seg
@@ -463,4 +478,49 @@ destruct (seg_wbyte (ms_segs B) (Z_to_bv 64 (ms_guard B + i))) as [b2|] eqn:E2; 
 split; [exact (writable_of_seg _ mem _ b1 E1) | exact (writable_of_seg _ mem _ b2 E2)].
 Qed.
 End c.
+(* 08b1429: the structural allocator facts above read only the record's invariant and its laws, so they hold for
+   a record at any allocation mode; the may-fail chain reads them over ZAllocatorMF's record at MayFail
+   (YO0d.AllocAPI carries its mode). *)
+Section cm.
+Context {AM : Cfg.AllocMode}.
+Variable B : malloc_syms.
+Variable API : AllocAPI B.
+Let MR := aa_MR API.
+Theorem blocks_low_ok_m : blocks_low B API.
+Proof using.
+intros L A mem md p n HM Hin. apply YI04.blocks_In in Hin as (q & <- & Hq).
+exact (proj1 (mr_blocks_range B MR (aa_laws API) _ _ _ _ _ _ HM Hq)).
+Qed.
+Theorem blocks_writable_ok_m : blocks_writable B API.
+Proof using.
+intros L A mem md p n i HM Hin Hi. apply YI04.blocks_In in Hin as (q & <- & Hq).
+apply YL01.present_writable. exact (proj1 (mr_blocks B MR (aa_laws API) L A mem md q n i HM Hq Hi)).
+Qed.
+Theorem libc_no_locks_ok_m : AllocExtra B MR -> libc_no_locks B API.
+Proof using.
+intros AX L A mem md HM. exact (proj2 (proj2 (ax_statics AX L A mem md HM))).
+Qed.
+Theorem errno_unowned_ok_m : AllocExtra B MR -> errno_check B = true -> errno_unowned B API.
+Proof using.
+intros AX HE L A mem md a HM Ha. destruct (errno_check_sound B a HE Ha) as (Himg & Hst & Hctx).
+intros [Ho|Ho]; [exact (Hctx (ax_img AX L A mem md a HM Himg Ho)) | exact (Hst Ho)].
+Qed.
+Theorem ctx_owned_ok_m : (forall L A mem md, MR L A mem md -> MRx B L A mem md) -> ctx_owned B API.
+Proof using.
+intros HX L A mem md a HM Ha. exact (MRx_ctx_owned B L A mem md a (HX L A mem md HM) Ha).
+Qed.
+Theorem block_slack_present_ok_m : (forall L A mem md, MR L A mem md -> MRx B L A mem md) -> block_slack_present B API.
+Proof using.
+intros HX L A mem md p n a HM Hin Ha. exact (MRx_block_slack B L A mem md p n a (HX L A mem md HM) Hin Ha).
+Qed.
+Theorem guard_rw_ok_m : guard_seg_b B = true -> guard_rw B API.
+Proof using.
+intros HG L A mem md i HM Hi. unfold guard_seg_b in HG. rewrite forallb_forall in HG.
+assert (Hin : In i [0; 1; 2; 3; 4; 5; 6; 7]) by (cbn; lia).
+specialize (HG i Hin).
+destruct (seg_wbyte (ms_segs B) (Z_to_bv 64 (ms_got_guard B + i))) as [b1|] eqn:E1; [|discriminate].
+destruct (seg_wbyte (ms_segs B) (Z_to_bv 64 (ms_guard B + i))) as [b2|] eqn:E2; [|discriminate].
+split; [exact (writable_of_seg _ mem _ b1 E1) | exact (writable_of_seg _ mem _ b2 E2)].
+Qed.
+End cm.
 End a.

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Test file (a Theorem Labs lane): a Theorem Labs lane's standing acceptance gate (06:19Z) for every glue green. A Theorem Labs lane's ruled PALibF
-   (lib/AU/Prog/SceneFrame.v at 8df4a950395, the same blob at a Theorem Labs lane f6ab6e97937 and a Theorem Labs lane 722526c3436) states
+   (lib/AU/Prog/SceneFrame.v, the same blob at a Theorem Labs lane and a Theorem Labs lane) states
    palf_sm8 = StackMalloc8Tbl.PC_STACK_MALLOC_8, and that field closes by vm_compute at scene's concrete B
-   (YD2l.TfibB, a Theorem Labs lane d7f9043aaa7): G_Close.g_TLF builds PALibF at TfibB, its palf_sm8 field by a Theorem Labs lane's
-   ScenePalfSm8.scene_palf_sm8 (c3131b23386), the others by computation. *)
+   (YD2l.TfibB, a Theorem Labs lane): G_Close.g_TLF builds PALibF at TfibB, its palf_sm8 field by a Theorem Labs lane's
+   ScenePalfSm8.scene_palf_sm8, the others by computation. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YK11 YM05.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Prog Require Import PaTable PaSym SceneSyms SceneList ScenePa SceneImg SceneFrame.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Rt Require Import StackMalloc8Tbl.

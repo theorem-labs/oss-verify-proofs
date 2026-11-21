@@ -1,5 +1,5 @@
 (** reac-pw/fuzz_segconf, UBSan build (image 1696d6c34ffd): satisfiability of the premises of contract family F1.
-    For each of the 18 contracts (lib/U/Prog/*_c.v; the text of commit e3c794acbc3d, unchanged through c7b9518dac31,
+    For each of the 18 contracts (lib/U/Prog/*_c.v; the text, unchanged through,
     which this tree is on) one
     closed lemma [<fn>_pre_sat]: its named premise holds at a real call site with real values. The lemmas with a
     suffix ([_absent], [_nosuch], [_acc_absent], [_acc_nosuch], [_dropin]) cover the function's other callers, so

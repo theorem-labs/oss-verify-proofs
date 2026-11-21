@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainQ.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 49093746176e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainQ.v at commit 257c1d78b5c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainQ.v (Quarantine::Drain walk set; file sha256 49093746176e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainQ.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the bridge between the MergeBatches slice's cell vocabulary
    (DMwalkIF.lcn / fa / la, the linked-list form the merge proves) and the dequeue loop's premise
    (DMdeq.deq_pre, which states the same cells as YFey.next_addr indices), plus the batch facts the loop asks of
@@ -125,8 +126,8 @@ rewrite AE. lia.
 Qed.
 
 (* NoDup over the two post-merge lists, from the entry list's and the slice's membership / length facts.
-   List.NoDup, not stdpp's: DMdeq.dq_ND (DMdeq.v:679) is the Stdlib one.  [nodup_of_stdpp] bridges the other
-   way, for DMiface.qview's qv_nodup (DMiface.v:96), which is stdpp's. *)
+   List.NoDup, not stdpp's: DMdeq.dq_ND (DMdeq.v:680) is the Stdlib one.  [nodup_of_stdpp] bridges the other
+   way, for DMiface.qview's qv_nodup (DMiface.v:97), which is stdpp's. *)
 Lemma nodup_of_stdpp : forall (l : list Z), NoDup l -> List.NoDup l.
 Proof. intros l H. apply NoDup_ListNoDup. exact H. Qed.
 

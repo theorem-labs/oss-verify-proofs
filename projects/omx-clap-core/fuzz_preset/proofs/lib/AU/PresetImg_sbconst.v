@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_sbconst.v (commit ce1a656b52b7, file sha256 ecde5af6f382) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_sbconst.v (file sha256 ecde5af6f382) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row img-sbconst-B of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the constant-cell table of reply's image B,
    fuzz_reply.asan-ubsan, pin 10ffb5f9202a).
 
-   SB_CONST, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainQ.v:45 @ 1c81ef042c9 (used as Hypothesis SBC, :154), over the
+   SB_CONST, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainQ.v:45 (used as Hypothesis SBC, :154), over the
    image class's field im_const (Context {IM : AImg}).  Reply does not carry YGcfInstDrainQ.v, so the Lemma states the
    body of SB_CONST verbatim at reply's instance IM := AImg_cgif (B/AGif2cgif.v:24, im_const := YF0m.Tfib_const).
    Proof: the space-base cell c8 (AInst o_space) (ASp 0) is found in Tfib_const by cell_lookup, computed by vm_compute
@@ -26,7 +27,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import ImgB
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import AGif2cgif.
 Open Scope Z_scope.
 
-(* SB_CONST at image B: YGcfInstDrainQ.v:45 @ 1c81ef042c9, at IM := AImg_cgif. *)
+(* SB_CONST at image B: YGcfInstDrainQ.v:45, at IM := AImg_cgif. *)
 Lemma SB_CONST_B : forall ly, In (ACell (AInst o_space) 8 (AV (ASp 0))) (@im_const AImg_cgif ly).
 Proof.
 intros ly. change (In (ACell (AInst o_space) 8 (AV (ASp 0))) (Tfib_const ly)).

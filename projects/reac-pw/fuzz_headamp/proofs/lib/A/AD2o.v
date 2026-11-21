@@ -1,15 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v and AD2p.v at
-   c8557374ad2e. This file is knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind:
+   theorem-labs/oss-verify-proofs@6b32741d849a. This file is knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind:
    assembly): it instantiates KnockClose's asan Section at closed parts, so fuzz_knock's two ASan statements rest on no
    Section hypothesis. cgif's AD2o keeps three program-walk hypotheses that its AD2p discharges; knock's program contract
    (lib/A/APgLib.v knock_lib_x_all) takes none, so the closing is one file and there is no AD2p. *)
-(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/AD2o.v at
-   origin/ossv/recipes 6ebe35ba632: it instantiates lib/A/QdiscClose.v's asan Section; the program contract is
+(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/AD2o.v:
+   it instantiates lib/A/QdiscClose.v's asan Section; the program contract is
    lib/A/QPgLib.v's (qdisc_lib_contract_x_all_tfib over qdisc_lib_x_all, in the roles of APgLib's knock_* ); the
    allocator parts are lib/A/QdiscAllocClose.v's; names knock_* -> qdisc_*, module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/AD2o.v at 56ce9edaafc, for reac-pw/fuzz_role image A: it
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/AD2o.v, for reac-pw/fuzz_role image A: it
    instantiates lib/A/RoleClose.v's asan Section (its trace tables from ACej / ACejTfib); the driver is the relocated
    core's float-state-slot driver (libreac/fuzz_grant's lib/A/AD1p.v tfib_drv_main at P := a zero rounding mode, as
    fuzz_grant's lib/A/AD1q.v:107-142 tfib_srealizesXF and libreac/fuzz_boxreg's lib/A/Prog/BoxCore.v apply it), since
@@ -17,12 +17,13 @@
    (role_lib_contract_x_all_tfib over role_lib_x_all, whose free / malloc premises the adapter feeds, as
    libreac/fuzz_ctrl's lib/A/ACtlAll.v:110-111 feeds its walk top's); the allocator parts are lib/A/RoleAllocClose.v's;
    names qdisc_* -> role_*, module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/AD2o.v at fa745625e7d, for reac-pw/fuzz_headamp image A:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/AD2o.v, for reac-pw/fuzz_headamp image A:
    it instantiates lib/A/HeadampClose.v's asan Section; the program contract is lib/A/HPgLib.v's
    (headamp_lib_contract_x_all_tfib over headamp_lib_x_all_stmt, the same premises in the same order as role's: the
    one-leaf law, then free, then malloc; the entry function's four blocks add none); the plain slot is
    lib/A/HeadampPlainSlot.v's (lib/AgreeHead.v plain_slot_ag_of_evts at the plain walks); names role_* -> headamp_*,
    RPgLib -> HPgLib, module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up hand-off states computed in the build); internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_headamp's two image-A ASan statements from lib/A/HeadampClose.v's parts; the agreement statement's plain side
    is lib/A/HeadampPlainSlot.v headamp_plain_slot_ag_closed (HeadampAsanTop.PLAIN_SLOT_AG).
    The entry function's program contract is lib/A/HPgTopI.v headamp_lib_x_all (the image-A walks of
@@ -33,7 +34,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From OSSVerify.reac_pw.fuzz_headamp Require Statements.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require Import YK11 YK0o YG00 YG01 YG0f YG0d YC5d YCbp YM05.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YG0q.
-From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.A Require AB1v AB01 AB12 AB1n ACej ACejTfib AD2l AD2m AD1k AD1o AD1l AD1j AD1p ACfn.
+From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.A Require AB1v AB01 AB01r AB12 AB1n ACej ACejTfib AD2l AD2m AD1k AD1o AD1l AD1j AD1p ACfn.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.A Require HPgLib HPgTopI HeadampAllocClose HeadampAsanTop
   HeadampClose HeadampPlainSlot.
 Local Open Scope Z_scope.
@@ -68,7 +69,7 @@ Lemma headamp_driver_TfibB : forall rc : YM05.RunCeil,
   (forall fx : YK11.FPState, @aintrin_realizes fx rc segs B OCpy (pc_wrap_memcpy (as_code B))) ->
   universe_ok (as_universe B) ->
   (forall t, In t ACejTfib.Tfib_drv_traces -> In t (as_universe B)) ->
-  HeadampClose.drv_mainA AB01.HS_tfib AB12.TFIB rc.
+  HeadampClose.drv_mainA AB01r.HS_tfib_r AB12.TFIB rc.
 Proof.
   intros rc AM AF AI _ _.
   exact (@AD1p.tfib_drv_main rc HeadampAsanTop.headamp_shape (fun fx : YK11.FPState => frm_zero (@fp_csr fx)) fp_frm_zero_fx0
@@ -89,12 +90,12 @@ Proof.
     (fun fx _ => AD1j.tfib_exit_site (fx := fx) B HB LAWS)).
 Qed.
 
-(* HeadampClose's asan Section at its parts: HS_TBL / TFIB_TBL / H_STARTUP from the start-up certificate (AB01.HS_tfib,
+(* HeadampClose's asan Section at its parts: HS_TBL / TFIB_TBL / H_STARTUP from the start-up certificate (AB01r.HS_tfib_r,
    AB12.TFIB, AB1n.tfib_startup_T1), B := AD2l.TfibB, the allocator parts from lib/A/HeadampAllocClose.v, the trace tables
    from ACej / ACejTfib with H_TRACES_B by reflexivity, and H_DRIVER from headamp_driver_TfibB. *)
 Theorem ASAN_T_closed : HeadampAsanTop.ASAN_T.
 Proof.
-  exact (HeadampClose.ASAN_T_of_parts AB01.HS_tfib AB12.TFIB AB1n.tfib_startup_T1 B
+  exact (HeadampClose.ASAN_T_of_parts AB01r.HS_tfib_r AB12.TFIB AB1n.tfib_startup_T1 B
     HeadampAllocClose.headamp_amalloc_closed HeadampAllocClose.headamp_afree_closed HeadampAllocClose.headamp_aicpy_closed
     ACej.Tfib_universe ACej.Tfib_universe_ok eq_refl ACejTfib.Tfib_drv_traces ACejTfib.Tfib_universe_drv
     headamp_driver_TfibB).

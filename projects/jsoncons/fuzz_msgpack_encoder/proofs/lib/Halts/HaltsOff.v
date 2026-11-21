@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by gabelogan195, 2026-11: made from this harness's proofs/lib/Mh_0055.v at commit f92feaf8b7, module HaltsKit (its import block, changed to require Mh_0055 and Mh_0055.HaltsKit and to leave out the BvWfKernel require at line 730 and the Zify setting at line 740 of Mh_0055.v; the theorem srealizes_must_exit_fo and the theorem srealizes_init_must_exit), restated as srealizes_must_exit_fo_off and srealizes_init_must_exit_off for a realization whose budget-refused leaf is off (bm_on = false): the no-refusal hypothesis, the reach_fo bookkeeping it needed and the budget premise are dropped, and the budget-refused case is closed by bm_on = false instead; its comments are left out and the doc comments are new. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the walk's induction names the node's new read-only-backing premise and the budget-refused case's, and the statement's form reads the realization over the run's segment list run_segments, as HaltsKit.srealizes_must_exit_fo and srealizes_init_must_exit of Mh_0055.v now do). *)
 (** A realization made with its budget-refused leaf off must exit, whatever the budget.
 
     [HaltsKit.srealizes_init_must_exit] walks a [srealizes0] derivation to
@@ -37,7 +38,7 @@ Theorem srealizes_must_exit_fo_off : forall (segs : list Segment) (scfgD : Spuri
   must_exit_in_at_cfg forced_only_cfg segs S c.
 Proof.
   intros segs scfgD S c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh Hmode | c T T' H IH Heq | c T Hon Hbr HT0];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh Hmode | c T T' H IH Heq | c T Hon Hbr Hbrob HT0];
     intros HE HK Hhalt.
   - destruct Hnode as [Hcomp Hsound].
     assert (Hnh : m_halted (cfg_model c) = None).
@@ -74,13 +75,16 @@ Qed.
 (** The statement's form, as [HaltsKit.srealizes_init_must_exit] has it, less
     its budget premise. *)
 Theorem srealizes_init_must_exit_off : forall scfgD segs pc ph sp brk0 mb rnd lim inp S T,
-  @srealizes0 bmK segs scfgD (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  @srealizes0 bmK (run_segments segs inp sp mb) scfgD
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   exit_codes_in S T -> kill_free T ->
   must_exit_in_scfg forced_only_cfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp.
 Proof.
   intros scfgD segs pc ph sp brk0 mb rnd lim inp S T Hs HE HK.
   cbn [must_exit_in_scfg].
-  apply (srealizes_must_exit_fo_off segs scfgD S _ T Hs HE HK).
-  intros code Hh. exfalso. unfold init_config in Hh. cbn [cfg_model] in Hh. rewrite m_halted_init_model in Hh. discriminate Hh.
+  apply (srealizes_must_exit_fo_off (run_segments segs inp sp mb) scfgD S _ T Hs HE HK).
+  intros code Hh. exfalso. unfold init_config in Hh. cbn [cfg_model] in Hh.
+  change (m_halted (with_vdso ?v ?m)) with (m_halted m) in Hh.
+  rewrite m_halted_init_model in Hh. discriminate Hh.
 Qed.
 End Off.

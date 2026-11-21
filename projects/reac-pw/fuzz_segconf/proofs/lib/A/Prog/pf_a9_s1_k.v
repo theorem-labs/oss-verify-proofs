@@ -4,16 +4,17 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 408 of its 431 lines of code are new or changed and 495 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the kit of stretch SA9_A of segment A9 of
    reac_segconf_parse_file's walk (KEY 0x87fac -> REF3 / K2 0x87fe4; segment A9's proof, by the G3 walk owner, 2026-10-30).
    No instruction is walked here: these are the facts the walk file lib/A/Prog/pf_a9_s1.v reads at its two calls.
 
    - s1_st and the buf facts (s1_addr_buf, s1_fframe_buf, ...): segment A7's a7_st and its lemmas,
-     lib/A/Prog/pf_a7_d.v (commit 0c85038238f5), renamed a7_ -> s1_.
-   - the strchr premise list (s1_strchr_pre) and its helpers: segment A7's pf_a7_r.v (commit
-     ebe0b30cca65) a7_strchr_pre_87f74 with the byte '=' (0x3d) in place of ']' (0x5d), renamed a7_ -> s1_.
-   - the trim call's premise list (s1_trim_call, s1_trim_site_ok): segment A7's pf_a7_s.v (commit
-     980fbe9c6015) a7_trim_call / a7_trim_site_ok, renamed; trim_site_ok_87fdc is rule 1j-bis for the call
+     lib/A/Prog/pf_a7_d.v, renamed a7_ -> s1_.
+   - the strchr premise list (s1_strchr_pre) and its helpers: segment A7's pf_a7_r.v
+      a7_strchr_pre_87f74 with the byte '=' (0x3d) in place of ']' (0x5d), renamed a7_ -> s1_.
+   - the trim call's premise list (s1_trim_call, s1_trim_site_ok): segment A7's pf_a7_s.v
+      a7_trim_call / a7_trim_site_ok, renamed; trim_site_ok_87fdc is rule 1j-bis for the call
      trim(line) at 0x87fdc, after the store `sb zero, 0(eq)` at 0x87fd4.
    - s1_move: THE transport of a9_core (pf_a9_d.v) across a step or a call whose writes miss A5's write set
      a5_Wrx v pos false false (the stack below s1 and buf): the strchr interceptor (its 2 * ESTACK window), the

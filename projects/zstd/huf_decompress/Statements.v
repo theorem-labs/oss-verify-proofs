@@ -20,9 +20,12 @@
 
     WHAT THE HARNESS CHECKS.  HUF_readDTableX1/X2 of the input (errors skip),
     then HUF_decompress1X/4X_usingDTable with random flags and buffer size;
-    result ignored.  The harness makes no check of its own beyond not crashing,
-    so a statement about it says only that the code it calls never crashes,
-    hangs or trips a sanitizer.
+    result ignored.  The harness makes no check of its own beyond not crashing.
+    Its halts statements say only that the code it calls never crashes, hangs or
+    trips a sanitizer.  Its agreement statements say only that the code never
+    crashes or trips a sanitizer, and allow a run that never ends.  Its bound
+    statements say only how often its builds may disagree.  Its decidability
+    statements say only that some program decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

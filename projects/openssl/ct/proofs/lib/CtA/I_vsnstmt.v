@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the string bound below USTACK_TOP). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
@@ -220,7 +221,7 @@ Definition varg_ok (Σ : rts RT) (m : mem) (sp : word) (lo D n : Z) (slot : word
       bytes_at ctasegs m (bv_unsigned slot) (zb s ++ Z_to_bv 8 0 :: slack)
       /\ Forall (fun c => 0 < c < 256) s /\ zlength s + 1 <= 2^40     (* [comment removed for export] *)
       /\ ((- (bv_unsigned slot + zlength s + 1)) mod 8 <= zlength slack)
-      /\ 0 < bv_unsigned slot /\ bv_unsigned slot + zlength s + 1 + zlength slack <= USTACK_TOP - 16
+      /\ 0 < bv_unsigned slot /\ bv_unsigned slot + zlength s + 1 + zlength slack <= USTACK_TOP - 8
       /\ (bv_unsigned slot + zlength s + 1 + zlength slack <= lo \/ bv_unsigned sp <= bv_unsigned slot)
       /\ (bv_unsigned slot + zlength s + 1 + zlength slack <= D \/ D + n <= bv_unsigned slot)
       /\ acc ctasegs m (bv_unsigned slot) (zlength s + 1)
@@ -249,7 +250,7 @@ Definition varg_okx (Σ : rts RT) (m : mem) (sp : word) (lo D n : Z) (slot : wor
       \/ (exists p, cov = Some p /\ 0 < p <= zlength s
              /\ bytes_at ctasegs m (bv_unsigned slot) (zb s)
              /\ Forall (fun c => 0 < c < 256) s /\ zlength s + 1 <= 2^40
-             /\ 0 < bv_unsigned slot /\ bv_unsigned slot + zlength s <= USTACK_TOP - 16
+             /\ 0 < bv_unsigned slot /\ bv_unsigned slot + zlength s <= USTACK_TOP - 8
              /\ (bv_unsigned slot + zlength s <= lo \/ bv_unsigned sp <= bv_unsigned slot)
              /\ (bv_unsigned slot + zlength s <= D \/ D + n <= bv_unsigned slot)
              /\ acc ctasegs m (bv_unsigned slot) p /\ rng_class RT Σ (bv_unsigned slot) p)

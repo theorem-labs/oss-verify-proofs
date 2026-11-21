@@ -20,10 +20,10 @@
    encR_wr_bound, encR_sh0 and the Ltac enc_shbase.
 
    rule 24: proves function preset_base64_encode (part R; reuse search: proof-index preset_base64_encode,
-   ported from a working branch 402eb5565fc + donor a working branch b96980d72d1)
-   Port-from: lib/A/FSW_preset_base64_encode.v at 402eb5565fc lines 741-1232 (Section R head, invariant layer, encR_nul),
+   ported from a working branch + donor a working branch)
+   Port-from: lib/A/FSW_preset_base64_encode.v lines 741-1232 (Section R head, invariant layer, encR_nul),
    1238-1240 (encR_kept), 1248-1297, 1369-1374, 1439-1460, 1477-1487, 1501-1507, 1515-1570; image-B facts from the old-B
-   donor a working branch b96980d72d1 lib/B/Prog/preset_base64_encode_blocks.v:86 (carve_frame 48: the 48-byte
+   donor a working branch lib/B/Prog/preset_base64_encode_blocks.v:86 (carve_frame 48: the 48-byte
    frame), :105-129 (enc_epilogue: the six reloads 40/32/24/16/8/0(sp), addi sp,sp,48, ret from 0x84b38), :1053-1091
    (enc_finish: the NUL store's block at 0x84b24 = BT 543524). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

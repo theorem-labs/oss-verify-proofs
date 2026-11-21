@@ -53,7 +53,7 @@ Ltac d4_mk HS := rewrite (st_ok_restrict_mkst tfibsegs _ _ _ _ HS eq_refl);
   lazymatch goal with |- context [Z_to_bv 64 (ss_pc ?x)] =>
     let v := eval vm_compute in (ss_pc x) in change (ss_pc x) with v end.
 (* awr_ok for the frame window (the frame at atom 2 = F = the journal's sp0 - 208); the second pattern is awr_ok's
-   form in Reloc's core aeb12aaa12b (segs and B first) *)
+   form in Reloc's core (segs and B first) *)
 Ltac d4_awr U2 :=
   lazymatch goal with
   | |- awr_ok ?E ?rs ?stk ?sp0 ?fp ?b0 ?bc ?ly ?own =>

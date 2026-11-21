@@ -13,13 +13,14 @@
    tfib_sink_head) and constants (ACfn); the frame-flag law reads the image cover of lib/A/AF0x.v; the stack frames of
    classes 1 and 3, the strlen / strcmp / snprintf wrappers and __asan_set_shadow_f5 are the frame's and the runtime
    lanes' walks; the allocation traces and the code entries are checked on TfibB by computation. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgLink.v at af0538adbf24 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgLink.v for image B
    (fuzz_rate.asan-ubsan): the contract is lib/AU/RtPgLibB.v's rate_lib_x_all_stmt_B, proved from lib/AU/RtPgTopAB.v's
    rate_lib_x_B at image B's core (lib/AU YB1v / YD2l / YE2k / YCfn / YD1u / YF0m / YF0x / YCej / YE2q / YE2r); the
    frames are classes 1, 2 and 4 (YF0s, YF0u, Rt/StackMalloc4), the bcmp wrapper is YE2s's, check_csv and
    reac_rate_drivable_csv are their walks, the image's read-only facts are lib/AU/RtPgRoCloseB.v's, and the strlen /
    strcmp / set_shadow_f5 / snprintf wrappers are image B's runtime walks (lib/AU/Rt/Strlen.v, Strcmp.v, SetShadow.v,
    SnprintfRate.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; addresses from the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1): THE ENTRY FUNCTION'S PROGRAM CONTRACT,

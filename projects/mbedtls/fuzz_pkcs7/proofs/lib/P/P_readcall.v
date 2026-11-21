@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the WIN window, win_store_ok and the buffer bound Hbufhi moved to sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -54,14 +55,14 @@ Section RC.
 
   Variables (R : bvmap 5 word) (M : word -> option byte).
   (* [comment removed for export] *)
-  Hypothesis WIN : ltac2:(CDefT.buildp (gd_tbl_P_readcall ()) "Pa,(0.&40.)P,(1.(2.(3.(4.&40.Vsp0,)+800000.)(4.&40.R1.))(5.(4.&40.R1.)(4.&40.Vsp0,)))(6.(7.(8.(0.&8.))(9.$:.VM,R2.)(;.(0.&8.))))")
+  Hypothesis WIN : ltac2:(CDefT.buildp (gd_tbl_P_readcall ()) "Pa,(0.&40.)P,(1.(2.(3.(4.&40.Vsp0,)+5=<200.)(4.&40.R1.))(5.(4.&40.R1.)(4.&40.Vsp0,)))(6.(7.(8.(0.&8.))(9.$:.VM,R2.)(;.(0.&8.))))")
 (* [comment removed for export] *).
   Hypothesis G2 : getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128).
   Hypothesis G3 : getr R 3 = Z_to_bv 64 0x10800.
   Hypothesis G4 : getr R 4 = Z_to_bv 64 0x599c8.
   Hypothesis G10 : getr R 10 = Z_to_bv 64 3.
 
-  #[using="Hvsp SPlo SPhi WIN"] Lemma win_store_ok : ltac2:(CDefT.buildp (gd_tbl_P_readcall ()) "Pd,$<.Pm,$=.P,(2.=R2.)P,(2.(>.R3.(?.R2.))+800000.)(7.$10.(11.$:.VM,(12.&40.(>.(3.(4.&40.Vsp0,)+800000.)R4.))R3.)$13.)")
+  #[using="Hvsp SPlo SPhi WIN"] Lemma win_store_ok : ltac2:(CDefT.buildp (gd_tbl_P_readcall ()) "Pd,$<.Pm,$=.P,(2.=R2.)P,(2.(>.R3.(?.R2.))+5=<200.)(7.$10.(11.$:.VM,(12.&40.(>.(3.(4.&40.Vsp0,)+5=<200.)R4.))R3.)$13.)")
 (* [comment removed for export] *).
   Proof.
     intros d m Hd Hm. pose proof SPlo. pose proof SPhi.
@@ -78,7 +79,7 @@ Section RC.
     Hypothesis G12 : getr R 12 = Z_to_bv 64 n.
     Hypothesis Hn : (1 <= n <= 65536)%Z.
     Hypothesis Hbuf : (0 <= buf)%Z.
-    Hypothesis Hbufhi : (buf + n <= bv_unsigned sp0 - 8388608)%Z.   (* [comment removed for export] *)
+    Hypothesis Hbufhi : (buf + n <= bv_unsigned sp0 - 6144512)%Z.   (* [comment removed for export] *)
     Hypothesis BOK : store_ok RSEGS M (Z_to_bv 64 buf) (Z.to_nat n) = true.
 
     Definition valsRD : list word := [sp0; Z_to_bv 64 buf; Z_to_bv 64 n] ++ junk_vals R.

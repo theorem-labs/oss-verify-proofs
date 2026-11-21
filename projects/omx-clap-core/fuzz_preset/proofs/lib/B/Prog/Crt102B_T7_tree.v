@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 443 of its 506 lines of code are new or changed and 451 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, walk of check_round_trip on the #102 pins, IMAGE B' (asan-ubsan
    d663f82d7f488d30, unstripped twin c90d4fa54d43160b), FREE-PIECES-102 Part 7a row T7 = CRT-B-CEXIT (segment C + the
    exit, B' entry + 0x6f8 .. + 0x80c): the READER LAYER of the row. Everything the walk needs to know about the bytes
@@ -11,23 +12,23 @@
    proves no function (kind: reader-layer lemmas for a segment walk).
 
    INPUTS OF RECORD (taken by path):
-   - base commit 91762d8dd6b1 (= cc93c792c645 merged with commit
-     11c39f7e88b7): lib/A/PRH_Reader.v (pj_hdrR, pj_cstrR, pj_memsR, pj_nodeR), lib/A/PRH_Base.v (prh_ledger,
+   - base (= merged with):
+     lib/A/PRH_Reader.v (pj_hdrR, pj_cstrR, pj_memsR, pj_nodeR), lib/A/PRH_Base.v (prh_ledger,
      prh_hblock, prh_lin, kept_img), lib/A/Prog/Crt102Model.v (cm_at, cm_crt_at), lib/A/Prog/Crt102Img.v
      (CRT_MOD_AT_B, CRT_STAMP_B, crt_str_rom_B), lib/A/Prog/S1Ledger.v (prh_ledger_hblock), lib/Reusable/YCbqG.v
      (AR_laws_x: alx_blocks, alx_hshadow, alx_blocks_tail, alx_zshadow, alx_const_cells), lib/Reusable/YGcallMxmn.v
      (aj_strcmp_at_xro: the per-string premises this file's cb7t_str_prem / cb7t_rom_prem_* deliver).
    - worked models, PORTED (not Required): slice S9's lib/A/Prog/Wsame_base.v (s9_ra_of_bshadow, s9_hull_sub) and
-     Wsame_memB.v (s9b_aview_vm, s9b_garr8_at, s9b_aview_pres, s9_str_ok) at commit
-     9a0674f0b5f2; S1's lib/B/Prog/FuzzStrdupB.v (sd_hull_img, sd_amr8, sd_src_shadow's kept_img arm).
+     Wsame_memB.v (s9b_aview_vm, s9b_garr8_at, s9b_aview_pres, s9_str_ok);
+     S1's lib/B/Prog/FuzzStrdupB.v (sd_hull_img, sd_amr8, sd_src_shadow's kept_img arm).
 
    NAMED SECTION HYPOTHESES (each one stated with its text where it is taken):
-   - LAWS : AR_laws_x SEGS B ARx cf_head (the same hypothesis lib/B/Prog/Crt102B_T4.v:491 takes; discharged at the
+   - LAWS : AR_laws_x SEGS B ARx cf_head (the same hypothesis lib/B/Prog/Crt102B_T4.v:492 takes; discharged at the
      instance ARcfx by lib/Reusable/YGcallcf.v AR_laws_x_xs).
    - BOK : asyms_ok B (only for the read-only strings: aso_zshadow, the 8-alignment of as_zero_shadow's ranges;
      image B's generated start-up facts carry it, AF0m.v-style ts_ok / YF0m).
    - IMGVIS (only for the read-only strings: the shadow hull of an image string; img_shadow_vis_cf,
-     lib/Reusable/YGcfAmx2.v:47, over ARx; FuzzStrdupB.v:286-289 takes the ARcf form as a Section hypothesis too).
+     lib/Reusable/YGcfAmx2.v:48, over ARx; FuzzStrdupB.v:287-290 takes the ARcf form as a Section hypothesis too).
 
    NUMERALS. WORD: 4 / 6 (PjTree.tag of a string / an object). LENGTH: 8 / 56 (a key slot / a struct pj, the
    strides), 16 (cf_head at CfParams_preset, read by `reflexivity`), 8 (shadow granule), 64 (GrantRo's hull margin),
@@ -159,8 +160,8 @@ End bk.
 End rd.
 
 (* ======================================================================================================== *)
-(* PART 2, image-free helpers: bytes and shadow of a view. PORTED, statement and proof, from slice S9
-   (commit 9a0674f0b5f2): Wsame_base.v s9_ra_of_bshadow / s9_hull_sub, Wsame_memB.v
+(* PART 2, image-free helpers: bytes and shadow of a view. PORTED, statement and proof, from slice S9:
+   Wsame_base.v s9_ra_of_bshadow / s9_hull_sub, Wsame_memB.v
    s9b_aview_vm / s9b_garr8_at / s9b_aview_pres; and S1's lib/B/Prog/FuzzStrdupB.v sd_hull_img. *)
 Lemma cb7t_ra_of_bshadow : forall (rd : Z -> option Z) p n x len,
   block_shadow rd SHADOW_OFF p n -> p <= x -> x + len <= p + n -> range_addressable rd SHADOW_OFF x len.
@@ -271,7 +272,7 @@ Context {PI : PrhImg} {L : ptable asym} {PA : PAImg L}.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
 (* NAMED HYPOTHESIS LAWS: the allocator relation's laws at the harness head length cf_head. Text
-   `AR_laws_x SEGS B ARx cf_head`, the same hypothesis lib/B/Prog/Crt102B_T4.v:491 takes; owner: the engine,
+   `AR_laws_x SEGS B ARx cf_head`, the same hypothesis lib/B/Prog/Crt102B_T4.v:492 takes; owner: the engine,
    discharged at the instance ARcfx by lib/Reusable/YGcallcf.v AR_laws_x_xs. *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 
@@ -434,7 +435,7 @@ Hypothesis BOK : asyms_ok B.
 (* NAMED HYPOTHESIS IMGVIS, here over the instance's image band [pa_lo, pa_hi) (kept_img's band). Text `forall ly S
    Hp (W : world SEGS) mem md a, ARx ly S Hp W mem md -> pa_lo <= a < pa_hi -> aview SEGS (w_H W) mem (shadow_addr
    a) <> None`. The image's shadow is visible in every ARx state. Owner: the visibility row (Definition img_shadow_vis_cf,
-   lib/Reusable/YGcfAmx2.v:47, the same statement over ARcf at cf_img_lo / cf_img_top; at image B CfImgB.CfImg_B's
+   lib/Reusable/YGcfAmx2.v:48, the same statement over ARcf at cf_img_lo / cf_img_top; at image B CfImgB.CfImg_B's
    [cf_img_lo, cf_img_top) is PI_prog_B's [pa_lo, pa_hi), cb7t_band_eq_B in Section bi below);
    lib/B/Prog/FuzzStrdupB.v takes it at CfImg_B as a Section hypothesis too. *)
 Hypothesis IMGVIS : forall ly S Hp (W : world SEGS) mem md a,
@@ -524,8 +525,8 @@ End blk.
 
 (* ======================================================================================================== *)
 (* PART 4, image B' (lib/B/PAImg_prog.v PI_prog_B): the read-only premise bundle for check_round_trip's two strings,
-   "modifiedAt" at CRT_MOD_AT_B and the stamp at CRT_STAMP_B (Crt102Img.v:1024-1025), from their kept_img (the
-   text's premise, PRH_FnCheck.v tcheck_round_trip_specX) and the image bytes crt_str_rom_B (Crt102Img.v:1050). *)
+   "modifiedAt" at CRT_MOD_AT_B and the stamp at CRT_STAMP_B (Crt102Img.v:1025-1026), from their kept_img (the
+   text's premise, PRH_FnCheck.v tcheck_round_trip_specX) and the image bytes crt_str_rom_B (Crt102Img.v:1051). *)
 Section bi. Context {rc : YM05.RunCeil}.
 #[local] Existing Instance CfParams_preset.
 #[local] Notation PA := (PI_prog_B).

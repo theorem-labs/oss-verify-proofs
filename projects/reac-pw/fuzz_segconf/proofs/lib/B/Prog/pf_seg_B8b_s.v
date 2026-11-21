@@ -23,6 +23,7 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 521 of its 608 lines of code are new or changed and 4966 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the shared step of
    segment B8b of reac_segconf_parse_file's walk, the two instructions both B8b pieces PROV2 and JOIN end in:
      0x88e4c jal wrapper_snprintf (pa_sigma SS___interceptor_trampoline_snprintf = 0x43af0; return 0x88e50 =
@@ -38,8 +39,8 @@
    shared call step; reuse search and CONFIRM: the rule-24 lookup record).
    ADAPTED from a working branch's lib/A/Prog/pf_a3_k.v (a3_snp_site, a3_mset_site: the snprintf step over
    the walk's journal through image A's segment-A8b lemma pfa8b_aj_snprintf_atSF, here pf_seg_B8b_t.v's pb8b_aj_snprintf_atSF) and
-   the image-B cut rebuild of a lane clone lib/B/Prog/pf_seg_B10b_j.v (the B10b segment lane,
-   961c19ce3f65: its keep lemmas, generalised here to any write set), re-derived on image B's code.
+   the image-B cut rebuild of a lane clone lib/B/Prog/pf_seg_B10b_j.v (the B10b segment lane,:
+   its keep lemmas, generalised here to any write set), re-derived on image B's code.
    The call keeps every byte outside the written range [d, d + |snprintf_s n "%s" [src]| + 1) and its stack window
    [s1 - 8192, s1) (CMD_SNP_K = 2 * ESTACK at sp = s1, pf_fi's register list); the cut's objects are carried
    across that keep clause by pb8b_kp_* below (each fact names the bytes it reads: stack slots and saved registers

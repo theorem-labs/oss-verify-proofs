@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact read from the walk's invariant by S_vdso and passed to each variant's section, whose post needs it; MInvIR, which pairs malloc's invariant with the vDSO fact, projected to that invariant where a lemma reads only it). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -140,6 +141,7 @@ Let wok0 := Glue.wok_of segsP mW.
 Lemma S_MI : ltac2:(tb__ "0|0|
 Sa8S2bVX;S3fS3bSdS0A2A1VU;S67Vs;VL;A2Vrd0;Vwok0;Vvm;A8").
 Proof using HJ mW. exact (proj1 HJ). Qed.
+Lemma S_vdso : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md. Proof using HJ. exact (proj2 (proj1 HJ)). Qed.
 Lemma S_xraw : xraw X s. Proof using HJ. exact (proj1 (proj2 HJ)). Qed.
 Lemma S_Kc : Kc tr md. Proof using HJ. exact (proj1 (proj2 (proj2 HJ))). Qed.
 Lemma S_sc : 0 <= sc < 48. Proof using HJ. exact (proj1 (proj1 (proj2 (proj2 (proj2 HJ))))). Qed.
@@ -435,6 +437,7 @@ Proof.
   intros X U [s L] Kc RF GF TR RR kB HkB Hpart rho.
   apply (trr_inhP RR); [exact HkB|]. intros [tr [ms md]] [Hsm HJ].
   cbn [w_tr w_cfg cfg_model cfg_ms fst snd ma_s] in HJ, Hpart.
+  pose proof (@P.Mal_aslot__G11.Mal_aslot_SInst.S_vdso X U s L Kc rho tr md HJ) as Hvd.
 
   set (sc := bv_unsigned (rw rho 12%positive)). set (req := bv_unsigned (rw rho 13%positive)).
   set (mW := rm rho). set (vm := m_vmmaps md). set (rd0 := Glue.rd_of segsP mW). set (wok0 := Glue.wok_of segsP mW).
@@ -475,7 +478,7 @@ Proof.
     apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW) SA_N (GX X U (mkMA s L) Kc rho)).
     - apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm 0 0 0 0 0 0 gd 1 0 m0d (ss_facts SA_N)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G10.Mal_aslot_VN.ZF_N s L sc req rho gd Hsc Hgd Hsp Hdepth Hsp_high)].
     - exact (@P.Mal_aslot__G10.Mal_aslot_VN.carve_N s L X U sc req rho gd Hsc rd0 wok0 vm HMI Hgd Hsp Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hgd_holds Hhd tr md).
-    - exact (@P.Mal_aslot__G10.Mal_aslot_VN.variant_N s L X U sc req rho gd HXr Hsc Hreq rd0 wok0 vm HMI Hgd Hsp Hdepth Hsp_high mW Erd Ewok ms Hm_sct Hm_ctz Hgd_holds Kc RF GF TR RR K HK Hhd tr md EmW Evm HKc Hsm Hsc_rho Hreq_rho Htier Htp HinitN).
+    - exact (@P.Mal_aslot__G10.Mal_aslot_VN.variant_N s L X U sc req rho gd HXr Hsc Hreq rd0 wok0 vm HMI Hgd Hsp Hdepth Hsp_high mW Erd Ewok ms Hm_sct Hm_ctz Hgd_holds Kc RF GF TR RR K HK Hhd tr md Hvd EmW Evm HKc Hsm Hsc_rho Hreq_rho Htier Htp HinitN).
     - intros w' Hw'. right. exact Hw'. }
   destruct (@P.Mal_aslot__G11.Mal_aslot_SInst.S_ring X U s L Kc rho tr md HJ m0 Hhd) as [rest Rg].
   destruct (@P.Mal_aslot__G11.Mal_aslot_SInst.S_bytes X U s L Kc rho tr md HJ m0 Hhd) as (byM0 & byA & byB & byC & byP & Hbytes & Hbytes_rd). cbn zeta in Hbytes, Hbytes_rd.
@@ -493,7 +496,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_E (GX X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_E)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G10.Mal_aslot_VE.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVa0 HVf0)]. }
           { exact (@P.Mal_aslot__G10.Mal_aslot_VE.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds tr md Hr). }
-          { exact (@P.Mal_aslot__G10.Mal_aslot_VE.variant_E s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Htier Htp Hr HVa0 HVf0). }
+          { exact (@P.Mal_aslot__G10.Mal_aslot_VE.variant_E s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Htier Htp Hr HVa0 HVf0). }
           { intros w' Hw'. right. exact Hw'. } }
       * assert (Hr : P.Mal_aslot__G1.Mal_aslot_I.rcls [x1] = 2%nat) by reflexivity.
         destruct (Z.eq_dec (am_freed (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
@@ -511,7 +514,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D2sh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D2sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G3.Mal_aslot_VD2sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G3.Mal_aslot_VD2sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G3.Mal_aslot_VD2sh.variant_D2sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G3.Mal_aslot_VD2sh.variant_D2sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         -- destruct (Z.eq_dec (P.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
         ++
@@ -536,7 +539,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D2ns (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D2ns)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G10.Mal_aslot_VD2ns.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G10.Mal_aslot_VD2ns.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G10.Mal_aslot_VD2ns.variant_D2ns s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact HVpart Hmv Hsv). }
+          { exact (@P.Mal_aslot__G10.Mal_aslot_VD2ns.variant_D2ns s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact HVpart Hmv Hsv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G3.Mal_aslot_VD2nh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -547,7 +550,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D2nh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D2nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G3.Mal_aslot_VD2nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G3.Mal_aslot_VD2nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G3.Mal_aslot_VD2nh.variant_D2nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G3.Mal_aslot_VD2nh.variant_D2nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
       * assert (Hr : P.Mal_aslot__G1.Mal_aslot_I.rcls [x1; x2] = 3%nat) by reflexivity.
         destruct (Z.eq_dec (am_freed (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
@@ -561,7 +564,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D3sr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D3sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G4.Mal_aslot_VD3sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G4.Mal_aslot_VD3sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G4.Mal_aslot_VD3sr.variant_D3sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G4.Mal_aslot_VD3sr.variant_D3sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G4.Mal_aslot_VD3sh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -572,7 +575,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D3sh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D3sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G4.Mal_aslot_VD3sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G4.Mal_aslot_VD3sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G4.Mal_aslot_VD3sh.variant_D3sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G4.Mal_aslot_VD3sh.variant_D3sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         -- destruct (Z.eq_dec (P.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
         ++
@@ -584,7 +587,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D3nr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D3nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G3.Mal_aslot_VD3nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G3.Mal_aslot_VD3nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G3.Mal_aslot_VD3nr.variant_D3nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G3.Mal_aslot_VD3nr.variant_D3nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G3.Mal_aslot_VD3nh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -595,7 +598,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D3nh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D3nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G3.Mal_aslot_VD3nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G3.Mal_aslot_VD3nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G3.Mal_aslot_VD3nh.variant_D3nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G3.Mal_aslot_VD3nh.variant_D3nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
       * assert (Hr : P.Mal_aslot__G1.Mal_aslot_I.rcls [x1; x2; x3] = 4%nat) by reflexivity.
         destruct (Z.eq_dec (am_freed (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
@@ -609,7 +612,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D4sr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D4sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G5.Mal_aslot_VD4sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G5.Mal_aslot_VD4sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G5.Mal_aslot_VD4sr.variant_D4sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G5.Mal_aslot_VD4sr.variant_D4sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G4.Mal_aslot_VD4sh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -620,7 +623,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D4sh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D4sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G4.Mal_aslot_VD4sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G4.Mal_aslot_VD4sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G4.Mal_aslot_VD4sh.variant_D4sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G4.Mal_aslot_VD4sh.variant_D4sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         -- destruct (Z.eq_dec (P.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
         ++
@@ -632,7 +635,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D4nr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D4nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G4.Mal_aslot_VD4nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G4.Mal_aslot_VD4nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G4.Mal_aslot_VD4nr.variant_D4nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G4.Mal_aslot_VD4nr.variant_D4nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G4.Mal_aslot_VD4nh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -643,7 +646,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D4nh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D4nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G4.Mal_aslot_VD4nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G4.Mal_aslot_VD4nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G4.Mal_aslot_VD4nh.variant_D4nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G4.Mal_aslot_VD4nh.variant_D4nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
       * assert (Hr : P.Mal_aslot__G1.Mal_aslot_I.rcls (x1 :: x2 :: x3 :: x4 :: rest5) = 5%nat) by reflexivity.
         destruct (Z.eq_dec (am_freed (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
@@ -657,7 +660,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D5sr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D5sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G6.Mal_aslot_VD5sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G6.Mal_aslot_VD5sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G6.Mal_aslot_VD5sr.variant_D5sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G6.Mal_aslot_VD5sr.variant_D5sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G6.Mal_aslot_VD5sh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -668,7 +671,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D5sh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D5sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G6.Mal_aslot_VD5sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G6.Mal_aslot_VD5sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G6.Mal_aslot_VD5sh.variant_D5sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G6.Mal_aslot_VD5sh.variant_D5sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         -- destruct (Z.eq_dec (P.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
         ++
@@ -680,7 +683,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D5nr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D5nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G5.Mal_aslot_VD5nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G5.Mal_aslot_VD5nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G5.Mal_aslot_VD5nr.variant_D5nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G5.Mal_aslot_VD5nr.variant_D5nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G5.Mal_aslot_VD5nh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -691,7 +694,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D5nh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D5nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G5.Mal_aslot_VD5nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G5.Mal_aslot_VD5nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G5.Mal_aslot_VD5nh.variant_D5nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G5.Mal_aslot_VD5nh.variant_D5nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
     +
       destruct rest as [|x1 [|x2 [|x3 [|x4 rest5]]]].
@@ -711,7 +714,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R1sh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R1sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G6.Mal_aslot_VR1sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G6.Mal_aslot_VR1sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G6.Mal_aslot_VR1sh.variant_R1sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G6.Mal_aslot_VR1sh.variant_R1sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         -- destruct (Z.eq_dec (P.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0) 0) as [HVact|HVact].
         ++
@@ -736,7 +739,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R1ns (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R1ns)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G10.Mal_aslot_VR1ns.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G10.Mal_aslot_VR1ns.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G10.Mal_aslot_VR1ns.variant_R1ns s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact HVpart Hmv Hsv). }
+          { exact (@P.Mal_aslot__G10.Mal_aslot_VR1ns.variant_R1ns s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact HVpart Hmv Hsv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G5.Mal_aslot_VR1nh.HVmask3 s X U sc HI Hsc m0 Hhd [] Rg Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -747,7 +750,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R1nh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R1nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G5.Mal_aslot_VR1nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G5.Mal_aslot_VR1nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G5.Mal_aslot_VR1nh.variant_R1nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G5.Mal_aslot_VR1nh.variant_R1nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
       * assert (Hr : P.Mal_aslot__G1.Mal_aslot_I.rcls [x1] = 2%nat) by reflexivity.
         destruct (Z.eq_dec (am_freed (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
@@ -761,7 +764,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R2sr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R2sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G7.Mal_aslot_VR2sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G7.Mal_aslot_VR2sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G7.Mal_aslot_VR2sr.variant_R2sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G7.Mal_aslot_VR2sr.variant_R2sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G6.Mal_aslot_VR2sh.HVmask3 s X U sc HI Hsc m0 Hhd [x1] Rg Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -772,7 +775,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R2sh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R2sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G6.Mal_aslot_VR2sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G6.Mal_aslot_VR2sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G6.Mal_aslot_VR2sh.variant_R2sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G6.Mal_aslot_VR2sh.variant_R2sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         -- destruct (Z.eq_dec (P.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
         ++
@@ -784,7 +787,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R2nr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R2nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G6.Mal_aslot_VR2nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G6.Mal_aslot_VR2nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G6.Mal_aslot_VR2nr.variant_R2nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G6.Mal_aslot_VR2nr.variant_R2nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G7.Mal_aslot_VR2nh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -795,7 +798,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R2nh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R2nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G7.Mal_aslot_VR2nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G7.Mal_aslot_VR2nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G7.Mal_aslot_VR2nh.variant_R2nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G7.Mal_aslot_VR2nh.variant_R2nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
       * assert (Hr : P.Mal_aslot__G1.Mal_aslot_I.rcls [x1; x2] = 3%nat) by reflexivity.
         destruct (Z.eq_dec (am_freed (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
@@ -809,7 +812,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R3sr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R3sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G7.Mal_aslot_VR3sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G7.Mal_aslot_VR3sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G7.Mal_aslot_VR3sr.variant_R3sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G7.Mal_aslot_VR3sr.variant_R3sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G8.Mal_aslot_VR3sh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -820,7 +823,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R3sh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R3sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G8.Mal_aslot_VR3sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G8.Mal_aslot_VR3sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G8.Mal_aslot_VR3sh.variant_R3sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G8.Mal_aslot_VR3sh.variant_R3sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         -- destruct (Z.eq_dec (P.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
         ++
@@ -832,7 +835,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R3nr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R3nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G7.Mal_aslot_VR3nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G7.Mal_aslot_VR3nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G7.Mal_aslot_VR3nr.variant_R3nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G7.Mal_aslot_VR3nr.variant_R3nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G7.Mal_aslot_VR3nh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -843,7 +846,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R3nh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R3nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G7.Mal_aslot_VR3nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G7.Mal_aslot_VR3nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G7.Mal_aslot_VR3nh.variant_R3nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G7.Mal_aslot_VR3nh.variant_R3nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
       * assert (Hr : P.Mal_aslot__G1.Mal_aslot_I.rcls [x1; x2; x3] = 4%nat) by reflexivity.
         destruct (Z.eq_dec (am_freed (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
@@ -857,7 +860,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R4sr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R4sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G9.Mal_aslot_VR4sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G9.Mal_aslot_VR4sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G9.Mal_aslot_VR4sr.variant_R4sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G9.Mal_aslot_VR4sr.variant_R4sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G8.Mal_aslot_VR4sh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -868,7 +871,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R4sh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R4sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G8.Mal_aslot_VR4sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G8.Mal_aslot_VR4sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G8.Mal_aslot_VR4sh.variant_R4sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G8.Mal_aslot_VR4sh.variant_R4sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         -- destruct (Z.eq_dec (P.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
         ++
@@ -880,7 +883,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R4nr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R4nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G8.Mal_aslot_VR4nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G8.Mal_aslot_VR4nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G8.Mal_aslot_VR4nr.variant_R4nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G8.Mal_aslot_VR4nr.variant_R4nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G8.Mal_aslot_VR4nh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -891,7 +894,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R4nh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R4nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G8.Mal_aslot_VR4nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G8.Mal_aslot_VR4nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G8.Mal_aslot_VR4nh.variant_R4nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G8.Mal_aslot_VR4nh.variant_R4nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
       * assert (Hr : P.Mal_aslot__G1.Mal_aslot_I.rcls (x1 :: x2 :: x3 :: x4 :: rest5) = 5%nat) by reflexivity.
         destruct (Z.eq_dec (am_freed (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (P.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
@@ -905,7 +908,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R5sr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R5sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G9.Mal_aslot_VR5sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G9.Mal_aslot_VR5sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G9.Mal_aslot_VR5sr.variant_R5sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G9.Mal_aslot_VR5sr.variant_R5sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G9.Mal_aslot_VR5sh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -916,7 +919,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R5sh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R5sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G9.Mal_aslot_VR5sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G9.Mal_aslot_VR5sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G9.Mal_aslot_VR5sh.variant_R5sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G9.Mal_aslot_VR5sh.variant_R5sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         -- destruct (Z.eq_dec (P.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
         ++
@@ -928,7 +931,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R5nr (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R5nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G9.Mal_aslot_VR5nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G9.Mal_aslot_VR5nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G9.Mal_aslot_VR5nr.variant_R5nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G9.Mal_aslot_VR5nr.variant_R5nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
         ++
           pose proof (@P.Mal_aslot__G8.Mal_aslot_VR5nh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
@@ -939,7 +942,7 @@ Proof.
           apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R5nh (HITP X U (mkMA s L) Kc rho)).
           { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R5nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G8.Mal_aslot_VR5nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
           { exact (@P.Mal_aslot__G8.Mal_aslot_VR5nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@P.Mal_aslot__G8.Mal_aslot_VR5nh.variant_R5nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
+          { exact (@P.Mal_aslot__G8.Mal_aslot_VR5nh.variant_R5nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
           { intros w' Hw'. left. exact Hw'. }
   -
     set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
@@ -947,7 +950,7 @@ Proof.
     apply (TAIL (P.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_H (HITP X U (mkMA s L) Kc rho)).
     { apply (@P.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_H)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@P.Mal_aslot__G5.Mal_aslot_VH.ZF_H s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVh)]. }
     { exact (@P.Mal_aslot__G5.Mal_aslot_VH.carve_H s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds tr md). }
-    { exact (@P.Mal_aslot__G5.Mal_aslot_VH.variant_H s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rest Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho HVh). }
+    { exact (@P.Mal_aslot__G5.Mal_aslot_VH.variant_H s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rest Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md Hvd EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho HVh). }
     { intros w' Hw'. left. exact Hw'. }
 Qed.
 
@@ -1044,7 +1047,7 @@ S4cS8S2bVX;VU;VA;VKc;Vrho;Vtr0;Vmd0;A9").
 Lemma HMI0 : ltac2:(tb__ "0|0|
 S51S8S2bVX;S3fS3bSdS0A2A1VU;VA;Vrho;Vmd0;A8"). Proof using HJ0. exact (proj1 HJ0). Qed.
 Lemma HI0 : ltac2:(tb__ "0|0|
-S69VX;S3fS3bSdS0A2A1VU;Vs;A4"). Proof using HJ0. exact (mig_I HMI0). Qed.
+S69VX;S3fS3bSdS0A2A1VU;Vs;A4"). Proof using HJ0. exact (mig_I (proj1 HMI0)). Qed.
 Lemma HXr0 : xraw X s. Proof using HJ0. exact (proj1 (proj2 HJ0)). Qed.
 Lemma Hsc0 : 0 <= sc < 48. Proof using HJ0. exact (proj1 (proj1 (proj2 (proj2 (proj2 HJ0))))). Qed.
 
@@ -1093,13 +1096,13 @@ Lemma kept0G : ltac2:(tb__ "0|0|
 S87S8S2bVA;VA_G;S59Vrho;A1S59VrhoG;A1A6").
 Proof using HJ0 HJG Hkept.
   exact (mem_kept_of_ownedG_P X None U X None U A A_G _ _ _ _ _ _ (rm rho) (rm rhoG)
-           HMI0 HXr0 (proj1 HJG) (proj1 (proj2 HJG)) Hkept).
+           (proj1 HMI0) HXr0 (proj1 (proj1 HJG)) (proj1 (proj2 HJG)) Hkept).
 Qed.
 
 Lemma client_addr_G a : ltac2:(tb__ "0|0|
 S88S8S2bVA;Va;A4S88S8S2bVA_G;Va;A4F_;").
 Proof using HJ0 HJG Hub.
-  unfold client_addr, A, A_G. rewrite (ma_blocks_ub_same X U X None U s sG L HI0 (mig_I (proj1 HJG)) Hub). exact (fun H => H).
+  unfold client_addr, A, A_G. rewrite (ma_blocks_ub_same X U X None U s sG L HI0 (mig_I (proj1 (proj1 HJG))) Hub). exact (fun H => H).
 Qed.
 
 Lemma kept_G A' m' : ltac2:(tb__ "0|0|
@@ -1114,7 +1117,7 @@ Lemma canary_G m' : ltac2:(tb__ "0|0|
 Sa7S8S2bS56Q40S57VrhoG;PaeA2A2Vm';A4S53S8S2bS59Vrho;A1Vm';A4F_;").
 Proof using HJ0 Hgd.
   intros [CG CD] a Ha.
-  pose proof (mig_statics HMI0) as ST. destruct ST as (_ & _ & _ & _ & _ & _ & _ & _ & g0 & HGOT & _).
+  pose proof (mig_statics (proj1 HMI0)) as ST. destruct ST as (_ & _ & _ & _ & _ & _ & _ & _ & g0 & HGOT & _).
   destruct Ha as [Ha|Ha].
   - set (k := Z.to_nat (a - mc_chk_guard_got C_P)).
     replace a with (mc_chk_guard_got C_P + Z.of_nat k) by (unfold k; lia).
@@ -1204,7 +1207,7 @@ Proof using AM AM_REACH HVI Hkam Pam Phit Pta0 RR TA_REACH.
   fold sc in Hheads, HhdG, Hta0.
   exists (SPJ segsP (J_as_pre segsP C_P X U (mkMA sG L) Kc) SG rhoG). split; [exact HSPJ|].
   destruct w as [trG [msG mdG]]. destruct HSPJ as [HsmG HJG]. cbn [w_tr w_cfg cfg_model] in HJG.
-  pose proof (mig_I (proj1 HJG) : Inv X None U sG) as HIG.
+  pose proof (mig_I (proj1 (proj1 HJG)) : Inv X None U sG) as HIG.
   assert (HreachG : reach_ok sG) by (exact (TA_REACH X U s sc 0 sG HI Hsc Hreach Hta0)).
   assert (HPhiG : Phi t sG) by (exact (Pta0 t sc s sG HPhi Hta0)).
   assert (EscG : bv_unsigned (rw rhoG 12%positive) = sc). { unfold sc. f_equal. symmetry. apply (proj1 Hag). reflexivity. }

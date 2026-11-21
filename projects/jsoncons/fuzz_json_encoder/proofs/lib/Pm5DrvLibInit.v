@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed LIBINIT_KN, lib_init_at_call; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm9DrvLibInit.v, lines 17-20, 69-72, 80, 102-106, 118. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -20,12 +21,15 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 Import SX2. Import SX2S.
 
-(* [comment removed for export] *)
+(* CHANGED, old beside new (Main's ruling, option D): the last entry
+     OLD  KWord (SA (ELit 0) 7084840) 8 (EAlu ALU_ADD (EVar 1) (ELit (-160)))
+   (libc's __auxv = argv[0]'s pointer - 160) is DROPPED: false at LPS 75d69e00, and its
+   only use was the [lib_init_facts] auxv conjuncts, which no consumer reads. *)
 Definition LIBINIT_KN : list kentry :=
   [KImg 65536 1466368; KImg 6946321 6952896; KImg 1477728 1477960; KImg 7084888 7084936; KImg 7085056 7085060;
    KWord (SA (ELit 0) 7084240) 8 (EVar 3); KWord (SA (ELit 0) 6952904) 8 (ELit 6952904); KWord (SA (ELit 0) 6952936) 4 (EVar 4); KRange (EVar 4) 1 4194303;
-   KWord (SA (ELit 0) 6953088) 8 (EVar 3); KWord (SA (ELit 0) 6953056) 8 (ELit 7084888); KWord (SA (ELit 0) 7084840) 8 (EAlu ALU_ADD (EVar 1) (ELit (-160)))].
-(* [comment removed for export] *)
+   KWord (SA (ELit 0) 6953088) 8 (EVar 3); KWord (SA (ELit 0) 6953056) 8 (ELit 7084888)].
+
 Definition ATX_KN : list kentry :=
   [KWord (SA (ELit 0) 7084256) 1 (ELit 0); KWord (SA (ELit 0) 7084260) 4 (ELit 0); KWord (SA (ELit 0) 7084272) 8 (ELit 7084280); KWord (SA (ELit 0) 7084264) 4 (ELit 2);
    KWord (SA (ELit 0) 7084280) 8 (ELit 0); KWord (SA (ELit 0) 7084288) 8 (ELit 1332024); KWord (SA (ELit 0) 7084544) 8 (ELit 656352); KWord (SA (ELit 0) 7084296) 8 (ELit 1332024); KWord (SA (ELit 0) 7084552) 8 (ELit 724392); KWord (SA (ELit 0) 7084835) 1 (ELit 0)].
@@ -70,14 +74,18 @@ Section LibInit.
   #[local] Notation dinvA := (dinv ar HI sp0 M0).
   #[local] Notation usp := (bv_unsigned sp0).
 
+  (* STATEMENT CHANGED, old beside new, as Pm4DrvLibInit:
+       OLD  .. -> dinvA LB LK cr A M model -> auxv_atA sp0 p0 M0 -> exists .., lib_init_facts ..
+       NEW  the [auxv_atA] premise is dropped, with the two [lib_init_facts] conjuncts it
+            fed: false at the revision, read by no consumer. *)
   Theorem lib_init_at_call : forall vals ebs kn LB LK cr A M (model : Model) (p0 : word),
     know_ok ASEGS (Env (vals_ev vals) ebs) (mrestrict (ahid A model) M) kn ->
     forallb (fun K => existsb (kentry_eqb K) kn) LIBINIT_KN = true ->
     vals_ev vals 1 = p0 ->
-    dinvA LB LK cr A M model -> auxv_atA sp0 p0 M0 ->
+    dinvA LB LK cr A M model ->
     exists av uid rnd tid canary hw, lib_init_facts (lib_view Lay ar) av uid rnd tid canary hw M.
   Proof.
-    intros vals ebs kn LB LK cr A M model p0 HK HB P1 D (uidz & rnd & hwz & AW & AU & AH & AR1 & AR2 & AP & AP8).
+    intros vals ebs kn LB LK cr A M model p0 HK HB P1 D.
     pose proof Hsp as Hsp'. set (E := Env (vals_ev vals) ebs) in *. set (MV := mrestrict (ahid A model) M) in *.
     pose proof (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ D) as (HOFF & _).
     rewrite forallb_forall in HB.
@@ -95,20 +103,15 @@ Section LibInit.
     pose proof (KW 6952936 4%nat (EVar 4) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CT.
     pose proof (KW 6953088 8%nat (EVar 3) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CC.
     pose proof (KW 6953056 8%nat (ELit 7084888) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CL.
-    pose proof (KW 7084840 8%nat (EAlu ALU_ADD (EVar 1) (ELit (-160))) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CA.
     assert (TR : 1 <= bv_unsigned (vals_ev vals 4) <= 4194303).
     { pose proof (KB (KRange (EVar 4) 1 4194303) ltac:(unfold LIBINIT_KN; cbn [In]; tauto)) as Hb.
       apply existsb_exists in Hb as (K & Hin & Heq). apply kentry_eqb_eq in Heq. subst K.
       pose proof (proj1 (Forall_forall _ _) HK _ Hin) as X. cbn [kentry_ok edenot ev E] in X. exact X. }
-    cbn [edenot ev E] in CG, CS, CT, CC, CL, CA. rewrite P1 in CA.
-    assert (EA : alu64 ALU_ADD p0 (Z_to_bv 64 (-160)) = Z_to_bv 64 (bv_unsigned p0 - 160)).
-    { rewrite alu_add. unfold v_add. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. rewrite Zplus_mod_idemp_r. reflexivity. }
-    rewrite EA in CA.
-    set (av := bv_unsigned p0 - 160) in *.
-    exists av, uidz, rnd, (bv_unsigned (vals_ev vals 4)), (bv_unsigned (vals_ev vals 3)), hwz.
+    cbn [edenot ev E] in CG, CS, CT, CC, CL.
+    exists 0, 0, usp, (bv_unsigned (vals_ev vals 4)), (bv_unsigned (vals_ev vals 3)), 0.
     destruct DLC as [d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 dimg _ _ dic _].
-    unfold lib_init_facts. cbn [lib_view ll_heap heap_view HeapIface.hl_segs hl_sptop ll_init_img ll_td_self ll_td_tid ll_td_locale ll_locale ll_td_canary ll_guard ll_auxvp].
-    rewrite LayL, (dla_segs _ _ _ _ DL), (dla_sptop _ _ _ _ DL), d1, d2, d3, d4, d5, d6, d7. unfold cellz.
+    unfold lib_init_facts. cbn [lib_view ll_heap heap_view HeapIface.hl_segs hl_sptop ll_init_img ll_td_self ll_td_tid ll_td_locale ll_locale ll_td_canary ll_guard].
+    rewrite LayL, (dla_segs _ _ _ _ DL), (dla_sptop _ _ _ _ DL), d1, d2, d3, d4, d5, d6. unfold cellz.
     rewrite !Z_to_bv_bv_unsigned.
     split. { intros iv a Hiv Ha. destruct (dimg iv Hiv) as (lo & hi & Hin & H1 & H2).
              unfold LIBINIT_IMG in Hin. cbn [In] in Hin.
@@ -119,13 +122,8 @@ Section LibInit.
     split. { intros k Hk. apply (img_cell M _ 8%nat _ (locale_imgA k Hk)); [lia | cbn; lia|].
              intros i Hi. apply (NONE 7084888 7084936); [unfold LIBINIT_KN; cbn [In]; tauto | lia | lia | cbn in Hi; lia]. }
     split; [exact CC|]. split; [exact CG|]. split; [pose proof (bv_unsigned_in_range _ (vals_ev vals 3)) as X; change (bv_modulus 64) with (2 ^ 64) in X; lia|].
-    split; [exact CA|]. split; [unfold av; lia|]. split; [unfold av; lia|].
-    split. { unfold av. rewrite <- Zminus_mod_idemp_l, AP8. reflexivity. }
-    split. { intros j Hj. unfold auxv_words. cbn [lib_view ll_phdr ll_phent ll_phnum]. rewrite d8, d9, d10.
-             apply (rdn_tr M0 M _ 8%nat _ (AW j Hj)); [unfold av; lia | unfold av; cbn; lia|].
-             intros i Hi. apply (di_above _ _ _ _ _ _ _ _ _ _ D). unfold av in *. cbn in Hi. lia. }
     repeat split; try lia.
-    all: match goal with |- forall c, In c _ -> _ => intros c Hc; cbn [ll_init_cells lib_view] in Hc; rewrite dic in Hc; destruct Hc | _ => idtac end.      (* [comment removed for export] *)
+    all: match goal with |- forall c, In c _ -> _ => intros c Hc; cbn [ll_init_cells lib_view] in Hc; rewrite dic in Hc; destruct Hc | _ => idtac end.
     all: fail "R23 DrvLibInit: unexpected remaining goal".
   Qed.
   Theorem atexit_init_at_call : forall vals ebs kn LB LK cr A M (model : Model),

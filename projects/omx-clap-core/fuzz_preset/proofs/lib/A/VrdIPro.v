@@ -38,7 +38,7 @@
    shadow obligation at all, and no run stops at an errpath slot.
 
    WHAT IS A HYPOTHESIS HERE (rule 24: no function is proved in this lane): the callee grow, by THE KIT'S PUBLISHED
-   text PRH_FnReader.tgrow_specX, taken verbatim and by name. ROOM IS AN INVARIANT since kit b7722372682: the
+   text PRH_FnReader.tgrow_specX, taken verbatim and by name. ROOM IS AN INVARIANT since kit: the
    texts take `room_live_cf S` and give `room_live_cf S'` in every arm, so this lane counts nothing and carries
    no kr.
 
@@ -54,7 +54,7 @@
 
    THE POST-IMPLICATION RESTATEMENT (lane A'Ipro, a Theorem Labs lane's approval 2026-10-29: the old statements of
    vrd_ipro_stmt / vrd_ipost / vrd_iRet change, the generic _inv / _P siblings kept). Against the kit reader text
-   (a working branch 3ac20a5c9e30 via a working branch 6b723d760c66: PRH_FnParse.v
+   (a working branch via a working branch: PRH_FnParse.v
    94232293d483, PRH_FnReader.v fb7b12dfa169, PRH_Base.v ee2f5cd7ed35, PRH_FnAlloc.v 95e26ff95e63):
    - the premises are the text's, vrd_ipre, with `.. ran most own`, the memnorm premise and the two live-count
      premises; there are NO room-position binders and no entry position (the record vrd_rpos is gone);
@@ -404,10 +404,10 @@ Hypothesis H_img : pi_frame F_parse_items = PI_FRAME /\ 0 <= pi_frame F_parse_va
 (* THE ONE CALLEE of this segment: grow, by the kit's PUBLISHED text, lib/A/PRH_FnReader.v tgrow_specX, at the call
    contexts CTX0 the caller supplies. It takes `room_live_cf S` and gives `room_live_cf S'` in every one of its
    eight arms, so this lane threads the room through and counts nothing: IproA's replaced-premise stand-in is
-   GONE. Since the kit 7bd893468c8 (record texts 6bdfe9256bd) tgrow_specX also gives `blocks_bytes S' <=
+   GONE. Since the kit (record texts) tgrow_specX also gives `blocks_bytes S' <=
    blocks_bytes S + prh_held (prhPg_gtrace ..)`, so no blocks_bytes premise is carried for grow. Since the texts'
-   call-graph universe closure (a working branch bbf2cf3be57) the texts and grow take the SAME closure
-   prh_univ_closure B CTX0, CTX0 the Section's, and vrd_ipre carries the closure premise. Since the kit's cut 7cdbb61b5fa0
+   call-graph universe closure (a working branch) the texts and grow take the SAME closure
+   prh_univ_closure B CTX0, CTX0 the Section's, and vrd_ipre carries the closure premise. Since the kit's cut
    the closure takes no cursor words; the cursor SET CW (the Section's) is the texts' prh_cw_entry / wild_room, which
    vrd_ipre carries in its trailing slot, and grow's text does not name it. *)
 Variable CTX0 : list (list Z).
@@ -592,7 +592,7 @@ Lemma vrd_ipc : A_prog_sigma AS_parse_items = PI_ENTRY.
 Proof. vm_compute. reflexivity. Qed.
 
 (* ---------------------------------------------------------------------------------------------------------- *)
-(* vrd_ipost: the post of PRH_FnParse.tparse_items_specX (the kit's cut 7cdbb61b5fa0, PRH_FnParse.v blob f0d92dcec7e9), as a
+(* vrd_ipost: the post of PRH_FnParse.tparse_items_specX (the kit's cut, PRH_FnParse.v blob f0d92dcec7e9), as a
    predicate on (W', c'): fpostWFb at the text's budget wbudget CW 0 (the cut's fpostWFbm without its m-keep) and at the
    text's post body VERBATIM, VrdIElem.vrd_items_q, the ONE copy the epilogue's conclusion states too. The memory keep
    of fpostWFbm is the generic invariant's (vrd_ipro_stmt_P's Pm), assembled at the function's top. There are NO
@@ -603,7 +603,7 @@ Definition vrd_ipost (d : nat) (o : bool) (q v text len p e : Z) (tb : list Z) (
   fpostWFb B ARx SK (YCbqGwild.wbudget CW 0) (STK_parse_items d) e (rd_fp q v) regs ly Sa Hp W mem md
     (vrd_items_q B d o q v text len p tb ly Sa Lam peak cnt fail ran most own).
 
-(* vrd_ipre: the premises of PRH_FnParse.tparse_items_specX d CTX CTX0 CW (the kit's cut 7cdbb61b5fa0, PRH_FnParse.v blob
+(* vrd_ipre: the premises of PRH_FnParse.tparse_items_specX d CTX CTX0 CW (the kit's cut, PRH_FnParse.v blob
    f0d92dcec7e9), verbatim and in the text's order, for one call, except the two premises the cut added for the cursor
    set CW (prh_cw_entry after prh_cur_entry, the wild room after rd_room): they are ONE trailing slot, so that every
    positional destruct of vrd_ipre gains exactly one name (VrdIElem.vrd_ient_ok carries them the same way). The text
@@ -959,7 +959,7 @@ Definition vrd_ient_of (d : nat) (o : bool)
 (* vrd_ipro_stmt d CTX: THE SEGMENT LEMMA of this lane. From parse_items' entry, the segment either reaches the
    head of the element loop in the state vrd_ielem_a, or it returns, and then the call's own post holds: the three
    returning arms of the segment are the depth refusal (row 39), the empty container (rows 294..304) and the
-   refusal of the first grow (row 92). The premises are tparse_items_specX's (the kit's cut 7cdbb61b5fa0, PRH_FnParse.v
+   refusal of the first grow (row 92). The premises are tparse_items_specX's (the kit's cut, PRH_FnParse.v
    blob f0d92dcec7e9), vrd_ipre, with
    the text's binders `.. Lam peak cnt fail ran most own`; the POST-IMPLICATION form has no room-position binders
    and no entry position premise (a Theorem Labs lane's approval of this restatement, 2026-10-29). The segment crosses the first
@@ -1222,7 +1222,7 @@ destruct n as [|n']; cbn [PRH_PjOrder.pj_foR]; apply HS;
 Qed.
 
 (* The kit's cut (CAP, PRH_Reader.pj_ncapR): the empty container's capacity word is 0 = ncap 0, and it has no kid
-   (a Theorem Labs lane's B' twin PItems_head.v hd_ncap_empty, a working branch 34d46afa0965) *)
+   (a Theorem Labs lane's B' twin PItems_head.v hd_ncap_empty, a working branch) *)
 Lemma vrd_ncap_empty : forall m (o : bool) v ty,
   pj_hdrR segs m v ty 0 0 0 0 0 0 -> pj_ncapR segs m v (PjGrammar.mk o []).
 Proof.
@@ -3902,8 +3902,8 @@ split; [split; [|split]|].
   rewrite vrd_rpeak1, Hrf, Hhs. cbn [map nth hpeakR PjGrammar.held_ev]. lia.
 Qed.
 
-(* the first grow's request and its live room AT EACH OF ITS EVENTS (tgrow_specX's per-event premise, the kit's cut
-   7cdbb61b5fa0), out of the call's rd_room: grow's events are a prefix of the call's all-granted events
+(* the first grow's request and its live room AT EACH OF ITS EVENTS (tgrow_specX's per-event premise, the kit's cut),
+   out of the call's rd_room: grow's events are a prefix of the call's all-granted events
    (VrdLedgerStep.vl_live_evs_prefix) *)
 Lemma vrd_grow_room : forall d o x S, (d < PjGrammar.MAXD)%nat ->
   (forall r, PjGrammar.skip (tl x) <> PjGrammar.closer o :: r) ->
@@ -4493,7 +4493,7 @@ Qed.
 (* D3 / E / F IN THE GENERIC FORM (lane IproE, 2026-10-29). Every new segment lemma below takes
    `forall (Pm : (word -> option byte) -> Prop), srr_inv_laws segs Pm -> .. -> Pm <start memory> ->
     SRr segs W c (fun W' c' => <Q> W' c' /\ Pm (ms_mem (cfg_ms c')))`; the segments here cross no call, so the laws are
-   the single srr_inv_laws premise (YC80x.v's record on the old-pin engine set, c-omx-alloc-preset-s1b 459129c18903).
+   the single srr_inv_laws premise (YC80x.v's record on the old-pin engine set, c-omx-alloc-preset-s1b).
    The runner segment carries Pm by YC1fPx.v's paj_run_to_x_inv; the refusal tail by vrd_iref92 at a body Qb that
    carries Pm of its memory (vrd_fpostWF_inv). The shared ledger records are read through ONE local projection lemma per shape
    (vrd_led_bounds / vrd_led_nodup / vrd_led_hblk), and the shared entry records through vrd_ipre_prj.
@@ -5198,7 +5198,7 @@ Proof. intros Hh m m' X HK x Hx. unfold mrestrict. rewrite (HK x Hx). reflexivit
    a call; those facts are rebuilt from the AR_laws_x laws at the later state):
    - H_HL: the harness-block shadow law's head length is cf_head (AR_laws_x field 14; an identity at the cf instance);
    - H_zsal: the image's zero-shadow ranges are granule-aligned (asyms_ok's aso_zshadow, ARcf's amc_syms);
-   - H_imgvis: the image's shadow is mapped at every state (a Theorem Labs lane's img_shadow_vis_cf, YGcfAmx2.v:47);
+   - H_imgvis: the image's shadow is mapped at every state (a Theorem Labs lane's img_shadow_vis_cf, YGcfAmx2.v:48);
    - H_pst_ro: alloc.c's statics are not read-only (S1ImgA.v pst_not_ro_A at prh_img_A). ==== *)
 Hypothesis H_HL : HL = cf_head.
 Hypothesis H_zsal : Forall (fun r => fst r mod 8 = 0 /\ snd r mod 8 = 0) (as_zero_shadow B).

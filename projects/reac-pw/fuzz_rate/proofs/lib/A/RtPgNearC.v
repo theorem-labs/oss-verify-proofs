@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgNearC.v at 92636bfca57b; the module paths name reac-pw/fuzz_rate, and the image, the entry 0x82ccc, the .got slot 0x9a830, the shadow-offset cell 0xa33f8 and the pcs and callee addresses in the comments are reac-pw/fuzz_rate's image A's (fuzz_rate.asan: 0x83dc0, 0x9be70, 0xa4c38). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgNearC.v; the module paths name reac-pw/fuzz_rate, and the image, the entry 0x82ccc, the .got slot 0x9a830, the shadow-offset cell 0xa33f8 and the pcs and callee addresses in the comments are reac-pw/fuzz_rate's image A's (fuzz_rate.asan: 0x83dc0, 0x9be70, 0xa4c38). *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Sem.

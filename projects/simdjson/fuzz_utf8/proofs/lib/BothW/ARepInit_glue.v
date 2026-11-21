@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the main-entry memory facts are split once more, the start state's layout facts being appended after the recorded ones; taken in part from projects/simdjson/fuzz_minifyimpl/proofs/lib/BothW/ARepInit_glue.v, line 45. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -40,7 +41,7 @@ Section Glue.
   Proof.
     intros en inp w V m ms mo _ _ HM HA HS.
     pose proof HM as (_ & _ & PIN & HMF & HPF & _ & _ & _ & SH0 & _).
-    apply Forall_app in HMF as [HMF HMW]. apply Forall_app in HPF as [HPF _].
+    apply Forall_app in HMF as [HMF HMW]. apply Forall_app in HMW as [HMW _]. apply Forall_app in HPF as [HPF _].
     assert (HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP).
     { destruct PIN as (_ & _ & _ & USP & _). rewrite USP. exact HA. }
     change (aps_m (aps_init (a_space_beg0 V) (a_ptr_array0 V) (resv_of V) ATOP)) with (ST0 V).

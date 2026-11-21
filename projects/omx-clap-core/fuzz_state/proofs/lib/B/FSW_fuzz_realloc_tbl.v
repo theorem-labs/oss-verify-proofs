@@ -2,8 +2,8 @@
    103 words), for the symbolic engine's runs in lib/B/FSW_realloc*.v. build_table steps pc + 4, valid because the
    function has no compressed (RVC) instruction: every one of its 103 instructions is 4 bytes (MEASURED: capstone 5.0.7
    on the unstripped twin of the pinned fuzz_state.asan-ubsan, sha256 5ac5ce09...).
-   proves function fuzz_realloc (B 0x82bc4) (reuse search: proof-index on main@f4cc67298b7 / ossv/recipes@5121fb8693b
-   / ossv/candidates@ee89628c997 / release/pau-projects-recipes@b6a0088adcb, by address on those four refs, and on named
+   proves function fuzz_realloc (B 0x82bc4) (reuse search: proof-index on main / ossv/recipes
+   / ossv/candidates / release/pau-projects-recipes, by address on those four refs, and on named
    lane branches / `proof-index fuzz_realloc`, `git grep -i -e <addr>`, `git grep -E '^(Theorem|Lemma)
    .*fuzz_realloc_spec'`; B 0x82bc4: 0 hits, CONFIRM).
    Port-from: lib/A/FSW_fuzz_realloc_tbl.v (this lane's A table), lib/B/FSW_own.v's tbl_own. No rename. *)

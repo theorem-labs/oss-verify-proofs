@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: ex_ws of fuzz_preset's image B' (#102 pin d663f82d7f488d30; lib/B/Prog/ex_ws_x.v's
    ex_ws_holds_x) at preset's allocator instance: h-mani-a8's ARcf and the generic rules' instance ARcf /\ xs_placed_cf
-   (YGcallcf.v 6d2b13c24437, engine set of record origin/cold/c-omx-alloc-preset-s1b 8a01e111a410 on YCbqG
+   (YGcallcf.v 6d2b13c24437, engine set of record on YCbqG
    c3b5d0111037). AR_laws_x (head length cf_head) from AR_laws_ok_cf (YG0lawscf.v) through YGcallcf's AR_laws_x_cf /
-   AR_laws_x_xs. K0's text tex_ws_specX is the #102 kit's (origin/cold/h-hpreset-7-walkkit-next decff67d721f, PRH_FnEx
+   AR_laws_x_xs. K0's text tex_ws_specX is the #102 kit's (PRH_FnEx
    45ddb7a7d5ae): m-form post fpostWm, S' = S, ledger with most / own.
    ex_ws_holds_cf / ex_ws_holds keep the two image facts of B (asyms) the walk reads, as_got_shadow B and
    as_shadow_cell B (the atoms A_OBJ 0 / A_OBJ 12 of PI_prog_B), and the PrhRoomLive instance RL as hypotheses.

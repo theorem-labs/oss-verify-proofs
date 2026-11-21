@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -30,16 +31,17 @@ Section Fam.
   Variable brk0 : word.
   Variables argv envp : list (list byte).
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Variable fs : Fs.Fs.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation LIM := AsanInit.LIMIT.
   Variable SV : env -> (word -> option byte) -> Prop.
-  Hypothesis SV_to1 : forall E M, SV E M -> HBArg.SINV1 sp brk0 argv envp rdraw hw uid E M.
+  Hypothesis SV_to1 : forall E M, SV E M -> HBArg.SINV1 (L:=L) sp brk0 argv envp rdraw hw uid E M.
   Hypothesis SV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SV E M -> SV E M'.
   Hypothesis SV_agree : forall E E' M, env_agree NX0 E E' -> SV E M -> SV E' M.
   Variable GC : bool.
@@ -51,9 +53,9 @@ Section Fam.
   #[local] Notation CHECK NX HS := (CAP.check HASEGS IT HAT NX LIM (hag_XN NX) (hag_XE NX) hag_XB HS 0 true false GC BF FUEL None).
   #[local] Notation HOP := (hop_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SV SV_to1 SV_frame SV_agree GC BF FUEL).
   #[local] Notation LEAF := (leaf_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SV SV_to1 SV_frame SV_agree GC BF FUEL).
-  #[local] Notation SPECB := (spec_back sp rdraw argv envp uid hw fs SV).
-  #[local] Notation ADDF := (add_facts sp rdraw argv envp uid hw fs SV).
-  #[local] Notation CSPHI := (csok_phi sp rdraw argv envp uid hw fs SV).
+  #[local] Notation SPECB := (spec_back sp rdraw argv envp fs SV).
+  #[local] Notation ADDF := (add_facts sp rdraw argv envp fs SV).
+  #[local] Notation CSPHI := (csok_phi sp rdraw argv envp fs SV).
 
   (* [comment removed for export] *)
   Variables N0 NA NB NC ND NE VSA VSB VSC VSD VSE : nat.
@@ -323,7 +325,7 @@ Section Fam.
       pose proof (proj1 (forallb_forall _ _) Hfes (k, f) Hf) as Y. unfold side_fe in Y. cbn [snd] in Y. apply andb_prop in Y as [_ HlvE].
       set (PHIX := PHI_ext PHI (fd_phi f) (fd_Fphi f)) in *.
       assert (PAX : forall Ea Eb, env_agree NE Ea Eb -> PHIX Ea -> PHIX Eb) by (apply (lvl_agree PHI _ _ NE NE (le_n _)); [exact PAE | exact HlvE]).
-      pose proof (fx_hole_phi sp rdraw argv envp uid hw fs SV NE PHIX PAX TFE TFEE LET H_FE) as HFX.
+      pose proof (fx_hole_phi sp rdraw argv envp fs SV NE PHIX PAX TFE TFEE LET H_FE) as HFX.
       apply (HFX E1 R1 FULL1 model1 (HOLES_X j k E1 (m_fs model1)) HC1').
       intros E2 R2 FULL2 model2 Hag HC2' Hfs.
       pose proof (SPECB PHIX (fd_phi f) (fd_Fphi f) TFEE E2 R2 FULL2 model2

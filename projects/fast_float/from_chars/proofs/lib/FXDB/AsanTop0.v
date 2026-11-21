@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the CONFIG_RSEQ flag of the start-up layer). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -57,44 +58,51 @@ Hypothesis Hoff : sc_alloc cfg = false.
 Variables (sp brk0 mb : word) (draw : EntryDraw) (inp : ProcInput).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hbrk : valid_brk ASEGS brk0.
-Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hid : valid_id (in_uid inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mb draw) inp.
 Variables (olo ohi xlo : Z).
-Hypothesis HC : olo <= OFS sp <= ohi.
-Hypothesis Hxlo : 0 <= olo /\ 64 * xlo <= 200 + olo.
+Hypothesis HC : HCp sp olo ohi.
+Hypothesis Hxlo : Hxlop olo xlo.
 
-Let mdl := model0 sp brk0 mb LIM inp.
-Let mem := m0 sp draw inp.
+Let mdl := model0 sp brk0 mb draw LIM inp.
+Let mem := m0 sp mb draw inp.
+Local Notation rs := (kb_rseq (in_kernel inp)).
 
-(* [comment removed for export] *)
-#[using="Hoff Hsp Hbrk Hfit Hva Hve Hid HC Hxlo"] Theorem asan_startup_cls_ag : startup_ok_c olo ohi xlo = true -> forall T,
-  (forall S' M' E' ms' model', In (S', M') (FINALS_c olo ohi xlo) -> DEN ASEGS LIM mdl mem E' S' M' ms' model' ->
-     agree 17 (E0 sp brk0 draw inp) E' -> realizes_cfg ASEGS cfg (mkCfg ms' model') T) ->
+(* FXG/AsanFinC.asan_startup_cls with the finals' valuations kept in agreement with [E0] on the first 19
+   variables; the certificate is at the run's own CONFIG_RSEQ flag *)
+#[using="Hoff Hsp Hbrk Hva Hve Hid Hvl Hlau HC Hxlo"] Theorem asan_startup_cls_ag : startup_ok_c rs olo ohi xlo = true -> forall T,
+  (forall S' M' E' ms' model', In (S', M') (FINALS_c rs olo ohi xlo) -> DEN ASEGS LIM mdl mem E' S' M' ms' model' ->
+     agree 19 (E0 sp brk0 draw inp) E' -> realizes_cfg ASEGS cfg (mkCfg ms' model') T) ->
   realizes_cfg ASEGS cfg (init_config ASEGS AsanUbsan.M.init_pc APH sp brk0 mb draw LIM inp) T.
-Proof. LiaFast.lf_pins (fun (Hoff Hsp Hbrk Hfit Hva Hve Hid HC Hxlo : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (Hoff Hsp Hbrk Hva Hve Hid Hvl Hlau HC Hxlo : LiaFast.U) => LiaFast.u0).
   intros Hcert T Hk.
-  change (init_config ASEGS AsanUbsan.M.init_pc APH sp brk0 mb draw LIM inp) with (mkCfg (ms0 sp draw inp) mdl).
-  pose proof (den_entry sp brk0 mb draw LIM inp Hsp Hbrk Hfit Hva Hve Hid olo ohi xlo HC Hxlo ltac:(clear; unfold LIM; lia)) as Hd0.
+  change (init_config ASEGS AsanUbsan.M.init_pc APH sp brk0 mb draw LIM inp) with (mkCfg (ms0 sp mb draw inp) mdl).
+  pose proof (den_entry sp brk0 mb draw LIM inp Hsp Hbrk Hva Hve Hid Hvl Hlau olo ohi xlo HC Hxlo ltac:(clear; unfold LIM; lia)) as Hd0.
   unfold startup_ok_c, FINALS_c in *.
-  destruct (startup_res (S0c olo ohi xlo) TBLd IMGd) as [finals|] eqn:HS; [|cbn in Hcert; discriminate Hcert]. cbn [list_of] in Hk.
-  destruct (startup_res_inv (S0c olo ohi xlo) TBLd IMGd finals HS) as (Hbi0 & Henv & Hpnt & L1 & HR0 & HL1 & Hbi1 & L2 & HR1 & HL2 & rgs' & Hpr & HCH).
+  destruct (startup_res rs (S0c rs olo ohi xlo) TBLd IMGd) as [finals|] eqn:HS; [|cbn in Hcert; discriminate Hcert]. cbn [list_of] in Hk.
+  destruct (startup_res_inv rs (S0c rs olo ohi xlo) TBLd IMGd finals HS) as (Hbi0 & Henv & Hpnt & L1 & HR0 & HL1 & Hbi1 & L2 & HR1 & HL2 & rgs' & Hpr & HCH).
   (* [comment removed for export] *)
-  apply (den_seg ASEGS cfg LIM mdl mem A_wx TBLd IMGd (pos_below 17) 20 PLAN0 (S0c olo ohi xlo) [L1] (E0 sp brk0 draw inp) M0 (ms0 sp draw inp) mdl T
-           TBLd_ok IMGd_ok HR0 Hd0 Hbi0 (pos_below_In 17)).
+  apply (den_seg ASEGS cfg LIM mdl mem A_wx TBLd IMGd (pos_below NV0) 20 PLAN0 (S0c rs olo ohi xlo) [L1] (E0 sp brk0 draw inp) M0 (ms0 sp mb draw inp) mdl T
+           TBLd_ok IMGd_ok HR0 Hd0 Hbi0 (pos_below_In NV0)).
   intros L E1 ms1 mdl1 HL Hd1 Ha1. destruct HL as [<-|[]].
   (* [comment removed for export] *)
-  pose proof (usp_b sp inp Hsp Hfit Hva Hve) as (U1 & U2).
-  pose proof (rel_rp sp draw inp Hsp Hfit Hva Hve) as (R1 & R2 & R3 & R4 & R5 & R6 & R7 & R8).
-  pose proof (blk_top sp draw inp Hsp Hfit Hva Hve) as Bt.
-  assert (HuE : forall E' l, agree 17 (E0 sp brk0 draw inp) E' -> lwf 17 l = true -> uE E' l = bv_unsigned (lden (E0 sp brk0 draw inp) l)).
-  { intros E' l Ha Hl. unfold uE. rewrite (lden_agree 17 (E0 sp brk0 draw inp) E' l Hl Ha). reflexivity. }
-  assert (Hw_ENVP : lwf 17 ENVP = true) by (vm_compute; reflexivity).
-  assert (Hw_AUXV : lwf 17 AUXV = true) by (vm_compute; reflexivity).
-  assert (Hw_ESZ : lwf 17 (laddc (lscale 8 ENVC) 8) = true) by (vm_compute; reflexivity).
-  pose proof (u_ENVP sp brk0 draw inp Hsp Hfit Hva Hve olo ohi HC) as uENVP. pose proof (u_AUXV sp brk0 draw inp Hsp Hfit Hva Hve olo ohi HC) as uAUXV.
-  pose proof (u_ESZ sp brk0 draw inp Hsp Hfit Hva Hve olo ohi HC) as uESZ.
+  pose proof (usp_b sp brk0 mb draw inp Hsp Hvl Hlau) as (U1 & U2).
+  pose proof (rel_rp sp brk0 mb draw inp Hsp Hva Hve Hvl Hlau) as (R1 & R2 & R3 & R4 & R5 & R6 & R7 & R8).
+  pose proof (rel_top sp brk0 mb draw inp Hsp Hvl Hlau) as (T1' & T2' & T3' & T4' & T5').
+  pose proof (rel_str sp brk0 mb draw inp Hsp Hva Hvl Hlau) as (Q1 & Q2 & Q3).
+  pose proof (blk_top sp brk0 mb draw inp Hsp Hvl Hlau) as Bt.
+  assert (HL0 : 0 <= L0 inp) by (unfold L0; lia).
+  assert (HuE : forall E' l, agree NV0 (E0 sp brk0 draw inp) E' -> lwf NV0 l = true -> uE E' l = bv_unsigned (lden (E0 sp brk0 draw inp) l)).
+  { intros E' l Ha Hl. unfold uE. rewrite (lden_agree NV0 (E0 sp brk0 draw inp) E' l Hl Ha). reflexivity. }
+  assert (Hw_ENVP : lwf NV0 ENVP = true) by (vm_compute; reflexivity).
+  assert (Hw_AUXV : lwf NV0 AUXV = true) by (vm_compute; reflexivity).
+  assert (Hw_ESZ : lwf NV0 (laddc (lscale 8 ENVC) 8) = true) by (vm_compute; reflexivity).
+  pose proof (u_ENVP sp brk0 mb draw inp Hsp Hva Hve Hvl Hlau olo ohi HC) as uENVP.
+  pose proof (u_AUXV sp brk0 mb draw inp Hsp Hva Hve Hvl Hlau olo ohi HC) as uAUXV.
+  pose proof (u_ESZ sp brk0 mb draw inp Hsp Hva Hve Hvl Hlau olo ohi HC) as uESZ.
   unfold L1_ok in HL1. apply andb_prop in HL1 as [HL1 Hn1]. apply Pos.leb_le in Hn1.
   apply andb_prop in HL1 as [HL1 HwA]. apply andb_prop in HL1 as [Hpc1 HS1]. apply Z.eqb_eq in Hpc1. apply lin_eqb_eq in HS1.
   unfold env_tbl_ok in Henv. apply andb_prop in Henv as [Henv T3]. apply andb_prop in Henv as [T1 T2].
@@ -111,19 +119,19 @@ Proof. LiaFast.lf_pins (fun (Hoff Hsp Hbrk Hfit Hva Hve Hid HC Hxlo : LiaFast.U)
   - rewrite (HuE E1 ENVP Ha1 Hw_ENVP), uENVP. unfold two64, EC in *. clear - U1 R7 R8. lia.
   - intros w Hw. exists (ENVP, laddc (lscale 8 ENVC) 8). split; [left; reflexivity|]. cbn [fst snd].
     rewrite (HuE E1 ENVP Ha1 Hw_ENVP) in *. rewrite (HuE E1 _ Ha1 Hw_ESZ), uESZ. rewrite uENVP in *. unfold EC in *. clear - Hw R8. lia.
-  - intros i Hi. rewrite (HuE E1 ENVP Ha1 Hw_ENVP), uENVP. exact (envp_words sp draw inp Hsp Hfit Hva Hve i Hi).
-  - rewrite (HuE E1 ENVP Ha1 Hw_ENVP), uENVP. pose proof (envp_null sp draw inp Hsp Hfit Hva Hve) as X. unfold EC in X. exact X.
-  - apply bv_eq. rewrite <- (lden_agree 17 (E0 sp brk0 draw inp) E1 AUXV Hw_AUXV Ha1), uAUXV. rewrite (HuE E1 ENVP Ha1 Hw_ENVP), uENVP.
+  - intros i Hi. rewrite (HuE E1 ENVP Ha1 Hw_ENVP), uENVP. exact (envp_words sp brk0 mb draw inp Hsp Hva Hve Hvl Hlau i Hi).
+  - rewrite (HuE E1 ENVP Ha1 Hw_ENVP), uENVP. pose proof (envp_null sp brk0 mb draw inp Hsp Hva Hve Hvl Hlau) as X. unfold EC in X. exact X.
+  - apply bv_eq. rewrite <- (lden_agree NV0 (E0 sp brk0 draw inp) E1 AUXV Hw_AUXV Ha1), uAUXV. rewrite (HuE E1 ENVP Ha1 Hw_ENVP), uENVP.
     rewrite u_small64 by (unfold two64, EC in *; clear - U1 R7 R8; lia). unfold EC in *. clear - R8. lia.
   - exact HwA.
   - intros E2 ms2 mdl2 Hd2 Ha2.
-    assert (Ha12 : agree 17 (E0 sp brk0 draw inp) E2) by (apply (agree_trans 17 _ E1 _ Ha1); exact (agree_mono 17 _ E1 E2 Hn1 Ha2)).
+    assert (Ha12 : agree NV0 (E0 sp brk0 draw inp) E2) by (apply (agree_trans NV0 _ E1 _ Ha1); exact (agree_mono NV0 _ E1 E2 Hn1 Ha2)).
     (* [comment removed for export] *)
     set (S1 := envp_post L1 (envp_pc + 12) AUXV) in *.
     apply (den_seg ASEGS cfg LIM mdl mem A_wx TBLd IMGd (pos_below (s_next S1)) 20 PLAN1 S1 [L2] E2 M0 ms2 mdl2 T
              TBLd_ok IMGd_ok HR1 Hd2 Hbi1 (pos_below_In (s_next S1))).
     intros L E3 ms3 mdl3 HL Hd3 Ha3. destruct HL as [<-|[]].
-    assert (Ha13 : agree 17 (E0 sp brk0 draw inp) E3) by (apply (agree_trans 17 _ E2 _ Ha12); exact (agree_mono 17 _ E2 E3 Hn1 Ha3)).
+    assert (Ha13 : agree NV0 (E0 sp brk0 draw inp) E3) by (apply (agree_trans NV0 _ E2 _ Ha12); exact (agree_mono NV0 _ E2 E3 Hn1 Ha3)).
     (* [comment removed for export] *)
     unfold L2_ok in HL2. apply andb_prop in HL2 as [HL2 Hn2]. apply Pos.leb_le in Hn2. apply andb_prop in HL2 as [HL2 HwP].
     apply andb_prop in HL2 as [HL2 HA1]. apply andb_prop in HL2 as [HL2 HA0]. apply andb_prop in HL2 as [HL2 HS0].
@@ -133,16 +141,18 @@ Proof. LiaFast.lf_pins (fun (Hoff Hsp Hbrk Hfit Hva Hve Hid HC Hxlo : LiaFast.U)
     apply andb_prop in Hpnt as [Hpnt P8]. apply andb_prop in Hpnt as [Hpnt P7]. apply andb_prop in Hpnt as [Hpnt P6].
     apply andb_prop in Hpnt as [Hpnt P5]. apply andb_prop in Hpnt as [Hpnt P4]. apply andb_prop in Hpnt as [Hpnt P3].
     apply andb_prop in Hpnt as [P1 P2].
-    assert (Hw_P0 : lwf 17 P0 = true) by (vm_compute; reflexivity).
-    assert (Hw_STR : lwf 17 (lsub RANDP P0) = true) by (vm_compute; reflexivity).
-    assert (Hw_PN : lwf 17 PN_L1 = true) by (vm_compute; reflexivity).
-    pose proof (u_P0 sp brk0 draw inp Hsp Hfit Hva Hve olo ohi HC) as uP0. pose proof (u_STR sp brk0 draw inp Hsp Hfit Hva Hve olo ohi HC) as uSTR.
-    pose proof (u_PNL1 sp brk0 draw inp Hsp Hfit Hva Hve olo ohi HC) as uPN.
-    pose proof (rp_str sp draw inp Hsp Hfit Hva Hve) as Hrs. pose proof (argv0_top sp draw inp Hfit Hva) as Atop.
+    assert (Hw_P0 : lwf NV0 P0 = true) by (vm_compute; reflexivity).
+    assert (Hw_FRZ : lwf NV0 (lsub TOP P0) = true) by (vm_compute; reflexivity).
+    assert (Hw_PN : lwf NV0 PN_L1 = true) by (vm_compute; reflexivity).
+    pose proof (u_P0 sp brk0 draw inp) as uP0.
+    pose proof (u_FRZ sp brk0 mb draw inp Hsp Hva Hve Hvl Hlau olo ohi HC) as uFRZ.
+    pose proof (u_PNL1 sp brk0 mb draw inp Hsp Hva Hve Hvl Hlau olo ohi HC) as uPN.
+    pose proof (argv0_top sp brk0 mb draw inp Hsp Hva Hvl Hlau) as (A1 & A2).
     set (n0 := Z.of_nat (length (nth 0 (in_argv inp) []))).
-    assert (HuP0 : uE E3 P0 = usp sp + 8 * AC inp + 8 * EC inp + 184) by (rewrite (HuE E3 P0 Ha13 Hw_P0); exact uP0).
+    assert (HuP0 : uE E3 P0 = S0P draw inp) by (rewrite (HuE E3 P0 Ha13 Hw_P0); exact uP0).
     assert (Hn0 : 0 <= n0 <= 131071).
     { clear - Hva R7. unfold n0. pose proof (valid_argv_str_len (in_argv inp) 0 Hva ltac:(clear - R7; unfold AC in *; lia)). lia. }
+    assert (HL0n : L0 inp = n0) by reflexivity.
     apply (den_pn ASEGS cfg LIM mdl mem A_wx TBLd TBLd_ok pn_pc E3 L2 M0 ms3 mdl3 T PNG P0 PN_L1 rgs' n0
              (fun i => nth (Z.to_nat i) (nth 0 (in_argv inp) [] ++ [Z_to_bv 8 0]) (Z_to_bv 8 0))).
     + unfold pn_pc. clear. lia.
@@ -162,30 +172,31 @@ Proof. LiaFast.lf_pins (fun (Hoff Hsp Hbrk Hfit Hva Hve Hid HC Hxlo : LiaFast.U)
     + exact HA0.
     + rewrite HA1, lden_laddc. reflexivity.
     + exact Hpr.
-    + rewrite HuP0. clear - U1 R7 R8. unfold AC, EC in *. lia.
-    + rewrite HuP0. unfold two64. clear - U1 R7 R8 Hn0 Atop. unfold AC, EC, n0 in *. lia.
+    + rewrite HuP0. clear - U1 R4 R5 R6 R7 R8 Q2. lia.
+    + rewrite HuP0. unfold two64. clear - A1 A2 Hn0 HL0n. lia.
     + exact (proj1 Hn0).
     + unfold PNG. clear. lia.
     + unfold PNG, two64. clear. lia.
-    + left. rewrite HuP0. unfold PNG. clear - U1 R7 R8. unfold AC, EC in *. lia.
-    + intros w Hw. exists (P0, lsub RANDP P0). split; [right; left; reflexivity|]. cbn [fst snd].
-      rewrite HuP0 in *. rewrite (HuE E3 _ Ha13 Hw_STR), uSTR. clear - Hw Hrs Hn0. unfold n0, AC, EC in *. lia.
+    + left. rewrite HuP0. unfold PNG. clear - U1 R4 R5 R6 R7 R8 Q2. lia.
+    + intros w Hw. exists (P0, lsub TOP P0). split; [right; left; reflexivity|]. cbn [fst snd].
+      rewrite HuP0 in *. rewrite (HuE E3 _ Ha13 Hw_FRZ), uFRZ. clear - Hw A1 HL0n. lia.
     + intros i Hi. rewrite HuP0. split.
-      * pose proof (argv0_byte sp draw inp Hsp Hfit Hva Hve (Z.to_nat i) ltac:(clear - Hi; unfold n0 in *; lia)) as X.
+      * pose proof (argv0_byte sp brk0 mb draw inp Hsp Hva Hvl Hlau (Z.to_nat i) ltac:(clear - Hi; unfold n0 in *; lia)) as X.
         rewrite Z2Nat.id in X by (clear - Hi; lia). exact X.
       * apply (argv0_nz inp Hva (Z.to_nat i)). clear - Hi. unfold n0 in *. lia.
-    + rewrite HuP0. pose proof (argv0_byte sp draw inp Hsp Hfit Hva Hve (length (nth 0 (in_argv inp) [])) ltac:(clear; lia)) as X.
+    + rewrite HuP0. pose proof (argv0_byte sp brk0 mb draw inp Hsp Hva Hvl Hlau (length (nth 0 (in_argv inp) [])) ltac:(clear; lia)) as X.
       rewrite (argv0_nul inp) in X. exact X.
-    + apply bv_eq. rewrite <- (lden_agree 17 (E0 sp brk0 draw inp) E3 PN_L1 Hw_PN Ha13). unfold PN_L1. rewrite uPN.
-      rewrite HuP0. rewrite u_small64 by (unfold two64; clear - U1 R7 R8 Hn0 Atop; unfold AC, EC, n0 in *; lia).
-      clear. unfold n0, L0. lia.
+    + apply bv_eq. rewrite <- (lden_agree NV0 (E0 sp brk0 draw inp) E3 PN_L1 Hw_PN Ha13). unfold PN_L1. rewrite uPN.
+      rewrite HuP0. rewrite u_small64 by (unfold two64; clear - U1 R4 R5 R6 R7 R8 Q2 A1 A2 Hn0 HL0n; lia).
+      clear - HL0n. lia.
     + exact HwP.
     + intros E4 ms4 mdl4 Hd4 Ha4.
-      assert (Ha14 : agree 17 (E0 sp brk0 draw inp) E4) by (apply (agree_trans 17 _ E3 _ Ha13); exact (agree_mono 17 _ E3 E4 Hn2 Ha4)).
+      assert (Ha14 : agree NV0 (E0 sp brk0 draw inp) E4) by (apply (agree_trans NV0 _ E3 _ Ha13); exact (agree_mono NV0 _ E3 E4 Hn2 Ha4)).
+      assert (Hn2' : (19 <= s_next L2)%positive) by exact Hn2.
       apply (chain_sound_ag ASEGS cfg LIM mdl mem TBLd IMGd A_wx A_segb Hoff A_respos A_reswf TBLd_ok IMGd_ok TBLd_ecall
                CH1 (pn_post L2 (pn_pc + 32) PN_L1 rgs') M0 finals HCH E4 ms4 mdl4 T Hd4).
       intros S' M' E' ms' model' Hin Hd' Ha'. apply (Hk S' M' E' ms' model' Hin Hd').
-      apply (agree_trans 17 _ E4 _ Ha14). apply (agree_mono 17 (s_next (pn_post L2 (pn_pc + 32) PN_L1 rgs')) E4 E'); [|exact Ha']. cbn [pn_post s_next]. lia.
+      apply (agree_trans 19 _ E4 _ Ha14). apply (agree_mono 19 (s_next (pn_post L2 (pn_pc + 32) PN_L1 rgs')) E4 E'); [|exact Ha']. cbn [pn_post s_next]. lia.
 Qed.
 End ThmAg.
 (* [comment removed for export] *)
@@ -214,17 +225,17 @@ Proof.
   apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2]. apply lin_eqb_eq in H1, H2. subst. f_equal. exact (IH y H3).
 Qed.
 (* [comment removed for export] *)
-Lemma fins_ok : forallb (fun F => (Pos.leb 17 (s_next (fst F)) && frz_eqb (sm_frz (snd F)) FRZ0)%bool) (FINC ++ FINA ++ FINB) = true.
+Lemma fins_ok : forallb (fun F => (Pos.leb 19 (s_next (fst F)) && frz_eqb (sm_frz (snd F)) FRZ0)%bool) (FINC ++ FINA ++ FINB) = true.
 Proof. vm_compute. reflexivity. Qed.
-Lemma FRZ0_wf : forallb (fun p => (lwf 17 (fst p) && lwf 17 (snd p))%bool) FRZ0 = true. Proof. vm_compute. reflexivity. Qed.
+Lemma FRZ0_wf : forallb (fun p => (lwf 19 (fst p) && lwf 19 (snd p))%bool) FRZ0 = true. Proof. vm_compute. reflexivity. Qed.
 
-Lemma frz_agree : forall E E' (m m' : word -> option byte), agree 17 E E' ->
+Lemma frz_agree : forall E E' (m m' : word -> option byte), agree 19 E E' ->
   (forall p, In p FRZ0 -> forall w, uE E (fst p) <= w < uE E (fst p) + uE E (snd p) -> m' (Z_to_bv 64 w) = m (Z_to_bv 64 w)) ->
   frz_keep E' m m'.
 Proof.
   intros E E' m m' Ha H p Hp w Hw. apply (H p Hp w).
   pose proof FRZ0_wf as X. rewrite forallb_forall in X. pose proof (X p Hp) as Xp. apply andb_prop in Xp as [W1 W2].
-  unfold uE in *. rewrite (lden_agree 17 E E' _ W1 Ha), (lden_agree 17 E E' _ W2 Ha). exact Hw.
+  unfold uE in *. rewrite (lden_agree 19 E E' _ W1 Ha), (lden_agree 19 E E' _ W2 Ha). exact Hw.
 Qed.
 
 Section Top0.
@@ -233,42 +244,48 @@ Hypothesis Hoff : sc_alloc cfg = false.
 
 (* [comment removed for export] *)
 Definition main_ok (sp brk0 mb : word) (draw : EntryDraw) (inp : ProcInput) (T : TSet) : Prop :=
-  forall mem0 E ms model, agree 17 (E0 sp brk0 draw inp) E ->
-  DEN ASEGS LIM (model0 sp brk0 mb LIM inp) mem0 E TMAIN MMAIN ms model -> HA E MMAIN AMAIN mem0 ->
-  frz_keep E (m0 sp draw inp) mem0 -> realizes_cfg ASEGS cfg (mkCfg ms model) T.
+  forall mem0 E ms model, agree 19 (E0 sp brk0 draw inp) E ->
+  DEN ASEGS LIM (model0 sp brk0 mb draw LIM inp) mem0 E TMAIN MMAIN ms model -> HA E MMAIN AMAIN mem0 ->
+  frz_keep E (m0 sp mb draw inp) mem0 -> realizes_cfg ASEGS cfg (mkCfg ms model) T.
 
 #[using="Hoff"] Theorem asan_from_main : forall (sp brk0 mb : word) (draw : EntryDraw) (inp : ProcInput) T,
-  valid_sp sp -> valid_brk ASEGS brk0 -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_argv (in_argv inp) ->
-  valid_envp (in_envp inp) -> valid_id (in_uid inp) ->
+  valid_sp sp -> valid_brk ASEGS brk0 -> valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk0 mb draw) inp ->
+  valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_id (in_uid inp) ->
   main_ok sp brk0 mb draw inp T ->
   realizes_cfg ASEGS cfg (init_config ASEGS AsanUbsan.M.init_pc APH sp brk0 mb draw LIM inp) T.
 Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
-  intros sp brk0 mb draw inp T Hsp Hbrk Hfit Hva Hve Hid Hmain.
+  intros sp brk0 mb draw inp T Hsp Hbrk Hvl Hlau Hva Hve Hid Hmain.
   (* [comment removed for export] *)
   assert (K : forall S' M' E' ms' model', In (S', M') FINALS_ALL ->
-            DEN ASEGS LIM (model0 sp brk0 mb LIM inp) (m0 sp draw inp) E' S' M' ms' model' -> agree 17 (E0 sp brk0 draw inp) E' ->
+            DEN ASEGS LIM (model0 sp brk0 mb draw LIM inp) (m0 sp mb draw inp) E' S' M' ms' model' -> agree 19 (E0 sp brk0 draw inp) E' ->
             realizes_cfg ASEGS cfg (mkCfg ms' model') T).
   { intros S' M' E' ms' model' Hin Hd Hag. rewrite finals_all_eq in Hin.
     pose proof bridge_all as Hb. rewrite forallb_forall in Hb. specialize (Hb (S', M') Hin).
     pose proof fins_ok as Hf. rewrite forallb_forall in Hf. specialize (Hf (S', M') Hin). apply andb_prop in Hf as [H17 Hfz].
     apply Pos.leb_le in H17. apply frz_eqb_eq in Hfz. cbn [fst snd] in H17, Hfz.
-    apply (tm_handoff cfg (model0 sp brk0 mb LIM inp) (S', M') Hb (m0 sp draw inp) E' ms' model' T Hd H17).
+    apply (tm_handoff cfg (model0 sp brk0 mb draw LIM inp) (S', M') Hb (m0 sp mb draw inp) E' ms' model' T Hd H17).
     intros E'' mem0' ms'' model'' Ha2 Hfs Hd'' HA''.
-    apply (Hmain mem0' E'' ms'' model''); [exact (agree_trans 17 _ E' _ Hag Ha2) | exact Hd'' | exact HA'' |].
-    apply (frz_agree E' E'' (m0 sp draw inp) mem0' Ha2). intros p Hp w Hw. cbn [snd] in Hfs. apply (Hfs p); [rewrite Hfz; exact Hp | exact Hw]. }
-  pose proof (ofs_b sp inp Hsp Hfit Hva Hve) as (O1 & O2 & O3 & O4 & O5).
+    apply (Hmain mem0' E'' ms'' model''); [exact (agree_trans 19 _ E' _ Hag Ha2) | exact Hd'' | exact HA'' |].
+    apply (frz_agree E' E'' (m0 sp mb draw inp) mem0' Ha2). intros p Hp w Hw. cbn [snd] in Hfs. apply (Hfs p); [rewrite Hfz; exact Hp | exact Hw]. }
+  pose proof (ofs_b sp brk0 mb draw inp Hsp Hvl Hlau) as (O1 & O2 & O3 & O4 & O5).
   unfold FINALS_ALL in K.
   assert (Hq : OFS sp = 16 * (OFS sp / 16)) by (pose proof (Z.div_mod (OFS sp) 16 ltac:(lia)); lia).
+  (* the run's own CONFIG_RSEQ flag selects its certificate; both are in [FINALS_ALL] *)
+  assert (Hin : forall (l1 l2 l3 : list (sst * smodel)) F, In F (if kb_rseq (in_kernel inp) then l2 else l1) -> In F ((l1 ++ l2) ++ l3)).
+  { intros l1 l2 l3 F H. apply in_or_app. left. exact (in_both _ F l1 l2 H). }
   destruct (Z_le_gt_dec (OFS sp) 4080) as [Hc|Hc]; [|destruct (Z_le_gt_dec (OFS sp) 4176) as [Hc'|Hc']].
-  - apply (asan_startup_cls_ag cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hfit Hva Hve Hid 176 4080 5 ltac:(clear - O4 Hc; lia) ltac:(clear; lia)
-             startup_ok_C T).
-    intros S' M' E' ms' model' Hin Hd Hag. apply (K S' M' E' ms' model'); [|exact Hd | exact Hag]. apply in_or_app. left. exact Hin.
-  - apply (asan_startup_cls_ag cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hfit Hva Hve Hid 4096 4176 67 ltac:(clear - O4 Hc Hc' Hq; lia) ltac:(clear; lia)
-             startup_ok_A T).
-    intros S' M' E' ms' model' Hin Hd Hag. apply (K S' M' E' ms' model'); [|exact Hd | exact Hag]. apply in_or_app. right. apply in_or_app. left. exact Hin.
-  - apply (asan_startup_cls_ag cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hfit Hva Hve Hid 4192 4256 68 ltac:(clear - O4 Hc Hc' Hq; lia) ltac:(clear; lia)
-             startup_ok_B T).
-    intros S' M' E' ms' model' Hin Hd Hag. apply (K S' M' E' ms' model'); [|exact Hd | exact Hag]. apply in_or_app. right. apply in_or_app. right. exact Hin.
+  - apply (asan_startup_cls_ag cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hva Hve Hid Hvl Hlau 176 4080 5
+             ltac:(unfold HCp; clear - O4 Hc; lia) ltac:(unfold Hxlop; clear; lia) (startup_ok_C _) T).
+    intros S' M' E' ms' model' Hm Hd Hag. apply (K S' M' E' ms' model'); [|exact Hd | exact Hag]. apply Hin.
+    destruct (kb_rseq (in_kernel inp)); exact Hm.
+  - apply (asan_startup_cls_ag cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hva Hve Hid Hvl Hlau 4096 4176 67
+             ltac:(unfold HCp; clear - O4 Hc Hc' Hq; lia) ltac:(unfold Hxlop; clear; lia) (startup_ok_A _) T).
+    intros S' M' E' ms' model' Hm Hd Hag. apply (K S' M' E' ms' model'); [|exact Hd | exact Hag]. apply in_or_app. right. apply in_or_app. left.
+    apply in_both with (r := kb_rseq (in_kernel inp)). destruct (kb_rseq (in_kernel inp)); exact Hm.
+  - apply (asan_startup_cls_ag cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hva Hve Hid Hvl Hlau 4192 4256 68
+             ltac:(unfold HCp; clear - O4 Hc Hc' Hq; lia) ltac:(unfold Hxlop; clear; lia) (startup_ok_B _) T).
+    intros S' M' E' ms' model' Hm Hd Hag. apply (K S' M' E' ms' model'); [|exact Hd | exact Hag]. apply in_or_app. right. apply in_or_app. right.
+    apply in_both with (r := kb_rseq (in_kernel inp)). destruct (kb_rseq (in_kernel inp)); exact Hm.
 Qed.
 End Top0.
 (* [comment removed for export] *)

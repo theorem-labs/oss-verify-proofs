@@ -5,8 +5,9 @@
    (W_cshe_epi.v cshe_out_B).  A segment lemma of BCheckShapeEvent's pb_check_shape_ends.  A NEW walk over
    lib/B/W_listing.v: B's loop is not A's (B reads the vector again in every turn, has four UBSan trap edges on the
    record's address, and CALLS list_drop at 0x85924 where A inlines free + __asan_memmove).  Structure after
-   lib/A/W_cshe_l2w.v (a working branch d6e8218b728: the invariant l2_mem / l2_inv, the record fields, the source
-   kept across a call) and lib/A/W_cshe_l2.v (a working branch 4bd30a14d29: the filter lemmas). *)
+   lib/A/W_cshe_l2w.v (a working branch: the invariant l2_mem / l2_inv, the record fields, the source
+   kept across a call) and lib/A/W_cshe_l2.v (a working branch: the filter lemmas). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* One turn, m + 1 records not yet examined (s3 = m + 1), the record v[m]:
      0x858ac  lbu (s2) (the shadow byte of &held.v), ld a1,0(s1) (v), addiw s3,s3,-1, a0 = v + 16 m   (l2_head)
      0x858c4  the traps bltu a0,a1 (refuted by trap_ptr_wrap_atom), snez/seqz/xor/beqz, beqz a1, andi a0,7
@@ -174,7 +175,7 @@ Qed.
 Lemma l2_set_held_twice : forall (h0 : hsrc) (H1 H2 : hlist),
 CheckRep.set_held (CheckRep.set_held h0 H1) H2 = CheckRep.set_held h0 H2.
 Proof. intros h0 H1 H2. reflexivity. Qed.
-(* a byte string as the walk reads it (lib/A/W_check_shape_ends.v cshe_bytes, a working branch d6e8218b728) *)
+(* a byte string as the walk reads it (lib/A/W_check_shape_ends.v cshe_bytes, a working branch) *)
 Lemma l2_u8 : forall v, 0 <= v < 256 -> bv_unsigned (Z_to_bv 8 v) = v.
 Proof.
 intros v Hv. rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 8) with 256. apply Z.mod_small. exact Hv.
@@ -526,7 +527,7 @@ Qed.
 
 Section c.
 Variable B : asyms.
-(* ARx conversion (route (b); A's lib/A/W_check_shape_ends.v Section c on a working branch 4f281bf9308): the
+(* ARx conversion (route (b); A's lib/A/W_check_shape_ends.v Section c on a working branch): the
    generic allocator relation ARx with its laws, the placement PST, the room record RP; HP0 (every ghost list is []),
    IMGC (the image's cover) and BLKN (a block's size is >= 0) as W_check_no_loss.v's Section c takes them *)
 Variable PST : list (Z * Z).
@@ -870,7 +871,7 @@ Hypothesis HPV : forall a, PF <= a < PF + PLEN + 8 -> aview SEGS (w_H W) mem a <
 Hypothesis HPM1 : amem_range PF (PLEN + 1).
 Hypothesis HPM8 : amem_range PF 8.
 Hypothesis HPRA0 : range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF PF (PLEN + 1).
-(* where P lives (cshe_spec's one premise, W3Checks-2's ruling at a working branch fb87b19890f): a read-only literal,
+(* where P lives (cshe_spec's one premise, W3Checks-2's ruling at a working branch): a read-only literal,
    or a buffer inside one of the entry's fake frames (ARM_gone's prefix[48]) *)
 Hypothesis HPLOC : ((forall a, PF <= a < PF + PLEN + 8 -> in_rom SEGS a) /\ ashp_x ARx PF (PLEN + 1)) \/
   (exists cid pos, In (cid, pos) (frames S) /\ forall a, PF <= a < PF + PLEN + 8 -> in_zr a (frame_rng ly (cid, pos))).
@@ -1978,7 +1979,7 @@ End loop.
 (* ------------------------------------------------------------------ the segment lemma *)
 (* Loop 2 of check_shape_ends on image B, from its first entry 0x858ac (cshe_l2_in) to the epilogue's entry 0x8592c
    (cshe_out_B, the gone <> 0 disjunct).  Its premises are cshe_spec's own (lib/B/W_contract.v Section w3e, CSHE_STK
-   read as CSHE_STK_B; P's location as W3Checks-2's one disjunctive premise, a working branch fb87b19890f), so the
+   read as CSHE_STK_B; P's location as W3Checks-2's one disjunctive premise, a working branch), so the
    composition gives each by assumption. *)
 Lemma cshe_l2_B : forall W ly S regs mem md ch XO AT HA (j : nat) PF h P A0 gone (O OUT : Z) (ob : list byte),
 AFP0 CSHE_STK_B ly S W regs mem md ch ->

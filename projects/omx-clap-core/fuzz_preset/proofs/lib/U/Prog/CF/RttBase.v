@@ -25,7 +25,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* round_trip_text of the #102 ubsan twin 27566683 (round_trip_text_c.v, ROUND_TRIP_TEXT 0x15334, 388 B), the CF form: the
-   mirror of lib/Prog/RttBase.v (plain, origin/cold/h-rw-pre-4-rw102-rtt 1a5309005128) with the same names; the ubsan
+   mirror of lib/Prog/RttBase.v (plain) with the same names; the ubsan
    body is the plain one instruction for instruction at + 0x5ac.  Frame `addi sp, sp, -0x70`; ra s0 s1 s2 s3 s4 s5 saved
    at S - 8 .. S - 56 (S the entry sp), the 56-byte save area [S - 56, S); locals [S - 112, S - 56): the struct text
    record (32 bytes: b, n, cap, failed) at S - 112, and the read-back's struct pj `back` (56 bytes) at S - 112 after the

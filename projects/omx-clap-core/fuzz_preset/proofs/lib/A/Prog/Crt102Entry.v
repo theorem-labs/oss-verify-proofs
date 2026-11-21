@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 787 of its 842 lines of code are new or changed and 723 lines of the source are left out. *)
-(* base: commit 2fdcfd7be069 (post-landing line). kb round (brief
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* base: (post-landing line). kb round (brief
    the internal file wild-budget-kb-reshape.md): the continuation at M takes crt_live at kb = 0
    (the entry -> M stretch makes no wild call: the frame call and __asan_memset have old posts, so the journal's budget is
    [], wbudget [] 0 []). *)
@@ -13,18 +14,18 @@
 
    INPUTS OF RECORD (taken by path, as Crt102Glue.v's header):
    - pins: A' asan 1be0f53d96cb9d6c (twin bff8519bbe3ea0e4), B' asan-ubsan d663f82d7f488d30 (twin c90d4fa54d43160b).
-   - base commit e6664614c075 (the contract texts and Spec at the kit tip of record
-     3ac20a5c9e30: PRH_Base.v ee2f5cd7ed35 (the E sweep: g_most / g_own_ran_out are ledger
-     fields; prh_cons_from), PRH_FnCheck.v 0844ed8c0608 (tcheck_round_trip_specX as at dc6ee977244a; entry prh_ledger .. SIZE_MAXZ ran most 0,
+   - base (the contract texts and Spec at the kit tip of record:
+     PRH_Base.v ee2f5cd7ed35 (the E sweep: g_most / g_own_ran_out are ledger
+     fields; prh_cons_from), PRH_FnCheck.v 0844ed8c0608 (tcheck_round_trip_specX as; entry prh_ledger .. SIZE_MAXZ ran most 0,
      prh_run_at .. rp_i (PresetReqAt.round_trip rp_sm t), rp_sm = ReaderRes.jr_strtod, prh_cons_from .. rp_i
      (length (round_trip rp_sm t)); the exact advance on r = 0 only), lib/Spec/PresetReqAt.v 43c958024221, PresetRun.v
-     5ac818ab1fe6; the engine whole set by path, YGcallMxmn.v b47cf7942c3d; S10Env.v d8ca1dd59ead from
-     commit a977ac095573; Crt102Img.v 176eec830b61 and Crt102Glue.v 69636067b31c, the lane's
+     5ac818ab1fe6; the engine whole set by path, YGcallMxmn.v b47cf7942c3d; S10Env.v d8ca1dd59ead;
+     Crt102Img.v 176eec830b61 and Crt102Glue.v 69636067b31c, the lane's
      interface, both unchanged by this file).
-   - listings of record: commit d42e123915ae (lib/A/Listing_prog.v 1ab147923c5d,
+   - listings of record: (lib/A/Listing_prog.v 1ab147923c5d,
      lib/A/PAImg_prog.v 47eeb54e93be, lib/Reusable/YPsym.v b6f5a85d234d).
    - the listing read: the internal file crt.A.s; the cut: DESIGN.md (sha256 d05697dd088c; internal record).
-   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS 8f3e7e1a07f1,
+   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS,
      PAU pau-preset-102.
    - rule 24: no function proved (proof-index check_round_trip, exit 0,
      an internal record of that lookup, run by the unit owner): written new. METHOD: the index
@@ -213,13 +214,13 @@ Hypothesis pal_pst_static : forall a, Exists (in_zr a) PST ->
   ~ Exists (in_zr a) (as_owned_static B) /\ ~ (as_errno B <= a < as_errno B + 4).
 (* ---- frame class 3: the frozen FCiface.v contract with the memnorm keep (YGcallMxmn.v's astack_malloc_realizes_xm;
    owner the frame-class lane, which pays the _xm contracts at the instance from its image walks, FCm3s.v), and the one
-   further hypothesis of YGcallSx.v's / YGcallMxmn.v's frame-call rule (OWNLOW, YGcallSx.v:64; S10TxString.v:174).
+   further hypothesis of YGcallSx.v's / YGcallMxmn.v's frame-call rule (OWNLOW, YGcallSx.v:65; S10TxString.v:174).
    The rule's SMX is NOT a hypothesis: YGcallScf.stack_malloc_x_any proves it at any ARx. ---- *)
 Hypothesis ASM3 : YGcallMxmn.astack_malloc_realizes_xm (fx := fx) SEGS B ARx 3.
 Hypothesis OWNLOW : ARx_owned_low_law SEGS B ARx.
 (* ---- __asan_memset (OSet), the runtime row with the memnorm keep (YGcallMxmn.v's aintrin_realizes_xm at the
-   listing's own pc, as FuzzStrdup.v:240 takes __asan_memcpy's; owner: the libc stdio row / the image row, whose
-   po_asan_memset_cf (CfApiPreset.v:115) is the instance's row) ---- *)
+   listing's own pc, as FuzzStrdup.v:241 takes __asan_memcpy's; owner: the libc stdio row / the image row, whose
+   po_asan_memset_cf (CfApiPreset.v:116) is the instance's row) ---- *)
 Hypothesis AMS : YGcallMxmn.aintrin_realizes_xm (fx := fx) SEGS B ARx OSet (SIGMA AS___asan_memset).
 
 Section g.

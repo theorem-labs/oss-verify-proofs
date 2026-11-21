@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -86,7 +87,7 @@ Section WithRT.
 Variable RT : rt_sig.
 
 Definition pa_live (Σ : rts RT) (E : pjenvA) (st : sbA) : Prop :=
-  rt_live RT Σ = sbchunkA st ++ pa_L E /\ In (pa_F E, pa_kF E) (rt_frames RT Σ) /\ rt_sp0 RT Σ - STACK_WIN <= pa_lo E.
+  rt_live RT Σ = sbchunkA st ++ pa_L E /\ In (pa_F E, pa_kF E) (rt_frames RT Σ) /\ rt_sp0 RT Σ - STACK_SPAN <= pa_lo E.
 
 Lemma pa_live_eq : forall Σ Σ' E st, pa_live Σ E st -> rt_live RT Σ' = rt_live RT Σ -> rt_frames RT Σ' = rt_frames RT Σ ->
   rt_sp0 RT Σ' = rt_sp0 RT Σ -> pa_live Σ' E st.
@@ -286,7 +287,7 @@ Definition loc_get_cpsA : Prop :=
   fdfs_only PMc -> mat_stable PMc ->
   pj_locA m -> libc_nl m -> lockwA m -> io_ssp m -> rw_cells asegs m P [CB 8 jp] -> P mod 8 = 0 ->
   (forall i, 0 <= i < 8 -> aclient (rt_live RT Σ) (rt_frames RT Σ) q (P + i)) -> (P + 8 <= PJ_LOC_LO_A \/ 0x6c81dc <= P) ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + PJ_LOC_STACK_A <= q ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + PJ_LOC_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   (forall t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',
      ART RT Σ m' -> mem_inv asegs m' -> stk asegs m' lo q -> LOCBA m' -> rw_cells asegs m' P [C8 (wz PJ_LOC_IMP_A)] ->
@@ -306,7 +307,7 @@ Definition ctor_cpsA : Prop :=
   fdfs_only PMc -> mat_stable PMc ->
   In (fO, kO) (rt_frames RT Σ) -> fO <= OS -> OS + 288 <= fO + fs_size kO - 8 -> OS mod 16 = 0 ->
   os_hullA m OS -> pj_locA m -> libc_nl m -> lockwA m -> io_ssp m ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + PJ_OS_CTOR_STACK_A <= q ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + PJ_OS_CTOR_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   (forall t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',
      ART RT Σ m' -> mem_inv asegs m' -> stk asegs m' lo q -> OSFRESHA m' OS -> os_hullA m' OS -> LOCBA m' ->
@@ -338,7 +339,7 @@ Definition put_cpsA : Prop :=
   OSFRESHA m OS -> os_hullA m OS -> LOCBA m ->
   rw_cells asegs m BUF [CB (Z.to_nat CAP) bs] -> 0 <= N <= CAP -> 0 < BUF -> BUF + CAP <= lo -> acc asegs m BUF N -> buf_clsA Σ fO kO BUF CAP ->
   (BUF + CAP <= OS \/ OS + 288 <= BUF) ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + PJ_OS_PUT_STACK_A <= q ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + PJ_OS_PUT_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   Z.of_nat (length (rt_frames RT Σ)) + 2 <= FRAMES_TOT -> 2 <= rt_credit RT Σ ->
   (forall (Σ' : rts RT) t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',
@@ -363,7 +364,7 @@ Definition iosdtor_cpsA : Prop :=
   fdfs_only PMc -> mat_stable PMc ->
   In (fO, kO) (rt_frames RT Σ) -> fO <= OS -> OS + 288 <= fO + fs_size kO - 8 -> OS mod 16 = 0 ->
   OSIOSA m OS -> os_hullA m OS -> LOCBA m -> unwind_ok ra s0 (wz q) ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + PJ_IOS_DTOR_STACK_A <= q ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + PJ_IOS_DTOR_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   (forall t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',
      ART RT Σ m' -> mem_inv asegs m' -> stk asegs m' lo q -> os_hullA m' OS ->

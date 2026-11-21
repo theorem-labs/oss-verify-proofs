@@ -1,6 +1,6 @@
 (** * SegModel: the semantic spine of reac-pw/fuzz_segconf (statement text and Gallina proofs; no machine walk).
 
-    Sources (ossv/recipes 25e3d17bdb50, projects/reac-pw/fuzz_segconf/): source/fuzz_segconf.c (the harness, "H:"
+    Sources (projects/reac-pw/fuzz_segconf/): source/fuzz_segconf.c (the harness, "H:"
     below), source/fuzz.h ("F:"), source/catalogue.c ("K:"); the reader of the pinned build's tree
     (pau-pipeline-next3/reac-pw/result/image/src/): reac-pw/src/reac_segconf.c ("R:"), reac-pw/src/reac_declared_vlan.c
     ("V:"), libreac/include/reac/reac_role.h ("RR:"); musl for the libc leaves. Pinned ELFs: plain 3776ca44d75c, ubsan

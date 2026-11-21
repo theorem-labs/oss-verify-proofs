@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v:29-85 (Section b),
-   A/AD1q.v:64-98 (drv_mainX_stmt / tfib_srealizesX) and A/AB1n.v:52-87 (HS_ok_open), origin/ossv/recipes c8557374ad2e, in the
-   shape of a Theorem Labs lane's proofs/libreac/fuzz_pcap/lib/A/PcapClose.v (a working branch fe3d720b4c7), for
+   A/AD1q.v:64-98 (drv_mainX_stmt / tfib_srealizesX) and A/AB1n.v:52-87 (HS_ok_open), in the
+   shape of a Theorem Labs lane's proofs/libreac/fuzz_pcap/lib/A/PcapClose.v (a working branch), for
    fuzz_ctrl's ASan image (image A): the closing of A.CtrlTFIB.TFIB_T from named parts.  Module paths changed,
    TfibB -> CtrlB, TfibSyms -> CtrlTSyms, lib shape ff_lib_shape -> ag_shape checksum_shape (A/CtrlTFIB.v:24), the walk
    top tfib_lib_x_all -> ctl_lib_x (a Theorem Labs lane's lib/A/ACtl.v). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed ctrl_drv_main, ctrl_srealizesX_rc, ctrl_TFIB_T_closed). *)
 (* The closing side of fuzz_ctrl's ASan statement TFIB_T (rule 24: no function proved; composition only).
 
    The donor closes TFIB_T in two steps: A/AD2o.v:29-85 applies A/AD1q.v:64-98 tfib_srealizesX, which joins the start-up
@@ -28,7 +29,7 @@
    Reusable.YG0q.AR_laws_ok, Reusable.YO01.specx_closedx_eq / CLOSEDX_has_nil.
    SECTION HYPOTHESIS (1):
      ctl_lib_x              ctrl_lib_x_at (below) for every fx rc: the walk top's lib contract at CtrlB (a Theorem Labs lane's
-                            A.ACtl.ctl_lib_x_CtrlB, route (C), a working branch 8ce82d7e310).  Its open
+                            A.ACtl.ctl_lib_x_CtrlB, route (C), a working branch).  Its open
                             arguments (TPARSE .. H_strcmp, CHAIN_OF_CUT and the 94 seg_* stages) stay inside it:
                             lib/A/CtrlCloseLink.v (not in this delivery) proves ctrl_lib_x_link, those arguments -> ctrl_lib_x_at, by
                             applying ctl_lib_x_CtrlB with actlb_libS / AF0q / AF0w for its Section hypotheses.
@@ -63,7 +64,7 @@ Require
 Require OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.CtrlTFIB.
 Require
   OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.AB1v OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.AB1h
-  OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.AB01 OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.AB12
+  OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.AB01r OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.AB12
   OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.AB1n OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.AD2l
   OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.AF0m OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.ACeg
   OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.ACfn OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.AF0w
@@ -105,20 +106,29 @@ Definition ctrl_lib_x_at (fx : lib.Reusable.YK11.FPState) (rc : lib.Reusable.YM0
   (forall pl fs K, @LIBK LS pl fs K = K (LL 0 fs [])) ->
   @lib.A.ACfn.tfib_lib_contract_x fx rc LS CtrlB ameter_triv ctrl_XL0 ctrl_XL0 ctrl_RLO ctrl_RHI.
 
-(* donor A/AD1q.v:64-98 drv_mainX_stmt, at fuzz_ctrl's LS. *)
+(* donor A/AD1q.v:64-98 drv_mainX_stmt, at fuzz_ctrl's LS.  At LPS 727298f3 it is A/AD1p.v's [tfib_drv_main]: the
+   hand-off state of the run's own CONFIG_RSEQ flag ([AB01r.HS_tfib_r]), the stack invariant abstract with its one
+   consequence [SINV_sp0], the mmap base, and the launch's fifth [valid_entry] conjunct. *)
 Definition ctrl_drv_main (rc : lib.Reusable.YM05.RunCeil) : Prop :=
-  forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
-    (FULL : word -> option byte) (model : Model),
+  forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
+    (FULL : word -> option byte) (model : Model) (SINV : env -> (word -> option byte) -> Prop),
   valid_sp sp -> valid_brk lib.A.AB1h.TSEGS brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
   @lib.Reusable.YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
-  lib.A.AB01.HS_tfib h = Some ch ->
-  cs_ok lib.A.AB1h.TSEGS lib.A.AB12.TFIB lib.Reusable.YA02.LIMIT (lib.Reusable.YA02.TOP sp)
-    (lib.Reusable.YA02.SINV0 lib.A.AB1h.TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (lib.Reusable.YA02.argH0 lib.A.AB1h.TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
+  lib.A.AB01r.HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+  (forall E' M, SINV E' M -> uE E' e_sp0 = lib.Reusable.YA02.TOP sp + 8388608) ->
+  cs_ok lib.A.AB1h.TSEGS lib.A.AB12.TFIB lib.Reusable.YA02.LIMIT (lib.Reusable.YA02.TOP sp) SINV
+    (lib.Reusable.YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp)
+      (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp)
+      (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)) (in_fs inp) E ch R FULL model ->
   (forall n, (n < NX0G)%nat ->
-     ev E n = ev (lib.Reusable.YA02.E0 lib.A.AB1h.TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-  (forall a, lib.Reusable.YA02.argH0 lib.A.AB1h.TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-     FULL a = wrap_mem lib.A.AB1h.TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+     ev E n = ev (lib.Reusable.YA02.E0 sp rdraw brk (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp)
+       (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp)
+       (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)) n) ->
+  (forall a, lib.Reusable.YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp)
+      (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp)
+      (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp) E a = true ->
+     FULL a = wrap_mem inp mbase lib.A.AB1h.TPH (Z_to_bv 64 (Z.of_N images.Asan.M.init_pc)) sp rdraw a) ->
   srealizes lib.A.AB1h.TSEGS (cfg_of lib.A.AB1h.TSEGS R (pc ch) FULL model) (CLOSEDX (LS:=LS) inp).
 
 (* ===================================================================================================== *)
@@ -155,41 +165,53 @@ Proof.
     (lib.A.AD1j.tfib_exit_site CtrlB HB LAWS)).
 Qed.
 
-(* donor A/AD1q.v:64-98 tfib_srealizesX, the same proof at fuzz_ctrl's LS, over the core's start-up certificate. *)
+(* donor A/AD1q.v:64-98 tfib_srealizesX, the same proof at fuzz_ctrl's LS, over the core's start-up certificate.
+   At LPS 727298f3 it takes the input apart into its twenty fields: [valid_input] fixes the abort-terminal flag, the
+   address size, the channel reader and the sigpipe-terminal flag, and says the kernel record is its own
+   [recorded_kernel], so the input is [YA02.inp] at that record, the exec file name and the SIGPIPE disposition. *)
 Lemma ctrl_srealizesX_rc : forall (sp : word) (rdraw : EntryDraw) (brk mb : word) (inp : ProcInput),
   valid_sp sp -> valid_brk lib.A.AB1h.TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   lib.Reusable.YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes lib.A.AB1h.TSEGS (init_config lib.A.AB1h.TSEGS images.Asan.M.init_pc lib.A.AB1h.TPH sp brk mb rdraw lib.Reusable.YA02.LIMIT inp)
     (SPECX (LS:=LS) inp).
 Proof.
-  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
-  pose proof Hinp as (Hva & Hve & Hvfs & _ & [Huid Hgid] & Hnof & Hsig & Hhw & Hab & Hmmu & _).
-  destruct inp as [argv envp fs stdin uid gid groups net nofile sigmask hw ab mmu urnd tmp]. cbn in *. subst ab mmu.
-  change (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp)
-    with (lib.Reusable.YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp) in *.
+  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
+  pose proof Hinp as (Hva & Hve & _ & _ & _ & [Huid _] & Hnof & Hsig & Hhw & Hab & Hmmu & _ & Hvl & Hcr & Hspt & Hkern).
+  destruct inp as [argv envp fs stdin uid gid groups net nofile sigmask hw ab mmu urnd tmp kern execfn cr spd spt].
+  cbn [in_argv in_envp in_uid in_hwcap in_nofile in_abort_terminal in_va_size in_channel_reader in_sigpipe_terminal in_kernel]
+  in Hva, Hve, Hfit, Huid, Hhw, Hnof, Hab, Hmmu, Hcr, Hspt, Hkern.
+  subst ab mmu cr spt.
+  rewrite Hkern in Hinp, Hsig, Hvl, Hlau |- *.
+  change (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp (recorded_kernel kern) execfn true spd false)
+    with (lib.Reusable.YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd) in *.
   apply (srz_conseq lib.A.AB1h.TSEGS _
-    (CLOSEDX (LS:=LS) (lib.Reusable.YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp)));
+    (CLOSEDX (LS:=LS) (lib.Reusable.YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd)));
     [| apply t_eq_sym; apply (specx_closedx_eq (LS:=LS))].
-  apply (lib.A.AB1n.tfib_startup_T1 sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp
-    Hsp Hbrk Hva Hve Hfit Huid Hhw
-    (CLOSEDX (LS:=LS) (lib.Reusable.YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp))
+  apply (lib.A.AB1n.tfib_startup_T1 sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd
+    Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hnof Hsig Hvl Hlau
+    (CLOSEDX (LS:=LS) (lib.Reusable.YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd))
     (CLOSEDX_has_nil (LS:=LS) _)).
   intros h c Hok.
-  destruct (lib.A.AB1n.HS_ok_open h sp rdraw brk argv envp uid hw (fs_seed_tmp fs tmp) c Hok)
-    as (ch & E & R & FULL & model & Hch & -> & HC & HE & HM & _).
-  exact (ctrl_DRV_MAIN sp rdraw brk (lib.Reusable.YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp)
-    h ch E R FULL model Hsp Hbrk Hfit Hinp Hceil Hch HC HE HM).
+  destruct (lib.A.AB1n.HS_ok_open h sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd
+    (fs_seed_tmp fs tmp) c Hok) as (ch & E & R & FULL & model & Hch & -> & HC & HE & HM & _).
+  assert (SP0 : forall E' M, lib.Reusable.YA02.SINV0 lib.A.AB1h.TPH sp rdraw brk mb argv envp fs stdin uid gid hw groups net
+    nofile sigmask urnd tmp kern execfn spd images.Asan.M.init_pc E' M -> uE E' e_sp0 = lib.Reusable.YA02.TOP sp + 8388608).
+  { intros E' M HSv. eapply lib.Reusable.YA02.SINV0_sp0; try eassumption.
+    Unshelve. all: first [assumption | exact lib.A.AB1h.TSEGS | exact lib.A.AB12.TFIB]. }
+  exact (ctrl_DRV_MAIN sp rdraw brk mb (lib.Reusable.YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd)
+    h ch E R FULL model _ Hsp Hbrk Hfit Hinp Hlau Hceil Hch SP0 HC HE HM).
 Qed.
 End RC.
 
 (* donor A/AD2o.v:29-85 tfib_srealizesX_top and TFIB_T_of_partsXF: fuzz_ctrl's TFIB_T (A/CtrlTFIB.v:17-23). *)
 Theorem ctrl_TFIB_T_closed : lib.A.CtrlTFIB.TFIB_T.
 Proof.
-  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
+  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
   change target_alloc_limit with lib.Reusable.YA02.LIMIT.
   exact (@ctrl_srealizesX_rc (lib.Reusable.YM05.RunCeilOf (bv_unsigned sp) (ctrl_valid_sp_window sp Hsp) lib.Reusable.YA02.LIMIT)
-    sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp (lib.Reusable.YM05.ceil_of_top_run _)).
+    sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau (lib.Reusable.YM05.ceil_of_top_run _)).
 Qed.
 
 (* Inside the Section, Print Assumptions lists the named parts TFIB_T rests on. *)

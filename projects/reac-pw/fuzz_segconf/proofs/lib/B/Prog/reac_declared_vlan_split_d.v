@@ -5,8 +5,9 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 206 of its 240 lines of code are new or changed and 220 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_split on fuzz_segconf image B (fuzz_segconf.asan-ubsan): the image-B port of
-   lib/A/Prog/reac_declared_vlan_split_d.v (commit ceb7e39832b2): the points at image B's listing
+   lib/A/Prog/reac_declared_vlan_split_d.v: the points at image B's listing
    offsets, and the loop head KL at image B's registers (B's digit loop keeps the byte in a5 and the pointer to it in
    a4, and tests a4 = -1 before the next load, 0x8a2c4).
    The interface of its walk's segments. The walk is a chain of program points, each stated over the CONCRETE

@@ -5,7 +5,7 @@
 
    rrB_SB_base_mem gives, from the data the glue holds at the class-1 fake-stack return (S-A's continuation of
    rrB_to_E1: rMCALL over normalize memc, mem_rel, ro_same, the journal at m1; E1's continuation of rrB_E1: the
-   journal at ((1, pos) :: own) with mem2, acall_kept, and -- after the fd812f73bc3 re-proof of rrB_E1 through
+   journal at ((1, pos) :: own) with mem2, acall_kept, and -- after the re-proof of rrB_E1 through
    lib/Reusable/YCbqMalloc.aj_stack_malloc_at_fc -- the four pre/post facts the class-1 request now hands on:
    ecall_pre, the astack frame condition, and the two presence clauses), the MEMORY-side premises of rrB_SB_lifted at
    mb := mem2, FS := lib.Reusable.YG0f.ly_F lyc, jj := pos:
@@ -16,7 +16,7 @@
    The FOOTPRINT/VIEW premises (shadow_rw_on R (route (C)), addressable, fp, tls, the rng/shcov/shkov at RNG_W (w_H W))
    are a Theorem Labs lane's half; rrB_SB_base composes the two.
 
-   PROVED B lemmas used (file:line on e026bdcbd0d):
+   PROVED B lemmas used (file:line):
      B.ProgWorldAstack.ctl_fs_of_astack        (lib/B/ProgWorldAstack.v:248)   the frame facts after __asan_stack_malloc_1
      B.ProgWorld.ctl_fs_geom                    (lib/B/ProgWorld.v:437)         class geometry (fs_B 1 = 128 etc.)
      B.ProgWorld.aview_vis_mrd                  (lib/B/ProgWorld.v:579)         a visible byte's view is its mrd byte
@@ -25,14 +25,14 @@
      B.ProgWorldAstack.pwfs_stk_of_present      (lib/B/ProgWorldAstack.v:155)   stk from presence
      B.ProgWorldAstack.pwfs_bytes_of_view       (lib/B/ProgWorldAstack.v:103)   bytes_at from the view
      B.ProgWorldCtlRt.find_segment_some_spec    (lib/B/ProgWorldCtlRt.v:318)    a found segment's bounds (in_img)
-     B.MemNormTr.ro_addr_above_img              (lib/B/MemNormTr.v:53)          above IMG_HI no byte is read-only
+     B.MemNormTr.ro_addr_above_img              (lib/B/MemNormTr.v:54)          above IMG_HI no byte is read-only
      lib.Reusable.YG0d.{al_blocks,al_frames,al_sep}  (lib/Reusable/YG0d.v:497,501,509)  the AR laws
-     lib.Reusable.YF0m.ts_errno                 (lib/Reusable/YF0m.v:2991)      as_errno B = TFIB_ERRNO
+     lib.Reusable.YF0m.ts_errno                 (lib/Reusable/YF0m.v:2992)      as_errno B = TFIB_ERRNO
      lib.Reusable.YI04.le_byte_small            (lib/Reusable/YI04.v:147)       the one-byte little-endian value
    Named Section hypotheses of the memory half: HRT2, the cut's B.ACtlRtC.ctl_rt_C at (lyc, S2, mem2) (route (C):
      the composition supplies it by B.ProgWorldCtlRtC.ctl_rt_C_of_AR at HJ2's AR); its 4th part is ro_agree mem2.
      The fr apartness of the three caller cells is in HF, under reply_args and 50 <= len (the accepted contract_F
-     guard, a working branch 20372bbcc3a), where P10's heap block and P11's caller frames give it by al_sep
+     guard, a working branch), where P10's heap block and P11's caller frames give it by al_sep
      (blocks vs frames).
    No Axiom, Parameter, Admitted, admit, Abort. *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -206,8 +206,8 @@ Hypothesis HREL : B.MemNorm.mem_rel rsegs m1 mc.
 Hypothesis HROS : B.MemNorm.ro_same rsegs memc m1.
 Hypothesis HJ1 : lib.Reusable.YCbq.ajournal rsegs B STK sp0 FP ly S0 W0 mem0 md0 own lyc Sc W m1 mdc1 k.
 
-(* ---- E1: the continuation data of rrB_E1, re-proved through lib.Reusable.YCbqMalloc.aj_stack_malloc_at_fc
-   (fd812f73bc3): regs is the pre-call register bundle (rrB_regsT ..) with spZ regs = rA S supplied at composition. ---- *)
+(* ---- E1: the continuation data of rrB_E1, re-proved through lib.Reusable.YCbqMalloc.aj_stack_malloc_at_fc:
+   regs is the pre-call register bundle (rrB_regsT ..) with spZ regs = rA S supplied at composition. ---- *)
 Variables (regs regs2 : bvmap 5 word) (S2 : lib.Reusable.YG00.astate)
   (mem2 : word -> option byte) (md2 : Model) (pos : Z).
 Hypothesis HECP : lib.Reusable.YG0d.ecall_pre rsegs B lyc Sc W regs m1 mdc1.

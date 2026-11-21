@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v; 1236 of its 1368 lines of code are new or changed and 1241 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_get (fs.asan A 0x83720 .. 0x83868, 82 instructions; pf.c:352-362): its ASan contract FSH_Fn_reader.pj_get_spec,
    by a symbolic walk of the machine code over fs's walk kit (FSW_K / FSW_ret / FSW_rd), in the per-function form of the
    donor cgif_file_fuzzer as ported by a Theorem Labs lane.
    rule 24: (internal path) (ossv proof index v5, built
-   2026-10-28T21:58:24Z, ossv/recipes@566eb6ffa5df): pj_get CONFIRMED, no released ASan-image proof of any fs function.
-   Control flow after fs's RELEASED plain proof lib/Prog/pj_get.v (c8557374ad2e) gp_loop / pj_get_holds; A's code is the
+   2026-10-28T21:58:24Z, ossv/recipes): pj_get CONFIRMED, no released ASan-image proof of any fs function.
+   Control flow after fs's RELEASED plain proof lib/Prog/pj_get.v gp_loop / pj_get_holds; A's code is the
    plain code plus five inline shadow checks (obj at 0x83768 (4-byte, slow check 0x83840), obj + 40 at 0x83788, obj + 32
    at 0x837a4, keys[i] at 0x837c0, obj + 24 at 0x8382c), each walked by the kit's token run (FSW_K fsw_aj_run_tokU,
    fs_Bx / fs_Bspan) with one shadow entry per object, so every __asan_report_* arm is untaken; and the strcmp call

@@ -1,6 +1,6 @@
 (* Theorem Labs, 2026-10-30: omx-clap-core/fuzz_preset, image B' (asan-ubsan, #102 pin B' d663f82d7f48, unstripped twin
    c90d4fa54d43): pj_free's B' result AT THE INTERFACE INSTANCE, for the B' halts top, whose slot field
-   PresetCfnB.pcc_pj_free states the kit's tpj_free_specX at ARx := PresetCfnB.iface_ARx (lib/AU/PresetCfnB.v:965:
+   PresetCfnB.pcc_pj_free states the kit's tpj_free_specX at ARx := PresetCfnB.iface_ARx (lib/AU/PresetCfnB.v:966:
    ARcf at CfParams_preset /\ xs_placed_cf, over the listing's segments).
    tpj_free_specX_B_preset_iface: the kit's tpj_free_specX (lib/A/PRH_FnPj.v) at CfParams_preset, prh_img_B,
    B_prog_listing, PI_prog_B, YD2l.TfibB and ARx := iface_ARx, for every CTX0 and depth n; the callee premises are

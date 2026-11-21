@@ -19,7 +19,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* The stages of LLVMFuzzerTestOneInput on the #102 ubsan pin (fuzz_preset.c:800-836; twin 27566683952ebd54...,
-   FUNC 0x13718): the CF twins of lib/Prog/EntStg.v (cold/h-rw-pre-4-rw102-ent f3c1596d9c63), each pc + 0xf0.
+   FUNC 0x13718): the CF twins of lib/Prog/EntStg.v, each pc + 0xf0.
    Each stage is a callee entry with the entry's return address in ra; it states the entry's frame (ent_inv), the
    registers the code reads after the call, and out_of_memory() = 0 (ent_flags) where a later step reads it.
    Frame: S = spZ regs0; sp = S - 112; the doc at S - 112; ra, s0-s5 saved at S - 8 .. S - 56. The registers the

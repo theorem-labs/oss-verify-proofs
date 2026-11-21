@@ -6,7 +6,7 @@
    (iface_room_pos_set_fs / iface_room_pos_stack_free). The parse_value proof walk (lib/A/VrdTop.v) cites them at the frame take
    and release; the names are stable.
    WHY THEY HOLD: iface_room_pos (lib/Spec/PresetRoomPos.v) reads blocks, st_chunks, the two quarantine caches and the
-   batch list - never st_fs. set_fs changes st_fs alone (YG01.v:1842 stack_free_state is a set_fs too), so both are
+   batch list - never st_fs. set_fs changes st_fs alone (YG01.v:1843 stack_free_state is a set_fs too), so both are
    true BY CONVERSION, the same argument as the allocator-model owner's room_live_set_fs / room_live_stack_free. A fake-frame take
    (__asan_stack_malloc, astack_malloc_realizes_cf's post at S' = set_fs f S) and its release therefore keep the run
    position. The one kit text that needs them is ex_value (lib/A/PRH_FnEx.v), whose body takes a class-1 fake frame.
@@ -350,7 +350,7 @@ subst S'. destruct (st_internal_inited S).
 Qed.
 
 (* one malloc_cf, at the cf level: the blocks, qtight, the FIFO suffix. The trace premise is the ADMISSION at S
-   (the B' walker's restatement, commit 4564dd337bcd, taken here as the one home, owner
+   (the B' walker's restatement, taken here as the one home, owner
    ruling 2026-10-30 04:07Z); a fixed-trace caller passes admits_fix U tr S HU (In tr U), as this lemma did inside. *)
 Lemma rp_alloc_parts : forall U S r tr trc p S' hist,
   universe_ok U -> Wf_cf U S -> ROOM_cf S -> 0 <= r < cf_malloc_max -> blocks_bytes S + r <= LIVE_MAX -> admits U tr S ->
@@ -373,7 +373,7 @@ Qed.
 
 (* one free_cf of a live (p, r), at the cf level, against any model list A that holds r.
    TWO CASES (free_cf's size test, Quarantine::Put: a chunk above kQuarantineMax is recycled at once; the ASan owner's
-   change, commit 6e4492231127): rp_free_parts is the SMALL case (req_size r <= kQuarantineMax), its
+   change): rp_free_parts is the SMALL case (req_size r <= kQuarantineMax), its
    body today's; rp_free_parts_big below is the BIG case (the chunk is not quarantined: freed_cf S p = [], no history
    entry, mf unchanged). *)
 Lemma rp_free_parts : forall U S p r tr trc S' (A d : list Z) H0 mf hist,
@@ -562,7 +562,7 @@ exact (PresetReqAt.rm1_in m A Hm).
 Qed.
 
 (* THE ADMISSION AT THE CALL STATE S, not the fixed-trace `In tr (as_universe B)` (the B' walker's restatement,
-   TxPutRoomPos102.v c05c5ea74cc0 at commit 4564dd337bcd, taken as the one home on the
+   TxPutRoomPos102.v c05c5ea74cc0, taken as the one home on the
    unit owner's ruling 2026-10-30 04:07Z; the second half of the free lemmas' move to `admits .. S`). The
    state-free prhtx_trace gives tx_put's realloc trace in the engine's form `inU (as_universe B) ..`, which the fixed
    list does not hold. The admission is carried S -> S1 -> S2 by YG01.admits_keep over the depot steps of the free

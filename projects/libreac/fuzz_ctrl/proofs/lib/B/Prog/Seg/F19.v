@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths and module names changed; 554 of its 593 lines of code are new or changed and 357 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F7.v, with its addresses and numbers changed; 268 of its 371 lines of code are new or changed and 490 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F19 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): the range 0x8264c-0x82664.
    bnez a0,82fa4 (not taken: the F18 bcmp returned 0); addi a1,s2,6; li a0,7; bltu a1,a0,82fa0 (T43, not taken:
    a1 = Phi + 6 does not wrap and Phi <> 0, so Phi + 6 >= 7); li a2,6; ld a0,96(s1); jal wrapper_bcmp@0x82664; the
@@ -16,7 +17,7 @@
    only its stack scratch). The helpers of the call are lib/B/Prog/Seg/F18.v's, whose segment calls the same wrapper:
    the Lib-evt -> SR bridge sl_run_lib, FRA / ENT across the call (bcmp_fra), the runtime cells the wrapper reads
    (bcmp_cells), rec_inv / LK / FM / FTURN / IFS across the scratch write, and the normalized-memory moves that give
-   the wrapper's mem_inv premise from FRA's ro_agree (MemNorm.evt_normalize). Adopt 6 (bc14aa7165): both cuts
+   the wrapper's mem_inv premise from FRA's ro_agree (MemNorm.evt_normalize). Adopt 6: both cuts
    carry FTURN and IFS (S j); Phi's live block lies below stklo (a_laws_blocks), the frame records and `first` in the
    frame, so both miss the scratch. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/C_reac_ctrl_classify_box_frameLib.v, with its module paths and module names changed; 2442 of its 2524 lines of code are new or changed and 907 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/reac_box_catalogue_match_on.v -- route (C) (a Theorem Labs lane 09:20Z; frozen form, a Theorem Labs lane 09:38Z; 09:58Z ruling;
    layout approved by a Theorem Labs lane 10:49Z): reac_box_catalogue_match's run, image A, with the four callee contracts in
    their `_on` form and the universal `shadow_rw m` premise narrowed to
@@ -8,7 +9,7 @@
    reac_box_catalogue_match_c.v 578488127b5). rule 24: no function proved here that is not
    already proved: this is reac_box_catalogue_match.v's run (blob 6770846641b), same scripts.
 
-   reac_box_catalogue_match.v's code is unchanged since release c5e779efe8c (comments edited); it keeps every code line of the source blob above and adds 11. Its Section Match takes the old callee contracts, and
+   reac_box_catalogue_match.v's code is unchanged since release (comments edited); it keeps every code line of the source blob above and adds 11. Its Section Match takes the old callee contracts, and
    `<callee>_contract -> <callee>_contract_on` does not hold, so no old statement follows from this file.
 
    Layout: the 83 Section Match declarations whose generalized form has neither SR nor a callee contract nor the old
@@ -45,7 +46,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require reac_box_catalogue_ma
 Import ListNotations.
 Open Scope Z_scope.
 
-(* MemMono.v's store-footprint hook, Local here (a Theorem Labs lane made MemMono's `::=` Local at 8bac67328ab; a Theorem Labs lane
+(* MemMono.v's store-footprint hook, Local here (a Theorem Labs lane made MemMono's `::=` Local; a Theorem Labs lane
    sanctioned this copy of MemMono.v:207-217's body): the store_done steps of the re-proved scripts carry munch /
    wmono / rd_mono / stk across each store by it, as reac_box_catalogue_match.v's scripts do. *)
 Local Ltac footprint_after_store segs m a bs ::=
@@ -237,7 +238,7 @@ Definition cm_Wc_rd_shadow_R (sp2 K : Z) (c : nat) (a : Z) : Prop :=
   shadow_addr (fs_frame FS c 0) <= a < shadow_addr (fs_frame FS c (fs_M c)) \/
   shadow_addr (sp2 - K) <= a < shadow_addr sp2.
 
-(* cm_Wc_rd (reac_box_catalogue_match.v:1711) with its shadow premise narrowed to the two regions it reads. *)
+(* cm_Wc_rd (reac_box_catalogue_match.v:1712) with its shadow premise narrowed to the two regions it reads. *)
 Lemma cm_Wc_rd_on : forall fr sp2 K d n c mc mc', (c <= 2)%nat -> munch (cmWc fr sp2 K d n c) mc mc' ->
   (forall y, fr + d <= y < fr + d + n -> exists b, mrd rsegs mc' (wa y) = Some b) ->
   stk rsegs mc' (sp2 - K) sp2 -> stk rsegs mc' FS (FS + FS_SIZE) ->
@@ -307,7 +308,7 @@ Proof.
     Z.div_mod_to_equations. lia.
 Qed.
 
-(* The bcmp wrapper at 0x846dc (reac_box_catalogue_match.v:2520: L = f + 18, R = fr + 112, N = 32): its R is in R. *)
+(* The bcmp wrapper at 0x846dc (reac_box_catalogue_match.v:2521: L = f + 18, R = fr + 112, N = 32): its R is in R. *)
 Lemma cm_R_bcmp : forall fr sp2 jj nn, cmFK fr sp2 jj nn -> 50 <= len ->
   forall a, bcmp_wrap_shadow_R (f + 18) (fr + 112) 32 a -> cmR a.
 Proof.
@@ -317,11 +318,11 @@ Proof.
   - exact (cm_buf_sh_R fr sp2 jj nn 112 32 FK ltac:(lia) ltac:(lia) ltac:(lia) a Ha).
 Qed.
 
-(* __asan_stack_malloc_2 at 0x84504 (reac_box_catalogue_match.v:972): its R (class 2) is in R. *)
+(* __asan_stack_malloc_2 at 0x84504 (reac_box_catalogue_match.v:973): its R (class 2) is in R. *)
 Lemma cm_R_sm2 : forall a, asan_stack_malloc_shadow_R FS 2 a -> cmR a.
 Proof. intros a Ha. unfold reac_box_catalogue_match_shadow_R. right; left. exists 2%nat. split; [lia | exact Ha]. Qed.
 
-(* reac_ctrl_parse at 0x84684 (reac_box_catalogue_match.v:2017: f, n = len, o = fr + 32, S = sp2, FS): its R
+(* reac_ctrl_parse at 0x84684 (reac_box_catalogue_match.v:2018: f, n = len, o = fr + 32, S = sp2, FS): its R
    (a Theorem Labs lane's, class 1) is in R. *)
 Lemma cm_R_parse : forall fr sp2 jj nn, cmFK fr sp2 jj nn -> 50 <= len ->
   forall a, reac_ctrl_parse_shadow_R f len (fr + 32) sp2 FS a -> cmR a.
@@ -337,7 +338,7 @@ Proof.
   - unfold reac_box_catalogue_match_shadow_R. right; right. split; [exact L | right; right; exact Ha].
 Qed.
 
-(* reac_box_model_block at 0x846c8 (reac_box_catalogue_match.v:2344: p = CM_T + 296 i, b = 0, o = fr + 112, S = sp2,
+(* reac_box_model_block at 0x846c8 (reac_box_catalogue_match.v:2345: p = CM_T + 296 i, b = 0, o = fr + 112, S = sp2,
    FS): at b = 0 the name / JOIN disjuncts are false; its window words, its class-0 block, the row's words and the
    buffer's words are in R. *)
 Lemma cm_R_mb : forall fr sp2 jj nn (i : nat) row nb, cmFK fr sp2 jj nn -> 50 <= len -> (i < 11)%nat ->

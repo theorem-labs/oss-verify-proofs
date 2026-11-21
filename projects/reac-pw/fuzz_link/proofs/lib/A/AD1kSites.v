@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: proof half of cgif c8557374ad2e lib/A/AD1k.v:272-346 (tfib_fwrite_site, msg_refused_eq, tfib_refused_site); the data half is a Theorem Labs lane's generated A/AD1k.v. Ported for libreac/fuzz_pcap's ASan build: module paths changed, TfibSyms -> PcapSyms; F_STDERR 0xab0f8 -> 0xa5fa0 (__stderr_FILE+0, the unstripped twin's symtab, st_size 232 = FILE_SZ) at AD1k.v:279 / :320; the stderr FILE image range 664880 665712 -> 679768 680608 at AD1k.v:292 / :326 (A/AD2j.v R_A3, the range of A/AD1k.v img_facts' third conjunct: [__stderr_FILE-72, .data end) in both images; pcap: oft_arg0+0 to __start_asan_globals+0). The data half's Section d closes before this file, so its lemmas take the Section variables explicitly: icpt_pre_facts B (AD1k.v:275 / :316), icpt_pre_room B (AD1k.v:282 / :323), rodata_shadow_facts B HB LAWS (AD1k.v:300-301), rodata_hull_zero B HB LAWS (AD1k.v:334). The stack bounds FWI_STK 6224 (A/AE2x.v), FPI_STK 9216 (A/AE2v.v), DIAG_STK 16384 (A/AD1x.v), the message length 38 (Reusable/YO05.v msg_refused, V_refused 67108864) and the canary's start-up atom SOff 41 0 (A/AD1k.v img_facts) equal the donor's. rule 24: no function proved anew. *)
+(* Modified by Theorem Labs, 2026-10: proof half of cgif lib/A/AD1k.v:272-346 (tfib_fwrite_site, msg_refused_eq, tfib_refused_site); the data half is a Theorem Labs lane's generated A/AD1k.v. Ported for libreac/fuzz_pcap's ASan build: module paths changed, TfibSyms -> PcapSyms; F_STDERR 0xab0f8 -> 0xa5fa0 (__stderr_FILE+0, the unstripped twin's symtab, st_size 232 = FILE_SZ) at AD1k.v:279 / :320; the stderr FILE image range 664880 665712 -> 679768 680608 at AD1k.v:292 / :326 (A/AD2j.v R_A3, the range of A/AD1k.v img_facts' third conjunct: [__stderr_FILE-72, .data end) in both images; pcap: oft_arg0+0 to __start_asan_globals+0). The data half's Section d closes before this file, so its lemmas take the Section variables explicitly: icpt_pre_facts B (AD1k.v:275 / :316), icpt_pre_room B (AD1k.v:282 / :323), rodata_shadow_facts B HB LAWS (AD1k.v:300-301), rodata_hull_zero B HB LAWS (AD1k.v:334). The stack bounds FWI_STK 6224 (A/AE2x.v), FPI_STK 9216 (A/AE2v.v), DIAG_STK 16384 (A/AD1x.v), the message length 38 (Reusable/YO05.v msg_refused, V_refused 67108864) and the canary's start-up atom SOff 41 0 (A/AD1k.v img_facts) equal the donor's. rule 24: no function proved anew. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stderr channel's fdchan, with the launch's channel-reader flag, passed whole as A/AD1k.v does); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -56,7 +57,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts B HB LAWS ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts B HB LAWS ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -89,7 +90,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero B HB LAWS ly S W mem md); [exact HAR | unfold FMT_refused; lia | unfold FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').

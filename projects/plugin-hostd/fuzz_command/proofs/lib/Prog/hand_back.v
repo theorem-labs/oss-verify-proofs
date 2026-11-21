@@ -557,8 +557,8 @@ Proof using SEGS FREE_PC ERRNO_LOW GOTG REC_IMG REC_FREE AX CTX BSP FREE FREE0 X
     - exact Hmat. }
   assert (AUX1 : st_init_done A = false -> auxv_pre B (ly_sec L) (bv_unsigned sp - 32) m1).
   { intros HI. pose proof (HAUX HI) as HAX.
-    destruct HAX as (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
-    exists av, ar.
+    destruct HAX as (rs & av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
+    exists rs, av, ar. pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
     split.
     { eapply word_mem_munch; [exact MU1 | | exact W1]. intros k Hk.
       assert (SO : owned B L A (ms_libc B + 8 + Z.of_nat k)) by (right; unfold static_owned; lia).

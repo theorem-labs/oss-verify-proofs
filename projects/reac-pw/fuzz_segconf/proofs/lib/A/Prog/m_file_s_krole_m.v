@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 176 of its 201 lines of code are new or changed and 493 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A, 0x85ebc), segment S_MF_KROLE (KDISP 0x86684 -> KMODEL 0x867b8 or KDONE
    0x86cd0; the G2 walk owner's guide/MF-CUTS-A.md section 4, 130 instructions): the inner points of the segment and the
    model facts its pieces use. Statement text and Gallina proofs; no instruction is executed here. The KROLE segment lane
@@ -43,7 +44,7 @@
    words loop's step over SegModel.word_go, mk_disp's role branch, the sizes a line keeps (so the stores into g lie
    in M_FILE_FP's seg range; the shared lib/A/Prog/m_file_mdl.v gives mf_grows and the m_lines growth). The mconf
    block after the hit's three stores is lib/A/Prog/m_file_s_krole_enc.v. Copied with their sources: lower_bin,
-   h_fold_length, h_fold_nth (the plain / image-B owner's lib/Prog/mfp_facts.v:212-231 at dec616e11c2f), renamed kr_* so that no
+   h_fold_length, h_fold_nth (the plain / image-B owner's lib/Prog/mfp_facts.v:212-231), renamed kr_* so that no
    name meets another lane's copy. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.

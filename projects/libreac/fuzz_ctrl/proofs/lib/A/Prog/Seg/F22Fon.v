@@ -5,23 +5,24 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its numbers changed; 495 of its 533 lines of code are new or changed and 358 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F22.v, with its module paths and module names changed; 29 of its 89 lines of code are new or changed and 473 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/F22Fon.v -- route (C) twin of Seg/F22F.v's f22_tail_F, WITHOUT the universal `shadow_rw m`
    premise.  ADDITIVE beside-file (a Theorem Labs lane 12:52Z twin rule): Seg/F22F.v stays unchanged apart from comment text.
    Writer: a Theorem Labs lane for a Theorem Labs lane.  proves no function (kind: segment lemma).
 
-   BASE: a Theorem Labs lane's fold blob of Seg/F22F.v, a working branch 4bae33fdf54, blob 677b7bc7239;
-   a working branch 1899bed1aee carries the SAME blob (an earlier version, blob 677b7bc7239, not in this delivery) (diffed: empty), so the base is both.
+   BASE: a Theorem Labs lane's fold blob of Seg/F22F.v, a working branch, blob 677b7bc7239;
+   a working branch carries the SAME blob (an earlier version, blob 677b7bc7239, not in this delivery) (diffed: empty), so the base is both.
 
    MEASURED (why the premise is removed, not narrowed): in F22F.v's f22_tail_F the premise `shadow_rw m` (named HSW)
    is never read and never stored through; its only use is `exact HSW` at the record verifier's contract
-   (F22F.v:209).  The tail 0x8258c -> 0x825a0 loads no shadow byte itself and stores none.  The other run the stage
+   (F22F.v:210).  The tail 0x8258c -> 0x825a0 loads no shadow byte itself and stores none.  The other run the stage
    lifts, f22_loop_F (0x82554 -> 0x8258c), has no shadow_rw premise (its six shadow loads come from its byte premise
    on the six shadow bytes), so it needs no twin and is cited from F22F.v as it is.
 
    CALLEE FORM: reac_ctrl_headamp_record_verify_contract_F_on (premise DROPPED; LANDED.md (a working note, not in this delivery), a Theorem Labs lane
-   a working branch 9509908083d, statement blob reac_ctrl_headamp_record_verify_c.v 86718f5a3d6), discharged
-   by reac_ctrl_headamp_record_verify_holds_F_on (LANDED.md (a working note, not in this delivery), a Theorem Labs lane 36bfd511da3, in a working branch
-   330e60af39d, blob reac_ctrl_headamp_record_verify_F.v 67d0e3dc3d4).
+   a working branch, statement blob reac_ctrl_headamp_record_verify_c.v 86718f5a3d6), discharged
+   by reac_ctrl_headamp_record_verify_holds_F_on (LANDED.md (a working note, not in this delivery), a Theorem Labs lane, in a working branch,
+   blob reac_ctrl_headamp_record_verify_F.v 67d0e3dc3d4).
 
    THE TWIN: f22_tail_F_on <- f22_tail_F (same statement minus the one premise; the proof is F22F.v's text minus the
    hand-on), in a Section with F22F.v's own Context.  No pin back to the old lemma.  No unproved step, no Axiom. *)

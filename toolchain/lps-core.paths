@@ -1,14 +1,17 @@
 # The files of theorem-labs/rocq-linux-process-semantics that toolchain/checker.Dockerfile builds the model from: the
-# opam package rocq-linux-process-semantics-core, which is the theory LinuxProcessSemantics and the two tools it
-# installs. The repository's other packages (its Common library and Examples), its tests, CI and README are left out,
-# so that a change to them leaves the checker image as it is. One git pathspec per line, for
+# opam package rocq-linux-process-semantics-core, which is the theory LinuxProcessSemantics, the proof library
+# LinuxProcessSemantics.Common (theories/Common) that the same package installs, and the two tools it installs. The
+# cut leaves out every other file, so that a change to one of them leaves the checker image as it is. They include the
+# repository's two other opam packages, rocq-linux-process-semantics-examples (theories/Examples) and
+# rocq-linux-process-semantics (which installs the other two), its tests, its CI and its other tools. The cut holds
+# one README, theories/Common/README.md: a change to it changes the cut's hash, LPS_TREE_SHA256.
+# One git pathspec per line, for
 #   grep -v -e '^#' -e '^$' toolchain/lps-core.paths | xargs -d '\n' git -C <checkout> archive <commit> -- | tar -x -C <dir>
 dune-project
 dune
 rocq-linux-process-semantics-core.opam
 LICENSE
 theories
-:(exclude)theories/Common
 :(exclude)theories/Examples
 tools/elf_snapshot.py
 tools/gen_fd_lemmas.py

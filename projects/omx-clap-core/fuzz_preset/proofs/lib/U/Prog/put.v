@@ -580,8 +580,8 @@ Proof using SEGS.
   split; [intros a Ha; apply WM; apply HWs; lia|].
   split; [rewrite G4; exact Htp|].
   split; [intros a Ha; apply WM; apply HWe; exact Ha|].
-  intros Hi. destruct (Haux Hi) as (av & ar & W1 & W2 & W3 & W4 & R1 & R2 & R3 & R4 & R5 & R6).
-  exists av, ar.
+  intros Hi. destruct (Haux Hi) as (rs & av & ar & W1 & W2 & W3 & W4 & R1 & R2 & R3 & R4 & R5 & R6). pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
+  exists rs, av, ar. unfold AUXV_RAND_K.
   assert (HL0 : forall k, 0 <= k < 8 -> owned B L A (ms_libc B + 8 + k)).
   { intros k Hk. right. unfold static_owned. right. right. left. lia. }
   pose proof (owned_low B API _ _ _ _ _ HM (HL0 0 ltac:(lia))) as RL0.

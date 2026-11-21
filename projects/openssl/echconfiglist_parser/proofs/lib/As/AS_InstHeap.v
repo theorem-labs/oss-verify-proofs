@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (agap_room also gives room for the launch's vDSO/vvar pair, which AGAP_of_akernel now counts); malloc is proved at the instance AS_InstX.KHX for every kernel-relation conjunct a heap call keeps (inst_malloc_stmt_X), and inst_malloc_stmt is that theorem at the conjunct that always holds. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -15,7 +16,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AsanAllocM
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import ASegs AsShadow AsConst AsIface AsDriverLaws AsSR AsChain AsUnwind FakeStackRep
      AllocWf AllocKit AllocBudget AllocRep AllocRepFacts AllocRepX SecLazy SecGap AsDepotInv AsDepotHash
      AG_WFHit AG_MallocModel AG_Frame AG_WriteSet AW_MallocBase AG_Malloc2 AG_MallocCold AG_MallocLarge3 AG_MallocAll
-     AS_InstDefs AS_InstChain AS_InstLaws2 AsWalk CidBits.
+     AS_InstDefs AS_InstX AS_InstChain AS_InstLaws2 AsWalk CidBits.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -133,11 +134,12 @@ Section Heap.
   Qed.
 
   (* [comment removed for export] *)
+  (* LPS 727298f3: the room also covers the launch's vDSO/vvar pair ([AllocRepX.ARXB], [ARXC]) *)
   Lemma agap_room : forall (K S M hc : Z),
     0 <= K <= 7040 -> 0 <= S <= ASECMAX * K -> 0 < M <= 2 ^ 28 + 12294 -> 0x7fff7f800000 <= hc ->
-    AHI_LO + (AHL0 + S) + (AHC0 + K) * (M + 4096) + M <= hc.
+    AHI_LO + (AHL0 + S) + (AHC0 + K) * (M + 4096) + (ARXB + ARXC * (M + 4096)) + M <= hc.
   Proof.
-    intros K S M hc HK HS HM Hc. unfold AHI_LO, AHL0, AHC0, ASECMAX in *.
+    intros K S M hc HK HS HM Hc. unfold AHI_LO, AHL0, AHC0, ASECMAX, ARXB, ARXC in *.
     assert (P1 : (32 + K) * (M + 4096) <= 7072 * (2 ^ 28 + 12294 + 4096)).
     { apply Z.mul_le_mono_nonneg; lia. }
     assert (P2 : (2 ^ 32 + 2 ^ 14) * K <= (2 ^ 32 + 2 ^ 14) * 7040) by (apply Z.mul_le_mono_nonneg_l; lia).
@@ -317,11 +319,16 @@ Section Heap.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  Theorem inst_malloc_stmt : malloc_stmt (KHp p).
+  (* malloc at [KHX p X] for every [X] a heap call keeps; [inst_malloc_stmt] below is the case of
+     an [X] that always holds *)
+  Theorem inst_malloc_stmt_X : forall (Iv : config -> Prop) (Xk : ist -> config -> Prop),
+    ikeep Iv -> (forall x c, Xk x c -> Iv c) -> XKEEP Iv Xk -> malloc_stmt (KHX p Xk).
   Proof.
-    unfold malloc_stmt, malloc_stmt_at. cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cm as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St KHp].
+    intros Iv Xk IKP XI XK.
+    unfold malloc_stmt, malloc_stmt_at. cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cm as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St KHX KHp].
     intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc msF m x LB n lo B errv mo CH.
     intros VIS HP K AOK CM AUX SPB ST CEIL LO ERR MI TP SP16 AC HCH TR A0 SZ.
+    destruct K as [K XPRE].
     destruct x as [s d]. cbn [i_s i_d] in *.
     unfold AsSR.VIS in VIS. unfold AsSR.AKREL in K. cbn [i_s cfg_model] in VIS, K. destruct K as [OK IKx]. destruct IKx as (AMX & DCOV & DTV).
     unfold Ialloc_ok, ILIVE_MAX, ILIVE_CNT_MAX, ADRV_CNT in AOK. destruct AOK as [AOK1 AOK2]. unfold Irauxv_ok in AUX. unfold AMALLOC_STACK in LO.
@@ -331,6 +338,8 @@ Section Heap.
     pose proof (nalloc_le_blocks s (lbp LB) m HR) as NAL. unfold lbp in NAL. rewrite zlen_map in NAL. unfold zlen in NAL.
     (* [comment removed for export] *)
     unfold AsSR.SR.
+    (* the invariant [Iv] holds where the reach ends *)
+    apply (sr_keep_imp Iv _ _ IKP (XI _ _ XPRE)).
     eapply (evt_sreach_lazy_at asegs (a_L s) (a_S s) (a_Zr s) _ msF _ mo _ OK VIS); [apply malloc_stub_evt; exact MI|].
     cbv beta. intros msF1 mo1 OK1 SBM1 _ E1.
     pose proof (AMODELX_mat s mo mo1 AMX SBM1) as AMX1. pose proof (depot_cov_mat d mo mo1 DCOV SBM1) as DCOV1.
@@ -436,13 +445,18 @@ Section Heap.
       pose proof PL' as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SEC' & _).
       pose proof (SEC' sc Hsc) as (_ & _ & _ & SZ2 & _). unfold kPageSize in SZ2.
       apply (proj2 (AVX' (wz x0) CV) sc Hsc NIs). unfold wz. rewrite unsigned_lit by exact RA. lia. }
-    apply sreach_done. unfold AsIface.malloc_post.
+    apply sreach_done. intros IPOST. unfold AsIface.malloc_post.
     exists t0', t1', t2', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6', m', errv, U, junk, U, (IST s' d').
-    cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cm as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St as_FSB KHp i_s i_d].
+    cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cm as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St as_FSB KHX KHp i_s i_d].
     split; [unfold AsSR.VIS; cbn [i_s]; exact VIS'|].
-    split. { unfold AsSR.AKREL. cbn [i_s i_d cfg_model cfg_ms]. split; [exact OK'|]. split; [exact AMX'|]. split; [exact DCOV'|].
-             intros x Hx. destruct (proj1 (AVX' x (DTV1 x Hx))) as [C|(sc & INs & _ & Rx)]; [exact C| exfalso].
-             pose proof (DSEC sc INs) as DS. clear - DS Rx Hx. unfold disj, kPageSize in *. lia. }
+    split. { split.
+             { unfold AsSR.AKREL. cbn [i_s i_d cfg_model cfg_ms]. split; [exact OK'|]. split; [exact AMX'|]. split; [exact DCOV'|].
+               intros x Hx. destruct (proj1 (AVX' x (DTV1 x Hx))) as [C|(sc & INs & _ & Rx)]; [exact C| exfalso].
+               pose proof (DSEC sc INs) as DS. clear - DS Rx Hx. unfold disj, kPageSize in *. lia. }
+             (* [Xk] of the new state, from [Xk] of the caller's and the write set *)
+             { exact (XK s s' d d' msF mo msF' mo' m m' lo (bv_unsigned sp) XPRE IPOST AMX AWV PL DPL
+                         ltac:(rewrite VIS; reflexivity) AMX' AWV' PL' ltac:(rewrite VIS'; reflexivity)
+                         (awkeep_of_compl s s' d lo (bv_unsigned sp) m m' CP') CEIL). } }
     split; [exact (nonvm_same_trans _ _ _ (nonvm_same_mat mo mo1 SBM1) NV')|].
     split; [exact MI'|]. split; [exact ST'|].
     split. { rewrite TP. unfold wz. rewrite unsigned_lit by (unfold AsIface.ATP; lia). rewrite TP in ERR. rewrite unsigned_lit in ERR by (unfold AsIface.ATP; lia).
@@ -480,5 +494,11 @@ Section Heap.
     - unfold malloc_cost in AL. rewrite (proj2 (mprimary_iff n ltac:(lia)) LE) in AL. lia.
     - unfold malloc_cost in AL. destruct (mprimary n) eqn:PR; [pose proof (proj1 (mprimary_iff n ltac:(lia)) PR); lia|].
       pose proof (lg_cost_le_4n n GT). lia.
+  Qed.
+
+  Theorem inst_malloc_stmt : malloc_stmt (KHp p).
+  Proof.
+    exact (malloc_of_X p (fun _ _ => True) (fun _ _ => I)
+             (inst_malloc_stmt_X (fun _ => True) (fun _ _ => True) ikeep_true (fun _ _ _ => I) xkeep_true)).
   Qed.
 End Heap.

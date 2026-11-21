@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: BPKN, imported from MainEntryBoth). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import MState Mem Cells ITree Nodes Decode.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Spec Require Import STree AsanCtrl AsanHandoffBoth.
-From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import AsanPlan MainExport MainFactsBoth.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import AsanPlan MainExport MainFactsBoth MainEntryBoth.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.BothW Require Import BImg ABase AMalloc_iface ARepInit_kit.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Common Require Import RunDraw.
 Import ListNotations. Import AP.
@@ -67,7 +68,7 @@ Local Ltac pv PF k lo hi :=
 let H := fresh in pose proof (pfact_find _ (PVar k lo hi) PF ltac:(vm_compute; reflexivity)) as H; cbn [pfact_ok] in H.
 Section CANSEC2. Context {rc : runConstT}.
 #[using="Type"] Theorem aresv_ok_handoff : forall V (w : bool) (U : list (list Z)),
-Forall (pfact_ok V) both_pure_facts ->
+Forall (pfact_ok V) BPKN ->
 aresv_ok (mkALayout (LV V) w U) (resv_of V).
 Proof.
 intros V w U PF.

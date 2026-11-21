@@ -1,8 +1,8 @@
 (* lib/A/Prog/C_reac_ctrl_parseP.v -- fuzz_ctrl image A (asan, libreac v1.9.0): the cgif-form glue theorem
-   pb_reac_ctrl_parse : treac_ctrl_parse_spec (lib/A/Prog/C_reac_ctrl_parse.v blob 7e1714c64e5 (the blob this tree had at release c5e779efe8c), FROZEN), route (C).
+   pb_reac_ctrl_parse : treac_ctrl_parse_spec (lib/A/Prog/C_reac_ctrl_parse.v blob 7e1714c64e5 (the blob this tree had at release), FROZEN), route (C).
    rule 24: no function proved.  This lane writes the glue of ctrl's OWN proved v1.9 image-A run of reac_ctrl_parse
    (0x83578): it lifts the run's footprint stretches into the core's world and applies the core's rules at the two
-   world events.  The walk, step by step (B's lib/B/Prog/C_reac_ctrl_parsePf.v @ 258208c7d59 is the template):
+   world events.  The walk, step by step (B's lib/B/Prog/C_reac_ctrl_parsePf.v is the template):
    1. the entry to the first slot of __asan_stack_malloc_1: reac_ctrl_parseF_pre.PreFOn.pre_call_F, lifted
       (C_reac_ctrl_parsePP.rcpPP_to_E1);
    2. the call `jal __asan_stack_malloc_1` (0x835e8): the core's astack_malloc_realizes at class 1, through
@@ -20,8 +20,8 @@
    shadow_rw_of_AR / VIS0 / OWNED_RO.
    Section hypotheses: errno_low, ML, SMP, ASM1 (the core's open premises, carried by every ctrl glue) and TS (image A's
    symbol table).  The callees of the post stretch are cited as proved: asan_memsetF_on.asan_memset_holds_F_on with
-   memset.memset_holds, asan_memcpyF_on.asan_memcpy_holds_F_on (a Theorem Labs lane's root-free set, 68c959385a88),
-   bcmp_wrap_on.bcmp_wrap_holds_F_on (a Theorem Labs lane, f4423e558860).
+   memset.memset_holds, asan_memcpyF_on.asan_memcpy_holds_F_on (a Theorem Labs lane's root-free set),
+   bcmp_wrap_on.bcmp_wrap_holds_F_on (a Theorem Labs lane).
    Twin rule: every project module is Required without Import and named through a full-path Module alias. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -202,7 +202,7 @@ Hypothesis errno_low : RCbq.api_env rsegs B.
 Hypothesis ML : RG0d.model_laws (RG0f.as_universe B).
 Hypothesis SMP : RCbq.stack_malloc_progressP B.
 Hypothesis ASM1 : RG0d.astack_malloc_realizes rsegs B 1.
-(* image A's symbol table (AF0m.v:2986). *)
+(* image A's symbol table (AF0m.v:2987). *)
 Hypothesis TS : AF.CtrlTSyms B.
 (* AR_laws of the bundle: the core's own proof (no premise). *)
 Local Notation LAWS := (RG0q.AR_laws_ok rsegs B).

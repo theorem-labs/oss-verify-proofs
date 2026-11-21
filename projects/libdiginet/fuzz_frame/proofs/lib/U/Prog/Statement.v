@@ -1,5 +1,5 @@
 (* fuzz_frame's UBSan halting statement from the slot contract of LLVMFuzzerTestOneInput, in the form of
-   libreac/fuzz_decode's lib/U/Prog/Statement.v (bf7779f81ed7), which concludes from U/FrameAPI.v frame_ubsan.
+   libreac/fuzz_decode's lib/U/Prog/Statement.v, which concludes from U/FrameAPI.v frame_ubsan.
    Written by Theorem Labs.
 
    llvm_frame binds the allocator and sink words of fuzz_frame.ubsan as U/FrameAPI.v frame_ubsan does; each is a

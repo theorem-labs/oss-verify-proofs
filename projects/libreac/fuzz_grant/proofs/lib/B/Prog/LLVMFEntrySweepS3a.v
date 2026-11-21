@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySweepS3b), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8v.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySweepS3b.v, with its module paths changed; 571 of its 687 lines of code are new or changed and 1078 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment 3, part a, of the sweep phase of fuzz_grant's entry function on IMAGE B:
    0x81618 .. 0x8173c (fuzz_grant.c:325-327) — the first group-A loop: for p = 0, 1, 2
    the harness calls want_of(was_set, set_to, a.base, p) (0x8163c) for the value it
@@ -14,7 +15,7 @@
    below the allocator's ceiling. The ground this walk stands on is
    LLVMFEntrySweepS1c.v and LLVMFEntrySweepS3c.v; the two calls are LLVMFEntrySweepS3d.v.
 
-   Adapted from lib/A/Prog/GrantEntrySweepS3a.v (a working branch afd75724b5b, blob bc91463cd, 1011 lines),
+   Adapted from lib/A/Prog/GrantEntrySweepS3a.v (a working branch, blob bc91463cd, 1011 lines),
    which carries no licence header of its own.
    Image B calls want_of where image A reads was_set and set_to in line and calls reac_headamp_default, reloads `a`, the two frame arrays and the table from spill slots 120, 136, 128 and 152, keeps the row, its offset and the bound in s9, s2 and s4, and guards each turn with a UBSan check against slot 88. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.

@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AF0x.v, with its module paths and module names changed; 571 of its 675 lines of code are new or changed and 468 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_rd_pre_k.v, with its module paths and module names changed; 56 of its 124 lines of code are new or changed and 607 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExDecl, IMAGE B: what a caller keeps across a program call (FMW_ex_decl_d5.v, the call of plain): C strings
-   with their homes, and the read-only view. B twin of lib/A/FMW_ex_decl_d5_kits.v (06d82004dc3), unchanged but for
+   with their homes, and the read-only view. B twin of lib/A/FMW_ex_decl_d5_kits.v, unchanged but for
    the Requires (lib.A AB1v -> lib.ReusableB YB1v; FMPstat, FMH_*, the kit from lib.B); A's file copies G5's kit
    (a Theorem Labs lane's lib/A/FMW_kitS.v:38-137: shadow_hull_vis_sub, word_end_mono, cstr_ok_kept_blk, cstr_ok_suffix,
    cstr_ok_kept, cstr_kept_kept; lib/A/FMW_K.v:397-414: roP_img, arodata_kept) under d5k_ names. *)

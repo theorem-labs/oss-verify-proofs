@@ -1,7 +1,7 @@
 (* Frame helpers of the segments of reac-pw/fuzz_pin LLVMFuzzerTestOneInput (plain): opening and closing cuts,
    straight runs (b8_run_to, b8_run_ex), runs through a Kind A callee on the normalized memory (b8_mid), the free
    call with the frame transported (b8_free_call), and Post from FR (b8_post_FR).
-   Adapted from libreac/fuzz_ctrl's released Prog/Seg/Tac_b8.v (origin/ossv/recipes 25e3d17bdb50): its generic
+   Adapted from libreac/fuzz_ctrl's released Prog/Seg/Tac_b8.v: its generic
    lemmas (ctrl's cut-bundle transports FT / VCm / IFS / CC7 / OURb / M7 and its Tac_b8m model facts are not
    here), with pin's numbers: frame 64 bytes, saved registers [S - 48, S), free at 0x13aa8, errno at
    0x2e7f0 - 164, frame_RELRO's first block (0x1c720, 3416), the sink symbols 0x4ea81 / 0x4eea8 / 0x4eeb0

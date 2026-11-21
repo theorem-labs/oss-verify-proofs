@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's mmap base; the walks' new node premise (RomBase.sys_rob) carried through its induction). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Classical.
@@ -85,7 +86,7 @@ Theorem srealizes_must_exit : forall S c T,
   m_halted (cfg_model c) = None ->
   must_exit_in_at_cfg CFG segs S c.
 Proof.
-  intros S c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros S c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros HK HE Hnone.
   - destruct Hnode as [Hcomp Hsound].
     apply must_exit_in_at_cfg_running.
@@ -146,13 +147,14 @@ Theorem srealizes_halts_scfg_budgets : forall cfg segs pc ph (lim : Z) S,
      valid_entry (mkImage segs pc ph) (mkEntry sp brk0 mbase rnd) inp ->
      valid_input inp ->
      exists T,
-       srealizes segs (init_config segs pc ph sp brk0 mbase rnd lim inp) T
+       srealizes (run_segments segs inp sp mbase)
+         (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) T
        /\ t_nokill T /\ t_exits_in S T) ->
   halts_allowed_T_scfg_budgets cfg lim S (mkImage segs pc ph).
 Proof.
   intros cfg segs pc ph lim S Hle H [sp brk0 mbase rnd] inp Hen Hinp _.
   cbn [must_exit_in_scfg].
   destruct (H sp brk0 mbase rnd inp Hen Hinp) as (T & Hs & HK & HE).
-  exact (srealizes_must_exit_le segs cfg S _ T Hle Hs HK HE (init_config_not_halted _ _ _ _ _ _ _ _ _)).
+  exact (srealizes_must_exit_le _ cfg S _ T Hle Hs HK HE (init_config_not_halted _ _ _ _ _ _ _ _ _)).
 Qed.
 

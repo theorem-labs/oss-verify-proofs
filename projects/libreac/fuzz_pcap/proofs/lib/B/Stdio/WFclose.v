@@ -1,11 +1,12 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane): the ASAN-UBSAN-image walk of musl fclose
    on libreac/fuzz_pcap's fmemopen READ stream, i.e. lib/A/Stdio/PFclose.v's afclose_source_spec_stk
    (unchanged, image-generic) at PFCLOSE_MUSL_STK, proved on the asan-ubsan image.
 
-   PORTED from a Theorem Labs lane's own proved ASan walk, a working branch 58e2132654e
+   PORTED from a Theorem Labs lane's own proved ASan walk, a working branch
    lib/A/Stdio/WFclose.v (afclose_source_spec_musl): the same four symbolic phases, the same
    hand-built phase-2 journal step (awr_byte has no disjunct for the open-file-list head; donor
    shape cgif AE24.v:176-225 + AE28.v:194 frameW), both arms of the FILE+124 (pipe_pid) test, and
@@ -43,10 +44,10 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import
   YG00 YG0a YG01 YG0f YG0n YG0d.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YM05 YI16 YG0q YG0p YCbq YE01 YE00.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Stdio Require Import PSource PSourceMeta PFmopsM PFflush PFclose.
-(* The asan-ubsan stdio pcs, from their one home (a working branch b4439851fa3): musl fclose
+(* The asan-ubsan stdio pcs, from their one home (a working branch): musl fclose
    PFCLOSE_MUSL_U 0x8e0e0, the fflush trampoline PFFLUSH_ICPT_U 0x41618, mclose PMCLOSE_U 0x8eb90. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.B.Stdio Require Import PStdioImgB.
-(* KS_U: a Theorem Labs lane's asan-ubsan pcap_KS (a working branch d6edf2117df; auditor PASSED 18/18). NOT
+(* KS_U: a Theorem Labs lane's asan-ubsan pcap_KS (a working branch; auditor PASSED 18/18). NOT
    lib/A/Stdio/PSourceK.v, which is the ASan record and is not in this file's closure. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.B.Stdio Require Import PSourceK.
 From OSSVerify.libreac.fuzz_pcap.images Require AsanUbsan.
@@ -162,8 +163,8 @@ Definition WF_FREETR : Z := (symaddr Symbols.AsanUbsan.s___wrap_free).   (* __in
 Definition WF_FREE1  : Z := (symaddr (Symbols.AsanUbsan.s_fclose + 0xa4)%Z).   (* fclose+0xa4, the return address of free(getln_buf) *)
 Definition WF_JOIN   : Z := (symaddr (Symbols.AsanUbsan.s_fclose + 0xac)%Z).   (* fclose+0xac, the return address of free(f) *)
 Definition WF_FRAME  : Z := 48.        (* addi sp,sp,-48 at fclose+0 = 0x8e0e0 *)
-(* PStdioImgB's musl fclose entry is KS_U's REAL(fclose) word (a working branch d6edf2117df, an
-   ancestor of a working branch b4439851fa3): the two homes agree. *)
+(* PStdioImgB's musl fclose entry is KS_U's REAL(fclose) word (a working branch, an
+   ancestor of a working branch): the two homes agree. *)
 Lemma WF_named_val : PFCLOSE_MUSL_U = PCAP_REAL_FCLOSE.
 Proof. reflexivity. Qed.
 
@@ -499,9 +500,9 @@ Local Notation SEGS_LOW := wsegs_low.
 Local Notation AJ := (ajournal wsegs B).
 
 (* The token-aware journal composition, ajournal_sub_tok, COPIED VERBATIM (statement and proof; only
-   segs / segs_low specialised to wsegs / wsegs_low) from lib/A/Prog/YC85.v:33 (a working branch
-   02075de74ec; identical text in a working branch 27d40cfe97f's YC85.v and in a working branch's image-free split
-   YC85G.v f5f4434265d). It is NOT Required from YC85.v because YC85.v Requires lib/A/Prog/PcapSyms
+   segs / segs_low specialised to wsegs / wsegs_low) from lib/A/Prog/YC85.v:33 (a working branch;
+   identical text in a working branch's YC85.v and in a working branch's image-free split
+   YC85G.v). It is NOT Required from YC85.v because YC85.v Requires lib/A/Prog/PcapSyms
    and PcapPa (the ASan program listing), which the lib/B closure rule keeps out of this file's
    closure; YC85G.v is not in this file's union. Every name it uses is lib/Reusable's (YCbq, YA0n,
    YG0f, YI04). It composes the fflush call's journal: asource_fp carries YI16.sink_token, so the

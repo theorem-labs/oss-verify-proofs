@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's auxv witness: its layout, entry, ids and hwcap values). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -133,7 +134,7 @@ Lemma P0_env_frame {HGW : HasGuard} {HCEIL : HasCeiling} : forall s LB m m' W B,
   rauxv_ok m' B.
 Proof.
   intros s LB m m' W B HR AUX MU WM FW.
-  pose proof AUX as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & AB & _).
+  pose proof AUX as (av & rnd & xla & xph & xen & xuid & xgid & xhw & xefn & _ & _ & _ & AB & _).
   eapply rauxv_ok_frame; [exact AUX| exact MU| exact WM|].
   eapply Forall_impl; [|exact FW]. intros [lo hi] H. cbn [fst snd al_errno al_client_static P0L] in H. cbn [fst snd].
   idtac. ceil_facts. unfold RAUXV_CELL, RERRNO in *.

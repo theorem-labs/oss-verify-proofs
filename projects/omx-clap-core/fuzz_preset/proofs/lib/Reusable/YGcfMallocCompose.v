@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the trace premise in the P'' form, `admits (as_universe B) tr S` (YG01.v), replacing the In-form. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: batch_room_cf added to rpreD_free_cf and to its realloc old-block free twin (YGcfReallocCompose.v RDF2); nmax_cf_ok's comment updated (c5's walk covers n < SEC_NMAX since 84ee52cd012). *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
-(* Modified by Theorem Labs, 2026-10-30: field round 3 part 3 (MP) from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v applied by 3-way (base commit 5034424e29db, theirs e8a7dd66acf2; preset-side hunks kept), module paths changed. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: batch_room_cf added to rpreD_free_cf and to its realloc old-block free twin (YGcfReallocCompose.v RDF2); nmax_cf_ok's comment updated (c5's walk covers n < SEC_NMAX). *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: field round 3 part 3 (MP) from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v applied by 3-way (base, theirs; preset-side hunks kept), module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's event-free allocator instance (suffix cf): the IMAGE-FREE bridge from a Theorem Labs lane's
    frame-generic Allocate / Deallocate contracts (AllocG.v, DeallocG.v: c5's by-path copies) and an interceptor-walk
    record to the API leaves amalloc_realizes_cf / afree_realizes_cf (YG0dcf.v:159-166 / :188-196).
@@ -12,9 +13,9 @@
    instructions are two segments, the call segment (the wrapper's entry -> Allocate's / Deallocate's entry) and the
    return segment (Allocate's / Deallocate's return -> the wrapper's return), joined by a consumer-chosen invariant K;
    both are fields of a Record (wrap_malloc_walk_cf / wrap_free_walk_cf), discharged per image by its walk.
-   The instance values: U := admits (as_universe B) (the P'' trace premise, YG01.v:158; a Theorem Labs lane 22:05Z); mt := malloc_cf; ft := free_cf;
+   The instance values: U := admits (as_universe B) (the P'' trace premise, YG01.v:159; a Theorem Labs lane 22:05Z); mt := malloc_cf; ft := free_cf;
    lmax := LIVE_MAX; lpost := qtight; oomb := as_oom_byte B; pcA := cf_pc_allocate, pcD := cf_pc_deallocate (CfImg);
-   Allocate: rpre := YGcfRmodel.rpre_cfr B, AOX := aowned \/ xs_cf (YGcfRmodel.v:97), nmax a parameter with the named
+   Allocate: rpre := YGcfRmodel.rpre_cfr B, AOX := aowned \/ xs_cf (YGcfRmodel.v:98), nmax a parameter with the named
    premise nmax_cf_ok (cf_malloc_max <= nmax: amalloc_realizes_cf's range, YG0dcf.v:162);
    Deallocate: rpre := rpre_dealloc_cf's body (YGcfDIface.v), AOX := aowned (free_leaf_cf's exception set has no
    errbuf extent), fpre := the freed base is not hidden (~ In (sptr_addr B ly p) Hp, afree_realizes_cf's premise).
@@ -24,7 +25,7 @@
    The free interceptor initializes the internal allocator before Deallocate's entry, on every free (a Theorem Labs lane, 2026-10-29
    13:08Z: ___interceptor_free calls internal_allocator() before its jal to asan_free), so wf_call reaches
    Deallocate's entry at finit_cf S, the state with the flag set; free_cf p tr S is the same tree as
-   free_cf p tr (finit_cf S) (free_cf_finit: free_cf sets the flag first, YG00cf.v:330), so Deallocate's run from
+   free_cf p tr (finit_cf S) (free_cf_finit: free_cf sets the flag first, YG00cf.v:331), so Deallocate's run from
    finit_cf S realizes the caller's tree and Deallocate's premise holds there (rpreD_free_cf_of_pre).
    The keep facts a Theorem Labs lane's statements do not carry yet (errno kept: alloc_post_e / dealloc_post_raw_e; memnorm kept)
    are in the named premises aalloc_realizes_cf_em / adealloc_realizes_raw_cf_em, whose first conjunct is AllocG's /
@@ -100,7 +101,7 @@ Section M.
 Variables (nmax al atp acf : Z).
 
 (* The named premise on Allocate's size bound: it covers amalloc_realizes_cf's range (YG0dcf.v:162). c5's walk covers
-   n < SEC_NMAX = 2 ^ 30 - 16384 (AGi9.SEC_NMAX, since 84ee52cd012), so a unit discharges this premise by arithmetic. *)
+   n < SEC_NMAX = 2 ^ 30 - 16384 (AGi9.SEC_NMAX), so a unit discharges this premise by arithmetic. *)
 Definition nmax_cf_ok : Prop := cf_malloc_max <= nmax.
 
 Definition mtr_cf (ly : alayout) (regs : bvmap 5 word) (ch : list (Z * Z * Z)) : list Z :=
@@ -113,7 +114,7 @@ acall_pre_cf segs B ly S Hp W regs mem md ch /\
 getr regs 10 = w64 n /\ 0 <= n < cf_malloc_max /\ blocks_bytes S + n <= LIVE_MAX /\
 admits (as_universe B) (mtr_cf ly regs ch) S.
 
-(* Allocate's owned set at the instance (rmodel_ok_cf_wf's, YGcfRmodel.v:97). *)
+(* Allocate's owned set at the instance (rmodel_ok_cf_wf's, YGcfRmodel.v:98). *)
 Definition AOXm_cf (ly : alayout) (S : astate) (a : Z) : Prop := aowned B ly S a \/ Exists (in_zr a) (xs_cf ly S).
 
 (* AllocG's pre / post / leaf at the cf instance, at the ghost set Hp. *)
@@ -281,7 +282,7 @@ End M.
 
 (* ---------------------------------------------------------------------------- *)
 (* The wrapper contract DERIVED from the body contract (Main, 2026-10-30; the shape of
-   fuzz_command's RtDMallocTramp.cmd_amalloc_of_body, commit 8aaeb29ab7b2).
+   fuzz_command's RtDMallocTramp.cmd_amalloc_of_body).
    Two premises the UNIT discharges at its image, both strictly weaker than
    wrap_malloc_walk_cf's wm_call:
    - wrap_to_body_step_cf: the trampoline is one forward jump to the body (cgif 0x52960
@@ -395,7 +396,7 @@ admits (as_universe B) (ftr_cf ly regs ch) S.
 (* The state at Deallocate's entry: the free interceptor has initialized the internal allocator. *)
 Definition finit_cf (S : astate) : astate := set_internal_inited true S.
 
-(* free_cf sets the flag before anything else (YG00cf.v:328-330), so starting it from finit_cf S is the same tree. *)
+(* free_cf sets the flag before anything else (YG00cf.v:329-331), so starting it from finit_cf S is the same tree. *)
 Lemma free_cf_finit : forall p tr S, free_cf p tr S = free_cf p tr (finit_cf S).
 Proof.
 intros p tr [rg ci0 ca chk sc sa sr qt qg fs dp ii nv]. destruct ii; reflexivity.
@@ -408,7 +409,7 @@ intros S [QT MR]. split; [exact QT|]. exact (mroom_cf_frame S (finit_cf S) eq_re
 Qed.
 
 (* Deallocate's premise at the instance: YGcfDIface.rpre_dealloc_cf's body, plus the batch class's room: free_cf's
-   Enqueue may allocate a new batch from class kBatchClass, whose populate maps one kUserMapSize (YG03cf.v:435-441),
+   Enqueue may allocate a new batch from class kBatchClass, whose populate maps one kUserMapSize (YG03cf.v:436-442),
    and that room is a pre fact of the call (acall_pre_cf's batch_room_cf conjunct), not an invariant of the relation;
    and the driver's hull admission at the call (acall_pre_cf's last conjunct, Main 2026-10-30). *)
 Definition rpreD_free_cf (S : astate) (n : Z) : Prop :=

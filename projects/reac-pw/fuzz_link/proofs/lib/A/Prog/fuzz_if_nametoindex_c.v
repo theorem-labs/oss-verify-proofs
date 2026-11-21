@@ -40,7 +40,7 @@
      link_ajkit.v's aj_gx_strncmp_at are the models); +0xe8 ret.
    - K = 80 + 2 * ESTACK = 8272: the 80-byte frame, then the strcmp wrapper's window [sp' - 2 ESTACK, sp') at
      sp' = sp - 80: link's strcmp contract (lib/A/Rt/RtString.v:102-113 astrcmp_realizes, on the form
-     branch since f961453c8093) takes `PRE (2 * ESTACK)` and `aread_ok (2 * ESTACK)` of each string (each outside
+     branch) takes `PRE (2 * ESTACK)` and `aread_ok (2 * ESTACK)` of each string (each outside
      [sp' - 2 ESTACK, sp'), RtDefs.v:35-40). link-a/form/FORM.md (internal record, sha256 13aeff774164) section 5's 4176
      (one ESTACK) is too small. No realignment. The plain K (48) does not carry over.
    - `anlk_at m LA_G_NL bs`: +0x38 reads n_if, +0x78 reads if_name[i], +0xbc reads if_index[i].

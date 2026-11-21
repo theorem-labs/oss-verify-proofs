@@ -1,6 +1,6 @@
 (* pcap_source_open (fuzz_pcap.asan 0x8145c, listing offset AF_pcap_source_open = 0xd24, 240 instructions) on
    libreac v1.9.0's ASan build: the contract of the code, in cgif_file's caller-journal form
-   (proofs/cgif/cgif_file_fuzzer/lib/YC20.v:311-365 at origin/ossv/recipes c8557374ad2e), and the constants its walk
+   (proofs/cgif/cgif_file_fuzzer/lib/YC20.v:311-365 at theorem-labs/oss-verify-proofs@6b32741d849a), and the constants its walk
    (PcapSourceOpen.v) shares. Every number is read from the pin fuzz_pcap.asan (sha256 b7a91d9b1fb0017d...;
    capstone 5 disassembly of 0x8145c..0x8181c); the comment beside a number names its instruction.
 

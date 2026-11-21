@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_codec proofs/libdiginet/fuzz_codec/lib/Prog/diginet_personality_from_name.v at d8e4e696562a3ec070d61f99e264ce9d80f5a5bd to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_codec proofs/libdiginet/fuzz_codec/lib/Prog/diginet_personality_from_name.v to fuzz_transport's images *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/Prog/diginet_personality_from_name.v, with its module paths and module names changed; 968 of its 996 lines of code are new or changed and 111 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* diginet_personality_from_name_cgW: Theorem transport_diginet_personality_from_name_cg_holds : the statement
    transport_diginet_personality_from_name_cg_holds_stmt of lib/B/Prog/diginet_personality_from_name_cg.v, the machine
    walk of diginet_personality_from_name (src/diginet_codec.c:17-25) on fuzz_transport.asan-ubsan at 0x8c050 =
@@ -36,9 +37,9 @@
 
    Copied and adapted (provenance): the image-generic lemmas (pfw_cs_k .. pfw_strcmpZ_unsigned, pfw_split ..
    pfw_res, pfw_cstr_at .. pfw_cstr_rom, pfw_bytes_view .. pfw_sltu0, pfw_strcmp_cstr_at, pfw_pres_groups,
-   pfw_close) are image A's lib/A/Prog/diginet_personality_from_name_cgW.v (origin/cold/h-disco-16-aw29
-   c8f7666ff568), copied rather than Required so that no image-A kit file enters this file's closure; they are in
-   turn adapted from origin/cold/h-dgn-c1-ai 879253f2304d proofs/libdiginet/fuzz_codec/lib/A/Prog/CPgWalkStr.v:45-354
+   pfw_close) are image A's lib/A/Prog/diginet_personality_from_name_cgW.v,
+   copied rather than Required so that no image-A kit file enters this file's closure; they are in
+   turn adapted from proofs/libdiginet/fuzz_codec/lib/A/Prog/CPgWalkStr.v:45-354
    (cw_cs_k .. cw_strcmp_cstr_at) and diginet_personality_from_name_A.v (pfn_res), and from
    lib/Prog/diginet_personality_from_name.v (pfn_split / pfn_cstring). pfw_aview_vis / pfw_aview_some are image A's
    lib/A/Prog/DgnTransportCgRun.v decode_aview_vis / decode_aview_some at image B's segments. *)

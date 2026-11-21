@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_seg_up.v, with its module names changed; 344 of its 394 lines of code are new or changed and 2639 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_seg_exit_scan: the scan piece of the exit segment of the image-A walk of libreac/fuzz_decode's
    LLVMFuzzerTestOneInput, ex_scan_ok : ex_scan_stmt (lib/A/Prog/LLVMFuzzerTestOneInput_seg_exit_cuts.v).
 
@@ -26,9 +27,9 @@
    At +0x98c the events (dec_ev_86c) and the meter are those of +0x908, weakened to ex_st_98c's bounds with
    dec_crt_cost_max >= 0 (mo_malloc_nonneg / mo_free_nonneg, mo_le_mono, mo_ok_le).
 
-   Steps follow libreac/fuzz_boxreg's ReadName.v (pb_read_name, 1d92330b7ad: the entry sstate, paj_run_tok,
+   Steps follow libreac/fuzz_boxreg's ReadName.v (pb_read_name: the entry sstate, paj_run_tok,
    psrr_branch_tok, shent_ok_of_range, range_addressable_of_block) and this unit's LLVMFuzzerTestOneInput_seg_entry.v
-   (a Theorem Labs lane, 4d4ce59e5f2: EEN / reg_at / the dec_a_core build). *)
+   (a Theorem Labs lane: EEN / reg_at / the dec_a_core build). *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,10 +1,10 @@
 # cb builds of the image-A cg walks of diginet_msg_next, diginet_frame_parse and diginet_body_check (S11 step 3),
-# on the clone at base a4816a31e86d (merged). Per log: its sha256, then its count, pin, target and timing lines.
+# on the clone at base (merged). Per log: its sha256, then its count, pin, target and timing lines.
 
 ## build-20261031T064926Z.log sha256 82301daa504eb3aade3377770f802304ac8cf62a5f269853ce1abb6121fc8789: diginet_msg_next_walk and the frame_parse kit / segs (seg_tail failed there; fixed, rebuilt below)
 cb-cache: mode=dune source=default dir=<the VM's dune cache> targets=7 compiled=6 from_cache=0 missing=0 failed=1 inconsistent=0
-cb: pins of libdiginet/fuzz_transport: each file of the workspace's projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts f6acfcb0c1b8 (facts of base f6acfcb0c1, BASE.tsv)
-cb: pins libdiginet/fuzz_transport at facts f6acfcb0c1b8: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts f6acfcb0c1b8
+cb: pins of libdiginet/fuzz_transport: each file of the workspace's projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts (facts of base, BASE.tsv)
+cb: pins libdiginet/fuzz_transport at facts: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts
 cb-dune: vo check: 209 .vo read, 1699 Require digests compared with this build's .vo, 1116 with the checker image's .vo (36 of its libraries read under the checker image's COQLIB), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 0.0 s
 cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_msg_next_walk.vo compiled
 cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_parse_kit.vo compiled
@@ -32,8 +32,8 @@ proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_parse_seg_hdr1.vo (rea
 
 ## build-20261031T070021Z.log sha256 525d3001b0179cb3e275ade7f7a6d406268476c2da2def66dabb696558794bc1: diginet_frame_parse_walk (and seg_tail)
 cb-cache: mode=dune source=default dir=<the VM's dune cache> targets=1 compiled=1 from_cache=0 missing=0 failed=0 inconsistent=0
-cb: pins of libdiginet/fuzz_transport: each file of the workspace's projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts f6acfcb0c1b8 (facts of base f6acfcb0c1, BASE.tsv)
-cb: pins libdiginet/fuzz_transport at facts f6acfcb0c1b8: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts f6acfcb0c1b8
+cb: pins of libdiginet/fuzz_transport: each file of the workspace's projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts (facts of base, BASE.tsv)
+cb: pins libdiginet/fuzz_transport at facts: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts
 cb-dune: vo check: 202 .vo read, 1627 Require digests compared with this build's .vo, 1070 with the checker image's .vo (36 of its libraries read under the checker image's COQLIB), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 0.0 s
 cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_parse_walk.vo compiled
 cb: dune: 1 targets: 1 compiled, 0 restored from the cache, 0 missing; 0 failed compiles; 1 more compiled (dependencies outside the targets); 0 inconsistent .vo (vo check)
@@ -43,8 +43,8 @@ proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_parse_walk.vo (real: 2
 
 ## build-20261031T072410Z.log sha256 2de2e35d582a17fc67aba43bbf0d9fbdab9bef2998ebf5e2aff044bf0f46ffc1: diginet_body_check_cgW (the nine DgnBc* / cgW files)
 cb-cache: mode=dune source=default dir=<the VM's dune cache> targets=1 compiled=1 from_cache=0 missing=0 failed=0 inconsistent=0
-cb: pins of libdiginet/fuzz_transport: each file of the workspace's projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts f6acfcb0c1b8 (facts of base f6acfcb0c1, BASE.tsv)
-cb: pins libdiginet/fuzz_transport at facts f6acfcb0c1b8: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts f6acfcb0c1b8
+cb: pins of libdiginet/fuzz_transport: each file of the workspace's projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts (facts of base, BASE.tsv)
+cb: pins libdiginet/fuzz_transport at facts: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts
 cb-dune: vo check: 210 .vo read, 2221 Require digests compared with this build's .vo, 1141 with the checker image's .vo (38 of its libraries read under the checker image's COQLIB), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 0.1 s
 cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_body_check_cgW.vo compiled
 cb: dune: 1 targets: 1 compiled, 0 restored from the cache, 0 missing; 0 failed compiles; 2 more compiled (dependencies outside the targets); 0 inconsistent .vo (vo check)

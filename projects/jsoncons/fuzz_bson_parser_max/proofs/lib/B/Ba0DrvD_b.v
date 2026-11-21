@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed can, drv_targetA, lh_valsA and 3 more; added auxvp; removed p0; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvD.v, 7 lines within its lines 144-479. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -144,7 +145,7 @@ Section DrvD.
   Hypothesis DL : drv_layoutA L ar IL sp0.
   Variable fs0 : Fs.Fs.
   Variable fdata : list byte.
-  Variables p0 p1 can : word.
+  Variables auxvp p1 can : word.
   Variable M0 : word -> option byte.
   Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
   Variable LK0 : list fframe.
@@ -161,7 +162,7 @@ Section DrvD.
   Let CFG : Z := CFGA fdata.
   Let PL : Z := PLA fdata.
   Let B2 : Z := B2A fdata.
-  Let target_k := target_kA scfg ar HI sp0 fs0 fdata p0 p1 can M0 LK0 A0 CAP crC.
+  Let target_k := target_kA scfg ar HI sp0 fs0 fdata auxvp p1 can M0 LK0 A0 CAP crC.
 
   (* [comment removed for export] *)
   Hypothesis Hok : 6 + CFG <= LEN.
@@ -182,7 +183,7 @@ Section DrvD.
 
   (* [comment removed for export] *)
   Definition lh_valsA (vals : list word) (A1 PTR OWN k : Z) : Prop :=
-    length vals = 102%nat /\ hdr_valsA sp0 p0 p1 can vals
+    length vals = 102%nat /\ hdr_valsA sp0 auxvp p1 can vals
     /\ vals_ev vals 48 = Z_to_bv 64 A1 /\ vals_ev vals 70 = Z_to_bv 64 LEN
     /\ vals_ev vals 73 = Z_to_bv 64 CFG /\ vals_ev vals 79 = Z_to_bv 64 PL
     /\ vals_ev vals 81 = Z_to_bv 64 k /\ vals_ev vals 82 = Z_to_bv 64 PTR /\ vals_ev vals 83 = Z_to_bv 64 OWN.
@@ -237,7 +238,7 @@ Section DrvD.
   (* [comment removed for export] *)
   #[using="fx C IL HIok Hsp DL HCAP target_k"] Lemma pl0_to_lhA : forall K (fx' : PropExec.FPState) vals1 srX R' M' (model' : Model) A (A1 : Z),
     lh1_kA K ->
-    length vals1 = 82%nat -> hdr_valsA sp0 p0 p1 can vals1 ->
+    length vals1 = 82%nat -> hdr_valsA sp0 auxvp p1 can vals1 ->
     vals_ev vals1 48 = Z_to_bv 64 A1 -> vals_ev vals1 70 = Z_to_bv 64 LEN -> vals_ev vals1 73 = Z_to_bv 64 CFG ->
     vals_ev vals1 79 = Z_to_bv 64 PL -> vals_ev vals1 81 = Z_to_bv 64 CALLSA ->
     regs_ok (ENVG vals1) srX R' -> relay_ok_bD (sr_upd srX (ridx 21) (EVar 81)) = true ->
@@ -304,7 +305,7 @@ Section DrvD.
     { subst vals1. rewrite <- HL, <- (Nat.add_0_r (length vals)). rewrite vals_ev_app_r. reflexivity. }
     assert (VL : forall j x, (j < 81)%nat -> vals_ev vals j = x -> vals_ev vals1 j = x).
     { intros j x Hj Hx. subst vals1. rewrite vals_ev_app_l by (rewrite HL; exact Hj). exact Hx. }
-    assert (WV : hdr_valsA sp0 p0 p1 can vals1) by (subst vals1; apply (hdr_appA sp0 fdata); [exact HV | rewrite HL; lia]).
+    assert (WV : hdr_valsA sp0 auxvp p1 can vals1) by (subst vals1; apply (hdr_appA sp0 fdata); [exact HV | rewrite HL; lia]).
     pose proof WV as (W0 & _).
     pose proof (VL 48%nat _ ltac:(lia) P48) as W48. pose proof (VL 70%nat _ ltac:(lia) P70) as W70.
     pose proof (VL 73%nat _ ltac:(lia) P73) as W73. pose proof (VL 79%nat _ ltac:(lia) P79) as W79. pose proof (VL 80%nat _ ltac:(lia) P80) as W80.
@@ -413,7 +414,7 @@ Section DrvD.
       assert (NEQ : u <> A1).
       { specialize (HAP (A1, CAP) ltac:(left; reflexivity)). cbn [fst snd] in HAP. lia. }
       assert (X0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W0).
-      assert (XV : hdr_valsA sp0 p0 p1 can vals2) by (subst vals2; apply (hdr_appA sp0 fdata); [exact WV | rewrite HL1; lia]).
+      assert (XV : hdr_valsA sp0 auxvp p1 can vals2) by (subst vals2; apply (hdr_appA sp0 fdata); [exact WV | rewrite HL1; lia]).
       assert (X48 : vals_ev vals2 48 = Z_to_bv 64 A1) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W48).
       assert (X73 : vals_ev vals2 73 = Z_to_bv 64 CFG) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W73).
       assert (X79 : vals_ev vals2 79 = Z_to_bv 64 PL) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W79).
@@ -479,7 +480,7 @@ Section DrvD.
       set (vals3 := vals2 ++ junk_vals R3) in *.
       change (Env (vals_ev vals3) (blobs_ev [[]; []; []; []; fdata])) with (ENVG vals3) in HR3, HK3.
       assert (Y0 : vals_ev vals3 0 = sp0) by (subst vals3; rewrite vals_ev_app_l by (rewrite HL'; lia); exact X0).
-      assert (YV : hdr_valsA sp0 p0 p1 can vals3) by (subst vals3; apply (hdr_appA sp0 fdata); [exact XV | rewrite HL'; lia]).
+      assert (YV : hdr_valsA sp0 auxvp p1 can vals3) by (subst vals3; apply (hdr_appA sp0 fdata); [exact XV | rewrite HL'; lia]).
       assert (Y92 : vals_ev vals3 92 = Z_to_bv 64 u) by (subst vals3; rewrite vals_ev_app_l by (rewrite HL'; lia); exact HA2).
       assert (YL : forall j, (j < 82)%nat -> vals_ev vals3 j = vals_ev vals1 j).
       { intros j Hj. subst vals3 vals2. rewrite !vals_ev_app_l by (rewrite ?length_app, ?junk_vals_length, HL1; lia). reflexivity. }

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (big_facts_C's URNG fact proved at fr.v's bound 2 ^ 47 - 10, the end of the printed string inside the image, from str_factsZ's room after it of plus 10; FpsU's tail certificate okR_5 checked at every residue 0 to 3 of the printed string's address mod 4, not only at 0: in the launch's image at LPS 727298f3 argv[0] has any alignment). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -912,7 +913,7 @@ Proof.
     pose proof (LOWV_of_facts rho7 HFf) as (_ & _ & _ & _ & _ & L6).
     destruct (str_factsZ rho7 (proj2 (proj1 (Forall_app _ _ _) HFf))) as (Z1 & _ & Z3 & _ & Z5 & Z6 & _).
     unfold URNG. cbn [holds]. cbn [eval]. rewrite add_val. change (eval rho7 sX) with (eval rho7 sX) in *.
-    cbn [eval] in L6. rewrite L6, Ez, E16, lit_unsigned. change ((2 ^ 47 - 16) mod 2 ^ 64) with (2 ^ 47 - 16).
+    cbn [eval] in L6. rewrite L6, Ez, E16, lit_unsigned. change ((2 ^ 47 - 10) mod 2 ^ 64) with (2 ^ 47 - 10).
     rewrite <- E16 in *. pose proof (urange (rw rho7 18)). pose proof (urange (rw rho7 20)). rewrite Z.mod_small; lia.
 Qed.
 Lemma big_facts_C_below : ltac2:(tb__ "0|0|
@@ -1105,7 +1106,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma okR_5 : ltac2:(tb__ "0|0|
-S5S2SbS0S0S9S7S8Z7R1Z0SaS6A7Ln;S1S0Z41S1S0Z42S3S0A1A3A3A3S4A3").
+S5S2SbS0S0SbS0S0S9S7S8Z7R2R1SaS6A7Lr;S1S0Z0S1S0Z1S1S0Z2S1S0Z3S3S0A1A3A3A3A3A3Ln;S1S0Z41S1S0Z42S3S0A1A3A3A3S4A3").
 Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 End FpsU_a5.
 

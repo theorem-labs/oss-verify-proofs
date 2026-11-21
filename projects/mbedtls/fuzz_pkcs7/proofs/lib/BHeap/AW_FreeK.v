@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the fields ff_node and ff_store take the placement premise ASys.placed_at at the grant size, last, which the depot grant lemmas now require and their users pass on from AO_grant). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -139,11 +140,13 @@ Record ffam (AL : asan_layout) := FF {
   ff_node : forall h nb bl mo (a : word), WFK h -> nb = d_nb (h_dep h) /\ bl = d_bl (h_dep h) -> ff_K (hdep h nb bl) mo ->
       bv_unsigned a mod 4096 = 0 -> 0 < bv_unsigned a -> bv_unsigned a + 2^20 <= ACEIL ->
       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2^20)) = true ->
+      ASys.placed_at (2^20) mo a ->
       ff_K (hdep h (nb ++ [bv_unsigned a]) bl) (anon_grant 0x22 a (2^20) mo) /\ crange (ff_CS (hdep h (nb ++ [bv_unsigned a]) bl)) (bv_unsigned a) (2^20);
   ff_store : forall h nb bl mo (a : word), WFK h -> bl = d_bl (h_dep h) /\ (nb = d_nb (h_dep h) \/ exists x, nb = d_nb (h_dep h) ++ [x]) ->
       ff_K (hdep h nb bl) mo ->
       bv_unsigned a mod 4096 = 0 -> 0 < bv_unsigned a -> bv_unsigned a + 2^23 <= ACEIL ->
       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2^23)) = true ->
+      ASys.placed_at (2^23) mo a ->
       ff_K (hdep h nb (bl ++ [bv_unsigned a])) (anon_grant 0x4022 a (2^23) mo) /\ crange (ff_CS (hdep h nb (bl ++ [bv_unsigned a]))) (bv_unsigned a) (2^23);
   ff_room_n : forall h nb bl mo, WFK h -> nb = d_nb (h_dep h) /\ bl = d_bl (h_dep h) -> ff_K (hdep h nb bl) mo ->
       exists a, anon_grantable 0x22 (2^20) mo a;

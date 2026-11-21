@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_c3.v (a working branch e2e59892bef),
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_c3.v (a working branch),
    re-walked on B: 0x81f20 .. 0x81f28 = A's same stretch + 0x290, text in s6 (A s8), uri_len in s1 (A s6). *)
 (* lv2_locate_manifest_readings, PRE piece c3 (FMW_rd_pre_cuts.v rdp_seg_C3). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

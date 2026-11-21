@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch facts valid_launch, entry_launch_ok_va and the channel reader read from the revision's valid_input and valid_entry and passed to the walks over the run's segment list. *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith List ZArith Lia Bool.
 Require OSSVerify.boost_json.fuzz_parse.images.Plain.
@@ -37,14 +38,16 @@ Section Open.
     intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid.
     pose proof (valid_input_va_size _ Hvalid) as Hsv48.
     rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-    destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-    pose proof Hvalid as (Hargv & Henvp & Hfs & _).
+    (* LPS 727298f3: [Run.valid_entry] ends with the launch clause [entry_launch_ok_va];
+       [Run.valid_input]'s sixteen clauses: the launch thirteenth, the channel reader fourteenth *)
+    destruct Hens as (Hrsp & Hrbrk & Hrmb & Hrfit & Hrlau). destruct Hent as (Hasp & Habrk & Hamb & Hafit & Halau).
+    pose proof Hvalid as (Hargv & Henvp & Hfs & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hvl & Hrdr & _ & _).
     change CFG with (@the_scfg hunspell_scfg).
     assert (Hr : 2 ^ 34 <= source_alloc_limit) by (unfold source_alloc_limit; cbn; lia).
     assert (Ha : 2 ^ 34 <= target_alloc_limit) by (unfold target_alloc_limit; cbn; lia).
     apply (shape_strong_equiv_ef_scfg _ _ _ _ _ _ _ _ _ _ _ _ _ _ (spec (in_argv inp) (in_fs inp))).
-    - exact (PlainClosed.plain_realizes_closed rsp rbrk rmb rrnd _ inp Hrsp Hrbrk Hr Hrfit Hargv Henvp Hfs).
-    - exact (UbsanClosed.ubsan_realizes_closed asp abrk amb arnd _ inp Hasp Habrk Ha Hafit Hargv Henvp Hfs).
+    - exact (PlainClosed.plain_realizes_closed rsp rbrk rmb rrnd _ inp Hrsp Hrbrk Hr Hrfit Hargv Henvp Hfs Hvl Hrlau Hrdr).
+    - exact (UbsanClosed.ubsan_realizes_closed asp abrk amb arnd _ inp Hasp Habrk Ha Hafit Hargv Henvp Hfs Hvl Halau Hrdr).
   Qed.
 
   (* [comment removed for export] *)
@@ -54,14 +57,15 @@ Section Open.
     intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid _.
     pose proof (valid_input_abort_va_size _ Hvalid) as Hsv48.
     rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-    destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-    pose proof Hvalid as (Hargv & Henvp & Hfs & _).
+    (* LPS 727298f3: as in [ubsan_base_scfg], over [Run.valid_input_abort]'s sixteen clauses *)
+    destruct Hens as (Hrsp & Hrbrk & Hrmb & Hrfit & Hrlau). destruct Hent as (Hasp & Habrk & Hamb & Hafit & Halau).
+    pose proof Hvalid as (Hargv & Henvp & Hfs & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hvl & Hrdr & _ & _).
     change CFG with (@the_scfg hunspell_scfg).
     assert (Hr : 2 ^ 34 <= ShippedBudgets.lim_source) by (unfold ShippedBudgets.lim_source, source_alloc_limit; cbn; lia).
     assert (Ha : 2 ^ 34 <= ShippedBudgets.lim_target) by (unfold ShippedBudgets.lim_target, target_alloc_limit; cbn; lia).
     apply (shape_strong_equiv_ef_abort _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (spec (in_argv inp) (in_fs inp))).
-    - exact (PlainClosed.plain_realizes_closed rsp rbrk rmb rrnd _ inp Hrsp Hrbrk Hr Hrfit Hargv Henvp Hfs).
-    - exact (UbsanClosed.ubsan_realizes_closed asp abrk amb arnd _ inp Hasp Habrk Ha Hafit Hargv Henvp Hfs).
+    - exact (PlainClosed.plain_realizes_closed rsp rbrk rmb rrnd _ inp Hrsp Hrbrk Hr Hrfit Hargv Henvp Hfs Hvl Hrlau Hrdr).
+    - exact (UbsanClosed.ubsan_realizes_closed asp abrk amb arnd _ inp Hasp Habrk Ha Hafit Hargv Henvp Hfs Hvl Halau Hrdr).
     - apply PlainTop.spec_kill_free.
   Qed.
 End Open.

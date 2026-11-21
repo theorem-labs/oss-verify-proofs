@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the start-up's reservation-ledger fact is the image's reservations followed by the launch's bounded reservations, and the mapped stack below sp is 6144512 bytes. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -108,8 +109,9 @@ Record a0_raw (P : aplace) (k1 : list Z) (sp0 : Z) (FULL : mem) (md : Model) : P
   ar0_fs_log   : u64_at ASEGS FULL (p_fs P + 88) kFakeStackSizeLog /\ u8_at ASEGS FULL (p_fs P + 96) 0;
   ar0_fs_flags : zero_at FULL (p_fs P + kFakeFlagsOffset) (kFakeFramesOffset - kFakeFlagsOffset);
   ar0_fs_map   : mapped FULL (p_fs P) kFakeStackBytes /\ mapped FULL (sh (p_fs P)) (kFakeStackBytes / 8);
-  (* [comment removed for export] *)
-  ar0_maps   : mapped FULL (sp0 - 0x800000) 0x800000;
+  (* LPS 727298f3: the 6144512 bytes below sp the launch maps ([StoreOk.stack_window_depth] is
+     6144513); it WAS the whole 8 MiB down to the heap ceiling *)
+  ar0_maps   : mapped FULL (sp0 - 6144512) 6144512;
   (* [comment removed for export] *)
   ar0_stkshadow_map : mapped FULL (fst stack_shadow_iv) (snd stack_shadow_iv);
   ar0_imgshadow_map : mapped FULL 0x7fffa000 0xbf400;
@@ -125,7 +127,9 @@ Record a0_raw (P : aplace) (k1 : list Z) (sp0 : Z) (FULL : mem) (md : Model) : P
   ar0_minv   : MInv (a0_hull P k1) (a0_lhull P k1) (a0_eager P k1) md;   (* [comment removed for export] *)
   ar0_halted : m_halted md = None;
   (* [comment removed for export] *)
-  ar0_reserved : vm_reserved (m_vmmaps md) = segments_reserved ASEGS;       (* [comment removed for export] *)
+  (* LPS 727298f3: the image's reservations, then the launch's own (the vvar pages and the vDSO
+     text, [res_launch]); it WAS the image's alone *)
+  ar0_reserved : exists rx, vm_reserved (m_vmmaps md) = segments_reserved ASEGS ++ rx /\ res_launch LPA rx;
   (* [comment removed for export] *)
   ar0_gap : In (Z_to_bv 64 kShadowGapBeg, Z_to_bv 64 (kHighShadowMapBeg - kShadowGapBeg)) (vm_maps (m_vmmaps md));
   (* [comment removed for export] *)
