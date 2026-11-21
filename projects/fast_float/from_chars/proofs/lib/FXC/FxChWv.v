@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of writev; RomBase.sys_rob at the system-call nodes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -204,6 +205,22 @@ Proof. intros segs ms x8 H. unfold sys_input, ms_read_byte, ms_writable_byte. cb
 Lemma ra_le : forall H a n n', (n' <= n)%nat -> range_avoids H a n -> range_avoids H a n'.
 Proof. intros H a n n' Hle Hav k Hk. apply Hav. lia. Qed.
 
+Lemma woff_add8 : forall (a b : word) k, bv_unsigned b = 8 -> woff (a + b)%bv k = woff a (8 + k).
+Proof.
+  intros a b k Hb. unfold woff. apply bv_eq. rewrite !Z_to_bv_unsigned, bv_add_unsigned, Hb.
+  unfold bv_wrap. rewrite Zplus_mod_idemp_l. f_equal. lia.
+Qed.
+(* At 75d69e00 an iovec descriptor's copy-in is recorded by [State.iovec_entry_accesses]: nothing, its
+   [iov_len] half [(a + 8, 8)], or the whole [(a, 16)] — each inside [(a, 16)]. *)
+Lemma iovec_entry_avoid : forall H mp a, range_avoids H a 16 -> ranges_avoid H (iovec_entry_accesses mp a).
+Proof.
+  intros H mp a Ha. unfold iovec_entry_accesses.
+  destruct (read_u64 mp _); [|intros ? ? []].
+  destruct (read_u64 mp a).
+  - apply ranges_avoid_cons; [exact Ha | intros ? ? []].
+  - apply ranges_avoid_cons; [|intros ? ? []]. intros k Hk. rewrite woff_add8 by reflexivity. apply Ha. lia.
+Qed.
+
 (* [comment removed for export] *)
 Definition wv_post (L : sst) (len : lin) (n : Z) : sst :=
   post_fresh L (fun x => [FRange x 1 n; FRange (lsub len x) 0 n]).
@@ -234,11 +251,11 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   assert (Hw : lden E1 (lvar (s_next L)) = w) by (rewrite lden_lvar; unfold E1, upd; rewrite Pos.eqb_refl; reflexivity).
   rewrite Hw in Hd3.
   assert (Hpf : post_fresh L fs = SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) (lvar (s_next L))) (s_rgs L)
-                                       (fs (lvar (s_next L)) ++ s_facts L) (Pos.succ (s_next L)) (s_resv L)) by reflexivity.
+                                       (fs (lvar (s_next L)) ++ s_facts L) (Pos.succ (s_next L)) RNone) by reflexivity.
   rewrite Hpf. clear Hpf.
   assert (Hgen : forall fl, (forall E', agree (Pos.succ (s_next L)) E1 E' -> Forall (fact_ok E') fl) ->
             DEN segs LIMIT model0 mem0 E1 (SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) (lvar (s_next L))) (s_rgs L)
-                                       (fl ++ s_facts L) (Pos.succ (s_next L)) (s_resv L)) M
+                                       (fl ++ s_facts L) (Pos.succ (s_next L)) RNone) M
                  (advance_past_svc (apply_effect (svc_set ms) (mkEffectU w [] [] [] [] ci))) m'').
   { induction fl as [|f fl IH]; intros Hfl.
     - exact Hd3.
@@ -255,6 +272,7 @@ Proof. LiaFast.lf_pins LiaFast.u0. intros ms k Hk. unfold getr, ms_gpr. cbn [svc
   DEN segs LIMIT model0 mem0 E L M ms model ->
   a7c L = Some 66 -> arg L 0 = Some ch -> arg L 2 = Some 1 -> (ch = 1 \/ ch = 2) ->
   fd_lookup (m_fds model0) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch)) ->
+  m_channel_reader model0 = true ->
   rdn segs (ms_mem ms) (lden E (argl L 1)) 8 = Some (word_to_le_bytes 8 (lden E b)) ->
   rdn segs (ms_mem ms) (Z_to_bv 64 (bv_unsigned (lden E (argl L 1)) + 16 - 8)) 8 = Some (word_to_le_bytes 8 (lden E len)) ->
   rdn segs (ms_mem ms) (lden E b) (length bs) = Some bs ->
@@ -267,7 +285,7 @@ Proof. LiaFast.lf_pins LiaFast.u0. intros ms k Hk. unfold getr, ms_gpr. cbn [svc
      realizes_cfg segs cfg (mkCfg ms' m'') (t_emit (map (WriteEv (Z_to_bv 64 ch)) (skipn (Z.to_nat (bv_unsigned (E' (s_next L)))) bs)) K)) ->
   realizes_cfg segs cfg (mkCfg (svc_set ms) model) (t_emit (map (WriteEv (Z_to_bv 64 ch)) bs) K).
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros model0 E L M ms model K ch b len bs n Hd H7 H0 H2 Hch Hfd0 Hi0 Hi1 Hbuf Hlen Hnb Hn Hn30 Hiok Hbok Havi Havb Hwl HK0 Hk.
+  intros model0 E L M ms model K ch b len bs n Hd H7 H0 H2 Hch Hfd0 Hrdr0 Hi0 Hi1 Hbuf Hlen Hnb Hn Hn30 Hiok Hbok Havi Havb Hwl HK0 Hk.
   pose proof Hd as Hd0.
   destruct Hd0 as [Hsd Hwf Hbw Hh Hawf Hanz Hminv Hhoff Hres Hlim Hsp Hspok Hbrk Hsbrk Htid Hmaps Hgsh Hgtop Hivwf Hpd Hmres Hkind Hlzm Hzrsh Hzrm Hzr Hrl Hvmo Hproc Hfrz Hrom Hown Hblob].
   set (H := Hof E M model) in *.
@@ -286,6 +304,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   { cbn [length]. change (Z.of_nat 1) with 1%Z. rewrite <- Hg2. transitivity (getr (ms_regs ms) (Z_to_bv 5 (10 + Z.of_nat 2))); [reflexivity|]. exact (getr_gpr ms 2 ltac:(lia)). }
   assert (R17 : getr regs 17 = Z_to_bv 64 66) by exact Hx8.
   assert (Hfm : m_fds model = m_fds model0) by (destruct Hvmo as (H1' & _); unfold m_fds; rewrite H1'; reflexivity).
+  assert (Hrd : m_channel_reader model = true) by (unfold m_channel_reader; rewrite Hproc; destruct (m_tid model); exact Hrdr0).
   assert (Hch32 : fd32 (getr regs 10) = Z_to_bv 64 ch) by (rewrite R10; apply fd32_id; rewrite u_small64 by (unfold two64; lia); lia).
   assert (Hfd : fd_lookup (m_fds model) (fd32 (getr regs 10)) = Some (FdChannel (Z_to_bv 64 ch))) by (rewrite Hch32, Hfm; exact Hfd0).
   assert (Hw0 : w_is0 (Z_to_bv 64 ch) = false) by (unfold w_is0, bv_eqb; destruct Hch as [->| ->]; reflexivity).
@@ -303,7 +322,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   assert (Hiok' : bv_unsigned (getr regs 11) + 16 * Z.of_nat (length iovs) <= TASK_SIZE) by (rewrite R11; unfold iovs; cbn [length]; lia).
   pose proof (writev_ch_ok_iff segs regs (ms_pc_val ms) (ms_mem ms) model (Z_to_bv 64 ch) iovs bss) as Hspec.
   pose proof (writev_ch_no_unmodeled segs regs (ms_pc_val ms) (ms_mem ms) model (Z_to_bv 64 ch) iovs bss R17 Hfd Hw0 R12
-                ltac:(unfold iovs; cbn; lia) Hiok' Harr Hbo Hbb ltac:(rewrite Htot; lia) ltac:(rewrite Htot; lia)) as Hnu.
+                ltac:(unfold iovs; cbn; lia) Hiok' Harr Hbo Hbb ltac:(rewrite Htot; lia) ltac:(rewrite Htot; lia) Hrd) as Hnu.
   rewrite <- (sys_input_pend segs ms (getr regs 17) Hrom) in Hnu.
   assert (Hx8' : getr regs 17 = x8) by reflexivity. rewrite Hx8' in Hnu.
   set (CA := import_iovecs_accesses (mrb segs (ms_mem ms)) (getr regs 11) (Z_to_bv 64 (Z.of_nat (length iovs)))).
@@ -311,7 +330,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   assert (Hspr : forall eff m' evs, syscall_spec (sys_input segs ms1 x8) model (Ok eff m' evs) <->
             exists j : wr_index bs, eff = EF j /\ m' = model /\ evs = map (WriteEv (Z_to_bv 64 ch)) (firstn (proj1_sig j) bs)).
   { intros eff m' evs. unfold ms1. rewrite (sys_input_pend segs ms x8 Hrom). fold regs. rewrite <- Hx8'.
-    rewrite (Hspec eff m' evs R17 Hfd Hw0 R12 ltac:(unfold iovs; cbn; lia) Hiok' Harr Hbo Hbb ltac:(rewrite Htot; lia) ltac:(rewrite Htot; lia)).
+    rewrite (Hspec eff m' evs R17 Hfd Hw0 R12 ltac:(unfold iovs; cbn; lia) Hiok' Harr Hbo Hbb ltac:(rewrite Htot; lia) ltac:(rewrite Htot; lia) Hrd).
     rewrite Hcb. split.
     - intros (k & Hk' & -> & -> & ->). exists (exist _ k Hk'). unfold EF. cbn [proj1_sig]. auto.
     - intros ([k Hk'] & -> & -> & ->). exists k. unfold EF. cbn [proj1_sig]. auto. }
@@ -320,7 +339,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     apply ranges_avoid_app.
     - unfold CA, import_iovecs_accesses. unfold iovs. cbn [length]. change (Z.of_nat 1) with 1%Z. rewrite bv_eqb_refl.
       destruct (negb (access_okb (getr regs 11) 16)); [apply ranges_avoid_nil|].
-      apply ranges_avoid_cons; [rewrite R11; exact Havi | apply ranges_avoid_nil].
+      apply iovec_entry_avoid. rewrite R11. exact Havi.
     - unfold iovs. cbn [iov_prefix_accesses].
       destruct k as [|k]; [lia|].
       destruct (Nat.eqb (word_to_nat_bounded (lden E len) (Datatypes.S k)) 0) eqn:Ez; [apply ranges_avoid_nil|].
@@ -340,6 +359,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     + intros _. apply lazy_cover_mkH_app. intros x Hx'. exact Hx'.
     + intros _. exact Hminv.
     + exact Hacc.
+    + exact (rob_writev_state segs ms1 model iovs bss (svc_set_pending ms) Hrom R17 R12 ltac:(unfold iovs; cbn; lia) Hiok' Harr Hbo Hbb ltac:(rewrite Htot; lia)).
     + intros [k Hk'] m'' Hinv'' Hsb''. cbn [proj1_sig].
       set (w := Z_to_bv 64 (Z.of_nat k)).
       assert (Hwu : bv_unsigned w = Z.of_nat k) by (unfold w; apply u_small64; unfold two64; lia).

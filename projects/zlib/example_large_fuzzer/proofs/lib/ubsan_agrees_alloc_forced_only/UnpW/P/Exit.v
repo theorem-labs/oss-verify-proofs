@@ -1,0 +1,283 @@
+(* reloc-zl14c *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.UnpW.Lib Require Import Tac. From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Lib Require Import Arr Bytes ITree Nodes Decode. From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.UnpW.Lib Require Import SysStep. From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Lib Require Import RegsEquiv. From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.UnpW.Lib Require Import Image.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Spec Require Import Prelim Monad Stdio Driver.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.UnpW.P Require Export Layout F_atexit.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.UnpW.P Require Import Str_tac Startup_glue.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.World Require Import SrcO_zlib_example_large_fuzzer_repro.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.UnpW.Lib Require Import StoreFast.  (* [comment removed for export] *)
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+Local Ltac transport_after_call segs m m' MU WM ::= transport_after_call_fast segs m m' MU WM.
+Import ListNotations.
+Open Scope bv_scope.
+Import ITree.Exc.
+
+Notation psegs := Image.psegs.
+
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Definition stdout_file (m : word -> option byte) (so : stdout_st) : Prop :=
+  exists (flags mode : word) (tail bufbytes : list byte),
+    rw_cells psegs m RSTDOUT
+      (file_cells flags
+         (if so_active so then RSTDOUT_BUF + 1024 else 0)%Z
+         (if so_active so then RSTDOUT_BUF + zlength (so_buf so) else 0)%Z
+         (if so_active so then RSTDOUT_BUF else 0)%Z
+         (if so_first so then F_STDOUT_WRITE else F_STDIO_WRITE)
+         RSTDOUT_BUF 1024 1 mode
+         (if so_lbf_nl so then 10 else 0xffffffff)%Z tail)
+    /\ Z.land (bv_unsigned flags) 72 = 0%Z
+    /\ rw_cells psegs m RSTDOUT_BUF [CB 1024 bufbytes]
+    /\ firstn (length (so_buf so)) bufbytes = to_bytes (so_buf so)
+    /\ (zlength (so_buf so) <= 1024)%Z
+    /\ (so_active so = false -> so_buf so = []).
+
+(* [comment removed for export] *)
+Definition stderr_file (m : word -> option byte) : Prop :=
+  exists (flags mode : word) (e wend : Z) (tail : list byte),
+    rw_cells psegs m RSTDERR (file_cells flags wend e e F_STDIO_WRITE 0x5aeb8 0 2 mode 0xffffffff tail).
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+Section StdioExitStatement.
+  Context {St : Type} (get_so : St -> stdout_st) (set_so : stdout_st -> St -> St).
+
+  Definition stdio_exit_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+      (lo : Z) (guard : word) (m : word -> option byte) (s : St) : unit -> St -> machine_state -> Prop :=
+    fun _ s' ms' => exists t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 so' m',
+      ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+               F (ret_pc ra) fc None m' (seg_rom psegs)
+      /\ munch [(bv_unsigned sp - 160, bv_unsigned sp); (RSTDOUT, 0x2a680); (RSTDOUT_BUF, 0x5b2c0)]%Z m m'
+      /\ wmono psegs m m' /\ mem_inv psegs m'
+      /\ stk psegs m' lo (bv_unsigned sp)
+      /\ s' = set_so so' s
+      /\ stdout_file m' so' /\ so_buf so' = [] 
+      /\ stderr_file m'
+      /\ rw_cells psegs m' 0x29468 [C8 (Z_to_bv 64 0x5aa58)] /\ rw_cells psegs m' 0x5aa58 [C8 guard].
+
+  Definition stdio_exit_spec_stmt : Prop :=
+    forall ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+           (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (lo : Z) (s : St) (guard : word)
+           (cdt thr sec : byte) (tm1 : word),
+      stk psegs m lo (bv_unsigned sp) ->
+      rw_cells psegs m 0x5aa78 [C1 cdt; C1 thr; C1 sec; C1 (Z_to_bv 8 0); C4 tm1] ->   (* [comment removed for export] *)
+      rw_cells psegs m 0x5aea8 [C8 z64] ->                                            (* [comment removed for export] *)
+      rw_cells psegs m 0x5ae98 [C8 z64] ->                                            (* [comment removed for export] *)
+      rw_cells psegs m 0x2a680 [C8 (Z_to_bv 64 RSTDOUT)] ->                          (* [comment removed for export] *)
+      rw_cells psegs m 0x2a590 [C8 (Z_to_bv 64 RSTDERR)] ->                          (* [comment removed for export] *)
+      stdout_file m (get_so s) -> stderr_file m ->
+      rw_cells psegs m 0x29468 [C8 (Z_to_bv 64 0x5aa58)] -> rw_cells psegs m 0x5aa58 [C8 guard] ->   (* [comment removed for export] *)
+      mem_inv psegs m ->
+      tp = Z_to_bv 64 RTP ->
+      (lo <= bv_unsigned sp - 160)%Z -> (0x5c000 <= lo)%Z ->
+      implM psegs (stdout_exit_flush get_so set_so) s
+            (stdio_exit_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc lo guard m s)
+            (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                F (Z_to_bv 64 0x22a8c) fc None m (seg_rom psegs)).
+End StdioExitStatement.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Definition exit_prefix_post (sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+    (lo code t : Z) (td0 td1 td2 td3 ra : word) (cdt thr sec : byte) (tm1 : word) (m : word -> option byte) : machine_state -> Prop :=
+  fun ms' => exists t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 m',
+    ms' = MS (mkR (Z_to_bv 64 0x20700) (Z_to_bv 64 (bv_unsigned sp + -16)) gp (Z_to_bv 64 RTP) t0 t1 t2 (Z_to_bv 64 code) s1
+                 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+             F (Z_to_bv 64 0x22a8c) fc None m' (seg_rom psegs)
+    /\ munch [(bv_unsigned sp - 80, bv_unsigned sp); (0x5aa50, 0x5aa54); (0x2a6d8, 0x2a6d9); (0x5a830, 0x5a848)]%Z m m'
+    /\ wmono psegs m m' /\ mem_inv psegs m'
+    /\ stk psegs m' lo (bv_unsigned sp + -16)
+    /\ rw_cells psegs m' (bv_unsigned sp + -16) [C8 s0; C8 ra]
+    /\ rw_cells psegs m' RTD [C8 td0; C8 td1; C8 td2; C8 td3; C4 (Z_to_bv 64 t)]
+    /\ rw_cells psegs m' 0x5aa50 [C4 (Z_to_bv 64 t)]
+    /\ rw_cells psegs m' 0x2a6d8 [C1 (Z_to_bv 8 1)]
+    /\ rw_cells psegs m' RLIBC_HEAD [C1 cdt; C1 thr; C1 sec; C1 (Z_to_bv 8 0); C4 tm1].
+
+Lemma exit_prefix_spec : forall ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+    (F : bvmap 5 word) fc (m : word -> option byte) (lo : Z) (code t : Z) (td0 td1 td2 td3 : word)
+    (cdt thr sec : byte) (tm1 : word),
+  stk psegs m lo (bv_unsigned sp) ->
+  rw_cells psegs m RTD [C8 td0; C8 td1; C8 td2; C8 td3; C4 (Z_to_bv 64 t)] ->      (* [comment removed for export] *)
+  rw_cells psegs m 0x5aa50 [C4 z64] ->                                              (* [comment removed for export] *)
+  rw_cells psegs m 0x29470 [C8 (Z_to_bv 64 0x29280); C8 (Z_to_bv 64 0x29278)] ->    (* [comment removed for export] *)
+  rw_cells psegs m 0x29278 [C8 (Z_to_bv 64 0x1593c)] ->                            (* [comment removed for export] *)
+  rw_cells psegs m 0x2a6d8 [C1 (Z_to_bv 8 0)] ->                                    (* [comment removed for export] *)
+  rw_cells psegs m 0x29410 [C8 (Z_to_bv 64 0x20578); C8 z64] ->                    (* [comment removed for export] *)
+  rw_cells psegs m RDSO [C8 (Z_to_bv 64 RDSO)] ->                                  (* [comment removed for export] *)
+  rdrv_statics m ->                                                                 (* [comment removed for export] *)
+  rw_cells psegs m RLIBC_HEAD [C1 cdt; C1 thr; C1 sec; C1 (Z_to_bv 8 0); C4 tm1] -> (* [comment removed for export] *)
+  mem_inv psegs m ->
+  tp = Z_to_bv 64 RTP -> a0 = Z_to_bv 64 code ->
+  (0 < t < 4194304)%Z -> (lo <= bv_unsigned sp - 80)%Z -> (0x5c000 <= lo)%Z ->
+  evt psegs (exit_prefix_post sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc lo code t td0 td1 td2 td3 ra cdt thr sec tm1 m)
+      (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          F (Z_to_bv 64 0x20694) fc None m (seg_rom psegs)).
+Proof.
+  intros until tm1. intros ST TDa EXL GF FA FIN GCX DSO [k ATX] LCH MI -> -> Ht LO LOLO.
+  destruct ATX as (AL & ACB & AFIN & ALCK & AHD & AA0).
+  unfold RINIT_FLAG, RIN_CB, RATX_FIN, RATX_LOCK, RATX_HEAD, RATX_A0, RLIBC_HEAD, RDSO in *.
+  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
+  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (0x5aa50, 0x5aa54); (0x2a6d8, 0x2a6d9); (0x5a830, 0x5a848)]%Z m) as MU.
+  pose proof (wmono_refl psegs m) as WM.
+  carve_frame 16%nat ST.
+  do 6 lstep.
+  replace (sx32 (Z_to_bv 64 t)) with (Z_to_bv 64 t)
+    by (unfold sx32; f_equal; rewrite unsigned_lit by lia; symmetry; apply swrap32_small; lia).
+  lstep. lstep.
+  (* [comment removed for export] *)
+  amo_step. replace (sx32 z64) with z64 by (vm_compute; reflexivity).
+  lstep. if_false. amo_step. lstep. if_false.
+  lstep. change (bv_swrap 32 (0 + 0)) with 0%Z.
+  lstep. if_cases K; zify_cond K; [exfalso; lia|]. clear K. lstep. if_true.
+  (* [comment removed for export] *)
+  lstep. lstep.
+  call_sp (funcs_on_exit_spec k);
+    [ exact ST | exact ACB | exact AFIN | exact ALCK | exact AHD | exact AA0 | exact LCH | exact MI
+    | lia | unfold GLOBALS_TOP; lia | ].
+  lazymatch goal with H : stk _ _ _ _ |- _ => rename H into ST end.
+  steps_to 0x20648%Z.
+  (* [comment removed for export] *)
+  carve_frame 32%nat ST. steps_to 0x1593c%Z.
+  carve_frame 16%nat ST. steps_to 0x159c8%Z. release_frame FR1 ST (bv_unsigned sp + -48)%Z. astep.
+  steps_to 0x20690%Z. release_frame FR0 ST (bv_unsigned sp + -16)%Z. astep. astep.
+  astep.
+  unfold exit_prefix_post. sys_finish.
+Time Qed.
+
+Section ExitProof.
+  Context {St : Type} (get_so : St -> stdout_st) (set_so : stdout_st -> St -> St).
+  (* [comment removed for export] *)
+  Hypothesis stdio_exit_spec : stdio_exit_spec_stmt get_so set_so.
+
+  Lemma exit_spec : forall (s : St) (Q : Empty_set -> St -> machine_state -> Prop)
+      ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+      (F : bvmap 5 word) fc (m : word -> option byte) (lo : Z) (code t : Z) (td0 td1 td2 td3 guard : word)
+      (cdt thr sec : byte) (tm1 : word),
+    stk psegs m lo (bv_unsigned sp) ->
+    rw_cells psegs m RTD [C8 td0; C8 td1; C8 td2; C8 td3; C4 (Z_to_bv 64 t)] ->      (* [comment removed for export] *)
+    rw_cells psegs m 0x5aa50 [C4 z64] ->                                              (* [comment removed for export] *)
+    rw_cells psegs m 0x29470 [C8 (Z_to_bv 64 0x29280); C8 (Z_to_bv 64 0x29278)] ->    (* [comment removed for export] *)
+    rw_cells psegs m 0x29278 [C8 (Z_to_bv 64 0x1593c)] ->                            (* [comment removed for export] *)
+    rw_cells psegs m 0x2a6d8 [C1 (Z_to_bv 8 0)] ->                                    (* [comment removed for export] *)
+    rw_cells psegs m 0x29410 [C8 (Z_to_bv 64 0x20578); C8 z64] ->                    (* [comment removed for export] *)
+    rw_cells psegs m RDSO [C8 (Z_to_bv 64 RDSO)] ->                                  (* [comment removed for export] *)
+    rdrv_statics m ->                                                                 (* [comment removed for export] *)
+    rw_cells psegs m RLIBC_HEAD [C1 cdt; C1 thr; C1 sec; C1 (Z_to_bv 8 0); C4 tm1] ->
+    rw_cells psegs m 0x5aea8 [C8 z64] -> rw_cells psegs m 0x5ae98 [C8 z64] ->
+    rw_cells psegs m 0x2a680 [C8 (Z_to_bv 64 RSTDOUT)] -> rw_cells psegs m 0x2a590 [C8 (Z_to_bv 64 RSTDERR)] ->
+    stdout_file m (get_so s) -> stderr_file m ->
+    rw_cells psegs m 0x29468 [C8 (Z_to_bv 64 0x5aa58)] -> rw_cells psegs m 0x5aa58 [C8 guard] ->
+    mem_inv psegs m ->
+    tp = Z_to_bv 64 RTP -> a0 = Z_to_bv 64 code ->
+    (0 < t < 4194304)%Z -> (lo <= bv_unsigned sp - 176)%Z -> (0x5c000 <= lo)%Z ->
+    implM psegs (Driver.exit_model (io_S get_so set_so) code) s Q
+         (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+             F (Z_to_bv 64 0x20694) fc None m (seg_rom psegs)).
+  Proof.
+    intros until tm1. intros ST TDa EXL GF FA FIN GCX DSO ATX LCH OFL SIN SOU SEU SOF SEF GG GU MI -> -> Ht LO LOLO.
+    unfold RLIBC_HEAD, RDSO in *.
+    pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
+    (* [comment removed for export] *)
+    destruct SOF as (flg & mode & tail & bufb & SOF1 & SOF2 & SOF3 & SOF4 & SOF5 & SOF6).
+    destruct SEF as (flg' & mode' & ee & wend' & tail' & SEF1).
+    unfold file_cells in SOF1, SEF1.
+    unfold Driver.exit_model.
+    eapply (implM_bind psegs _ _ s
+              (fun _ _ ms' => exists sp' gp' tp' x5 x6 x7 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 m',
+                 ms' = MS (mkR (Z_to_bv 64 0x20700) sp' gp' tp' x5 x6 x7 (Z_to_bv 64 code) x9 x10 x11 x12 x13 x14 x15 x16 x17
+                               x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31)
+                          F (Z_to_bv 64 0x20700) fc None m' (seg_rom psegs))).
+    - (* [comment removed for export] *)
+      change (io_exit (io_S get_so set_so)) with (stdout_exit_flush get_so set_so).
+      unfold implM. iprefix.
+      call exit_prefix_spec; [exact ST | exact TDa | exact EXL | exact GF | exact FA | exact FIN | exact GCX | exact DSO | exact ATX | exact LCH | exact MI
+                              | reflexivity | reflexivity | lia | lia | lia | ].
+      name_sp sp (-16)%Z.
+      pose proof stdio_exit_spec as SE. unfold stdio_exit_spec_stmt in SE.
+      apply evt_done. eapply impl_epost_mono; [eapply SE|].
+      all: lazymatch goal with
+           | |- forall _, _ =>
+               intros [[] s'] ms' PO; cbn [fst snd] in PO; unfold stdio_exit_post in PO;
+               destruct_exs PO; destruct PO as (E & PO); subst ms'; cbn [fst snd];
+               replace (ret_pc (Z_to_bv 64 0x20700)) with (Z_to_bv 64 0x20700) by (symmetry; apply ret_pc_even; [lia|reflexivity]);
+               repeat eexists; cbv delta [mkR]; reflexivity
+           | |- stdout_file _ _ => exists flg, mode, tail, bufb; exact (conj SOF1 (conj SOF2 (conj SOF3 (conj SOF4 (conj SOF5 SOF6)))))
+           | |- stderr_file _ => exists flg', mode', ee, wend', tail'; exact SEF1
+           | |- _ => unname_sp; first [ hyp_by_addr | reflexivity | lia ]
+           end.
+    - (* [comment removed for export] *)
+      clear SOF1 SOF2 SOF3 SOF4 SOF5 SOF6 SEF1.
+      intros [] s' ms' PO. destruct_exs PO. subst ms'.
+      apply implM_sys. do 4 lstep. step_ecall.
+      split; [ at_node_red; split; [right; reflexivity | reflexivity] | intros rsp a H; cbn in H; discriminate H].
+  Time Qed.
+End ExitProof.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Definition at_exit {St : Type} (get_so : St -> stdout_st) (code : Z) (s : St) (ms : machine_state) : Prop :=
+  exists (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+         (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (lo t : Z) (td0 td1 td2 td3 guard : word)
+         (cdt thr sec : byte) (tm1 : word),
+    ms = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+            F (Z_to_bv 64 0x20694) fc None m (seg_rom psegs)
+    /\ stk psegs m lo (bv_unsigned sp)
+    /\ rw_cells psegs m RTD [C8 td0; C8 td1; C8 td2; C8 td3; C4 (Z_to_bv 64 t)]
+    /\ rw_cells psegs m 0x5aa50 [C4 z64]
+    /\ rw_cells psegs m 0x29470 [C8 (Z_to_bv 64 0x29280); C8 (Z_to_bv 64 0x29278)]
+    /\ rw_cells psegs m 0x29278 [C8 (Z_to_bv 64 0x1593c)]
+    /\ rw_cells psegs m 0x2a6d8 [C1 (Z_to_bv 8 0)]
+    /\ rw_cells psegs m 0x29410 [C8 (Z_to_bv 64 0x20578); C8 z64]
+    /\ rw_cells psegs m RDSO [C8 (Z_to_bv 64 RDSO)]
+    /\ rdrv_statics m
+    /\ rw_cells psegs m RLIBC_HEAD [C1 cdt; C1 thr; C1 sec; C1 (Z_to_bv 8 0); C4 tm1]
+    /\ rw_cells psegs m 0x5aea8 [C8 z64] /\ rw_cells psegs m 0x5ae98 [C8 z64]
+    /\ rw_cells psegs m 0x2a680 [C8 (Z_to_bv 64 RSTDOUT)] /\ rw_cells psegs m 0x2a590 [C8 (Z_to_bv 64 RSTDERR)]
+    /\ stdout_file m (get_so s) /\ stderr_file m
+    /\ rw_cells psegs m 0x29468 [C8 (Z_to_bv 64 0x5aa58)] /\ rw_cells psegs m 0x5aa58 [C8 guard]
+    /\ mem_inv psegs m
+    /\ tp = Z_to_bv 64 RTP /\ a0 = Z_to_bv 64 code
+    /\ (0 < t < 4194304)%Z /\ (lo <= bv_unsigned sp - 176)%Z /\ (0x5c000 <= lo)%Z.
+
+Lemma exit_from_at_exit {St : Type} (get_so : St -> stdout_st) (set_so : stdout_st -> St -> St) :
+  stdio_exit_spec_stmt get_so set_so ->
+  forall (s : St) (Q : Empty_set -> St -> machine_state -> Prop) code ms,
+    at_exit get_so code s ms -> implM psegs (Driver.exit_model (io_S get_so set_so) code) s Q ms.
+Proof.
+  intros STDIO_EXIT s Q code ms H.
+  destruct H as (ra & sp & gp & tp & t0 & t1 & t2 & s0 & s1 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 &
+                 s2 & s3 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & F & fc & m & lo & t &
+                 td0 & td1 & td2 & td3 & guard & cdt & thr & sec & tm1 & -> & H).
+  destruct H as (ST & TD & EXL & GF & FA & FIN & GCX & DSO & ATX & LCH & OFL & SIN & SOU & SEU & SOF & SEF & GG & GU & MI & Htp & Ha0 & Ht & LO & LOLO).
+  eapply (exit_spec get_so set_so STDIO_EXIT s Q);
+    [exact ST | exact TD | exact EXL | exact GF | exact FA | exact FIN | exact GCX | exact DSO | exact ATX | exact LCH | exact OFL | exact SIN | exact SOU | exact SEU | exact SOF | exact SEF | exact GG | exact GU | exact MI | exact Htp | exact Ha0 | exact Ht | exact LO | exact LOLO].
+Qed.
+
+(* [comment removed for export] *)
+Lemma impl_msys_of_enode : forall segs {St A} (n : node) (pl : resp -> option A) (Q : A -> machine_state -> Prop) (s : St) ms,
+  impl segs (at_node segs) (enode n pl) (epost Q) ms ->
+  impl segs (at_node segs) (Monad.msys n pl s) (epost (fun p ms' => Q (fst p) ms' /\ snd p = s)) ms.
+Proof.
+  intros segs St A n pl Q s ms H. unfold Monad.msys, enode in *. cbn in *.
+  eapply evt_mono; [exact H|]. intros ms1 [Hat Hk]. split; [exact Hat|].
+  intros rsp. specialize (Hk rsp). destruct (pl rsp) as [a|]; cbn in *; [|exact Hk].
+  eapply evt_mono; [exact Hk|]. intros ms2 HQ. cbn. auto.
+Qed.

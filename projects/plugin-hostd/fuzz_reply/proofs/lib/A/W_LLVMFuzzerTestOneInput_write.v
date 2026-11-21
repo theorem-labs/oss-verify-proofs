@@ -19,8 +19,9 @@
      HGs / HZS - the G-coverage and zero-shadow facts of g_s (no gx_rt of G_fr: G_fr holds errno, see _exit.v);
      HGW / HERRS / ROM_ERR - G_fr / errno facts, proved for G_fr_c in W_LLVMFuzzerTestOneInput_G.v (c_HGW, c_HERRS,
                  c_ROM_ERR);
-     ROM_PIN - rom_out's pinning conjunct (W_journal.v:397), the start-up instance's debt;
+     ROM_PIN - rom_out's pinning conjunct (W_journal.v:398), the start-up instance's debt;
      RI_write_* and LS_write_* - the arm's open model obligations. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -165,10 +166,10 @@ Definition wr_G : list (Z * Z) :=
 Hypothesis HGW : forall a, inG wr_G a -> inG G_fr a.
 (* errno is apart from g_s and from the model's globals (c_HERRS): gx_rt of list_push's G and the model's carry *)
 Hypothesis HERRS : forall a, inG ((rg_s fr_RG, 4 * ASRC) :: wr_G) a -> ~ (as_errno B <= a < as_errno B + 4).
-(* errno is no read-only byte (c_ROM_ERR): rom_out's errno conjunct (W_journal.v:398) *)
+(* errno is no read-only byte (c_ROM_ERR): rom_out's errno conjunct (W_journal.v:399) *)
 Hypothesis ROM_ERR : forall a, in_rom segs a -> ~ (as_errno B <= a < as_errno B + 4).
 (* ---- the start-up instance's debt (not a G_fr / errno fact) ---- *)
-(* rom_out's pinning conjunct (W_journal.v:397, comment :372-375), verbatim: an allocator-owned read-only byte is a
+(* rom_out's pinning conjunct (W_journal.v:398, comment :372-375), verbatim: an allocator-owned read-only byte is a
    byte of one of AR's const cells.  With ROM_ERR and two vm_computes it gives rom_out at list_push's G, so the
    journal carries rom_view across the call (W_journal.v ajournal_gx_rom_view) *)
 Hypothesis ROM_PIN : forall a, in_rom segs a -> Exists (in_zr a) (as_owned_static B) -> rom_pinned segs B a.
@@ -245,8 +246,8 @@ Hypothesis LS_write_room : forall cx t m si h ly S,
   (lp_grow (hs_pending h) = true -> lp_vbytes (hs_pending h) < WR_MMAX) /\
   blocks_bytes S + (if lp_grow (hs_pending h) then lp_vbytes (hs_pending h) else 0) + (wr_n cx m + 1) <= LIVE_MAX /\
   mo_ok MT S (lp_cost MT (hs_pending h) (wr_n cx m)).
-(* the push rule at W8Add's PROPOSED text (lib/A/ReplyLS.v atop_LS_write_push_prop, a working branch
-   f57b3e2d0ca), in this Section's form (B, MT): list_push's post facts about the pushed list l' (lp_post, W_contract.v:
+(* the push rule at W8Add's PROPOSED text (lib/A/ReplyLS.v atop_LS_write_push_prop, a working branch),
+   in this Section's form (B, MT): list_push's post facts about the pushed list l' (lp_post, W_contract.v:
    the record, the capacity, the address kept when it does not grow, and the blocks' change) in place of the published
    `mo_le MT S S' cost` alone, which left l' and S' free *)
 Hypothesis LS_write_push : forall cx t m si h (l' : hlist) d ev ly S ly' S',
@@ -1816,7 +1817,7 @@ Proof.
   intros si. unfold wr_LA, ASRC. change (rg_s fr_RG) with 6129888.
   replace (6129888 + 96 * Z.of_nat si + 16) with ((766238 + 12 * Z.of_nat si) * 8) by lia. apply Z_mod_mult.
 Qed.
-(* rom_out at list_push's G (W_journal.v:396): g_s and the sink's head are no ROM (vm_compute), ROM_PIN, ROM_ERR *)
+(* rom_out at list_push's G (W_journal.v:397): g_s and the sink's head are no ROM (vm_compute), ROM_PIN, ROM_ERR *)
 Lemma wr_rom_out1 : forall si, (si < 4)%nat -> rom_out segs B (wr_G1 si).
 Proof.
   intros si Hsi a Ha.

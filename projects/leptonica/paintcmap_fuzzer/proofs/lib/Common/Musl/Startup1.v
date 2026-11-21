@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Section P1 over the launch record (ProcInput, mmap base, image entry) and its launch facts, the argv strings read from the new stack layout under the stack top; Hsp_lo', Hsp_hi' and Ltac lctx added; Proof using annotations). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -33,25 +34,35 @@ End GD_1.
 Section P1.
   Context {fx : FPState} {RL : Reloc} {RLC : RelocCode RL} {RLS : RelocSites RL} {RLI : RelocImg RL} {RLD : RelocData RL} {RLW : RelocRW RL RLD} {RST : RelocStart RL RLD}.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variables (hw : word) (drw : EntryDraw).   (* [comment removed for export] *)
-  Hypothesis Hva : valid_argv av.
-  Hypothesis Hve : valid_envp ev.
+  Variable inp : ProcInput.
+  Variables mbase brk : word.
+  Variable ent : word.   (* the image's entry, as [Run.init_machine_state] hands it to the auxv *)
+  Variable drw : EntryDraw.   (* [comment removed for export] *)
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase drw) inp.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
 
-  Local Notation mem0 := (wrap_mem RPH sp0 av ev uid hw drw) (only parsing).
-  Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av ev uid hw drw)) (only parsing).
+  Lemma Hsp_lo' : (sp_window_lo <= bv_unsigned sp0)%Z. Proof using Hlo. exact Hlo. Qed.
+  Lemma Hsp_hi' : (bv_unsigned sp0 <= sp_window_hi)%Z. Proof using Hhi. exact Hhi. Qed.
+  (* the launch facts a layout lemma of ArgvEnv/RefLayout asks for *)
+  Ltac lctx := first [ exact Hva | exact Hve | exact Hvl | exact Hlau | exact Hsp_lo' | exact Hsp_hi' | exact Hal ].
 
-  Let argc : word := argcN av.
+  Local Notation mem0 := (wrap_mem inp mbase RPH ent sp0 drw) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH ent sp0 drw)) (only parsing).
+
+  Let argc : word := argcN inp.
   Local Notation argvp := (Z_to_bv 64 (bv_unsigned sp0 + 8)) (only parsing).
-  Let envp : word := envp_ptr sp0 av.
-  Let pn : word := cat_argv_ptr sp0 av ev 0.
+  Let envp : word := envp_ptr inp sp0.
+  Let pn : word := cat_argv_ptr (ed_top drw) av ev (in_execfn inp) 0.
 
   Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
-  Proof. exact (u_argcN av Hva). Qed.
+  Proof using Hva. exact (u_argcN inp Hva). Qed.
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
   Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
@@ -85,7 +96,7 @@ Section P1.
       /\ getr regs' 12 = Z_to_bv 64 304
       /\ getr regs' 18 = rl dF_131d0 0x131d0
       /\ (forall r : reg, In r [5;19;20;21;22;23;24;25;26;27]%list -> getr regs' r = Z_to_bv 64 0).
-  Proof.
+  Proof using fx RL RLC RLS RLI RLD RLW RST Hva Hve Hvl Hlau Hlo Hhi Hal.
     intros rom J HJ.
     pose proof len_av as Hlen. pose proof u_argc as Hargc.
     eexists. split.
@@ -103,7 +114,7 @@ Section P1.
         [ exact F_130a0 | reflexivity | exact D_130a0
         | addr_norm; rewrite rdn_cmem_above by region_side;
           apply (rdn_low_bytes SEGS mem0 sp0 argc 4); [lia|];
-          exact (read_argc_w SEGS RPH sp0 av ev uid hw drw Hva Hve Hhi)
+          eapply read_argc_w; lctx
         | apply bytes_le_to_Z_4_small; rewrite Hargc; lia ]
         | step_simpl]; vnorm.
       rewrite (v_lw_small argc) by (rewrite Hargc; lia).
@@ -136,7 +147,7 @@ Section P1.
         | addr_norm; rewrite rdn_cmem_above by region_side;
           replace (Z_to_bv 64 (bv_unsigned sp0 + 8)) with (sp0 + nat_to_word (8 + 8 * 0))
             by (rewrite word_add_nat; f_equal; lia);
-          exact (read_argv_ptr_w SEGS RPH sp0 av ev uid hw drw Hva Hve Hlo Hhi 0 ltac:(lia))
+          eapply read_argv_ptr_w; first [lctx | lia]
         | apply bytes_le_to_Z_8 ]
         | step_simpl]; vnorm.
       stepiv F_1540c D_1540c (Z_to_bv 64 (8 * Z.of_nat (length av)))

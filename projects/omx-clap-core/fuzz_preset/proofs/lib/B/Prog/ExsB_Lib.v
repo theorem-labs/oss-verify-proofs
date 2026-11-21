@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* RELOCATED B -> B' (h-pre-b3's #102 row, 2026-10-29): the walk of origin/cold/h-pre-b3-exstring-b 5f62ea0b5c45 (OLD
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* RELOCATED B -> B' (h-pre-b3's #102 row, 2026-10-29): the walk (OLD
    pin f8f98a95, unstripped twin 3b5e1a09) moved to the #102 pin B' (asan-ubsan d663f82d7f48, unstripped twin
-   c90d4fa54d43, facts 8f3e7e1a07f1) by alreloc c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9), on int102 with the kit
-   decff67d721f. ex_string, ex_hex4 and ex_utf8 have equal instruction words on B and B' up to pc-relative fields,
+   c90d4fa54d43, facts) by alreloc c4338d099cfb8025, on int102 with the kit.
+   ex_string, ex_hex4 and ex_utf8 have equal instruction words on B and B' up to pc-relative fields,
    and every pc-relative target names the same symbol + offset. Every address in this file, in a comment or in a term, is the B' image's; a mention of the record image
    f8f98a95 below names the donor's image. *)
 (* Theorem Labs, 2026-10: fuzz_preset, ex_string's walk on image B (record f8f98a95): the journal-level helpers every

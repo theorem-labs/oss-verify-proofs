@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (grant_ok_na also requires Linux's placement (linux_place_is, hint_placement_ok_b); grant_ok_na_pin, the placement alone, and six lemmas on it added (grant_ok_na_pin_unpack, grant_ok_na_of_pin, grant_ok_na_pin_of_grant_ok, grant_ok_na_pin_of_gate, grant_ok_na_place, grant_na_pin_not_errno); mprotect_check's premise that the range avoids the vDSO pair; brk_model_grow_eq, grant_ok_na_unpack and grant_na_not_errno re-proved; imports Placement, ExecutableSpecs and AsanCeil). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -20,6 +21,8 @@ Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
 Import ListNotations.
 Open Scope bv_scope.
 From Stdlib Require Import Zify.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement ExecutableSpecs.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import AsanCeil.
 Local Ltac Stdlib.micromega.Lia.lia ::=
 first [ intros; Zify.zify_pre_hook; zify_elim_let; zify_op; (Zify.zify_iter_specs); Zify.zify_saturate; Zify.zify_post_hook; xlia zchecker
 | Zify.zify; xlia zchecker ].
@@ -135,10 +138,21 @@ rewrite (brk_unmaps_grow req b) by lia. cbn [forget_vm_ranges].
 unfold brk_model_next, brk_maps_next. fold b.
 rewrite (proj2 (Z.ltb_ge (bv_unsigned req) (bv_unsigned b))) by lia. rewrite andb_false_r.
 rewrite (brk_grants_grow req req b Hreq0 Hb0 Hlt), (brk_unmaps_grow req b) by lia.
+(* Qualified: LPS 727298f3 added Checks/Placement.v:63 page_round_up_Z_aligned
+   (page_round_up_Z z mod page_size = 0), and this file imports Checks.Placement at :23
+   AFTER AS.AllocSim, so the bare name now resolves to that one and :140 read
+   "Found no subterm matching page_round_up_Z (bv_unsigned b) mod page_size".
+   The meaning wanted here is AS/AllocSim.v:208, z mod page_size = 0 -> page_round_up_Z z = z. *)
+rewrite (AllocSim.page_round_up_Z_aligned (bv_unsigned b)) by (first [lia | exact Hbal]).
+rewrite Hureq.
+rewrite (AllocSim.page_round_up_Z_aligned (bv_unsigned b + d))
+by (first [lia | rewrite Zplus_mod, Hbal, Hdal; reflexivity]).
+unfold brk_page_range. rewrite (proj2 (Z.ltb_lt (bv_unsigned b) (bv_unsigned b + d))) by lia.
 cbn [app maps_subtract_ranges fold_left].
-replace (req - b) with (Z_to_bv 64 d); [reflexivity|].
-apply bv_eq. rewrite bv_sub_unsigned, Hureq.
-rewrite bv_wrap_small by (unfold bv_modulus; lia). rewrite u64_lit by lia. lia.
+replace (Z_to_bv 64 (bv_unsigned b)) with b
+by (apply bv_eq; rewrite u64_lit by lia; reflexivity).
+replace (bv_unsigned b + d - bv_unsigned b)%Z with d by lia.
+reflexivity.
 Qed.
 Definition brk_adm (model : Model) (req r : word) : Prop :=
 brk_resolution_ok model req r
@@ -211,9 +225,73 @@ with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
 (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
 (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
 Definition grant_ok_na (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-(bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
-&& (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
-&& region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n).
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
+  && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
+  && hint_placement_ok_b hint (m_vmmaps m) (bv_unsigned a) n.
+Definition grant_ok_na_pin (hint : word) (m : Model) (a : word) (n : Z) : bool :=
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a.
+
+Lemma grant_ok_na_pin_unpack : forall hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  grant_ok_na_pin hint m a n = true ->
+  (bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z
+  /\ (bv_unsigned a + n <= alloc_top (m_vmmaps m))%Z
+  /\ region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n) = true.
+Proof.
+  intros hint m a n Hn Hnal H.
+  exact (linux_place_is_admissible _ _ _ _ _ Hn Hnal H).
+Qed.
+
+Lemma grant_ok_na_of_pin : forall hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  grant_ok_na_pin hint m a n = true -> grant_ok_na hint m a n = true.
+Proof.
+  intros hint m a n Hn Hnal H.
+  unfold grant_ok_na_pin in H.
+  destruct (linux_place_is_admissible _ _ _ _ _ Hn Hnal H)
+    as (Hal & Hpos & Htop & Hfree).
+  unfold grant_ok_na. rewrite H, Hfree.
+  rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt _ _) Hpos),
+    (proj2 (Z.leb_le _ _) Htop). cbn [andb].
+  unfold hint_placement_ok_b. destruct (w_is0 hint) eqn:H0; [|reflexivity].
+  unfold w_is0 in H0. apply bv_eqb_eq in H0. subst hint.
+  exact (placement_policy_holds (m_vmmaps m) (kb_thp (m_kernel m)) a n Hn Hnal
+           (proj1 (linux_place_is_iff _ _ _ _ _ Hn Hnal) H)).
+Qed.
+
+Lemma grant_ok_na_pin_of_grant_ok : forall hint m a n,
+  grant_ok hint m a n = true -> grant_ok_na_pin hint m a n = true.
+Proof.
+  intros hint m a n H. unfold grant_ok_na_pin.
+  exact (grant_ok_place _ _ _ _ H).
+Qed.
+
+Lemma grant_ok_na_pin_of_gate : forall hint m a n,
+  grant_ok_na hint m a n = true -> grant_ok_na_pin hint m a n = true.
+Proof.
+  intros hint m a n H. unfold grant_ok_na in H. unfold grant_ok_na_pin.
+  rewrite !andb_true_iff in H. tauto.
+Qed.
+
+Lemma grant_ok_na_place : forall hint m a n,
+  grant_ok_na hint m a n = true ->
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true.
+Proof.
+  intros hint m a n H. unfold grant_ok_na in H.
+  rewrite !andb_true_iff in H. tauto.
+Qed.
+
+Lemma grant_na_pin_not_errno : forall hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z -> grant_ok_na_pin hint m a n = true ->
+  errno_ret_in mmap_errnos a = false.
+Proof.
+  intros hint m a n Hn Hnal Hg.
+  destruct (grant_ok_na_pin_unpack _ _ _ _ Hn Hnal Hg) as (_ & _ & Htop & _).
+  apply errno_ret_in_below; [reflexivity|]. alloc_top_bounds. unfold two_pow_64 in *. lia.
+Qed.
+
 #[using="Type"] Lemma grant_ok_na_unpack : forall hint m a n,
 grant_ok_na hint m a n = true ->
 (bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z /\
@@ -221,14 +299,18 @@ grant_ok_na hint m a n = true ->
 region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n) = true /\ True.
 Proof.
 intros hint m a n H. unfold grant_ok_na in H.
-rewrite !andb_true_iff in H. destruct H as [[[H1 H2] H3] H4].
+rewrite !andb_true_iff in H. destruct H as [[[[[_ H1] H2] H3] H4] _].
 apply Z.eqb_eq in H1. apply Z.ltb_lt in H2. apply Z.leb_le in H3. repeat split; assumption.
 Qed.
 #[using="Type"] Lemma grant_na_not_errno : forall hint model a n,
 (0 <= n)%Z -> grant_ok_na hint model a n = true -> errno_ret_in mmap_errnos a = false.
 Proof.
-intros hint model a n Hn Hg. unfold grant_ok_na in Hg.
-apply andb_true_iff in Hg as [Hg _]. apply andb_true_iff in Hg as [Hg Hce]. apply Z.leb_le in Hce.
+(* Was two positional [andb_true_iff] peels, which landed Hce on grant_ok_na's
+   region_free component rather than its alloc_top bound: the conjunction is six
+   components and the peels reach the fifth.  Taken through grant_ok_na_unpack
+   (:294), which names them, as grant_na_pin_not_errno (:289) already does for
+   the _pin twin -- so a further conjunct change moves neither proof. *)
+intros hint model a n Hn Hg. destruct (grant_ok_na_unpack _ _ _ _ Hg) as (_ & _ & Hce & _).
 apply errno_ret_in_below; [reflexivity|].
 pose proof (alloc_top_room (m_vmmaps model)). unfold two_pow_64, stack_max_size in *. lia.
 Qed.
@@ -249,6 +331,7 @@ ms_gpr ms 1 = Z_to_bv 64 len -> (0 < len)%Z ->
 (bv_unsigned addr + page_round_up_Z len < two_pow_64)%Z ->
 ms_gpr ms 2 = Z_to_bv 64 3 ->
 let n := Z_to_bv 64 (page_round_up_Z len) in
+region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
 map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
 map_contains (vm_maps (m_vmmaps model)) addr n = true ->
 check_syscall (sys_input segs ms x8) eff model
@@ -262,7 +345,7 @@ else CheckReject
 | _ => CheckReject
 end.
 Proof.
-intros ms x8 model eff addr len Hno H0 Hal H1 Hlen Hnw H2 n Hna Hma.
+intros ms x8 model eff addr len Hno H0 Hal H1 Hlen Hnw H2 n Hvd Hna Hma.
 assert (Hlen' : (len < two_pow_64)%Z).
 { pose proof (page_round_up_Z_bounds len ltac:(lia)). pose proof (u64_range addr). lia. }
 assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite H1; apply u64_lit; unfold two_pow_64 in Hlen'; lia).
@@ -274,7 +357,7 @@ rewrite (proj2 (Z.eqb_eq _ _) Hal). cbn [negb].
 assert (E1 : w_is0 (ms_gpr ms 1) = false).
 { unfold w_is0, bv_eqb. rewrite Hu1. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. apply Z.eqb_neq. lia. }
 rewrite E1. rewrite (proj2 (Z.leb_gt _ _)) by lia.
-cbv beta iota zeta. fold n. rewrite Hna, Hma. cbn [andb].
+cbv beta iota zeta. fold n. rewrite Hvd. cbn [negb]. rewrite Hna, Hma. cbn [andb].
 destruct eff as [r ws zs us cs ci]. destruct ws; [|reflexivity].
 destruct us; [| destruct (errno_ret_in mprotect_errnos r); reflexivity].
 destruct cs; [| destruct (errno_ret_in mprotect_errnos r); reflexivity].

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the auxv hand-off section takes the run's whole launch input, with its launch hypotheses, in place of argv, envp, uid and hw; the slot table and [hi_auxv] name the slots of the revision's auxv layout (pairs 10, 11, 13-15, 19, 20, 23, 24), not the released model's ten contiguous pairs, and AT_NULL is not named because its index moves with the kernel's rseq flag. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs StackLayout.
@@ -23,30 +24,43 @@ Definition auxv_slot_ok (ch : acs) (jx : nat * (Z + nat)) : bool :=
   | None, _ => false
   end.
 
+(* LPS 727298f3: the slots [el_auxvA] names, at the revision's auxv layout (D_auxv.v:
+   pair k's key in slot 2k, its value in slot 2k + 1): AT_HWCAP pair 10, AT_PAGESZ 11,
+   AT_PHDR 13, AT_PHENT 14, AT_PHNUM 15, AT_UID 19, AT_EUID 20, AT_SECURE 23, AT_RANDOM 24
+   (AS/AsanPlanCore.v [init_kn_with] states each of these pairs at the start).  AT_NULL is
+   not listed: its pair is 26 + 2*r, which moves with the rseq flag. *)
 Definition AUXV_TABLE : list (nat * (Z + nat)) :=
-  [(0%nat, inl 3); (1%nat, inl EL_AT_PHDR); (2%nat, inl 4); (3%nat, inl 56); (4%nat, inl 5); (5%nat, inl 11); (6%nat, inl 16); (7%nat, inr 7%nat);
-   (8%nat, inl 6); (9%nat, inl 4096); (10%nat, inl 11); (11%nat, inr 11%nat); (12%nat, inl 12); (13%nat, inr 11%nat); (14%nat, inl 23); (15%nat, inl 0);
-   (16%nat, inl 25); (17%nat, inr 17%nat); (18%nat, inl 0); (19%nat, inl 0)].
+  [(20%nat, inl 16); (21%nat, inr 21%nat); (22%nat, inl 6); (23%nat, inl 4096);
+   (26%nat, inl 3); (27%nat, inl EL_AT_PHDR); (28%nat, inl 4); (29%nat, inl 56); (30%nat, inl 5); (31%nat, inl 11);
+   (38%nat, inl 11); (39%nat, inr 39%nat); (40%nat, inl 12); (41%nat, inr 39%nat);
+   (46%nat, inl 23); (47%nat, inl 0); (48%nat, inl 25); (49%nat, inr 49%nat)].
 
 Definition hs_auxv_ok (ch : acs) : bool :=
   (lit_word ch EL_AUXV_CELL 8 e_auxv && forallb (auxv_slot_ok ch) AUXV_TABLE)%bool.
 
 Section Aux.
 Variables (A : atable) (nx0 : nat) (LIMIT : Z) (FS0 : Fs.Fs).
-Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word).
+(* the launch, as AS/AsanInit.v's Section Init names it: the run's whole input [inp]
+   (B/HandoffArgv.v and B/HandoffG1.v take it the same way) *)
+Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput).
+#[local] Notation argv := (in_argv inp).
+#[local] Notation envp := (in_envp inp).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
 Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hlaunch : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
 Hypothesis SEGS_in_hull : forall a : word, APS.in_hull A (bv_unsigned a) = false -> find_segment bsegs (bv_unsigned a) 1 = None.
 Hypothesis HULL_ok : APS.hull_ok A.
 
-#[local] Notation SINV := (SINV0 ph sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 ph sp rdraw argv envp uid hw).
+#[local] Notation SINV := (SINV0 A ph sp rdraw brk0 mbase inp).
+#[local] Notation argH := (argH0 sp rdraw inp).
+#[local] Notation E0 := (AsanInit.E0 sp rdraw brk0 inp).
 #[local] Notation usp := (bv_unsigned sp).
-#[local] Notation bsb := (build_stack_bytes ph sp argv envp uid hw rdraw).
 #[local] Notation argc := (Z.of_nat (length argv)).
 #[local] Notation envc := (Z.of_nat (length envp)).
+#[local] Notation bsb := (entry_stack_image inp mbase ph (Z_to_bv 64 (a_entry A)) sp rdraw).
 
 Variables (E : env) (ch : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
 Hypothesis HC : APS.cs_ok bsegs A nx0 LIMIT SINV argH FS0 E ch R FULL model.
@@ -55,32 +69,42 @@ Hypothesis HA' : forall p, page_allowedb (APS.allowA A E ch) p = true -> page_al
 
 #[local] Notation m := (mH FULL model A').
 
-Let AH := ha_argH_high ph sp rdraw argv envp uid hw Hsp Hva.
+Lemma hx_argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a.
+Proof. intros E1 a H. eapply argH0_high; eassumption. Qed.
+
+Let AH := hx_argH_high.
 
 Let av : Z := usp + 8 * argc + 8 * envc + 24.
 
 Lemma hx_usp : sp_window_lo <= usp <= sp_window_hi /\ 1 <= argc <= 1024 /\ 0 <= envc <= 256.
-Proof. exact (sw_usp ph sp rdraw argv envp uid hw Hsp Hva Hve). Qed.
+Proof.
+  assert (L : 1 <= argc <= 1024 /\ 0 <= envc <= 256 /\ sp_window_lo <= usp <= sp_window_hi) by (eapply ha_lens; eassumption).
+  tauto.
+Qed.
+
+Lemma hx_u : forall e, expr_vars_lt NX0 e = true -> ev_only e = true -> APS.uE E e = APS.uE E0 e.
+Proof. intros e H1 H2. eapply ha_u; eassumption. Qed.
 
 Lemma hx_av : APS.uE E (fst e_auxb) + 24 = av.
-Proof. exact (sw_uauxv A nx0 LIMIT FS0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit E ch R FULL model HC). Qed.
+Proof. unfold av. eapply sw_uauxv; eassumption. Qed.
 
 Lemma hx_auxv : APS.uE E e_auxv = av.
 Proof.
-  rewrite (ha_u A nx0 LIMIT FS0 ph sp rdraw brk0 argv envp uid hw E ch R FULL model HC e_auxv (proj1 e_auxv_vars) (proj2 e_auxv_vars)).
-  exact (u_e_auxv ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit).
+  rewrite (hx_u e_auxv (proj1 e_auxv_vars) (proj2 e_auxv_vars)).
+  unfold av. eapply u_e_auxv; eassumption.
 Qed.
 
-Lemma hx_bounds : usp + 32 <= av /\ av + 176 <= 2 ^ 47 /\ av mod 8 = 0.
+Lemma hx_bounds : usp + 32 <= av /\ av + 416 <= 2 ^ 47 /\ av mod 8 = 0.
 Proof.
-  pose proof hx_usp as ((U1 & U2) & LA & LE). pose proof (bsb_ge ph sp rdraw argv envp uid hw) as (G & _).
-  destruct (ha_bsb ph sp rdraw argv envp uid hw Hfit) as (F1 & _).
+  pose proof hx_usp as ((U1 & U2) & LA & LE).
+  assert (G : 8 * argc + 8 * envc + 482 <= Z.of_nat (length bsb)) by (edestruct bsb_ge as [G _]; first [exact G | eassumption]).
+  assert (F1 : usp + Z.of_nat (length bsb) <= 2 ^ 47) by (eapply usp_fit; eassumption).
   pose proof Hsp as HS. unfold valid_sp, sp_window_lo, sp_window_hi in *. unfold av.
   split; [lia|]. split; [lia|].
   destruct HS as (_ & _ & M16). apply Z.mod_divide; [lia|]. apply Z.mod_divide in M16; [|lia]. destruct M16 as (q & Hq). exists (2 * q + argc + envc + 3). lia.
 Qed.
 
-Lemma hx_slot : forall j v, (j < 20)%nat -> auxv_slot ch j = Some v ->
+Lemma hx_slot : forall j v, (j < 50)%nat -> auxv_slot ch j = Some v ->
   bytes_at bsegs m (av + 8 * Z.of_nat j) (le8 (edenot E v)).
 Proof.
   intros j v Hj H. unfold auxv_slot in H. apply kw_find_in in H.
@@ -94,7 +118,7 @@ Qed.
 Lemma hx_table : hs_auxv_ok ch = true -> forall jx, In jx AUXV_TABLE -> auxv_slot_ok ch jx = true.
 Proof. intros HT jx Hin. unfold hs_auxv_ok in HT. apply andb_prop in HT as [_ HT]. exact (proj1 (forallb_forall _ _) HT jx Hin). Qed.
 
-Lemma hx_lit : forall j z, auxv_slot_ok ch (j, inl z) = true -> (j < 20)%nat -> 0 <= z < 2 ^ 64 ->
+Lemma hx_lit : forall j z, auxv_slot_ok ch (j, inl z) = true -> (j < 50)%nat -> 0 <= z < 2 ^ 64 ->
   bytes_at bsegs m (av + 8 * Z.of_nat j) (le8 (Z_to_bv 64 z)).
 Proof.
   intros j z H Hj Hz. unfold auxv_slot_ok in H. cbn [fst snd] in H.
@@ -102,7 +126,7 @@ Proof.
   pose proof (hx_slot j (ELit z) Hj Hs) as X. cbn [edenot] in X. exact X.
 Qed.
 
-Lemma hx_var : forall j k, auxv_slot_ok ch (j, inr k) = true -> (j < 20)%nat -> (k < 20)%nat ->
+Lemma hx_var : forall j k, auxv_slot_ok ch (j, inr k) = true -> (j < 50)%nat -> (k < 50)%nat ->
   exists v, auxv_slot ch k = Some v /\ bytes_at bsegs m (av + 8 * Z.of_nat j) (le8 (edenot E v)).
 Proof.
   intros j k H Hj Hk. unfold auxv_slot_ok in H. cbn [fst snd] in H.
@@ -121,39 +145,37 @@ Proof.
   { rewrite <- hx_auxv. unfold APS.uE. symmetry. apply Z_to_bv_bv_unsigned. }
   rewrite EV in CELL.
 
-  destruct (hx_var 7%nat 7%nat (hx_table HT (7%nat, inr 7%nat) ltac:(tab_in)) ltac:(lia) ltac:(lia)) as (v7 & S7 & W7).
-  destruct (hx_var 11%nat 11%nat (hx_table HT (11%nat, inr 11%nat) ltac:(tab_in)) ltac:(lia) ltac:(lia)) as (v11 & S11 & W11).
-  destruct (hx_var 13%nat 11%nat (hx_table HT (13%nat, inr 11%nat) ltac:(tab_in)) ltac:(lia) ltac:(lia)) as (v13 & S13 & W13).
-  rewrite S11 in S13. injection S13 as <-.
-  destruct (hx_var 17%nat 17%nat (hx_table HT (17%nat, inr 17%nat) ltac:(tab_in)) ltac:(lia) ltac:(lia)) as (v17 & S17 & W17).
-  exists av, (bv_unsigned (edenot E v7)), (bv_unsigned (edenot E v11)), (bv_unsigned (edenot E v17)).
-  pose proof (bv_unsigned_in_range 64 (edenot E v7)) as R7. pose proof (bv_unsigned_in_range 64 (edenot E v11)) as R11.
-  pose proof (bv_unsigned_in_range 64 (edenot E v17)) as R17. unfold bv_modulus in R7, R11, R17. change (2 ^ Z.of_N 64) with (2 ^ 64) in R7, R11, R17.
+  destruct (hx_var 21%nat 21%nat (hx_table HT (21%nat, inr 21%nat) ltac:(tab_in)) ltac:(lia) ltac:(lia)) as (v21 & S21 & W21).
+  destruct (hx_var 39%nat 39%nat (hx_table HT (39%nat, inr 39%nat) ltac:(tab_in)) ltac:(lia) ltac:(lia)) as (v39 & S39 & W39).
+  destruct (hx_var 41%nat 39%nat (hx_table HT (41%nat, inr 39%nat) ltac:(tab_in)) ltac:(lia) ltac:(lia)) as (v41 & S41 & W41).
+  rewrite S39 in S41. injection S41 as <-.
+  destruct (hx_var 49%nat 49%nat (hx_table HT (49%nat, inr 49%nat) ltac:(tab_in)) ltac:(lia) ltac:(lia)) as (v49 & S49 & W49).
+  exists av, (bv_unsigned (edenot E v21)), (bv_unsigned (edenot E v39)), (bv_unsigned (edenot E v49)).
+  pose proof (bv_unsigned_in_range 64 (edenot E v21)) as R21. pose proof (bv_unsigned_in_range 64 (edenot E v39)) as R39.
+  pose proof (bv_unsigned_in_range 64 (edenot E v49)) as R49. unfold bv_modulus in R21, R39, R49. change (2 ^ Z.of_N 64) with (2 ^ 64) in R21, R39, R49.
   split; [exact (proj1 CELL)|].
   split.
-  { unfold el_auxv_words, EL_AT_PHDR. apply bytes_at_u64s; [lia| cbn [length map]; lia|].
-    intros j w Hn.
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 0%nat 3 (hx_table HT (0%nat, inl 3) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 1%nat 65600 (hx_table HT (1%nat, inl 65600) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 2%nat 4 (hx_table HT (2%nat, inl 4) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 3%nat 56 (hx_table HT (3%nat, inl 56) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 4%nat 5 (hx_table HT (4%nat, inl 5) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 5%nat 11 (hx_table HT (5%nat, inl 11) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 6%nat 16 (hx_table HT (6%nat, inl 16) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; rewrite Z_to_bv_bv_unsigned; exact W7|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 8%nat 6 (hx_table HT (8%nat, inl 6) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 9%nat 4096 (hx_table HT (9%nat, inl 4096) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 10%nat 11 (hx_table HT (10%nat, inl 11) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; rewrite Z_to_bv_bv_unsigned; exact W11|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 12%nat 12 (hx_table HT (12%nat, inl 12) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; rewrite Z_to_bv_bv_unsigned; exact W13|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 14%nat 23 (hx_table HT (14%nat, inl 23) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 15%nat 0 (hx_table HT (15%nat, inl 0) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 16%nat 25 (hx_table HT (16%nat, inl 25) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; rewrite Z_to_bv_bv_unsigned; exact W17|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 18%nat 0 (hx_table HT (18%nat, inl 0) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    destruct j as [|j]; [cbn [map nth_error] in Hn; injection Hn as <-; exact (hx_lit 19%nat 0 (hx_table HT (19%nat, inl 0) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
-    cbn [map nth_error] in Hn. destruct j; discriminate Hn.
+  { (* one word per slot: [hx_lit]/[hx_var] state slot j at [av + 8 * Z.of_nat j], which is
+       [av + 8 j] by computation *)
+    unfold el_auxv_at, el_auxv_word, EL_AT_PHDR.
+    split; [exact (hx_lit 20%nat 16 (hx_table HT (20%nat, inl 16) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [rewrite Z_to_bv_bv_unsigned; exact W21|].
+    split; [exact (hx_lit 22%nat 6 (hx_table HT (22%nat, inl 6) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [exact (hx_lit 23%nat 4096 (hx_table HT (23%nat, inl 4096) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [exact (hx_lit 26%nat 3 (hx_table HT (26%nat, inl 3) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [exact (hx_lit 27%nat 65600 (hx_table HT (27%nat, inl 65600) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [exact (hx_lit 28%nat 4 (hx_table HT (28%nat, inl 4) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [exact (hx_lit 29%nat 56 (hx_table HT (29%nat, inl 56) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [exact (hx_lit 30%nat 5 (hx_table HT (30%nat, inl 5) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [exact (hx_lit 31%nat 11 (hx_table HT (31%nat, inl 11) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [exact (hx_lit 38%nat 11 (hx_table HT (38%nat, inl 11) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [rewrite Z_to_bv_bv_unsigned; exact W39|].
+    split; [exact (hx_lit 40%nat 12 (hx_table HT (40%nat, inl 12) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [rewrite Z_to_bv_bv_unsigned; exact W41|].
+    split; [exact (hx_lit 46%nat 23 (hx_table HT (46%nat, inl 23) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [exact (hx_lit 47%nat 0 (hx_table HT (47%nat, inl 0) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    split; [exact (hx_lit 48%nat 25 (hx_table HT (48%nat, inl 25) ltac:(tab_in)) ltac:(lia) ltac:(lia))|].
+    rewrite Z_to_bv_bv_unsigned; exact W49.
   }
   unfold USTACK_TOP. repeat (split; [lia|]). lia.
 Qed.

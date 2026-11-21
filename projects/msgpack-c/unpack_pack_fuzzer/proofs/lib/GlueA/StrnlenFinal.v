@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the string area's length hypothesis loses its 8-alignment half, false at this revision). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -61,8 +62,7 @@ Hypothesis PB_str : forall b, PB b -> forall j js, legal_str j js ->
   exists s : list byte, b j = s ++ [Z_to_bv 8 0] /\ Forall (fun x : byte => bv_unsigned x <> 0) s
     /\ b js = Z_to_le_bytes 8 (Z.of_nat (length s) + 1) /\ Z.of_nat (length s) <= 131071.
 
-Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63))
-                                        /\ Z.of_nat (length (eb E 12%uint63)) mod 8 = 0.
+Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)).
 
 Theorem astrnlen_sound : forall pc, to_Z pc = STRNLEN_SYM -> contract_sound asegs OPS MP PB (astrnlen_c pc).
 Proof.
@@ -133,8 +133,7 @@ Hypothesis PB_str : forall b, PB b -> forall j js, legal_str j js ->
   exists s : list byte, b j = s ++ [Z_to_bv 8 0] /\ Forall (fun x : byte => bv_unsigned x <> 0) s
     /\ b js = Z_to_le_bytes 8 (Z.of_nat (length s) + 1) /\ Z.of_nat (length s) <= 131071.
 
-Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63))
-                                        /\ Z.of_nat (length (eb E 12%uint63)) mod 8 = 0.
+Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)).
 
 Theorem astrnlen_sound : forall pc, to_Z pc = STRNLEN_SYM -> contract_sound bsegs OPS MP PB (astrnlen_c pc).
 Proof.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 (* The interface between the SECONDARY path of the frame-generic Allocate walk (n >= 64513, the
    LargeMmapAllocator) and an allocator model.  It is the secondary twin of AGif0n.AIface: the hit-g arm reads the
    machine through AIface's fields, the secondary arm reads it through AIfaceS's.
@@ -160,7 +161,7 @@ Record skern (grow : bool) (W Wz : world im_segs) (md0 mdz : Model) (ly : alayou
      kernel nodes (AGjs.nodeS's amwf of the map's model, AGjt.nodeV's eager bound), the instance cannot rebuild
      the eager bound without the world's AI at the commit *)
   sk_md : exists mat matV mat', mdz = sec_md grow md0 mat matV mat' mb msz qs /\
-    grant_ok_na_pin (with_vm_backing (m_vm_lazy md0) mat md0) (w64 mb) msz = true /\
+    grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md0) mat md0) (w64 mb) msz = true /\
     amwf (mmap_model (w64 mb) (w64 msz) (with_vm_backing (m_vm_lazy md0) mat md0)) /\
     (grow = true -> eager_used mdz <= eager_used (mmap_model (w64 mb) (w64 msz) (with_vm_backing (m_vm_lazy md0) mat md0)) + 131072);
   sk_wle : wle W Wz;
@@ -179,7 +180,7 @@ Record skern (grow : bool) (W Wz : world im_segs) (md0 mdz : Model) (ly : alayou
 }.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* AllocG.alloc_leaf without its model-path clause: the walk's arms prove this, and the top (AGioMB.alloc_sec_w_em, lib/AU/AGioMB.v:192, and AGioM.alloc_sec_w_em, lib/A/AGioM.v:196, for the memnorm-kept leaf) adds the path
+(* AllocG.alloc_leaf without its model-path clause: the walk's arms prove this, and the top (AGioMB.alloc_sec_w_em, lib/AU/AGioMB.v:193, and AGioM.alloc_sec_w_em, lib/A/AGioM.v:197, for the memnorm-kept leaf) adds the path
    over the WHOLE tree [mt n tr S] with AGif0n.amreal_apath_gflag.  The clauses and their order are alloc_leaf's. *)
 Definition alloc_leaf0 (B : asyms)
 (ARX : Z -> alayout -> astate -> world im_segs -> (word -> option byte) -> Model -> Prop)
@@ -262,23 +263,25 @@ Record AIfaceS : Prop := {
          ~ ims_dzone ly (bv_unsigned x) -> mem' x = mem x) /\
       (forall a, apresent (w_H Wy) mem a -> apresent (w_H Wy) mem' a) /\
       dpost inst ly S W tr z mem');
-  (* (c) the kernel: the model is well formed, has room, and its map ledger is the image's *)
+  (* (c) the kernel: the model is well formed, has room, and its map ledger is the image's (at 727298f3 followed by
+     the reservation tail YG0n.res_tail_ok bounds, the vDSO/vvar pair, as ALedger's al_reserved states it) *)
   ifs_mwf : forall inst ly S W mem md, ARX inst ly S W mem md -> amwf md;
   (* the room bound needs the premise on the state: cgif_file reads it out of qmeter (rpre_cgif) *)
   ifs_room : forall inst ly S W mem md n, ARX inst ly S W mem md -> rpre S n ->
     eager_used md + A_bytes (w_A W) + 2 ^ 30 <= vm_limit (m_vmmaps md);
   ifs_ledger : forall inst ly S W mem md, ARX inst ly S W mem md ->
-    vm_reserved (m_vmmaps md) = segments_reserved im_segs /\
+    (exists rx, vm_reserved (m_vmmaps md) = segments_reserved im_segs ++ rx /\ res_tail_ok ly rx) /\
     (forall sg, In sg im_segs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) /\
     In (wiv (ly_Q ly, kPtrArrayResv)) (vm_maps (m_vmmaps md)) /\
     YM05.ceil_of_top (alloc_top (m_vmmaps md));
-  (* a grant of the block's size exists *)
-  ifs_grant : forall inst ly S W mem md mat sz, ARX inst ly S W mem md -> 0 < sz <= ImgBaseAGS.NOB ->
-    exists a, grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true;
+  (* a grant of the block's size exists.  The size is page aligned, as the placement rule's producer
+     (YK13.grant_ok_na_pin_of_gap) asks; the hint is the mmap call's NULL addr argument. *)
+  ifs_grant : forall inst ly S W mem md mat sz, ARX inst ly S W mem md -> 0 < sz <= ImgBaseAGS.NOB -> sz mod 4096 = 0 ->
+    exists a, grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a sz = true;
   (* and every grant is in the heap band, apart from what the allocator owns, with a zero shadow *)
   ifs_apart : forall inst ly S W mem md mat sz (a : word), ARX inst ly S W mem md ->
     0 < sz <= MALLOC_MAX + 4 * 4096 -> sz mod 4096 = 0 ->
-    grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
+    grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
     ims_zone3 (bv_unsigned a) sz /\
     Forall (zdisjoint (bv_unsigned a, sz)) (static_extents ly ++ vis0_zones ly ++ sec_extents ly S) /\
     (forall g, g mod 8 = 0 -> bv_unsigned a <= g -> g + 8 <= bv_unsigned a + sz ->
@@ -319,24 +322,24 @@ Record AIfaceS : Prop := {
 }.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The interface at a larger size bound [NMAXW] (the IFS of AGioMB.alloc_sec_w_em, lib/AU/AGioMB.v:66, and of AGioM.alloc_sec_w_em, lib/A/AGioM.v:70).  AIfaceS states three of its fields at cgif's
+(* The interface at a larger size bound [NMAXW] (the IFS of AGioMB.alloc_sec_w_em, lib/AU/AGioMB.v:67, and of AGioM.alloc_sec_w_em, lib/A/AGioM.v:71).  AIfaceS states three of its fields at cgif's
    own constants: grants apart only up to MALLOC_MAX (ifs_apart), a grant exists only up to the obstacle bound
    ImgBaseAGS.NOB = 2 ^ 29 (ifs_grant), and the vm_limit room is the model's VM_HEAD = 2 ^ 30 (ifs_room).  An
    allocator whose sizes go up to NMAXW adds the same three at its own [NOBW] (its grant-existence bound) and
-   [ROOMW] (its room), which the walk relates to NMAXW by the premises HNOB / HROOM of AGioMB.alloc_sec_w_em (lib/AU/AGioMB.v:64-65) and AGioM.alloc_sec_w_em (lib/A/AGioM.v:68-69); lib/AU/AGio.v is removed in this series, as history. *)
+   [ROOMW] (its room), which the walk relates to NMAXW by the premises HNOB / HROOM of AGioMB.alloc_sec_w_em (lib/AU/AGioMB.v:65-66) and AGioM.alloc_sec_w_em (lib/A/AGioM.v:69-70); lib/AU/AGio.v is removed in this series, as history. *)
 Variables (NMAXW NOBW ROOMW : Z).
 Definition ifs_apart_w : Prop :=
   forall inst ly S W mem md mat sz (a : word), ARX inst ly S W mem md ->
     0 < sz <= NMAXW + 4 * 4096 -> sz mod 4096 = 0 ->
-    grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
+    grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
     ims_zone3 (bv_unsigned a) sz /\
     Forall (zdisjoint (bv_unsigned a, sz)) (static_extents ly ++ vis0_zones ly ++ sec_extents ly S) /\
     (forall g, g mod 8 = 0 -> bv_unsigned a <= g -> g + 8 <= bv_unsigned a + sz ->
        mem (Z_to_bv 64 (shadow_addr g)) = Some (Z_to_bv 8 0)).
 (* a grant of the block's size exists, up to the instance's own bound *)
 Definition ifs_grant_w : Prop :=
-  forall inst ly S W mem md mat sz, ARX inst ly S W mem md -> 0 < sz <= NOBW ->
-    exists a, grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true.
+  forall inst ly S W mem md mat sz, ARX inst ly S W mem md -> 0 < sz <= NOBW -> sz mod 4096 = 0 ->
+    exists a, grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a sz = true.
 (* the instance's room below the vm limit.  The walk needs the block's map, its shadow hull and the growth of
    A_bytes, i.e. 2 * MSv + MSv / 8 + 2 pages, and on the grow arm 2 ^ 19 more for the pointer-array commit
    (AGjt.nodeV); cgif's is the model's VM_HEAD = 2 ^ 30 (YG0n.v:543, through mroom / qmeter). *)

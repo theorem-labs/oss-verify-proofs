@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ffam_fr passes the new placement premise of ff_node and ff_store on to the underlying family). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -55,8 +56,8 @@ Section FR.
     - intros h k i mo W N B [K M]. cbn zeta. split; [exact (ff_madv AL F0 h k i mo W N B K)| fr mo_frame_madvise_model].
     - intros h k i mo W N [K _]. exact (ff_unmap_has AL F0 h k i mo W N K).
     - intros h k i mo W N [K M]. split; [exact (ff_unmap AL F0 h k i mo W N K)| fr mo_frame_munmap_model].
-    - intros h nb bl mo a W E [K M] A0 A1 A2 RF. destruct (ff_node AL F0 h nb bl mo a W E K A0 A1 A2 RF) as [K' C']. split; [split; [exact K'| fr mo_frame_anon_grant]| exact C'].
-    - intros h nb bl mo a W E [K M] A0 A1 A2 RF. destruct (ff_store AL F0 h nb bl mo a W E K A0 A1 A2 RF) as [K' C']. split; [split; [exact K'| fr mo_frame_anon_grant]| exact C'].
+    - intros h nb bl mo a W E [K M] A0 A1 A2 RF FL. destruct (ff_node AL F0 h nb bl mo a W E K A0 A1 A2 RF FL) as [K' C']. split; [split; [exact K'| fr mo_frame_anon_grant]| exact C'].
+    - intros h nb bl mo a W E [K M] A0 A1 A2 RF FL. destruct (ff_store AL F0 h nb bl mo a W E K A0 A1 A2 RF FL) as [K' C']. split; [split; [exact K'| fr mo_frame_anon_grant]| exact C'].
     - intros h nb bl mo W E [K _]. exact (ff_room_n AL F0 h nb bl mo W E K).
     - intros h nb bl mo W E [K _]. exact (ff_room_s AL F0 h nb bl mo W E K).
     - exact (ff_cs_mono_fa AL F0). - exact (ff_cs_mono_u AL F0). - exact (ff_cs_rec_sec AL F0). - exact (ff_cs_mono_dep AL F0).

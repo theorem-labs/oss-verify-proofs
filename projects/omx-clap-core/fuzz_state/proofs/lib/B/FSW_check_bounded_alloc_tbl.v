@@ -4,7 +4,7 @@
    (Reusable/YP02.v), so the count is in 32-bit words: 13. MEASURED on the pinned fs.asan-ubsan (sha256 5ac5ce09...):
    those 52 bytes decode to exactly 13 instructions, each 4 bytes (capstone, RISCV64 + C): the 12 words of the A twin's
    shape and a trailing `unimp` (0xc0001073) at 0x81648, which no path reaches. Twin of lib/A/FSW_check_bounded_alloc_tbl.v
-   (a working branch 3694074f8f1). *)
+   (a working branch). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 2668 of its 2786 lines of code are new or changed and 1447 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S7a_put.v, with its module paths and module names changed; 494 of its 580 lines of code are new or changed and 2700 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/B, parse_string on image B (asan-ubsan): the ENTRY stretch of the walk, offsets 0..147 of
    parse_string (DERIVED), from the entry to the scan loop head PSB_SCAN (148) or the NULL return PSB_RET0 (1256).
    rule 24: no function proved
@@ -11,9 +12,9 @@
    as the premises of its theorem psb_entry_holdsP, over a GENERIC memory invariant P (a Theorem Labs lane 12:18Z / 12:22Z:
    an SRr post is OPAQUE once Qed, so an end-state invariant must be in the segment's statement). The old statement
    psb_entry_holds is its corollary at P := fun _ => True (psb_seg_*_of_True, srr_inv_laws_True); it did not move.
-   The kit's text is tparse_string_specX (lib/A/PRH_FnReader.v f1ae32e3b2cd at the kit's cut 7cdbb61b5fa0) at image B's instances
-   (prh_img_B, B_prog_listing, PL_prog_B, PI_prog_B), through this row's PS_Gen.v / PSB_Base.v (generic-P from base
-   3d53a181c75, a working branch).
+   The kit's text is tparse_string_specX (lib/A/PRH_FnReader.v f1ae32e3b2cd at the kit's cut) at image B's instances
+   (prh_img_B, B_prog_listing, PL_prog_B, PI_prog_B), through this row's PS_Gen.v / PSB_Base.v (generic-P from base,
+   a working branch).
    THE INVARIANT: P stays ABSTRACT here (the top instantiates it once as ps_mn D). The stretch makes no call, so it
    takes srr_inv_laws segs P only (no srr_inv_call): HPM : P (pi_mem D) is psb_seg_entryP's premise, then each of the
    two straight-line runs is YC1fPx.v's invariant twin (paj_run_x_m_inv / paj_run_to_x_m_inv at P with PLAW,
@@ -22,7 +23,7 @@
    conjunct.
    FILE SET: every non-lane file as the kit's cut carries it (YCbqG.v 219748197d6b, B Listing_prog.v c97cc46b3e13,
    PRW_StepKit.v 0df3991c13f4, YSRrMemnorm.v 5ffa8525936b, YAkMemnorm.v 96c72061b4d4); earlier engine and YCbqG.v from
-   a working branch 63997a07aa6, listing a working branch 7c8ffeba5035, PRW_StepKit walk-S7B b77dc99e0b5, YSRrMemnorm.v
+   a working branch, listing a working branch, PRW_StepKit walk-S7B, YSRrMemnorm.v
    a1c1ece77b14. Reading aid: WalkS4's image-A entry stretch (a working branch, lib/A/Prog/S4_PsEntry.v),
    same logic over image A's registers; nothing is Required from it.
    THE INSTRUCTIONS (the neutral listing of the rebuilt image B,

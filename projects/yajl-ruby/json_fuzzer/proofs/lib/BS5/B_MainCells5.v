@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the launch's whole ProcInput, mmap base and kernel build, with launch_ok, the recorded kernel and entry_launch_ok_va, and reaches AsanInit's lemmas through iax/iap; cxs_okk over the eight main-phase entry states, computed in the build per CONFIG_RSEQ value). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -112,7 +113,9 @@ Fixpoint cxs_okk (k : list kentry) (be : expr) (a : Z) (l : list cx) : bool :=
 (* [comment removed for export] *)
 Definition cxs_ok (be : expr) (a : Z) (l : list cx) : bool :=
   (0 <? cxs_len l) && cxs_okk (kn HS_s2_00) be a l && cxs_okk (kn HS_s2_01) be a l
-  && cxs_okk (kn HS_s2_10) be a l && cxs_okk (kn HS_s2_11) be a l.
+  && cxs_okk (kn HS_s2_10) be a l && cxs_okk (kn HS_s2_11) be a l
+  && cxs_okk (kn HS_s2_00R) be a l && cxs_okk (kn HS_s2_01R) be a l
+  && cxs_okk (kn HS_s2_10R) be a l && cxs_okk (kn HS_s2_11R) be a l.
 
 (* [comment removed for export] *)
 Definition xv_den (E : env) (v : xv) : word := match v with XL z => Z_to_bv 64 z | XS e => edenot E e end.
@@ -168,6 +171,18 @@ Section Sound.
   Variable argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variable uid : word.
+  Variable mbase : word.
+  Variable ifs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable urnd : InputStream.
+  Variable tmp : Fs.Fs.
+  Variable kbld : KernelBuild.
+  Variable execfn : list byte.
+  Variables rdr sgd sgt : bool.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Variable E : env.
@@ -176,9 +191,9 @@ Section Sound.
   Variable model : Model.
   Variable hs : acs.
   Hypothesis Hhs : HS_MAIN hs.
-  Hypothesis HC : cs_ok BSEGS BOTH5 AsanInit.LIMIT (SINV0 BPH sp rdraw brk0 argv envp uid hw) (argH0 BPH sp rdraw argv envp uid hw) fs E hs R FULL model.
+  Hypothesis HC : cs_ok BSEGS BOTH5 AsanInit.LIMIT (SINV0 BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) (argH0 sp rdraw argv envp kbld execfn) fs E hs R FULL model.
 
-  #[local] Notation MR := (Mr BOTH5 (argH0 BPH sp rdraw argv envp uid hw) E hs model FULL).
+  #[local] Notation MR := (Mr BOTH5 (argH0 sp rdraw argv envp kbld execfn) E hs model FULL).
   #[local] Notation BYTES := (Mem.bytes_at AImages.bsegs).
   #[local] Notation WR := (Mem.wr_at AImages.bsegs).
 
@@ -194,19 +209,19 @@ Section Sound.
   Proof.
     intros x b H. unfold Mem.mrd in H |- *. pose proof (u64_range x) as Rx.
     destruct (MR x) as [b0|] eqn:HM.
-    - injection H as <-. rewrite (Mr_some0 sp rdraw hw argv envp uid E FULL model hs x b0 HM).
-      split; [reflexivity|]. intros _. unfold wview. rewrite (Mr_some0 sp rdraw hw argv envp uid E FULL model hs x b0 HM). discriminate.
+    - injection H as <-. rewrite (Mr_some0 sp rdraw argv envp kbld execfn E FULL model hs x b0 HM).
+      split; [reflexivity|]. intros _. unfold wview. rewrite (Mr_some0 sp rdraw argv envp kbld execfn E FULL model hs x b0 HM). discriminate.
     - assert (IB : img_byte (bv_unsigned x) = Some b).
       { unfold img_byte, Mem.wa. rewrite Z_to_bv_bv_unsigned. exact H. }
       pose proof (img_byte_inside (bv_unsigned x) b Rx IB) as IN.
-      rewrite <- (B_MainFacts.Mr_hull sp rdraw hw argv envp uid Hsp Hva E FULL model hs x IN), HM.
+      rewrite <- (B_MainFacts.Mr_hull sp rdraw argv envp kbld execfn Hsp Hva E FULL model hs x IN), HM.
       split; [exact H|]. intros Hw. apply AsanPlanImagesB.both_rw_window. lia.
   Qed.
 
   Lemma wview_MR_FULL : forall x, wview AImages.bsegs MR x <> None -> wview AImages.bsegs FULL x <> None.
   Proof.
     intros x H. unfold wview in *. destruct (MR x) as [b|] eqn:HM.
-    - rewrite (Mr_some0 sp rdraw hw argv envp uid E FULL model hs x b HM). discriminate.
+    - rewrite (Mr_some0 sp rdraw argv envp kbld execfn E FULL model hs x b HM). discriminate.
     - destruct (FULL x); [discriminate | exact H].
   Qed.
 
@@ -427,7 +442,7 @@ Section Sound.
         split; [lia|]. split; [lia|]. intros i Hi. specialize (IZ i Hi).
         pose proof (img_byte_inside (a + i) _ ltac:(lia) IZ) as IN.
         assert (FN : FULL (Mem.wa (a + i)) = None).
-        { rewrite <- (B_MainFacts.Mr_hull sp rdraw hw argv envp uid Hsp Hva E FULL model hs) by (unfold Mem.wa, B_MainFacts.A_IMG_LO, B_MainFacts.A_IMG_HI; rewrite u64_lit by lia; lia).
+        { rewrite <- (B_MainFacts.Mr_hull sp rdraw argv envp kbld execfn Hsp Hva E FULL model hs) by (unfold Mem.wa, B_MainFacts.A_IMG_LO, B_MainFacts.A_IMG_HI; rewrite u64_lit by lia; lia).
           unfold Mem.wa. apply Hnone. lia. }
         split; [unfold Mem.mrd; rewrite FN; exact IZ|].
         apply AsanPlanImagesB.both_rw_window. unfold Mem.wa. rewrite u64_lit by lia. lia. }
@@ -499,9 +514,14 @@ Section Sound.
   Theorem cxs_sound : forall be a l, cxs_ok be a l = true ->
     cxs_prop E FULL (uE E be + a) l /\ WR FULL (uE E be + a) (cxs_len l).
   Proof.
-    intros be a l H. unfold cxs_ok in H. apply andb_prop in H as [H H4]. apply andb_prop in H as [H H3]. apply andb_prop in H as [H H2]. apply andb_prop in H as [H0 H1]. apply Z.ltb_lt in H0.
+    intros be a l H. unfold cxs_ok in H.
+    apply andb_prop in H as [H H8]. apply andb_prop in H as [H H7]. apply andb_prop in H as [H H6]. apply andb_prop in H as [H H5].
+    apply andb_prop in H as [H H4]. apply andb_prop in H as [H H3]. apply andb_prop in H as [H H2]. apply andb_prop in H as [H0 H1]. apply Z.ltb_lt in H0.
     assert (Hne : l <> []) by (intros ->; cbn in H0; lia).
-    destruct Hhs as [Eh|[Eh|[Eh|Eh]]]; [pose proof H1 as X | pose proof H2 as X | pose proof H3 as X | pose proof H4 as X]; rewrite <- Eh in X; exact (cxs_okk_sound l be a X Hne).
+    destruct Hhs as [Eh|[Eh|[Eh|[Eh|[Eh|[Eh|[Eh|Eh]]]]]]];
+      [pose proof H1 as X | pose proof H2 as X | pose proof H3 as X | pose proof H4 as X
+      | pose proof H5 as X | pose proof H6 as X | pose proof H7 as X | pose proof H8 as X];
+      rewrite <- Eh in X; exact (cxs_okk_sound l be a X Hne).
   Qed.
 End Sound.
 
@@ -529,6 +549,18 @@ Section Cells.
   Variable argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variable uid : word.
+  Variable mbase : word.
+  Variable ifs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable urnd : InputStream.
+  Variable tmp : Fs.Fs.
+  Variable kbld : KernelBuild.
+  Variable execfn : list byte.
+  Variables rdr sgd sgt : bool.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Variable E : env.
@@ -537,7 +569,7 @@ Section Cells.
   Variable model : Model.
   Variable hs : acs.
   Hypothesis Hhs : HS_MAIN hs.
-  Hypothesis HC : cs_ok BSEGS BOTH5 AsanInit.LIMIT (SINV0 BPH sp rdraw brk0 argv envp uid hw) (argH0 BPH sp rdraw argv envp uid hw) fs E hs R FULL model.
+  Hypothesis HC : cs_ok BSEGS BOTH5 AsanInit.LIMIT (SINV0 BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) (argH0 sp rdraw argv envp kbld execfn) fs E hs R FULL model.
 
   #[local] Notation BYTES := (Mem.bytes_at AImages.bsegs).
 
@@ -573,10 +605,11 @@ Section Cells.
   Theorem cxs_rw : forall be a l, cxs_ok be a l = true -> forallb not_any l = true ->
     Step.rw_cells AImages.bsegs FULL (uE E be + a) (map (cx_cell E) l).
   Proof.
-    intros be a l H Hna. pose proof (cxs_sound sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs Hhs HC be a l H) as [P W].
-    unfold cxs_ok in H. apply andb_prop in H as [H H4]. apply andb_prop in H as [H H3]. apply andb_prop in H as [H H2]. apply andb_prop in H as [H0 H1]. apply Z.ltb_lt in H0.
-    assert (Hne : l <> []) by (intros ->; cbn in H0; lia).
-    assert (OK : cxs_okk (kn hs) be a l = true) by (destruct Hhs as [-> | [-> | [-> | ->]]]; assumption).
+    intros be a l H Hna. pose proof (cxs_sound sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs Hhs HC be a l H) as [P W].
+    unfold cxs_ok in H. rewrite !andb_true_iff in H.
+    repeat match type of H with _ /\ _ => destruct H as [H ?] end. rename H into Hlen0. apply Z.ltb_lt in Hlen0.
+    assert (Hne : l <> []) by (intros ->; cbn in Hlen0; lia).
+    assert (OK : cxs_okk (kn hs) be a l = true) by (pose proof Hhs as Hx; hs_cases Hx; assumption).
     destruct (cxs_prop_bytes l (uE E be + a) be a Hne Hna OK P) as [B S].
     split; [split; [apply cxs_cells_wf | exact B]|]. rewrite S. exact W.
   Qed.
@@ -607,7 +640,7 @@ Section Cells.
     Step.rw_cells AImages.bsegs FULL (uE E be + a) (map (cx_cell E) l).
   Proof.
     intros be a l Hl H Hna. assert (Hne : l <> []) by (intros ->; cbn in Hl; lia).
-    pose proof (cxs_okk_sound sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs HC l be a H Hne) as [P W].
+    pose proof (cxs_okk_sound sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs HC l be a H Hne) as [P W].
     destruct (cxs_prop_bytes l (uE E be + a) be a Hne Hna H P) as [B S].
     split; [split; [apply cxs_cells_wf | exact B]|]. rewrite S. exact W.
   Qed.
@@ -615,7 +648,7 @@ Section Cells.
     cxs_prop E FULL (uE E be + a) l /\ Mem.wr_at AImages.bsegs FULL (uE E be + a) (cxs_len l).
   Proof.
     intros be a l Hl H. assert (Hne : l <> []) by (intros ->; cbn in Hl; lia).
-    exact (cxs_okk_sound sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs HC l be a H Hne).
+    exact (cxs_okk_sound sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs HC l be a H Hne).
   Qed.
   Theorem cxs_zero_k : forall be a n, 0 < n -> cxs_okk (kn hs) be a [CXZ n] = true ->
     Arr.u8arr AImages.bsegs FULL (uE E be + a) (repeat (Z_to_bv 8 0) (Z.to_nat n)).

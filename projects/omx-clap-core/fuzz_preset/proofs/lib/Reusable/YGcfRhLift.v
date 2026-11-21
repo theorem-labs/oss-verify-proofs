@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfRhLift.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the shared lifting helper of the primed port.
-   ra_rh_of_SRr is the lemma of lib/A/Prog/FuzzReallocAp.v:852-858 at commit 5e9d09d04d3a (the same text is
-   at commit e4fc05dc07bf), with that Section's variables SEGS / RZ made explicit arguments; the proof is its
+   ra_rh_of_SRr is the lemma of lib/A/Prog/FuzzReallocAp.v:852-858 (the same text is),
+   with that Section's variables SEGS / RZ made explicit arguments; the proof is its
    five lines verbatim. GENERIC: no image, no unit, no address. It lifts a plain SRr segment whose continuation is
    already in the primed relation (YA0nH.SRr' at a zone RZ) to SRr', through YA0nH.SRr_SRr' and YA0nH.wle'_trans, so
    every owner of a walk that ends in a re-hide cites one lemma.

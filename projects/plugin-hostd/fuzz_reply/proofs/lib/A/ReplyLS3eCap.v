@@ -12,15 +12,15 @@
      XB cx m S = bsum (fr_hblks (c_W cx) (c_mem cx)),
    the relay table it was handed (ATABLE when g_src is not 0) plus the g_out buffer it was handed (g_capout).
 
-   THE ENTRY CLAUSE.  lib/A/W_LLVMFuzzerTestOneInput_cut.v:223 `Definition CAPOUT_MAX : Z := 4 * (OPS_MAX - 1) *
+   THE ENTRY CLAUSE.  lib/A/W_LLVMFuzzerTestOneInput_cut.v:224 `Definition CAPOUT_MAX : Z := 4 * (OPS_MAX - 1) *
    65535.`, and LAST in fr_lib_pre_cf (:213; _cut_x.v:109 in fr_lib_pre_cf_x), at the call's world and memory:
      exists c, val_mem segs (arm W mem) (rg_capout fr_RG) 8 c /\ 0 <= c <= CAPOUT_MAX
    with segs := tfibsegs (_cut.v's Section cf) and arm := W_rep.v:69.  The R4 lemmas below take that text at
    W := c_W cx, mem := c_mem cx, word for word, so the cut's conjunct plugs by `exact`.  (The clause as it first
    landed, `c <= CAPOUT_MAX` without c's sign, bounded nothing: val_mem stores the low 64 bits of c, so a negative c
-   reads any 8 bytes; W8 fixed it as fd261f0a4de.)
+   reads any 8 bytes; W8 fixed it as.)
 
-   THE BRIDGE.  W_frame.v:192 rdword_of_val_mem turns the val_mem read into fr_hblks' rdword read (it needs
+   THE BRIDGE.  W_frame.v:193 rdword_of_val_mem turns the val_mem read into fr_hblks' rdword read (it needs
    0 <= c < 2 ^ 64, which the clause gives), and ent_hblks_bsum bounds the entry's harness bytes by
    ATABLE + CAPOUT_MAX.
 
@@ -77,14 +77,14 @@ Open Scope Z_scope.
 Local Notation MT := ameter_triv.
 Local Notation MMAX := WR_MMAX.
 
-(* CAPOUT_MAX is W_LLVMFuzzerTestOneInput_cut.v:181's *)
+(* CAPOUT_MAX is W_LLVMFuzzerTestOneInput_cut.v:182's *)
 Lemma CAPOUT_MAX_OUT_MAX4 : CAPOUT_MAX = OUT_MAX4.
 Proof. reflexivity. Qed.
 Lemma CAPOUT_MAX_val : CAPOUT_MAX = 133953540.
 Proof. reflexivity. Qed.
 
-(* THE BRIDGE: W_frame.v:192 rdword_of_val_mem turns the clause's val_mem read into fr_hblks' rdword read at the
-   same address (fr_hblks: W_LLVMFuzzerTestOneInput_cut.v:166); the table is ATABLE or nothing *)
+(* THE BRIDGE: W_frame.v:193 rdword_of_val_mem turns the clause's val_mem read into fr_hblks' rdword read at the
+   same address (fr_hblks: W_LLVMFuzzerTestOneInput_cut.v:167); the table is ATABLE or nothing *)
 Section eclause.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Lemma ent_hblks_bsum : forall W mem,

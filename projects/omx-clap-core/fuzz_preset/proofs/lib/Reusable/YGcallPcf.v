@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the cf BRIDGE of YGcallPx.v. h-rw-man-5's poison / unpoison contracts over the second
-   allocator instance (YGcfHp.v:128-154, relaxed to `cf_head <= req_size n`) ARE the generic texts of YGcallPx.v at
+   allocator instance (YGcfHp.v:129-155, relaxed to `cf_head <= req_size n`) ARE the generic texts of YGcallPx.v at
      ARx := fun ly S Hp W mem md => ARcf segs B ly S Hp W mem md,  hd := cf_head,
      pc  := cf_pc_poison (poison) / cf_pc_unpoison (unpoison), the per-image CfImg fields.
    Both directions are below (the cf -> x ones by conversion), so a walk takes the cf text itself as its callee

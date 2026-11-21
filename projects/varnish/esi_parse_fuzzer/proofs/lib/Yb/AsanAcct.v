@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the step lemmas read the new vvar-range and vDSO-text checks of the step, and node_ok's third conjunct (RomBase.sys_rob). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Import CatSim Prop
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Dest4xs.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require AndN.   (* [comment removed for export] *)
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
 Local Ltac Zify.zify ::= intros; Zify.zify_pre_hook; Zify.zify_elim_let; Zify.zify_op; (Zify.zify_iter_specs); Zify.zify_to_euclidean_division_equations; Zify.zify_post_hook.
@@ -413,7 +415,7 @@ Proof.
     apply ranges_avoid_nil.
   - (* [comment removed for export] *)
     destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-      [|discriminate].
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
     rewrite Hfull.
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
@@ -495,7 +497,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
   exfalso. unfold fetch_failure in Hs.
-  destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
+  try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
                | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
@@ -935,10 +937,12 @@ Hypothesis HH : H_off_segments segs H.
 Hypothesis Hwx : wx_segs_nowrap segs.
 
 (* [comment removed for export] *)
+(* LPS 727298f3: the read-only-backing certificate is the third conjunct, as in Yb/ShapeAlg. *)
 Definition node_ok (c : config) (I : Type)
     (evs : I -> list event) (nx : I -> config) : Prop :=
   (forall i, sstep_cfg segs ACFG c (evs i) (SNext (nx i)))
-  /\ (forall e st, sstep_cfg segs ACFG c e st -> exists i, e = evs i /\ st = SNext (nx i)).
+  /\ (forall e st, sstep_cfg segs ACFG c e st -> exists i, e = evs i /\ st = SNext (nx i))
+  /\ RomBase.sys_rob segs c.
 
 (* [comment removed for export] *)
 #[using="Hwx HH"] Theorem mi_account_step_restricted : forall A ms msr' model,
@@ -995,10 +999,11 @@ Proof.
   exists (with_vm_backing (m_vm_lazy model) mat' model).
   split; [exact Hinv'|]. split; [apply with_vm_backing_same|]. split; [exact Hcl|].
   split; [exact Hacc|].
-  split.
+  split; [|split].
   - intros []. apply sstep_cfg_instr; [exact Hh | exact Hsvc | exact Hacc].
   - intros e st Hss. exists tt.
     exact (sstep_instr_det ms model _ _ e st Hsvc Hacc (sstep_cfg_sub segs ACFG _ _ _ Hss)).
+  - apply RomBase.sys_rob_instr. exact Hsvc.
 Qed.
 
 (* [comment removed for export] *)

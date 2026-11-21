@@ -2,19 +2,20 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2f.v (origin/ossv/recipes c8557374ad2e), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD2f.v (a working branch 9700d736a50): every hunk of that file against the donor's A file is mirrored here, each address re-measured on the asan-ubsan image (keyed by symbol + offset or section + offset, never by a delta from the asan value); beyond relocation it carries a Theorem Labs lane's two adaptations, restated below with the asan-ubsan values. *)
-(* ADAPTED by Theorem Labs, 2026-10, as lib/A/AD2f.v (two Theorem Labs lanes; commit 1ad302a9bfc),
-   beyond relocation. Donor = cgif lib/YD2f.v at origin/ossv/recipes c8557374ad2e; "donor :N" is a donor line.
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2f.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD2f.v (a working branch): every hunk of that file against the donor's A file is mirrored here, each address re-measured on the asan-ubsan image (keyed by symbol + offset or section + offset, never by a delta from the asan value); beyond relocation it carries a Theorem Labs lane's two adaptations, restated below with the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ADAPTED by Theorem Labs, 2026-10, as lib/A/AD2f.v (two Theorem Labs lanes),
+   beyond relocation. Donor = cgif lib/YD2f.v; "donor :N" is a donor line.
    1. YCfl -> lib/A/Prog/PcapEntry + lib/B/Prog/PcapEntry (porter ruling 1; a Theorem Labs lane: ACfl -> Prog/PcapEntry +
       Prog/PcapEntryA): A_LLVMF / RA_LLVMF / A_EMPTY / LLVMF_STK / G_HARNESS_U now come from lib/B/Prog/PcapEntry.v
       (the asan-ubsan image's constants, the twin of lib/A/Prog/PcapEntryA.v), EV_LIB / LIVE_LIB from the
       image-free lib/A/Prog/PcapEntry.v. Donor :13.
-   2. The harness globals' hull [DRV_G_LO, DRV_G_HI) = [0x5d3e40, 0x5d3e80) (YD1y.v:22-23) is clipped out of
+   2. The harness globals' hull [DRV_G_LO, DRV_G_HI) = [0x5d3e40, 0x5d3e80) (YD1y.v:23-24) is clipped out of
       IMG_L, IMG_LC and L_pieces (donor :151-152, :178), outermost, after STDOUT and SOBUF, because the PROGRAM
       call writes G_HARNESS_U (lib/B/Prog/PcapEntry.v G_HARNESS_U) while the donor's call writes nothing outside
       its window; the new vm_compute lemma L_mem_avoids_G (end of file) states the side condition YD1r needs.
    COUNTS, re-derived from the asan-ubsan start-up region list (Reusable/YD2j.v IMG_REGIONS, a Theorem Labs lane's generated
-   file, a working branch 6927e0d899c): 14 R_A1* regions, and a Theorem Labs lane's cut of R_A5a around the hull (R_A5a_1 =
+   file, a working branch): 14 R_A1* regions, and a Theorem Labs lane's cut of R_A5a around the hull (R_A5a_1 =
    [0x5d3e10, 0x5d3e40), R_A5a_2 = [0x5d3e80, 0x5d46ec)) adds one, so IMG_REGIONS has 33 regions, in the same
    order as the asan list, and every length / skipn numeral is the donor's: length (ss_mem S_Pm) = 3 + 33 + 3 =
    39, firstn 33 (skipn 3 ...) = IMG_REGIONS, skipn 36 = RT_REGIONS (YD20.v, three regions). STDOUT [0x9ddc0,
@@ -37,9 +38,9 @@ From OSSVerify.libreac.fuzz_pcap.images Require Import AsanUbsan.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YK11 YK00 YP0m YP09 YP02 YP0l YP06 YP03 YP0g YP08 YN3q YN3v YI04 YL09 YL02 YL04.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YK04 YB1v YF0m YD2j YD2i YD1t YD20 YD1y YD24 YD2h.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YO05.
-(* ADAPTED (porter ruling 1; a Theorem Labs lane's AD2f.v:42-47): cgif's YCfl.v is not ported; fuzz_pcap's asan-ubsan entry-call
+(* ADAPTED (porter ruling 1; a Theorem Labs lane's AD2f.v:43-48): cgif's YCfl.v is not ported; fuzz_pcap's asan-ubsan entry-call
    constants (A_LLVMF 0x80818, RA_LLVMF 0x80684, A_EMPTY 0x5d3e20, LLVMF_STK and the harness globals G_HARNESS_U)
-   are lib/B/Prog/PcapEntry.v's, EV_LIB and LIVE_LIB the image-free lib/A/Prog/PcapEntry.v's. Donor YD2f.v:13
+   are lib/B/Prog/PcapEntry.v's, EV_LIB and LIVE_LIB the image-free lib/A/Prog/PcapEntry.v's. Donor YD2f.v:14
    `Require Export YCeg YCfl`. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Export YCeg.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Prog Require Export PcapEntry.
@@ -182,9 +183,9 @@ Definition clip_out (lo hi : Z) (r : YP09.region) : list YP09.region :=
 if ((hi <=? r_lo r) || (r_hi r <=? lo))%bool then [r] else
 (if (r_lo r <? lo)%bool then [clip_region (r_lo r) lo r] else []) ++ (if (hi <? r_hi r)%bool then [clip_region hi (r_hi r) r] else []).
 (* ADAPTED (porter ruling 3): the image regions the loop state keeps across the PROGRAM call must also leave
-   out the harness globals' hull [DRV_G_LO, DRV_G_HI) = [0x5d3e40, 0x5d3e80) (YD1y.v:22-23), because the call
+   out the harness globals' hull [DRV_G_LO, DRV_G_HI) = [0x5d3e40, 0x5d3e80) (YD1y.v:23-24), because the call
    writes G_HARNESS_U (lib/B/Prog/PcapEntry.v) and the donor's harness writes nothing outside its window. The hull
-   is clipped out exactly the way STDOUT and SOBUF already are (donor YD2f.v:151-152). *)
+   is clipped out exactly the way STDOUT and SOBUF already are (donor YD2f.v:152-153). *)
 Definition IMG_L : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out DRV_G_LO DRV_G_HI) (flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r))) IMG_B.
 Definition IMG_LC : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out DRV_G_LO DRV_G_HI) (flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r))) IMG_E.
 Definition L_regs : list sv :=
@@ -321,6 +322,6 @@ Proof. vm_compute. repeat split; reflexivity. Qed.
 Lemma IMG_L_wf : regions_wf IMG_L = true. Proof. reflexivity. Qed.
 (* NEW (porter ruling 3, for Reusable/YD1r.v): every image region of the loop state avoids the harness globals'
    hull. `tl` drops the stack window [WIN208], whose base is Some 0 and which region_avoids_G passes anyway;
-   the lemma is stated over tl L_mem because that is the list YD1r walks. region_avoids_G: YD1y.v:223. *)
+   the lemma is stated over tl L_mem because that is the list YD1r walks. region_avoids_G: YD1y.v:224. *)
 Lemma L_mem_avoids_G : forallb region_avoids_G (tl L_mem) = true.
 Proof. vm_compute. reflexivity. Qed.

@@ -4,7 +4,11 @@ Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Definition KRES : Z := 8.
 Definition SLOT_BYTES : Z := 2 ^ 45 + 2 ^ 30.
-Definition slot_cap (R : Z) : Z := (CEIL_MIN - SLOT_BYTES) / (page_round R + PGSZ) - 1.
+(* 727298f3: a grant is the address Linux's placement picks, and its bottom-up window starts
+   at [Mmap.task_unmapped_base] (= this literal; [PlaceGap.place_floor_eq] checks it).  The
+   slot count leaves that floor out of the ceiling, so a gap is found above it. *)
+Definition PLACE_FLOOR : Z := 183251939328.
+Definition slot_cap (R : Z) : Z := (CEIL_MIN - SLOT_BYTES - PLACE_FLOOR) / (page_round R + PGSZ) - 1.
 Lemma slot_round_ge : forall R, R <= page_round R.
 Proof.
 intros R. unfold page_round, PGSZ.
@@ -20,7 +24,7 @@ Lemma slot_cap_anti : forall R1 R2, 0 < R1 <= R2 -> slot_cap R2 <= slot_cap R1.
 Proof.
 intros R1 R2 H. unfold slot_cap.
 pose proof (slot_round_ge R1). pose proof (slot_round_mono R1 R2 ltac:(lia)).
-assert (D : (CEIL_MIN - SLOT_BYTES) / (page_round R2 + PGSZ) <= (CEIL_MIN - SLOT_BYTES) / (page_round R1 + PGSZ)).
-{ apply Z.div_le_compat_l; [unfold SLOT_BYTES; lia | unfold PGSZ; lia]. }
+assert (D : (CEIL_MIN - SLOT_BYTES - PLACE_FLOOR) / (page_round R2 + PGSZ) <= (CEIL_MIN - SLOT_BYTES - PLACE_FLOOR) / (page_round R1 + PGSZ)).
+{ apply Z.div_le_compat_l; [unfold SLOT_BYTES, PLACE_FLOOR; lia | unfold PGSZ; lia]. }
 lia.
 Qed.

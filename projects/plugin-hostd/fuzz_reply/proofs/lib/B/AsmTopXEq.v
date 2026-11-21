@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane): copied from lib/A/AsmTopXEq.v (a working branch dac32c4fd94) for fuzz_reply.asan-ubsan (image B): the module paths changed and the WFX / TOPX aliases are written out. *)
+(* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane): copied from lib/A/AsmTopXEq.v (a working branch) for fuzz_reply.asan-ubsan (image B): the module paths changed and the WFX / TOPX aliases are written out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane): image B's (fuzz_reply.asan-ubsan) twin of lib/A/AsmTopXEq.v
-   (a working branch dac32c4fd94). Rule 24: no function is proved here (instance discharge); the
+   (a working branch). Rule 24: no function is proved here (instance discharge); the
    function's reuse search is lib/B/RT_asan_stack_malloc_0.v's header:
    RULE 24: `proof-index __asan_stack_malloc_0 0x3d1c0`: 0 released lemmas for either key; no released FUNCTION proof found. Second-agent
    check: CONFIRM (the 25 unreleased hits are all statements or symbols; in the lemma index over 17316 refs, no lib/B class-0 walk declaration, and every stack_malloc0_contract / tfib_stack_malloc_at / asm0 / ASM0 declaration is lib/A). REUSE = this port of the image-A walk of the same function.
@@ -17,7 +18,7 @@
 
    The row ASM0 (TOPX-HYPS.md (sha256 47b88854dcb3; internal record) table) AT B top_x's OWN relation:
    W_LLVMFuzzerTestOneInput_top_x.ARX (lib/B/W_LLVMFuzzerTestOneInput_top_x.v's Definition ARX) is AsmTopX.ARX_asm by
-   reflexivity (segs = pa_segs PB_fr = tfibsegs, lib/B/Rt/Bcmp.v:44), so the row is AsmTopX's theorem by conversion. *)
+   reflexivity (segs = pa_segs PB_fr = tfibsegs, lib/B/Rt/Bcmp.v:45), so the row is AsmTopX's theorem by conversion. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

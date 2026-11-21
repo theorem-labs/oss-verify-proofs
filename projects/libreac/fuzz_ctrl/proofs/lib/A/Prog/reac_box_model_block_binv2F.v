@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 731 of its 745 lines of code are new or changed and 234 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_model_block_binv2.v; 415 of its 921 lines of code are new or changed and 239 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block_binv2.v at a working branch d69f7c708f6 (proved v1.9
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block_binv2.v at a working branch (proved v1.9
    run of record) over lib/Lib/StepF, from its proof scripts; the script edits include `hide_sec.`, rng and narrowed-shadow steps, and eleven declarations with a proof are new (five helpers, two OfF bounds and the four cl_*_of_F corollaries) with seven Lets.
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes: none read (the four runs of this file take no step of this
    image: each one cuts at its call and hands the stretch [call .. ret) to the callee's footprint contract, so the
    only cells read are the callee's own, inside the regions the contract asks for).
@@ -23,7 +24,7 @@
         no new proof obligation;
      2. the _F output feeds ONLY the ported cgif-form walk (no W_cutfree_ok, no cut-free twin, no LSCPS join, no
         top-level claim);
-     3. the source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+     3. the source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
         wrong-image cell; the re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes;
      4. every _F carries provenance in its header and goes to the auditor a Theorem Labs lane, who signs it against its
         proved run before it counts;
@@ -173,7 +174,7 @@ Section MainF.
     fp_dj [(rname row, rname row + Z.of_nat (length nb))] (fp_w [0%nat] FS).
 
   (* The footprint and the regions the runs of this function read or write (the nine of
-     reac_box_model_blockF.v (at head lib/A/Prog/reac_box_model_blockF.v:159 and :161-168; written on a working branch 3c9fcc93205)), then the data-region facts every F file of this family carries
+     reac_box_model_blockF.v (at head lib/A/Prog/reac_box_model_blockF.v:160 and :162-169; written on a working branch)), then the data-region facts every F file of this family carries
      (a Theorem Labs lane, interface decision (B)). *)
   Variable RNG : footprint.
   Hypothesis Rimg : rng RNG 0x10000 0x5ee000.
@@ -846,7 +847,7 @@ End MainF.
    This is the check that each _F statement is the old one plus footprint premises, nothing weaker. The callee
    contract stays in its _F form (a run that calls __asan_memset cannot be re-played without the callee's
    footprint contract), and so does the lemma's own continuation premise, for the same reason.
-   Text of the section and of all_rng: reac_box_model_block_epiF.v:879-950. *)
+   Text of the section and of all_rng: reac_box_model_block_epiF.v:880-951. *)
 Section OfF.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
     (m : word -> option byte) (p b o FS off A : Z) (row nb ob : list byte).

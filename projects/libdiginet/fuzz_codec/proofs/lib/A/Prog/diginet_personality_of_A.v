@@ -5,8 +5,8 @@
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc from
    proofs/libreac/fuzz_knock/lib/A/APgCSpec.v (the Section form of its lines 32-164) and
    proofs/libreac/fuzz_knock/lib/A/ACfn.v (lines 27-71, the harness contract tfib_lib_pre_x / _post_x /
-   _contract_x; its lines 72-73, tfib_lib_contract_x_all, are not carried here) at origin/ossv/recipes
-   6ebe35ba632, with their module paths changed (h-small-a3). rule 24 (reuse): no function is proved here;
+   _contract_x; its lines 72-73, tfib_lib_contract_x_all, are not carried here),
+   with their module paths changed (h-small-a3). rule 24 (reuse): no function is proved here;
    this file states the three ASan-level contracts only.
 
    THE QDISC CHANGES, and why each one is there.
@@ -47,6 +47,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_qdisc/lib/A/QPgCSpec.v, with its module paths and module names changed; 6 of its 69 lines of code are new or changed and 64 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/CPgMainC.v, with its module paths and module names changed; 22 of its 44 lines of code are new or changed and 47 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/diginet_meter_segments_A.v, with its module names changed; 17 of its 53 lines of code are new or changed and 8 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* diginet_personality_of at image A (fuzz_codec.asan, entry 0x84888, the personalities table 0x9d920) against
    its A-level contract cdc_pers_of_specX (lib/A/Prog/CPgEncC.v).
    The walk is diginet_personality_of_holds_of_F (lib/A/Prog/diginet_personality_of_F.v): for any 64-bit a0 = d

@@ -3,7 +3,7 @@
    cross_check / r_cross_seg / refuse and about seg_spec's record encoding read through a reader. No machine
    state and no instruction of the binary appear here; every lemma is about Gallina terms only. Because of
    that, this file is the same text on both images: it is ADAPTED from the image-A G3 walk owner's image-A
-   lib/A/Prog/cross_check_f.v (commit 130284ff40f1) with the Requires moved to the image-B
+   lib/A/Prog/cross_check_f.v with the Requires moved to the image-B
    kit copies (lib.B, the unit owner's B-kit copy lane) and lib.B.Prog, the pc comments moved to image B's addresses, and
    cc_fold brought here from cross_check_d.v so that this file needs no listing and can be built before the
    image-B listing is switched to the B kit.

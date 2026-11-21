@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of writev; RomBase.sys_rob at the system-call nodes). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require Export ShapeSet RealizesCfg SysNodesCfg.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require RomBase RomWrite.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require Import PropExec CatExec CatSim SeqExec.
 Import ListNotations.
 Open Scope bv_scope.
@@ -77,11 +79,11 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   destruct H17 as [H|H]; [right|left]; exact H.
 Qed.
 
-(* [comment removed for export] *)
 #[using="Type"] Lemma rz_writev2_wall : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 b2 n2 : word) bs1 bs2 (K : TSet),
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -106,7 +108,7 @@ Qed.
   realizes segs (mkCfg (mkst regs pc mem (seg_rom segs)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 fd)) (bs1 ++ bs2)) K).
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 K HF HE Hh Hl Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 K HF HE Hh Hl Hfd Hrd Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rb2 Rn2 B1 B2 Ht1 Hmax Ht30 Tiov Tb1 Tb2 HK0 HK.
   eapply rzc_ecall; [exact Hh | exact Hl | exact HF | exact HE |].
   assert (Hfd32 : fd32 (getr regs 10) = Z_to_bv 64 fd).
@@ -133,7 +135,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   assert (Hfd' : fd_lookup (m_fds model) (fd32 (getr regs 10)) = Some (FdChannel (Z_to_bv 64 fd)))
     by (rewrite Hfd32; exact Hfd).
   pose proof (rzc_writev_ch_wall segs DCFG regs pc mem model (Z_to_bv 64 fd) [(b1, n1); (b2, n2)] [bs1; bs2] K
-           Hh Hl H17 Hfd' Hw E12 Hcnt Hiok Harr Hbok Hbufs T1 T30 HK0) as R.
+           Hh Hl H17 Hfd' Hw E12 Hcnt Hiok Harr Hbok Hbufs T1 T30 Hrd HK0) as R.
   cbn [concat] in R. rewrite app_nil_r in R. apply R.
   intros k Hk1 Hk2. apply HK; assumption.
 Qed.
@@ -143,6 +145,7 @@ Qed.
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -163,7 +166,7 @@ Qed.
   realizes segs (mkCfg (mkst regs pc mem (seg_rom segs)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 fd)) bs1) K).
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros regs pc mem model w fd iov b1 n1 bs1 K HF HE Hh Hl Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 bs1 K HF HE Hh Hl Hfd Hrd Hfdr H17 H10 H11 H12
          Rb1 Rn1 B1 Ht1 Hmax Ht30 Tiov Tb1 HK0 HK.
   eapply rzc_ecall; [exact Hh | exact Hl | exact HF | exact HE |].
   assert (Hfd32 : fd32 (getr regs 10) = Z_to_bv 64 fd).
@@ -184,7 +187,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   assert (Hfd' : fd_lookup (m_fds model) (fd32 (getr regs 10)) = Some (FdChannel (Z_to_bv 64 fd)))
     by (rewrite Hfd32; exact Hfd).
   pose proof (rzc_writev_ch_wall segs DCFG regs pc mem model (Z_to_bv 64 fd) [(b1, n1)] [bs1] K
-           Hh Hl H17 Hfd' Hw E12 Hcnt Hiok Harr Hbok Hbufs T1 T30 HK0) as R.
+           Hh Hl H17 Hfd' Hw E12 Hcnt Hiok Harr Hbok Hbufs T1 T30 Hrd HK0) as R.
   cbn [concat] in R. rewrite app_nil_r in R. apply R.
   intros k Hk1 Hk2. apply HK; assumption.
 Qed.
@@ -252,7 +255,16 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     - intros (-> & -> & ->). exists (mkEffect (Z_to_bv 64 0) [] []). split; [reflexivity|].
       unfold with_copyins, ret_ci. reflexivity. }
   apply (rzc_sys_det segs DCFG ms model (getr regs 17) (ret_ci (Z_to_bv 64 0) (CA ++ [])) model K);
-    [exact Hh | reflexivity | apply Hsp; auto | intros; apply Hsp; assumption | | | exact Hh | exact Hl | ].
+    [exact Hh | reflexivity | apply Hsp; auto | intros; apply Hsp; assumption | | | exact Hh | exact Hl
+    | (apply (RomWrite.writev_rob_zero segs ms model (getr regs 17) [(b1, Z_to_bv 64 0)] iov (Z_to_bv 64 1) eq_refl);
+       [ exact Hno
+       | unfold ms; rewrite ms_gpr_epend by lia; rewrite <- H11; f_equal
+       | unfold ms; rewrite ms_gpr_epend by lia;
+         replace (getr regs (Z_to_bv 5 (10 + Z.of_nat 2))) with (getr regs 12) by f_equal;
+         rewrite H12; reflexivity
+       | exact Himp
+       | vm_compute; reflexivity ])
+    | ].
   - intros Hs. fold i in Hs. rewrite (syscall_spec_66 i model _ Hno) in Hs. rewrite A0, A1, A2, H12, Hfd32 in Hs.
     unfold writev_spec in Hs. rewrite bind_input, bind_get_model in Hs. rewrite Hfd in Hs.
     replace (w_is0 (Z_to_bv 64 fd)) with false in Hs by (symmetry; apply w_is0_pos; rewrite u64_lit by lia; lia).

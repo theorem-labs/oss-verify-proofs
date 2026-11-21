@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepPrfE.v (commit f01d79f3fb5, cf refill round 3; file sha256 b1e4b9e164b2) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepPrfE.v (cf refill round 3; file sha256 b1e4b9e164b2) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane's class-full report walk, slice F2): the two entry lemmas of
    __sanitizer::Printf's silent path at cgif_file_fuzzer's asan-ubsan image (pin 1c29845fe605).
    - SEED_ok: Printf's entry state satisfies st_ok of the symbolic seed SS_P0 (RepPrfS.v).
    - imemset_stretch_stk: internal_memset (the kit YB15.tfib_imemset, entry 0x65204, clobbers a1 a2 a3) over a
-     STACK buffer, as a stretch of the symbolic state.  It is the twin of imemset_stretch (commit eee4bb778e4,
+     STACK buffer, as a stretch of the symbolic state.  It is the twin of imemset_stretch (commit theorem-labs/oss-verify-proofs@6b32741d849a,
      proofs/cgif/cgif_file_fuzzer/lib/A/AFff.v:46), whose writability came from the image's rw window; here it
      comes from apresent (YF0x.apresent_writable), and the byte written is 0xaa, so the post does not pin it.
    rule 24: proves no function (kind: segment lemma; the st_ok seed of __sanitizer::Printf's entry and the

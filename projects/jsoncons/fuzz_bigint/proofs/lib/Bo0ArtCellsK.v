@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section takes the full launch input (the fields of State.mkProcInput_full), the mmap base and the entry pc that AsanInitK's start state reads. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -70,12 +71,27 @@ Section Lits.
   Variable argv envp : list (list byte).
   Variables uid hw : word.
   Variable fs : Fs.Fs.
+  (* [AsanInitK]'s [Section Init] is parameterised by the full
+     [State.mkProcInput_full] field list, so [SINV0]/[argH0]/[argH0_high]
+     discharge all sixteen of [AsanInitK.inp]'s arguments plus [mbase] and
+     [apc].  Same block as [HandoffBridgeK.v:614-624]. *)
+  Variable mbase : word.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variables abrt sdf : bool.
+  Variable ur : InputStream.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable apc : N.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn apc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn).
   #[local] Notation CSOK := (cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs).
-  Let AH := argH0_high APH0 sp rdraw argv envp uid hw Hsp Hva.
+  Let AH := argH0_high sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva.
 
   Lemma art_lit1 : forall E cs R FULL model c, CSOK E cs R FULL model -> chk_lit1 (kn cs) c = true ->
     cell ASEGS0 FULL (fst (fst c)) (snd (fst c)) (snd c).

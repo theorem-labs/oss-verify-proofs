@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-10: the addresses, frame shape and inlined-expected_value statement of reac-repacer/fuzz_uci's
-   check_value in image A, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_iface.v and crtA_loop_stmt.v
-   (origin/ossv/recipes 88154566652a); the expected_value statement is the footprint twin of the plain walk's
+   check_value in image A, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_iface.v and crtA_loop_stmt.v;
+   the expected_value statement is the footprint twin of the plain walk's
    continuation form (lib/Prog/check_value.v, Section Ev, ev_block / KFIN). *)
 (* Modified by Theorem Labs, 2026-10: the straight-line segments of reac-repacer/fuzz_uci's check_value in image A, in the form
-   and with the helpers of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v (origin/ossv/recipes 88154566652a:
+   and with the helpers of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v (
    crt_seg1_F .. crt_seg9_F, Z_to_le_bytes_to_Z, crt_le8_of_bytes, crt_c8s, crt_rw_c8s, crt_frame_words, crt_regs,
    crt_usub, crt_shift, crt_w, crt_finF, crt_memF, crt_pc) and of its lib/A/Prog/ReacDecodeLib.v rd_all. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_copy_cgW_iface: what the pieces of the image-B walk of check_copy (fuzz_wire.asan-ubsan 0x80abc =
    wire_sigma WS_check_copy) share, for the caller-journal statement lib/B/Prog/check_copy_cg.v; the image-B twin of
    lib/A/Prog/check_copy_cgW_iface.v, in the form of reac-repacer/fuzz_uci's lib/B/Prog/UciCvBIface.v and

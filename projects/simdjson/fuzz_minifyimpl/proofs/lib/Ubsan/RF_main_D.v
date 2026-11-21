@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the section also takes the run's launch class, the stack image is pimg, and the stack region's lower bound is 4 MiB below the entry sp instead of 8 MiB; taken in part from projects/simdjson/fuzz_parser/proofs/lib/Ubsan/RF_main_D.v, lines 27, 48, 78, 94, 125. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
@@ -24,7 +25,7 @@ Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 Ltac ua := idtac.
 Ltac rpc := apply ret_pc_even; [lia| reflexivity].
 
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {rl : runLaunchT}.
 Section D.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
             (J8 : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
@@ -45,7 +46,7 @@ Section D.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes pph sp0 argv envp uid hw draw).
+  Notation IMGB := (pimg sp0 argv envp uid hw draw).
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid hw draw TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm J8 S7 S6 S5 S4).
@@ -76,7 +77,7 @@ Section D.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s RQEXIT msx) end.
     eapply implM_bind.
     { unfold rfree_stmt in FREE.
-      eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := cap) (LB := cb ++ [(bufp, A, cap)]); try reflexivity; unfold RATP;
+      eapply FREE with (lo := usp0 - 4194304) (B := usp0) (p := bufp) (A := A) (n := cap) (LB := cb ++ [(bufp, A, cap)]); try reflexivity; unfold RATP;
         rewrite ?(unsigned_lit 976216) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia;
         first [ exact P0 | apply in_or_app; right; left; reflexivity | exact AUX | exact ST | exact MI | exact ERR | unfold RFREE_STACK; lia | lia ]. }
     cbv beta. intros [] s2 ms2 PO.
@@ -92,7 +93,7 @@ Section D.
     apply implM_ret. change (RQEXIT code s2) with (pat_exitU code s2).
     eapply (main_return sp0 argv envp TID VSP HT code s2 cb).
     - unfold MFRAME. eapply rheap_pres_rw_cells; [exact HPR3| exact FR| left; cbn; lia].
-    - unfold LO. first [exact ST3| replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST3].
+    - unfold LO. first [exact ST3| replace (usp0 - 4194304) with (usp0 + -4194304) by lia; exact ST3].
     - eapply RSTAT_heap_pres; [exact HPR3| exact RS].
     - exact HEAP3.
     - apply exit_table_of_static.      (* [comment removed for export] *)
@@ -124,7 +125,7 @@ Section D.
     unfold implM. iprefix. zstep. zstep. zstep. zstep. zstep. apply evt_done.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s RQEXIT msx) end.
     eapply implM_bind.
-    { eapply TRUN with (lo := usp0 - 8388608) (AB := usp0) (p := bufp) (cap := cap);
+    { eapply TRUN with (lo := usp0 - 4194304) (AB := usp0) (p := bufp) (cap := cap);
         rewrite ?(unsigned_lit (usp0 + -128)) by lia.
       - exact PST0.
       - left; reflexivity.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (U_realizes_spec_LM, U_realizes_spec_lim and U_realizes_spec gain the channel-reader, valid_launch and entry_launch_ok_va premises). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -34,7 +35,7 @@ Section Top.
   #[using="SI SIFP FUZZ"] Theorem U_realizes_spec_LM {AMB : Amb} {LM : Lim} : forall sp brk mbase (rd : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk usegs' brk ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
-    entry_stack_fits sp (in_argv inp) (in_envp inp) ->                 (* [comment removed for export] *)
+    entry_stack_fits sp (in_argv inp) (in_envp inp) -> in_channel_reader inp = true -> valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rd) inp ->                 (* [comment removed for export] *)
     realizes usegs' (init_config usegs' upc uph sp brk mbase rd LIM inp) (spec (in_argv inp) (in_fs inp)).
   Proof.
     apply (U_realizes_spec_drv U_heap_rz.U_DRV U_heap_rz.U_nosmall U_heap_rz.U_malloc_rz U_heap_rz.U_free_c U_heap_rz.U_drv_mo SI SIFP FUZZ).
@@ -47,7 +48,7 @@ Section Top.
     2 ^ 31 <= lim ->
     valid_sp sp -> valid_brk usegs' brk ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
-    entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+    entry_stack_fits sp (in_argv inp) (in_envp inp) -> in_channel_reader inp = true -> valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rd) inp ->
     realizes usegs' (init_config usegs' upc uph sp brk mbase rd lim inp) (spec (in_argv inp) (in_fs inp)).
   Proof.
     intros lim sp brk mbase rd inp Hlim. exact (@U_realizes_spec_LM AMB (mkLim lim Hlim) sp brk mbase rd inp).
@@ -57,7 +58,7 @@ Section Top.
   #[using="SI SIFP FUZZ"] Theorem U_realizes_spec {AMB : Amb} : forall sp brk mbase (rd : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk usegs' brk ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
-    entry_stack_fits sp (in_argv inp) (in_envp inp) ->                 (* [comment removed for export] *)
+    entry_stack_fits sp (in_argv inp) (in_envp inp) -> in_channel_reader inp = true -> valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rd) inp ->                 (* [comment removed for export] *)
     realizes usegs' (init_config usegs' upc uph sp brk mbase rd source_alloc_limit inp) (spec (in_argv inp) (in_fs inp)).
   Proof.
     intros sp brk mbase rd inp. exact (U_realizes_spec_lim source_alloc_limit sp brk mbase rd inp source_alloc_limit_ge31).

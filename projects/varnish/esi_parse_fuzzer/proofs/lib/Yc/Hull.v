@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob, node_ok's third conjunct, in node_account). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require AndN.   (* [comme
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require Import ShapeAlg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomBase.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc Require Divembc.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc Require SpinAlg.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc Require SpinAlg.
@@ -1098,10 +1100,11 @@ Lemma node_account : forall ms model ms' model',
   mi_account_step segs ms model = MachineOk (ms', model') ->
   node_ok segs (mkCfg ms model) unit (fun _ => []) (fun _ => mkCfg ms' model').
 Proof.
-  intros ms model ms' model' Hh Hsvc Hacc. split.
+  intros ms model ms' model' Hh Hsvc Hacc. split; [| split].
   - intros []. apply (sstep_cfg_instr segs ACFG ms model ms' model'); assumption.
   - intros e st Hss. destruct (sstep_account_det ms model ms' model' e st Hsvc Hacc (sstep_cfg_sub segs ACFG _ _ _ Hss)) as [-> ->].
     exists tt. split; reflexivity.
+  - apply RomBase.sys_rob_instr. exact Hsvc.
 Qed.
 
 Theorem node_instr_hull : forall A AL E ms model ms' ranges,

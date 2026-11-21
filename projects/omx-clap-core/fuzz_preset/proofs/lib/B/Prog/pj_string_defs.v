@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the CUTS of pj_string's image-B walk (fuzz_preset asan-ubsan, B entry B_entry_pj_string,
    49 instructions; preset_file.c :406-411). STATEMENTS ONLY: the entry record, the kit's premises of tpj_string_specX
    (lib/A/PRH_FnPj.v: ENTRY-keyed,
@@ -12,7 +13,7 @@
    MARKED image facts the segments take. The walk keeps the run's strtod model a parameter (js_sm); the top
    instantiates it at ReaderRes.jr_strtod. lib/B/Prog/pj_string_top.v composes them into the text.
    proves no function (kind: statement text).
-   The text carries the three premises this walk found missing at a3bdeca3920: the live-set bounds through the
+   The text carries the three premises this walk found missing: the live-set bounds through the
    model-run position PresetRoomPos.iface_room_pos (the walk derives fuzz_strdup's sec_cnt / ccnt24 premises from it by
    PresetRoomCounts.v counts_of_room_pos_rl, in the top: pjs_cnt), `v < YM05.alloc_ceiling`, and prh_head_wide. The walk's goal
    is fpostWm: pjs_Q (the position at the return, from fuzz_strdup's post implication at pj_string's entry position
@@ -33,7 +34,7 @@
      +0x80 .. +0x8c  a0 := (str != 0) - 1; v->str := str
      +0x90 .. +0xa4  restore ra, s0, s1, s2; sp += 32; ret
    Callee texts: __asan_memset = YGcallMxmn.v aintrin_realizes_xm OSet (the m-form: the plain text plus the memnorm
-   keep); fuzz_strdup = the tfuzz_strdup_specX (lib/A/PRH_FnAlloc.v:517-558 at d607d12e4b0f: the POST-IMPLICATION
+   keep); fuzz_strdup = the tfuzz_strdup_specX (lib/A/PRH_FnAlloc.v:517-558: the POST-IMPLICATION
    form, no position and no run premise at entry, each arm's position transfer an implication over the model run, and
    THE OUTCOME conjunct; a Section hypothesis, never unfolded, its post read by name). Every name is stated at
    PA := PI_prog_B, the whole-range instance. Numerals: 32 / 56 / 24 / 16 / 8 / 4 (LENGTH: frame, struct, slots, field
@@ -149,7 +150,7 @@ Definition pjs_cnt (en : PjsEnt) : Prop :=
   YGcfRoomLive.sec_cnt (js_S en) <= PresetLiveBounds.LSEC + PresetLiveBounds.DRV /\
   YGcfRoomLive.ccnt24 (js_S en) <= PresetLiveBounds.L24 + PresetLiveBounds.DRV.
 
-(* The kit's run premise (PRH_FnPj.v:1261 at d607d12e4b0f) and its prh_cons_from premise (:1234), over the entry's values *)
+(* The kit's run premise (PRH_FnPj.v:1261) and its prh_cons_from premise (:1234), over the entry's values *)
 Definition pjs_run (en : PjsEnt) : Prop :=
   prh_run_at (js_sm en) (js_x en) (js_os en) (js_i en)
     (prhPj_string_evs (Z.of_nat (length (js_cs en))) (js_cnt en) (js_fail en)).
@@ -158,7 +159,7 @@ Definition pjs_cons (en : PjsEnt) : Prop :=
     (length (prhPj_string_evs (Z.of_nat (length (js_cs en))) (js_cnt en) (js_fail en))).
 
 (* the walk's own post body: the text's, with the position as fuzz_strdup's post implication (PRH_FnAlloc.v
-   tfuzz_strdup_specX at d607d12e4b0f) gives it when applied at pj_string's entry position (js_i, js_hist, pjs_pre):
+   tfuzz_strdup_specX) gives it when applied at pj_string's entry position (js_i, js_hist, pjs_pre):
    a = 0 gives some history at js_i (E = []); a <> 0 with the run's HMal at js_i gives some history at S js_i
    (E = [HMal ..], prh_run_at_one); and DEAD-PJSTRING as fuzz_strdup's OUTCOME conjunct gives it at the same
    position: with no chosen failure (cnt <> fail), the kit's run and prh_cons_from premises put the HMal at js_i as a
@@ -184,7 +185,7 @@ Definition pjs_Q (en : PjsEnt) : alayout -> astate -> list Z -> world SEGS -> bv
      bytes_at (PA := PA) W' mem' v ([4; 0; 0; 0] ++ repeat 0 52) /\
      pj_fdR SEGS (rdW W' mem') (prh_lin Lam) 0 v []).
 
-(* The post body of tpj_string_specX (PRH_FnPj.v:1263-1286 at d607d12e4b0f), verbatim, over the entry's values:
+(* The post body of tpj_string_specX (PRH_FnPj.v:1263-1286), verbatim, over the entry's values:
    the walk's post gives the text's under the run and prh_cons_from premises (pj_string_top.v pjs_Q_K0_of_Q). *)
 Definition pjs_Q_K0 (en : PjsEnt) : alayout -> astate -> list Z -> world SEGS -> bvmap 5 word ->
     (word -> option byte) -> Model -> Prop :=
@@ -281,7 +282,7 @@ Definition pjs_seg_entry (CTX0 : list (list Z)) : Prop :=
   SRr SEGS (js_W en) (cfg_at SEGS (pa_sigma AS_pj_string) (js_regs en) (js_mem en) (js_md en)) (pjs_FIN en).
 
 (* ---- MARKED image facts (the unit's binding of B at image B; owner a Theorem Labs lane), taken by the segments that need them ---- *)
-(* G-Pj2 (the named gap, PRH_FnPj.v:54-57 at d607d12e4b0f): for s = NULL pj_string duplicates the image's ""
+(* G-Pj2 (the named gap, PRH_FnPj.v:54-57): for s = NULL pj_string duplicates the image's ""
    literal PJS_LIT, a registered one-byte global (`.str.1`, 32 bytes with its redzone in the unstripped twin).
    RESTATED 2026-10-29 (kind-A vacuity; the image-A twin is S6PjString.v pal_lit, blob efdbe4e4b8f8): the old text asked for all 8 bytes PJS_LIT ..
    PJS_LIT + 7 `~ Exists (in_zr a) (as_owned_static B)`, which is FALSE at YD2l.TfibB (PJS_LIT + 1 .. + 7 lie in ASan's

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFia.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed sec_grant_exists_AR, grant_facts, grant_parts). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -48,22 +49,23 @@ pose proof (proj1 (Forall_forall _ _) CK k Hk) as [Hn _]. destruct (ck_beg k) as
 cbn [snd] in *. pose proof (YG08.sec_map_size_bound (ck_req k) ltac:(lia)) as SB. pose proof (req_size_bounds (ck_req k) ltac:(lia)) as RB.
 unfold YF06.NOB, MALLOC_MAX in *. lia.
 Qed.
-Lemma sec_grant_exists_AR : forall B ly S rd md nZ,
-ARm B ly S rd -> ALedger tfibsegs ly S md -> amwf md -> 0 < nZ <= YF06.NOB ->
-exists a, grant_ok_na_pin md a nZ = true.
+Lemma sec_grant_exists_AR : forall hint B ly S rd md nZ,
+ARm B ly S rd -> ALedger tfibsegs ly S md -> amwf md -> 0 < nZ <= YF06.NOB -> nZ mod page_size = 0 ->
+exists a, grant_ok_na_pin hint md a nZ = true.
 Proof.
-intros B ly S rd md nZ M L [_ NZ] HnZ.
-exact (sec_grant_exists tfibsegs ly S md nZ (am_layout _ _ _ _ M) L NZ (sec_extents_count B ly S rd M) (sec_extents_sizes B ly S rd M) HnZ).
+intros hint B ly S rd md nZ M L [_ NZ] HnZ HnZal.
+exact (sec_grant_exists hint tfibsegs ly S md nZ (am_layout _ _ _ _ M) L NZ (sec_extents_count B ly S rd M) (sec_extents_sizes B ly S rd M) HnZ HnZal).
 Qed.
 Section G.
 Variable B : asyms.
 Variables (ly : alayout) (S : astate) (rd : reader) (md : Model) (a : word) (nZ : Z).
+Context {hint : word}.
 Hypothesis M : ARm B ly S rd.
 Hypothesis L : ALedger tfibsegs ly S md.
 Hypothesis Hev : aregime S.
 Hypothesis HnZ : 0 < nZ <= MALLOC_MAX + 4 * 4096.
 Hypothesis HnZal : nZ mod 4096 = 0.
-Hypothesis HG : grant_ok_na_pin md a nZ = true.
+Hypothesis HG : grant_ok_na_pin hint md a nZ = true.
 Let A : Z := bv_unsigned a.
 Let LY : layout_ok ly := am_layout _ _ _ _ M.
 Lemma nZ_word : bv_unsigned (Z_to_bv 64 nZ) = nZ.
@@ -73,7 +75,7 @@ page_aligned A /\ in_app A nZ /\ A + nZ <= ASAN_CEIL /\
 Forall (zdisjoint (A, nZ)) (static_extents ly ++ sec_extents ly S ++ perm_maps ly ++ band_maps).
 Proof.
 pose proof (am_wf _ _ _ _ M : WfP (as_universe B) 0 0 0 S) as W.
-pose proof (anon_grant_facts tfibsegs (as_universe B) 0 0 0 ly S md a (Z_to_bv 64 nZ) LY W (am_placed _ _ _ _ M) L) as X.
+pose proof (anon_grant_facts tfibsegs (as_universe B) 0 0 0 ly S md a (Z_to_bv 64 nZ) (hint:=hint) LY W (am_placed _ _ _ _ M) L) as X.
 rewrite nZ_word in X. exact (X HG (proj1 HnZ) HnZal).
 Qed.
 Lemma grant_parts :
@@ -81,9 +83,7 @@ A mod 4096 = 0 /\ 0 < A /\ A + nZ <= alloc_top (m_vmmaps md) /\
 region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) a (Z_to_bv 64 nZ) = true /\
 A + nZ <= alloc_top (m_vmmaps md).
 Proof.
-clear LY. pose proof HG as Hg. unfold grant_ok_na_pin in Hg.
-apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Htop]. apply andb_prop in Hg as [Hal Hpos].
-apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
+clear LY. destruct (grant_ok_na_pin_unpack hint md a nZ (proj1 HnZ) ltac:(unfold page_size; exact HnZal) HG) as (Hal & Hpos & Htop & Hrf).
 unfold page_size in Hal. unfold A. repeat split; assumption.
 Qed.
 Lemma grant_A_range : 0 <= A /\ A + nZ < 2 ^ 64.

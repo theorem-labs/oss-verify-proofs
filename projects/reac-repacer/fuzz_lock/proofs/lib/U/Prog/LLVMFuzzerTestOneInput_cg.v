@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_gcg.v, with its module paths changed; 18 of its 41 lines of code are new or changed and 17 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The crash-free twin of LLVMFuzzerTestOneInput_g.v: from the SRcf contract of fuzz_lock.ubsan's
    LLVMFuzzerTestOneInput to U/Prog/AgreeRet.v's lib_contract_cgr for the return lock_ret, as
-   libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v (25e3d17bdb50) does for its harness
+   libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v does for its harness
    function. The post is the one of LLVMFuzzerTestOneInput_g.v (llvm_post_gr); only realizes becomes
    crealizes. *)
 From Stdlib Require Import ZArith List Bool Lia.

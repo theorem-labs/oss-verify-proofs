@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_identity/lib/A/IdentTop.v (a working branch b49fc549b95; itself from fuzz_grant's GrantTop.v and a Theorem Labs lane's AGrantT.v 2d4a68692f3) for fuzz_identity's ASan+UBSan build; on the composed B tree as the A closer of 2e13013179f is on the composed A tree. *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_identity/lib/A/IdentTop.v (a working branch; itself from fuzz_grant's GrantTop.v and a Theorem Labs lane's AGrantT.v) for fuzz_identity's ASan+UBSan build; on the composed B tree as the A closer is on the composed A tree. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed identb_srealizesX_rc, identb_srealizesX_top, identb_TFIB_TB_of_parts). *)
 (* The closing file of fuzz_identity's ASan+UBSan build (image B): IdentityTFIB.TFIB_TB (lib/B/IdentityTFIB.v:20) and
    the two statements Statements.asan_ubsan_agrees and Statements.asan_ubsan_halts, from named parts only. The image-B
    twin of lib/A/IdentTop.v.
@@ -14,7 +15,7 @@
    or a Section hypothesis of this file.
 
    The chain, each link proved in its owner's file:
-     IdentEntryLink.identb_entry_link_x / identb_entry_link (lib/B/Prog/IdentEntryLink.v:726, :741) -- the program
+     IdentEntryLink.identb_entry_link_x / identb_entry_link (lib/B/Prog/IdentEntryLink.v:727, :742) -- the program
        contract of the entry function (LLVMFuzzerTestOneInput, 0x80774) in the link's copy of the core's contract
        (IdentEntryLink.v:88-147);
      the link's copy IS the core's lib/ReusableB/YCfn.v:70 tfib_lib_contract_x_all at the core's sink names, by
@@ -31,25 +32,25 @@
    THE LINK'S OPEN NAMES (IdentEntryLink.v:183-723, each at every fx and rc), instantiated by:
      IdentB          lib/ReusableB/YD2l.v:12 IdentB (cgif YD2l.v's TfibB renamed)
      asink_syms_T    Reusable/YE00.v:38 asink_syms
-     KS              lib/ReusableB/YE2k.v:59 tfib_K
+     KS              lib/ReusableB/YE2k.v:60 tfib_K
      asink_none      Reusable/YE00.v:131 asink_none
-     ameta_inv       lib/ReusableB/YE01.v:146 ameta_inv
+     ameta_inv       lib/ReusableB/YE01.v:147 ameta_inv
      LAWS            Reusable/YG0q.v:804 AR_laws_ok
-     TL              lib/B/IdentRtGlueB.v:72 identb_TL
+     TL              lib/B/IdentRtGlueB.v:73 identb_TL
      TLF             lib/B/Prog/IdentBFrameImg.v:30 identb_palf; its five premises (IdentB's as_got_uar 0x9c6e8,
                      as_uar_cell 0xa52c0 and the pc_stack_malloc entries 0x3cfe8, 0x3d15c, 0x3d308 of YF0l.v:12) by
                      eq_refl
      PSIG            lib/B/Prog/IdentBProgSigImg.v:9 identb_prog_sig
-     ML              lib/B/IdentRtGlueB.v:85 identb_ML
-     ASM0 ASM3 ASM4  lib/B/Rt/StackMalloc0.v:518 stack_malloc0_contract, Rt/StackMalloc3.v:520
-                     stack_malloc3_contract, Rt/StackMalloc4.v:518 stack_malloc4_contract
-     SMP             lib/B/IdentRtGlueB.v:88 identb_SMP
+     ML              lib/B/IdentRtGlueB.v:86 identb_ML
+     ASM0 ASM3 ASM4  lib/B/Rt/StackMalloc0.v:519 stack_malloc0_contract, Rt/StackMalloc3.v:521
+                     stack_malloc3_contract, Rt/StackMalloc4.v:519 stack_malloc4_contract
+     SMP             lib/B/IdentRtGlueB.v:89 identb_SMP
      ASF             Reusable/YG0t.v:474 astack_free_law_ok
-     FFL             lib/B/IdentRtGlueB.v:92 identb_FFL
-     AMALLOC4        lib/B/IdentRtGlueB.v:113 identb_AMALLOC4 (the glue of record,
+     FFL             lib/B/IdentRtGlueB.v:93 identb_FFL
+     AMALLOC4        lib/B/IdentRtGlueB.v:114 identb_AMALLOC4 (the glue of record,
                      at the link's meter IdentEntryLink.v:80 ameter_triv)
-     AFREE4          lib/B/IdentRtGlueB.v:121 identb_AFREE4 (the same)
-     HUMB            lib/B/IdentStartupFacts.v:1938 identb_HUMB, from the record facts below
+     AFREE4          lib/B/IdentRtGlueB.v:122 identb_AFREE4 (the same)
+     HUMB            lib/B/IdentStartupFacts.v:1939 identb_HUMB, from the record facts below
      AMEMSET         identb_AMEMSET below: lib/ReusableB/YE2r.v:568 asan_memset_realizes (0x51d5c =
                      IB___asan_memset, Prog/IdentBAddr.v:19) with its premises in aintrin_realizes's order (amem_range
                      before the two shadow premises; the OSet premise is True); the restatement of lib/A/IdentTop.v's
@@ -60,28 +61,28 @@
      ASTRLEN         lib/B/Rt/WrapBinders.v:63 astrlen_binder_B (the strlen trampoline 0x421f4)
      ASTRCMP         lib/B/Rt/WrapBinders.v:75 astrcmp_binder_B (the strcmp trampoline 0x421fc)
      AMEMCHR         lib/B/Rt/WrapBinders.v:87 amemchr_binder_B (the memchr trampoline 0x4220c)
-     ASSF5           lib/B/Rt/SetShadow.v:193 ident_set_shadow_f5 (SetShadow.v:32 SSF5_ENTRY = 0x54888
+     ASSF5           lib/B/Rt/SetShadow.v:194 ident_set_shadow_f5 (SetShadow.v:32 SSF5_ENTRY = 0x54888
                      = IB___asan_set_shadow_f5, IdentBAddr.v:34)
      GM IV ZS_STEM ZS_NAME HUMM HUMF
-                     lib/B/IdentStartupFacts.v:1902, :1910, :1918, :1922, :1926, :1932, from the record facts below
-     HIMG_UNOWNED    lib/B/IdentHimgOwned.v:106 identb_HIMG_UNOWNED, its HOWN / HERRNO lib/B/IdentCloseImgB.v:120
+                     lib/B/IdentStartupFacts.v:1903, :1911, :1919, :1923, :1927, :1933, from the record facts below
+     HIMG_UNOWNED    lib/B/IdentHimgOwned.v:106 identb_HIMG_UNOWNED, its HOWN / HERRNO lib/B/IdentCloseImgB.v:121
                      identb_HOWN / :125 identb_HERRNO from the record facts below
-     AJ_FP_NIL       lib/ReusableB/YCfh.v:20 ajournal_fp_nil
-     AJ_NIL_IO       lib/B/IdentCloseImgB.v:130 identb_AJ_NIL_IO (jl2_nil_io at the B head and image instance)
-     SRZ_ENTER       lib/ReusableB/YCfh.v:38 srz_enter
-     ASINK_NONE_KEPT lib/ReusableB/YE01.v:89 asink_none_kept, at lib/ReusableB/YD1u.v:45 tfib_AIL
-     AMETA_INV_KEPT  lib/ReusableB/YE01.v:160 ameta_inv_kept, at lib/ReusableB/YD1u.v:45 tfib_AIL
-   RECORD FACTS. HZS, HCONST, HUNIV, HMRA, HFRA (IdentStartupFacts.v:1871-1875), TS_OWNED, TS_ERRNO
-   (IdentCloseImgB.v:115-116) and IN_RO_TFA (the core's in_ro_tfa, IdentCloseImgB.v:145) close by eq_refl at the
+     AJ_FP_NIL       lib/ReusableB/YCfh.v:21 ajournal_fp_nil
+     AJ_NIL_IO       lib/B/IdentCloseImgB.v:131 identb_AJ_NIL_IO (jl2_nil_io at the B head and image instance)
+     SRZ_ENTER       lib/ReusableB/YCfh.v:39 srz_enter
+     ASINK_NONE_KEPT lib/ReusableB/YE01.v:90 asink_none_kept, at lib/ReusableB/YD1u.v:45 tfib_AIL
+     AMETA_INV_KEPT  lib/ReusableB/YE01.v:161 ameta_inv_kept, at lib/ReusableB/YD1u.v:45 tfib_AIL
+   RECORD FACTS. HZS, HCONST, HUNIV, HMRA, HFRA (IdentStartupFacts.v:1872-1876), TS_OWNED, TS_ERRNO
+   (IdentCloseImgB.v:116-117) and IN_RO_TFA (the core's in_ro_tfa, IdentCloseImgB.v:146) close by eq_refl at the
    core's IdentB: the core's Tfib_zero_shadow (YF0m.v:1576), Tfib_const (YF0m.v:1575, over Tfib_const_sym,
    Tfib_const_abs, Tfib_const_shadow), Tfib_universe (YCej.v:223), Tfib_owned_static (YF0m.v:1578), TFIB_ERRNO
    (YF0m.v:25), Tfib_code's allocator return addresses (YF0l.v:10-11) and in_ro_tfa (YCeg.v:31) are the text those
-   files copy (IdentStartupFacts.v:42-1617 Module StartupB, IdentCloseImgB.v:50-108 Module IdentCloseTables). HCONST
+   files copy (IdentStartupFacts.v:43-1618 Module StartupB, IdentCloseImgB.v:51-109 Module IdentCloseTables). HCONST
    is an equation on B, not an existential as on A: fun ly => eq_refl.
 
    THE CORE'S LEMMAS, instantiated in Section RC as fuzz_grant's AGrantT.v:41-74 instantiates them:
-     TfibSyms YF0m.v:1640; IdentB_syms := YD2l.v:70 TfibB_syms; HD := IdentRtGlueB.v:107 identb_HD (eq_refl,
-     YD2l.v:30 as_dhash := YF0p.v:14 tfib_dhash); RO_IN := IdentCloseImgB.v:148 identb_RO_IN over IN_RO_TFA (its
+     TfibSyms YF0m.v:1640; IdentB_syms := YD2l.v:70 TfibB_syms; HD := IdentRtGlueB.v:108 identb_HD (eq_refl,
+     YD2l.v:30 as_dhash := YF0p.v:14 tfib_dhash); RO_IN := IdentCloseImgB.v:149 identb_RO_IN over IN_RO_TFA (its
      right arm [0x9b080, 0x9d388) = [RLO, RHI), IdentEntryLink.v:76-77); tfib_amalloc_realizes YF0w.v:44;
      afree_realizes_closed YF0q.v:10; tfib_AICPY / tfib_ARDCHK YD2m.v:16 / :21; aread_check_stmt YD1i.v:18; xst / est
      YD1k.v:127 / :88; tfib_xst_frame YD1k.v:135; tfib_est_img / tfib_est_frame YD1k.v:116 / :118; tfib_fwrite_site /
@@ -94,7 +95,7 @@
      lemma is identity_shape (the local instance below).
 
    THE SINK HEAD IS EXPLICIT. This file Requires lib/ReusableB/YE2k.v but does not Import it, so the core's
-   #[export] instance tfib_sink_head (YE2k.v:41) is not in resolution. The plain build's sink hints (Reusable YI5b /
+   #[export] instance tfib_sink_head (YE2k.v:42) is not in resolution. The plain build's sink hints (Reusable YI5b /
    YI5c) are removed below (the link's IdentBSkGuard.v removes them too; the local line repeats it in this file); a
    bare `sink_head` then does not elaborate (the `Fail` line). Every part this file names is passed
    `ident_asan_ubsan_sink_head` (sk_ofl_head = 0x5f8948, IdentEntryLink.v:68) by name; sk_probe_is_asan shows what a
@@ -148,7 +149,7 @@ Fail Definition sk_bare : YI16.sink_head := _.
 Definition sk_probe : YI16.sink_head := _.
 Lemma sk_probe_is_asan : sk_probe = ident_asan_ubsan_sink_head.
 Proof. reflexivity. Qed.
-(* The core's head (YE2k.v:41, sk_ofl_head := A_ofl_head = 0x5f8948, YE2k.v:32) is the same head: the core's
+(* The core's head (YE2k.v:42, sk_ofl_head := A_ofl_head = 0x5f8948, YE2k.v:33) is the same head: the core's
    YCfn.v contract, stated at it, is the link's contract, stated at ident_asan_ubsan_sink_head. *)
 Lemma tfib_sink_head_is_asan : YE2k.tfib_sink_head = ident_asan_ubsan_sink_head.
 Proof. reflexivity. Qed.
@@ -164,18 +165,18 @@ Local Notation SIGMAr rc := (@pa_sigma _ identb_listing (@PI_identb rc)).
 Section asan_ubsan.
 
 (* ---- the record facts, at the core's IdentB (YD2l.v:12) --------------------------------------------------- *)
-(* IdentStartupFacts.v:1871-1875: its zero-shadow table, its constant cells, its universe and the two allocator
+(* IdentStartupFacts.v:1872-1876: its zero-shadow table, its constant cells, its universe and the two allocator
    return addresses of its code, against the start-up tables IdentStartupFacts.v copies (Module StartupB). *)
 Let HZS : as_zero_shadow IdentB = B.IdentStartupFacts.StartupB.Tfib_zero_shadow := eq_refl.
 Let HCONST : forall ly, as_const IdentB ly = B.IdentStartupFacts.StartupB.Tfib_const ly := fun ly => eq_refl.
 Let HUNIV : as_universe IdentB = B.IdentStartupFacts.StartupB.Tfib_universe := eq_refl.
 Let HMRA : pc_malloc_ra0 (as_code IdentB) = 0x52eb0 := eq_refl.
 Let HFRA : pc_free_ra0 (as_code IdentB) = 0x52d50 := eq_refl.
-(* IdentCloseImgB.v:115-116: its owned-static list and errno word (TfibSyms's ts_owned / ts_errno), against
+(* IdentCloseImgB.v:116-117: its owned-static list and errno word (TfibSyms's ts_owned / ts_errno), against
    IdentCloseImgB.v's copy of YF0m.v (Module IdentCloseTables). *)
 Let TS_OWNED : as_owned_static IdentB = IdentCloseImgB.IdentCloseTables.Tfib_owned_static := eq_refl.
 Let TS_ERRNO : as_errno IdentB = IdentCloseImgB.IdentCloseTables.TFIB_ERRNO := eq_refl.
-(* IdentCloseImgB.v:145: the core's in_ro_tfa (YCeg.v:31, at tfibsegs = AsanUbsan.M.loaded_segments) is the
+(* IdentCloseImgB.v:146: the core's in_ro_tfa (YCeg.v:31, at tfibsegs = AsanUbsan.M.loaded_segments) is the
    read-only segments or the relro range. *)
 Let IN_RO_TFA : forall a, in_ro_tfa a =
 ((exists s, In s AsanUbsan.M.loaded_segments /\ seg_writable s = false /\
@@ -259,7 +260,7 @@ Let AFREE : afree_realizes tfibsegs B := afree_realizes_closed B HB HD.
 Let AICPY : aintrin_realizes tfibsegs B OCpy (pc_wrap_memcpy (as_code B)) := tfib_AICPY B HB.
 (* The core's contract (YCfn.v:70) is the link's copy at the core's sink names: the conversion the header names. *)
 Let LIBX : @YCfn.tfib_lib_contract_x_all rc identity_shape B ameter_triv XL0 XL0 RLO RHI := identb_lib_all rc.
-(* fuzz_grant's AGrantT.v:47 Let RO_IN (or_intror at the core's in_ro_tfa): IdentCloseImgB.v:148 identb_RO_IN over
+(* fuzz_grant's AGrantT.v:47 Let RO_IN (or_intror at the core's in_ro_tfa): IdentCloseImgB.v:149 identb_RO_IN over
    IN_RO_TFA. RLO, RHI = 0x9b080, 0x9d388 (IdentEntryLink.v:76-77). *)
 Let RO_IN : forall a, RLO <= a < RHI -> in_ro_tfa a :=
   IdentCloseImgB.identb_RO_IN in_ro_tfa
@@ -287,15 +288,16 @@ Let EXS : exit_site_tfa B est xst := tfib_exit_site B HB LAWS.
 Lemma identb_srealizesX_rc : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk identsegsB0 brk -> valid_mmap_base mb ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 srealizes identsegsB0
   (init_config identsegsB0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mb rdraw target_alloc_limit inp)
   (SPECX (LS:=identity_shape) inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
 change target_alloc_limit with YA02.LIMIT.
 exact (@tfib_srealizesX rc identity_shape B HB AMALLOC AFREE AICPY ARDCHK ameter_triv XL0 XL0 RLO RHI MT_FREE RO_IN LIBX
-  xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+  xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 
@@ -303,20 +305,21 @@ End RC.
 Theorem identb_srealizesX_top : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk identsegsB0 brk -> valid_mmap_base mb ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
 srealizes identsegsB0
   (init_config identsegsB0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mb rdraw target_alloc_limit inp)
   (SPECX (LS:=identity_shape) inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau.
 exact (@identb_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp)) sp rdraw brk mb inp
-  Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+  Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 
 (* IdentityTFIB.TFIB_TB (lib/B/IdentityTFIB.v:20), as fuzz_grant's AGrantT.v:83-84 closes TFIB_T. *)
 Theorem identb_TFIB_TB_of_parts : TFIB_TB.
 Proof.
-intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
-exact (identb_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp).
+intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
+exact (identb_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau).
 Qed.
 
 (* The two statements of fuzz_identity's ASan+UBSan build, given only the named parts above (lib/B/AsanUbsanTop.v:30,

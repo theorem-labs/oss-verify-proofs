@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (vm_room restated in plain text as RoomS's vm_roomS, a bound on the count of ledger entries in place of the ledger discipline; vm_room_mono, vm_room_init, vm_room_init_P and vm_room_init_U restated for it, with reserved_count_P and reserved_count_U added). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -77,8 +78,18 @@ Qed.
 Definition vm_pot (md : Model) : Z := ltac2:(tb__ "0|3|
 S14S6aS68S5S36Q40A1M0G0A2M1S5S3S3A2S6bSbG1S23S20Vmd;A1M2A1S24G2A1A3A4A1S19S18SfG0S22Vmd;A1A2A1S7fA2A2").
 
-Definition vm_room (md : Model) (X : Z) : Prop := ltac2:(tb__ "0|3|
-S0S6cSbS5S36Q40A1M0G0A2S23S20Vmd;A1M1A1S24G1A1A3A1S0S12Z0VX;A2S0S12S14S50Vmd;A1VX;A2S21G1A1M2A2S0S12G2S13Z2Z28A2A2S12Z7fff7f800000S25G1A1A2A2A2A2A2").
+(* LPS 727298f3: the room is Malloc/RoomS.v's [vm_roomS], conjunct for conjunct, with the count
+   bound first (in the place [FreeGap.ledger_disciplined] held).  Linux places an anonymous map
+   top-down from the mmap base and the start-up ledger holds the vDSO pair near the top, so no
+   ledger of this model keeps every entry below [FreeGap.F]; a bound on the NUMBER of entries is
+   what lets RoomS.v find a free gap (and with it a non-refusable request) for any hint.
+   Malloc/RoomK.v's [vm_room_S] states the equivalence. *)
+Definition vm_room (md : Model) (X : Z) : Prop :=
+  PGSZ * Z.of_nat (length (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md))) + X <= 2 ^ 29
+  /\ 0 <= X
+  /\ vm_pot md + X <= vm_limit (m_vmmaps md)
+  /\ vm_limit (m_vmmaps md) <= 2 ^ 40
+  /\ 140735332483072 <= alloc_top (m_vmmaps md).
 
 Definition init_cost : Z := 2 ^ 25.
 Definition malloc_cost (n : Z) : Z := n + 2 ^ 21.
@@ -86,7 +97,7 @@ Definition payload_cost (n : Z) : Z := n + 2 ^ 27.
 
 Lemma vm_room_mono : ltac2:(tb__ "0|0|
 S1eS3S3S0S12Z0R1A2S12R1R2A2A2S37R4R3A2S37R5R3A2F_;F_;FX';FX;Fmd;").
-Proof using . intros md X X' HX (D & H0 & HP & HL). split; [exact D|]. split; [lia|]. split; [lia|exact HL]. Qed.
+Proof using . intros md X X' HX (D & H0 & HP & HL). unfold vm_room. unfold PGSZ in *. split; [lia|]. split; [lia|]. split; [lia|exact HL]. Qed.
 
 Lemma vm_room_frame : ltac2:(tb__ "0|0|
 S1eS1eS3S1S28S20R2A1S20R3A1A3S1S4S36Q40A1A1S22R3A1S22R4A1A3S37R5R3A2S37R5R4A2F_;F_;F_;FX;Fmd';Fmd;").
@@ -139,12 +150,21 @@ Proof using .
   specialize (IH B H2). unfold FreeGap.total in *. cbn. lia.
 Qed.
 
-Lemma vm_room_init : ltac2:(tb__ "0|4|
-S1eS3S1S4S5S36Q40A1M0G0A2M1A1S24S20R2A1A1S7G1A1A3S1S4G0A1S22R3A1S7G0A1A3S1S6S42S23S20R4A1A1A1SaA3S12S6aS68G1S5S3S3A2S6bS23S20R5A1A1A4A1S13Z2M2Z14A2M3A2S12Z0R5A2S12S14R6G3A2S21S20R7A1A1A2S12S21S20R8A1A1S13G2Z28A2A2S12Z7fff7f800000S25S20R9A1A1A2S37RaR9A2F_;F_;F_;F_;F_;F_;F_;F_;FX;Fmd;").
+(* LPS 727298f3: the room's count bound replaces the reserved-entry discipline: at most eight
+   reserved entries and room below [2 ^ 29] (Malloc/RoomS.v's [vm_roomS_init] premises). *)
+Lemma vm_room_init : forall (md : Model) (X : Z),
+  vm_maps (m_vmmaps md) = [] -> m_vm_materialized md = [] ->
+  (length (vm_reserved (m_vmmaps md)) <= 8)%nat ->
+  FreeGap.total (map zpair (vm_reserved (m_vmmaps md))) <= 2 ^ 20 ->
+  0 <= X -> X + 2 ^ 20 <= vm_limit (m_vmmaps md) -> vm_limit (m_vmmaps md) <= 2 ^ 40 ->
+  X + 2 ^ 16 <= 2 ^ 29 ->
+  140735332483072 <= alloc_top (m_vmmaps md) ->
+  vm_room md X.
 Proof using .
-  intros md X Hmaps Hmat Hres Htot HX Hlim Hlim' Htop.
+  intros md X Hmaps Hmat Hres Htot HX Hlim Hlim' HXC Htop.
   unfold vm_room, vm_pot. rewrite Hmaps, Hmat, app_nil_r. cbn [length Z.of_nat].
-  split; [apply reserved_okb_sound; exact Hres|]. split; [exact HX|]. split; [|split; [exact Hlim'|exact Htop]]. lia.
+  apply Nat2Z.inj_le in Hres. unfold PGSZ.
+  split; [lia|]. split; [exact HX|]. split; [|split; [exact Hlim'|exact Htop]]. lia.
 Qed.
 
 Inductive drv_reach : nat -> MA -> Prop :=
@@ -254,6 +274,10 @@ Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 Lemma reserved_okb_U : ltac2:(tb__ "0|0|
 S1S6S7bS67S52A1A1SaA3").
 Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma reserved_count_P : (length (segments_reserved segsP) <= 8)%nat.
+Proof. vm_compute. repeat constructor. Qed.
+Lemma reserved_count_U : (length (segments_reserved segsU) <= 8)%nat.
+Proof. vm_compute. repeat constructor. Qed.
 Lemma reserved_total_P : ltac2:(tb__ "0|1|
 S12S6aS68S5S36Q40A1M0G0A2S5S3S3A2S6bS67S51A1A4A1S13Z2Z14A2A2").
 Proof.
@@ -267,20 +291,30 @@ Proof.
   apply Z.leb_le in H. exact H.
 Qed.
 
-Theorem vm_room_init_P : ltac2:(tb__ "0|5|
-S1eS3S1S4S5S36Q40M0A1M1G1A2M2A1M3S23S20R2A1A1S67S51A1A3S1G3S24S20R3A1A1S7G2A1A3S1S4G1A1S22R4A1S7G1A1A3S12Z0R4A2S12S14R5S13Z2M4Z14A2A2S21S20R6A1A1A2S12S21S20R7A1A1S13G4Z28A2A2S12S26S35G0S27S20R8A1A1A2A2S7cR9R8A2F_;F_;F_;F_;F_;F_;F_;FX;Fmd;").
+Theorem vm_room_init_P : forall (md : Model) (X : Z),
+  vm_reserved (m_vmmaps md) = segments_reserved segsP ->
+  vm_maps (m_vmmaps md) = [] -> m_vm_materialized md = [] ->
+  0 <= X -> X + 2 ^ 20 <= vm_limit (m_vmmaps md) -> vm_limit (m_vmmaps md) <= 2 ^ 40 ->
+  X + 2 ^ 16 <= 2 ^ 29 ->
+  sp_window_lo <= bv_unsigned (vm_init_sp (m_vmmaps md)) ->
+  vm_room md X.
 Proof.
-  intros md X Hres Hmaps Hmat HX Hlim Hlim' Hsp. apply vm_room_init; auto.
-  - rewrite Hres. exact reserved_okb_P.
+  intros md X Hres Hmaps Hmat HX Hlim Hlim' HXC Hsp. apply vm_room_init; auto.
+  - rewrite Hres. exact reserved_count_P.
   - rewrite Hres. exact reserved_total_P.
   - unfold alloc_top, stack_max_size, sp_window_lo in *. lia.
 Qed.
 
-Theorem vm_room_init_U : ltac2:(tb__ "0|5|
-S1eS3S1S4S5S36Q40M0A1M1G1A2M2A1M3S23S20R2A1A1S67S52A1A3S1G3S24S20R3A1A1S7G2A1A3S1S4G1A1S22R4A1S7G1A1A3S12Z0R4A2S12S14R5S13Z2M4Z14A2A2S21S20R6A1A1A2S12S21S20R7A1A1S13G4Z28A2A2S12S26S35G0S27S20R8A1A1A2A2S7cR9R8A2F_;F_;F_;F_;F_;F_;F_;FX;Fmd;").
+Theorem vm_room_init_U : forall (md : Model) (X : Z),
+  vm_reserved (m_vmmaps md) = segments_reserved segsU ->
+  vm_maps (m_vmmaps md) = [] -> m_vm_materialized md = [] ->
+  0 <= X -> X + 2 ^ 20 <= vm_limit (m_vmmaps md) -> vm_limit (m_vmmaps md) <= 2 ^ 40 ->
+  X + 2 ^ 16 <= 2 ^ 29 ->
+  sp_window_lo <= bv_unsigned (vm_init_sp (m_vmmaps md)) ->
+  vm_room md X.
 Proof.
-  intros md X Hres Hmaps Hmat HX Hlim Hlim' Hsp. apply vm_room_init; auto.
-  - rewrite Hres. exact reserved_okb_U.
+  intros md X Hres Hmaps Hmat HX Hlim Hlim' HXC Hsp. apply vm_room_init; auto.
+  - rewrite Hres. exact reserved_count_U.
   - rewrite Hres. exact reserved_total_U.
   - unfold alloc_top, stack_max_size, sp_window_lo in *. lia.
 Qed.

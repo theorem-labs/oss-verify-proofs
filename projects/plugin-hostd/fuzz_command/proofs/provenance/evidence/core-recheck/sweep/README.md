@@ -52,9 +52,9 @@ covering symbol and no symbol start).
 `src` / `dst` in the TSVs are file:line relative to the run's directories in this table. Every run was made by
 port_addr_check 3d2eee813cce; sweep.py checks that each run's header names the images it resolves in. In addition
 the RU pairs are resolved in the plain images (`work/rows.RU-P.tsv`): lib/Reusable's 425 pre-port `.v` files (of its
-565, the ones added 2026-10-27 in 84b1ffc6d7d; 421 directly in lib/Reusable, 4 in its sub-directories R/ and Z/)
+565, the ones added 2026-10-27; 421 directly in lib/Reusable, 4 in its sub-directories R/ and Z/)
 describe the plain build. Scope of findings (owner's ruling): port_core outputs only, i.e. lib/A/A*.v, lib/B/Y*.v, lib/Reusable's
-140 files added by the port (commit 6b559e1f018; list in `work/portera.files`) and the Rt relocations. Rows of the
+140 files added by the port (list in `work/portera.files`) and the Rt relocations. Rows of the
 pre-port Reusable files are in `adjacent.tsv` as OUT-OF-SCOPE-PREPORT, with their measurements.
 
 ## Rows checked, per run and status (rows.tsv)
@@ -134,3 +134,5 @@ rows.tsv, rows.skipped.tsv (sweep), mismatches.tsv (triage, in scope), adjacent.
 findings.code.tsv, controls.txt, sweep.py, triage.py, hand.tsv, run.sh, all.sh; work/ctl (control rows and triage),
 work/rows.RU-P.tsv (RU resolved in the plain images), work/portera.files, work/img (the plain images, local copies),
 work/notes (copies of the lanes' notes, read-only).
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

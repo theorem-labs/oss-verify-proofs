@@ -19,15 +19,15 @@
    memory is carried back to the real memory by MemNormF.evtF_normalize_ro; the four region files
    ctrl_lay_block_F_R{1..4}.v add the boundary steps and the exact write sets the journal steps need.
    The lift pattern (SRr_fevt_hid on the normalized memory, the journal step after it, the allocator event through
-   cgif's astack_malloc_realizes) is a Theorem Labs lane's, reac_box_model_block_glue.v (a working branch
-   3ba915a90d1) SRr_evtF_norm :144-166 and bmb_to_ret :600-723; the same shape here keeps the two glues one audit.
+   cgif's astack_malloc_realizes) is a Theorem Labs lane's, reac_box_model_block_glue.v (a working branch)
+   SRr_evtF_norm :144-166 and bmb_to_ret :600-723; the same shape here keeps the two glues one audit.
 
    CLOSURE (glue closure rule, a Theorem Labs lane 23:38Z, accepted by a Theorem Labs lane): the `_F` files and their closure are Required
    QUALIFIED, never Imported or Exported; no lib/AZ/AsanW (not in this delivery), no W6, no SegCF / *_cfw / Cf* file; the statement of
    pb_ctrl_lay_block names only C_ctrl_lay_block's contract.  The lib.Lib family is Required from its own directory
    and named lib.Lib.X (a Theorem Labs lane 05:20Z).
 
-   OVERLAP WITH fuzz_grant's proved walk (a working branch 5aae1e8a0ce,
+   OVERLAP WITH fuzz_grant's proved walk (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Prog/CtrlLayBlock.v): cited at each shared stretch below (prologue, the
    fake-stack frame at 0x85668, the memset, the epilogue and the class-1 release); nothing of fuzz_grant is
    Required. *)
@@ -61,9 +61,9 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require ProgBridge ProgWorld ProgW
 (* route (C): the cut facts ctl_rt_C (a Theorem Labs lane's form, A.ACtlRtC) from AR by a Theorem Labs lane's A.ProgWorldCtlRtC.ctl_rt_C_of_AR
    (no VIS0, no OWNED_RO), and the region form A.ShadowRwOn.shadow_rw_on with its normalize transport.  Loaded BEFORE
    ctrl_lay_block: ShadowRwOnT loads MemMono, whose `Ltac footprint_after_store ::=` (MemMono.v:207) is not Local and
-   would replace ctrl_lay_block.v:215's if it loaded after it (a Theorem Labs lane's files keep the same order). *)
+   would replace ctrl_lay_block.v:216's if it loaded after it (a Theorem Labs lane's files keep the same order). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require ShadowRwOn ShadowRwOnT ACtlRtC ProgWorldCtlRtC.
-(* ProgWorld statements proved by a Theorem Labs lane (a working branch 87fcd8d0b28): fp_tls_apart_stmt,
+(* ProgWorld statements proved by a Theorem Labs lane (a working branch): fp_tls_apart_stmt,
    ctl_block_apart_fs_stmt *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require ProgWorldTlsApart ProgWorldBlkApart.
 (* the _F closure, QUALIFIED only *)
@@ -73,7 +73,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Img0 AsanRT.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require ImgBounds.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require asan_stack_malloc_c ctrl_lay_block_c ctrl_lay_block
   ctrl_lay_block_F_R1.
-(* route (C) twins of the region runs (a working branch 5a39ad33995) and a Theorem Labs lane's
+(* route (C) twins of the region runs (a working branch) and a Theorem Labs lane's
    route (C) footprint contracts they take *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require ctrl_lay_block_F_R2_on ctrl_lay_block_F_R3_on
   ctrl_lay_block_F_R4_on asan_memset_cF_on asan_memcpy_cF_on asan_stack_malloc_c_on sh_word_on rng_asan.
@@ -95,7 +95,7 @@ Local Notation rmkst := lib.Reusable.YK11.mkst.
    1. The lift of one stretch (lib.Lib level): a footprint run on the normalized memory is a silent prefix of a world
    walk from the real memory, for a footprint that avoids the world's hidden bytes; the continuation gets the run,
    the post carried back through ms_rel, and the hidden bytes kept.  a Theorem Labs lane's SRr_evtF_norm
-   (reac_box_model_block_glue.v:144-166), same proof.
+   (reac_box_model_block_glue.v:145-167), same proof.
    ================================================================================================================ *)
 Section Lift.
 Context {fx : lib.Reusable.YK11.FPState}.
@@ -133,7 +133,7 @@ Qed.
 End Lift.
 
 (* Byte-level glue between the core's view and ctrl's raw-memory facts: a Theorem Labs lane's lemmas
-   (reac_box_model_block_glue.v:486-535), same proofs; the lib.Lib layer is Imported inside this module only. *)
+   (reac_box_model_block_glue.v:487-536), same proofs; the lib.Lib layer is Imported inside this module only. *)
 Module LayLib.
 Import lib.Lib.PropExec lib.Lib.MState lib.Lib.Mem lib.Lib.Frame lib.Lib.Cells lib.Lib.Step.
 
@@ -193,7 +193,7 @@ End LayLib.
 (* ================================================================================================================
    The Section facts of a stretch at the normalized memory of a cut, from the cut's world (AR).  rt_facts_C, win_facts,
    asan_tls_cells_normalize and fp_normalize are a Theorem Labs lane's (reac_box_model_block_glue.v at
-   a working branch cc9af1fcb2e, :733-795), same proofs; lay_fp0_facts is a Theorem Labs lane's fp0_facts (:801-883)
+   a working branch, :733-795), same proofs; lay_fp0_facts is a Theorem Labs lane's fp0_facts (:801-883)
    for ctrl_lay_block's class set [0; 1] and its write / data ranges; lay_tls0_facts takes ProgWorld's
    fp_tls_apart_stmt (owner a Theorem Labs lane; proved: A.ProgWorldTlsApart.fp_tls_apart).
    ================================================================================================================ *)
@@ -416,7 +416,7 @@ Hypothesis HWX : wx_segs_nowrap SEGS.
 Hypothesis stack_malloc_classes : A.ProgWorld.stack_malloc_classes B.
 
 (* ---- the class-1 release law over the generic SK is a theorem: A.ProgWorldAstack.ctl_release_of_free_law
-   (lib/A/ProgWorldAstack.v:333, Section Fs with {SK} at :158; a working branch 170335f992e). ---- *)
+   (lib/A/ProgWorldAstack.v:333, Section Fs with {SK} at :158; a working branch). ---- *)
 
 (* ---- the callee (a Theorem Labs lane), exactly its type ---- *)
 Hypothesis TMB : treac_box_model_block_spec (SK := SK) B GLOBS (BASE + AF_reac_box_model_block) RLO RHI.
@@ -429,14 +429,14 @@ Hypothesis MEMCF : asan_memcpy_cF_on.asan_memcpy_contract_F_on.
 (* the registered globals' shadow encoding (CtrlRo.v:116), as a Theorem Labs lane's TMB contract takes it *)
 Hypothesis HGM : globs_marked SEGS B GLOBS.
 (* ProgWorld's thread-cell apartness and heap-block apartness are theorems (A.ProgWorldTlsApart.fp_tls_apart,
-   A.ProgWorldBlkApart.ctl_block_apart_fs; a working branch 87fcd8d0b28). *)
+   A.ProgWorldBlkApart.ctl_block_apart_fs; a working branch). *)
 (* CTRL_FRAMES (object 21, 11 rows of 24 bytes) and BOX_CATALOGUE (object 17, 11 rows of 296 bytes): registered
    globals, in the image, read-only (in_roP: PT_GNU_RELRO), not owned, not errno; the rows' bytes are the image's. *)
 Hypothesis HFR_glob : In (VAL (A_OBJ A_FRAMES), 11 * ROW_BYTES) GLOBS.
 Hypothesis HCAT_glob : In (VAL (A_OBJ A_CAT), 11 * CAT_BYTES) GLOBS.
 Hypothesis HFR_rng : A.Prog.ImgBounds.IMG_LO <= VAL (A_OBJ A_FRAMES) /\
   VAL (A_OBJ A_FRAMES) + 11 * ROW_BYTES <= A.Prog.ImgBounds.IMG_HI /\ VAL (A_OBJ A_FRAMES) mod 8 = 0.
-(* the catalogue's rows lie 64 bytes inside the image on both sides (TMB's row premise, C_reac_box_model_block.v:152) *)
+(* the catalogue's rows lie 64 bytes inside the image on both sides (TMB's row premise, C_reac_box_model_block.v:153) *)
 Hypothesis HCAT_rng : A.Prog.ImgBounds.IMG_LO + 64 <= VAL (A_OBJ A_CAT) /\
   VAL (A_OBJ A_CAT) + 11 * CAT_BYTES + 64 <= A.Prog.ImgBounds.IMG_HI /\ VAL (A_OBJ A_CAT) mod 8 = 0.
 Hypothesis HFR_ro : forall x, VAL (A_OBJ A_FRAMES) <= x < VAL (A_OBJ A_FRAMES) + 11 * ROW_BYTES ->
@@ -603,7 +603,7 @@ Qed.
    call, AR at the new state, the realizes post's frame condition (YG0d.v:298-299) and the window presence
    (YG0d.v:300).
    fuzz_grant overlap: the fake-stack frame at 0x85668 is the twin of grant's CtrlLayBlock.v class-1 frame
-   (a working branch 5aae1e8a0ce).
+   (a working branch).
    ================================================================================================================ *)
 Lemma lay_stack_malloc_atS : forall cid, astack_malloc_realizes SEGS B cid -> 0 <= cid <= 10 ->
   forall W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k (o : Z) raw,
@@ -689,12 +689,12 @@ Qed.
    0x8566c.  lay_F_R1_run (ctrl_lay_block_F_R1.v: stretch k = 1 + the jal) on the normalized entry memory, the
    journal step with its write set [(S - K, S)] (all window bytes), then the allocator (section 3) and
    A.ProgWorldAstack.ctl_fs_of_astack for the class-1 frame's bytes.  a Theorem Labs lane's bmb_to_ret
-   (reac_box_model_block_glue.v:983-1121) takes the first three of these steps for class 0 (the run on the normalized entry memory, the journal step with write set [(S - 4272, S)], the allocator); in place of ctl_fs_of_astack it hands the allocator's zero_shadow and flag facts to its continuation, and bmb_frame_facts (:1394) derives the class-0 frame facts.
-   fuzz_grant overlap: grant's proved prologue (CtrlLayBlock.v at a working branch 5aae1e8a0ce) is the twin of
+   (reac_box_model_block_glue.v:984-1122) takes the first three of these steps for class 0 (the run on the normalized entry memory, the journal step with write set [(S - 4272, S)], the allocator); in place of ctl_fs_of_astack it hands the allocator's zero_shadow and flag facts to its continuation, and bmb_frame_facts (:1394) derives the class-0 frame facts.
+   fuzz_grant overlap: grant's proved prologue (CtrlLayBlock.v at a working branch) is the twin of
    stretch k = 1 (same listing offsets).
    ================================================================================================================ *)
 (* What a call keeps (acall_kept), after a stretch that wrote only a window of the machine stack: a Theorem Labs lane's
-   acall_kept_after_munch (reac_box_model_block_glue.v:551-585), same proof. *)
+   acall_kept_after_munch (reac_box_model_block_glue.v:552-586), same proof. *)
 Lemma lay_acall_kept_after_munch : forall lyc Sc (W : world SEGS) (memc mem1 mem2 : word -> option byte)
     md (lo hi lo1 hi1 lo2 hi2 : Z) (E : Z -> Prop),
   AR SEGS B lyc Sc W memc md ->
@@ -932,7 +932,7 @@ Qed.
    the journal step with k2's exact write set (window, the class-1 frame's first 24 bytes and 12 of its
    shadow bytes, the 32-byte block: all awr), then the continuation at the callee entry.
    fuzz_grant overlap: the memset at 0x856f4 in k2 is the twin of grant's proved memset in CtrlLayBlock.v
-   (a working branch 5aae1e8a0ce).
+   (a working branch).
    ================================================================================================================ *)
 
 (* Route (C): the shadow region the region runs R2 / R3 take (a Theorem Labs lane's lay_F_R2_shadow_R = lay_F_R3_shadow_R: the
@@ -1664,7 +1664,7 @@ Qed.
    memory after the callee, its shadow region lay_F_R3_shadow_R from ctl_rt_C at the callee's return (lay_on_R_cut),
    then the journal step over the release (A.ProgWorldAstack.ctl_release_of_free_law at class 1).
    fuzz_grant overlap: the epilogue's class-1 release (0x858ec / 0x858f0) is the twin of grant's proved release
-   in CtrlLayBlock.v (a working branch 5aae1e8a0ce).
+   in CtrlLayBlock.v (a working branch).
    ================================================================================================================ *)
 Lemma lay_raw_of_aview2 : forall (W W' : world SEGS) (mem mem' : word -> option byte) (a : Z),
   0 <= a < 2 ^ 64 -> w_H W (Z_to_bv 64 a) = false -> w_H W' (Z_to_bv 64 a) = false -> ~ in_img SEGS a ->
@@ -2287,7 +2287,7 @@ Qed.
 (* ================================================================================================================
    8. Region R4 (0x858f4 -> ret) and the glue theorem.
    fuzz_grant overlap: the epilogue (stretch k = 8) is the twin of grant's proved epilogue in CtrlLayBlock.v
-   (a working branch 5aae1e8a0ce).
+   (a working branch).
    ================================================================================================================ *)
 Lemma lay_mod2_land : forall x, (x mod 2 ^ 64) mod 2 = x mod 2.
 Proof.

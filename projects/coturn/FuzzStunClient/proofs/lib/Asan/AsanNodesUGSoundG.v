@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the node statements carry the flag of the flagged relation SpinAlg.srealizesM. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -75,6 +76,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section Sound.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -127,7 +129,7 @@ Proof.
 Qed.
 
 Theorem node_unreg_sound : forall args,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => UGN.node_unreg SEGS A nx0 T cs args).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => UGN.node_unreg SEGS A nx0 T cs args).
 Proof.
   intros args cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -233,7 +235,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Theorem ug_xn_sound : ext_stmt SEGS A nx0 LIMIT (UGN.xn SEGS A nx0 T) SINV argH FS0.
+Theorem ug_xn_sound : ext_stmt SEGS A nx0 LIMIT (UGN.xn SEGS A nx0 T) SINV argH FS0 sfl.
 Proof.
   intros id args. unfold UGN.xn. destruct (Nat.eqb id 121).
   - intros cs cs' E R FULL model TT HC Hpre Hn Hk. rewrite UGN.node_unregB_eq in Hn.

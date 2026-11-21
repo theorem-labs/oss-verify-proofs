@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up stack layout (the strings above the random bytes, up to ed_top; the path's end bounded above sp through the launch's ed_top - sp bound)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -63,9 +64,12 @@ Definition FARGC2N : fact := FRange (lvar 5) 2 2.
 Definition FV8N : fact := FRange PV 140735332483072 140737488355326.
 Definition FV8SPN : fact := FRange (lsub PV (sm_sp M1)) 0 4194304.
 Definition FLPN : fact := FRange LPNF 0 131071.
-Definition FENDN0 : fact := FRange (ladd PV LPNF) 0x7fff7f800000 (0x800000000000 - 17).
+(* 75d69e00: argv[1]'s end is at most ed_top - 10 (its NUL, then the exec name's NUL and the 8-byte slot above
+   it; StackLayout.launch_string_bytes), and ed_top <= 2^47 (Run.valid_stack_top_va), hence the [- 10];
+   the strings end at ed_top = TOPS, above the random bytes *)
+Definition FENDN0 : fact := FRange (ladd PV LPNF) 0x7fff7f800000 (0x800000000000 - 10).
 Definition FENDN2 : fact := FRange (lsub (ladd PV LPNF) (sm_sp M1)) 0 4194304.
-Definition FRZN : fact := FRange (lsub (laddc RANDP16 (-16)) (ladd PV LPNF)) 1 4194304.
+Definition FRZN : fact := FRange (lsub TOPS (ladd PV LPNF)) 1 4194304.
 Definition FPV0N : fact := FRange (lsub PV P0) 1 4194304.
 Definition FSNF : list fact := [FARGC2N; FV8N; FV8SPN; FLPN; FENDN0; FENDN2; FRZN; FPV0N].
 Definition SNF : sst := add_facts (bump (drop_post S1 (drop_f DROPB)) (Pos.succ NNF)) FSNF.
@@ -103,9 +107,12 @@ Definition NNFT : positive := Eval vm_compute in s_next TMAIN.
 Definition LPNFT : lin := lvar NNFT.
 Definition FV8SPNT : fact := FRange (lsub PV (sm_sp MMAIN)) 0 4194304.
 Definition FLPNT : fact := FRange LPNFT 0 131071.
-Definition FENDN0T : fact := FRange (ladd PV LPNFT) 0x7fff7f800000 (0x800000000000 - 17).
-Definition FENDN2T : fact := FRange (lsub (ladd PV LPNFT) (sm_sp MMAIN)) 0 4194304.
-Definition FRZNT : fact := FRange (lsub (laddc RANDP16 (-16)) (ladd PV LPNFT)) 1 4194304.
+Definition FENDN0T : fact := FRange (ladd PV LPNFT) 0x7fff7f800000 (0x800000000000 - 10).
+(* argv[1] ends at most 2101782 - 10 bytes above sp: its NUL is at most ed_top - 10 and ed_top - sp <= 2101782
+   at the launch (AsanLayoutT.lay_nums); ASan's check of its bytes (AsanRpNode.rp_chk) needs the end inside the
+   4 MiB above sp *)
+Definition FENDN2T : fact := FRange (lsub (ladd PV LPNFT) (sm_sp MMAIN)) 0 (2101782 - 10).
+Definition FRZNT : fact := FRange (lsub TOPS (ladd PV LPNFT)) 1 4194304.
 Definition FSNFT : list fact := [FARGC2N; FV8N; FV8SPNT; FLPNT; FENDN0T; FENDN2T; FRZNT; FPV0N].
 Definition SNFT : sst := add_facts (bump TMAIN (Pos.succ NNFT)) FSNFT.
 (* [comment removed for export] *)

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded proofs of v_add_0_r, v_add_0_l replaced by plain proofs). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -9,8 +10,6 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.Common Require Import
   PropExec CatExec CatSim SeqExec StepTac Hoare.
-From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib Require KReplay.
-Ltac2 kr_t_WalkTac () := "K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00C45stdpp9bitvector;definitions;bv_unsignedC45stdpp9bitvector;definitions7Z_to_bvI47Corelib4Init5Logic2eq00C45stdpp9bitvector;definitions5bv_eqC45stdpp9bitvector;definitions7bv_wrapC45stdpp9bitvector;definitionsDbv_unsigned_in_rangeC45stdpp9bitvector;definitions=bv_wrap_smallC45stdpp9bitvector;definitions@Z_to_bv_unsignedC47Corelib4Init5Logic8eq_ind_rC56Stdlib6ZArith6BinInt1Z3addC56Stdlib6ZArith6BinInt1Z7add_0_rC59OSSVerify5KrLib6Common8PropExec5v_addC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive03I47Corelib7Numbers7BinNums1Z00I47Corelib7Numbers7BinNums1N00I47Corelib4Init5Logic3and00K47Corelib7Numbers7BinNums1Z01C56Stdlib6ZArith6BinInt1Z7add_0_l".
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -42,11 +41,17 @@ Ltac gres :=
 (* [comment removed for export] *)
 Lemma v_add_0_r : forall x : word, v_add x (Z_to_bv 64 0) = x.
 Proof.
-ltac2:(KReplay.run1 (kr_t_WalkTac ()) [] "h02b1h12b2h21nh31zh41Hh51xp;1p;2p;3p;6g0000j13Tg000Uj1>Tg0013j12Tg001Vj20Tg002@j24Tg002fj31Tg003@j3;Tg003dj29Tg004Jj28Tg005=j37Tg005ij26Tg006Xj65Tg0076j2:Tg007Sj1=Tg0084j2<Tg008n#3#3#3#3#3#3#>R0#2R1g009SR2f0R3,00R41403f1R5511X32g00:1R6%23R7%25R8g00:Of2R9#2?153f3R:/0910:5512R;[10951093512%2:?195[R<f4#2?1:9\;A;953P3n2001000000120000000W1W0W2P<^18^07^26P3P01005R6,40R7P5P2190610099123X321805970610071606E5O4b4g00:jR6,:4%=4E51406,<3=113eW5o"). Qed.
+  intro x. unfold v_add. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z.
+  rewrite Z.add_0_r. apply bv_eq. rewrite Z_to_bv_unsigned.
+  apply bv_wrap_small, bv_unsigned_in_range.
+Qed.
 
 Lemma v_add_0_l : forall x : word, v_add (Z_to_bv 64 0) x = x.
 Proof.
-ltac2:(KReplay.run1 (kr_t_WalkTac ()) [] "h02b1h12b2h21nh31zh41Hh51xp;1p;2p;3p;6g0000j13Tg000Uj1>Tg0013j12Tg001Vj20Tg002@j24Tg002fj31Tg003@j3;Tg003dj29Tg004Jj28Tg005=j37Tg005ij26Tg006Xj65Tg0076j2:Tg00;Hj1=Tg0084j2<Tg008n#3#3#3#3#3#3#>R0#2R1g009SR2f0R3,00R41403f1R5511X32g00:1R6%23R7%25R8g00:Of2R9#2?153f3R:/0910:5512R;[10951093512%2:?195[R<f4#2?1:9\;A;953P3n2001000000120000000W1W0W2P<^18^07^26P3P01005R6,40R7P5P2190610099123X321805970610071606E5O4b4g00:jR6/:4%=4E51406/<3=113eW5o"). Qed.
+  intro x. unfold v_add. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z.
+  rewrite Z.add_0_l. apply bv_eq. rewrite Z_to_bv_unsigned.
+  apply bv_wrap_small, bv_unsigned_in_range.
+Qed.
 
 (* [comment removed for export] *)
 Ltac is_pos_lit p :=

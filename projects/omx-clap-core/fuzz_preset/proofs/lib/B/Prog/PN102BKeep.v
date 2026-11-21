@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994): the KEEP LEMMAS of the walk of parse_noting
    (the B' twin of row N10-PNA; cut table lib/B/Prog/PN102BCuts.v): the frame invariant pn_frame (its journal at a
@@ -9,8 +10,8 @@
    (pn_cw_len, pn_cw_budget), at the B' instance. No function is proved here.
    rule 24: proves function parse_noting (fuzz_preset, image B') (preparation; proof-index 03:20Z: 0 named / 0 by
    address / 0 released; the rule-24 parse_noting check CONFIRM 03:25Z). This file: support lemmas of that walk only.
-   PORT, lemma for lemma, of a Theorem Labs lane's image-A' lib/A/Prog/PN102BKeep.v (a working branch
-   41f83d5b57f8), at PI_prog_B / prh_img_B. Changed: the statics' read-only check is computed here at prh_img_B (the
+   PORT, lemma for lemma, of a Theorem Labs lane's image-A' lib/A/Prog/PN102BKeep.v (a working branch),
+   at PI_prog_B / prh_img_B. Changed: the statics' read-only check is computed here at prh_img_B (the
    checkers of lib/A/Prog/S1ImgA.v copied body for body as pnk_*: S1ImgA.v Requires lib/A/PRH_Img.v); the journal
    carries a budget (pn_ajw_materialize: YCbqGwild.v rebase / unbase0 around YCbqG.v ajournal_x_materialize); and
    pn_R_keep carries the batch kit's pn_R, the tree's free order and capacities by PRH_PjOrder.pj_foR_frame and
@@ -20,8 +21,8 @@
    form over R BESIDE it (pn_img_keepR, pn_frame_stepR) and the old name as the instance at wle: pn_img_keep,
    pn_frame_step. Used only over R (after or across the free), so restated in place over R: pn_ajw_materialize,
    pn_frame_call, pn_R_keep. The journals over R are YCbqG.v ajournal_xwR, read through the ajxR_* projections.
-   SHAPES TAKEN: the read-only keep is lib/A/Prog/Ent102L2A.v l2_imgkeep's second half (a working branch
-   b1bc025047ea), restated at PST := prh_pst prh_img_B.
+   SHAPES TAKEN: the read-only keep is lib/A/Prog/Ent102L2A.v l2_imgkeep's second half (a working branch),
+   restated at PST := prh_pst prh_img_B.
    NUMERALS: 48 (the frame), 8 .. 40 (the save slots), 8 (a word). No ADDRESS. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

@@ -5,18 +5,19 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 809 of its 930 lines of code are new or changed and 890 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R4.v, with its module paths, module names, addresses and numbers changed; 357 of its 406 lines of code are new or changed and 881 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/P3F.v, with its module names, addresses and numbers changed; 194 of its 272 lines of code are new or changed and 328 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-   source runs: lib/B/Prog/Seg/R3.v r3_evt (:229) at a working branch 3803efccea0
+   source runs: lib/B/Prog/Seg/R3.v r3_evt (:229) at a working branch
      (blob 6ae9be99eebcf5082cecf82db91f8b7f17f617e5);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: r3_evt calls reac_identity_init (0x87de8) at 0x81688, so it is split at that call and has no
-     single _of_F. r3_pre_F re-runs R3.v:271-275 (0x81640 li a0,4; 0x81644 li a1,6; the fifteen `sb`
+     single _of_F. r3_pre_F re-runs R3.v:272-276 (0x81640 li a0,4; 0x81644 li a1,6; the fifteen `sb`
      0x81648 .. 0x81680; 0x81684 ld a0,144(s1); 0x81688 jal) and stops AT the callee entry, with the facts
-     R3.v:276-294 derives there (asan_cells, shadow_rw, addressable) in its post; r3_post_F re-runs
-     R3.v:310-349 (the return point 0x8168c = the run's end cut: the ret_pc normalisation and the
+     R3.v:277-295 derives there (asan_cells, shadow_rw, addressable) in its post; r3_post_F re-runs
+     R3.v:311-350 (the return point 0x8168c = the run's end cut: the ret_pc normalisation and the
      munch / wmono / bytes_at transport), its premises being the callee post facts r3_evt uses there.
      No _F steps through the callee, and no callee contract is stated here.
    Bridge input only: no top, no W_cutfree_ok, no cut-free twin, no LSCPS join.
@@ -68,7 +69,7 @@ Definition r3_mid (m m1 : word -> option byte) (Sh idp lo spv : Z) (idb : list b
   bytes_at rsegs m1 (Sh + 272) [Z_to_bv 8 0; Z_to_bv 8 0; Z_to_bv 8 0; Z_to_bv 8 0; Z_to_bv 8 6] /\
   bytes_at rsegs m1 (Sh + 282) (repeat (Z_to_bv 8 0) 9).
 
-(* The post of the R3 run (R3.v:242-251). *)
+(* The post of the R3 run (R3.v:243-252). *)
 Definition r3_Q (sp gp tp s0 s1 s2 s3 s7 s9 s10 : word) (F : bvmap 5 word) (fc : bv 32)
     (m : word -> option byte) (spv Sh idp lo : Z) : machine_state -> Prop :=
   fun ms' => exists (R : bvmap 5 word) (m' : word -> option byte),

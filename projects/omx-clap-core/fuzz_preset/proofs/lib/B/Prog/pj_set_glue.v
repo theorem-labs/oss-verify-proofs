@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the GLUE facts of pj_set's image-B walk (fuzz_preset asan-ubsan, B 0x86e8c): the pure
    Props pjs_g_* / pjs_glue of lib/B/Prog/pj_set_defs.v.
    proves no function (kind: glue lemma). Pure facts over the tree model (Spec/PjTree.v), the reader's tree
@@ -10,7 +11,7 @@
    - pjs_g_model_hit / pjs_g_model_miss: pj_set_model replaces the first member whose key is equal, and appends
      when there is none (PjTree.v:40-44), by induction on the member list.
    - pjs_g_trace_len: the request list of pj_set's absent arm has three events when n = cap and one otherwise.
-   - pjs_g_counts_swap / pjs_g_counts_eq: sec_cnt and ccnt24 (YGcfRoomLive.v:1139, :1167) count a FILTER of the
+   - pjs_g_counts_swap / pjs_g_counts_eq: sec_cnt and ccnt24 (YGcfRoomLive.v:1140, :1168) count a FILTER of the
      live requests, so they ride a permutation of the block list and grow by at most the number of blocks added.
      They are what the fuzz_strdup call needs after grow has swapped the two slot blocks.
    - pjs_g_ab_snd: the allocator's block list and cgif's ablocks have the same sizes (ablocks maps the address only).

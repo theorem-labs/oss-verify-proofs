@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v (rt_hand, fs_roF / fs_rwF) and
-   APgStep.v (same_io_wvb) at 6ebe35ba632; adapted to the class-0 frame and the exit of reac_box_pin_parse. *)
+   APgStep.v (same_io_wvb); adapted to the class-0 frame and the exit of reac_box_pin_parse. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_pin/lib/A/PPgParse4.v, with its module paths and module names changed; 262 of its 291 lines of code are new or changed and 251 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/check_personality_A.v, with its module paths and module names changed; 185 of its 215 lines of code are new or changed and 261 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* diginet_vpot_encode, image B 0x85914, 94 instructions, against lib/AU/Prog/CPgEncU.v's cdcU_vpot_specX.
    a0 = p (the personality), a1 = strip (arg_u32A: w64 (s32 strip)), a2 = delta (arg_s32A), a3 = out. The walk
    starts from `Ereg regs (cw_extra xs)` (atom 32 = SB, the shadow offset; atom 33 = p->strips when pd = Some d)

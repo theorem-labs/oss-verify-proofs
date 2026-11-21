@@ -5,10 +5,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Prog/drain_b_seg.v, with its module paths, module names and numbers changed; 578 of its 664 lines of code are new or changed and 1143 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/U/Prog/relay_finish_seg.v, with its module paths and module names changed; 360 of its 432 lines of code are new or changed and 592 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/U/Prog/CF/RecKindB.v, with its module paths and module names changed; 50 of its 61 lines of code are new or changed and 421 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_copy, fuzz_wire.c:184-210, with untagged (:172-182) and fuzz.h's fuzz_dup inlined: fuzz_wire ubsan
    6e91fe0b5555 at 0x13550 (392 bytes). A 48-byte frame (ra / s0..s4); callees rp_copy_untag (32 bytes below its sp),
    malloc and free (ALLOC_STACK below their sp), memcpy twice, bcmp: CC_STACK = 48 + ALLOC_STACK bytes below sp.
-   Form: libreac/fuzz_decode's check_round_trip_c.v (recipes 25e3d17bdb5): the allocator model B / API, call_pre_k at
+   Form: libreac/fuzz_decode's check_round_trip_c.v (recipes): the allocator model B / API, call_pre_k at
    entry, the SR run to ret_pc ra. check_copy returns normally (its abort() at 0x136d0 and its UBSan trap, the `unimp`
    at 0x136d4, are unreachable) from every state LLVMFuzzerTestOneInput calls it in (fuzz_wire.c:274-275):
    c = fuzz_dup(f, n) a heap block holding the n bytes f holds, f in another heap block, n <= W_RECV_MAX = 1600, the

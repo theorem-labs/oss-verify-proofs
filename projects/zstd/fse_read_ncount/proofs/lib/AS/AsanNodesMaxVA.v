@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a section variable rz, the plan's CONFIG_RSEQ flag, passed to x_stmt in x_sound_maxva's statement). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
@@ -28,6 +29,8 @@ Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* the plan's CONFIG_RSEQ flag ([APS.rz]); this summary does not read it *)
+Variable rz : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
 Variable argH : env -> word -> bool.
 Variable FS0 : Fs.Fs.
@@ -41,7 +44,7 @@ fetch_word SEGS (Z_to_bv 64 (x_maxva A + 4 * Z.of_nat i)) = Some (nth i MAXVA_WO
 #[local] Notation Hv := (AsanNodesAux.Hv A).
 #[local] Notation lazy_cover_vis := (AsanNodesAux.lazy_cover_vis SEGS A LIMIT SINV argH FS0 HULL_ok).
 #[local] Notation H_off_segments_vis := (AsanNodesAux.H_off_segments_vis SEGS A SEGS_in_hull).
-#[using="SEGS_wx SEGS_in_hull HULL_ok SINV_frame Xmv CODE"] Theorem x_sound_maxva : x_stmt SEGS A nx0 LIMIT SINV argH FS0 XMaxVA.
+#[using="SEGS_wx SEGS_in_hull HULL_ok SINV_frame Xmv CODE"] Theorem x_sound_maxva : x_stmt SEGS A nx0 LIMIT rz SINV argH FS0 XMaxVA.
 Proof.
 intros args cs cs' E R FULL model T HC _ Hn Hk. cbn [node_x] in Hn. unfold summary_maxva in Hn.
 destruct (Z.eqb (x_maxva A) 0 || negb (Z.eqb (pc cs) (x_maxva A)))%bool eqn:Hg; [discriminate|].

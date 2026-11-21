@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -36,29 +37,35 @@ Definition regs_init (sp0 : word) : bvmap 5 word :=
 
 Section P1.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
-  Variable rdraw : EntryDraw.
-  Hypothesis Hva : valid_argv av.
-  Hypothesis Hve : valid_envp ev.
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase : word.
+  Variable entry : word.
+  Variable brk : word.
+  Variable rnd : EntryDraw.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp0 brk mbase rnd) inp.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
 
-  Local Notation mem0 := (wrap_mem RPH sp0 av ev uid hw rdraw) (only parsing).
-  Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av ev uid hw rdraw)) (only parsing).
+  Local Notation mem0 := (wrap_mem inp mbase RPH entry sp0 rnd) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH entry sp0 rnd)) (only parsing).
 
-  Let argc : word := argcN av.
+  Let argc : word := argcN inp.
   Local Notation argvp := (Z_to_bv 64 (bv_unsigned sp0 + 8)) (only parsing).
-  Let envp : word := envp_ptr sp0 av.
-  Let pn : word := cat_argv_ptr sp0 av ev 0.
+  Let envp : word := envp_ptr inp sp0.
+  Let pn : word := cat_argv_ptr (ed_top rnd) (in_argv inp) (in_envp inp) (in_execfn inp) 0.
 
-  #[using="Hva"] Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
-  Proof. LiaFast.lf_pins (fun (Hva : LiaFast.U) => LiaFast.u0). exact (u_argcN av Hva). Qed.
+  Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
+  Proof. exact (u_argcN inp Hva). Qed.
 
-  #[using="sp0 Hva"] Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
-  Proof. LiaFast.lf_pins (fun (sp0 Hva : LiaFast.U) => LiaFast.u0). destruct Hva as [[H1 H2] _]. lia. Qed.
+  Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
+  Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
 
   (* [comment removed for export] *)
   Definition J1 (J : word -> option byte) : word -> option byte :=
@@ -73,7 +80,7 @@ Section P1.
       (Z_to_bv 64 (bv_unsigned sp0 - 56)) (word_to_le_bytes 8 argc))
       (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (Z_to_bv 64 0x22638)).
 
-  #[using="Hva Hve Hlo Hhi Hal"] Lemma p1_run : forall rom (J : word -> option byte),
+  #[using="All"] Lemma p1_run : forall rom (J : word -> option byte),
     wfJ sp0 J ->
     exists regs',
       msteps SEGS (mkst (regs_init sp0) (0x224ec : word) (CM J (fun _ => None)) rom)
@@ -89,7 +96,7 @@ Section P1.
       /\ getr regs' 12 = Z_to_bv 64 304
       /\ getr regs' 18 = Z_to_bv 64 0x22638
       /\ (forall r : reg, In r [5;19;20;21;22;23;24;25;26;27]%list -> getr regs' r = Z_to_bv 64 0).
-  Proof. LiaFast.lf_pins (fun (Hva Hve Hlo Hhi Hal : LiaFast.U) => LiaFast.u0).
+  Proof.
     intros rom J HJ.
     pose proof len_av as Hlen. pose proof u_argc as Hargc.
     eexists. split.
@@ -107,7 +114,7 @@ Section P1.
         [ exact F_22508 | reflexivity | exact D_22508
         | addr_norm; rewrite rdn_cmem_above by region_side;
           apply (rdn_low_bytes SEGS mem0 sp0 argc 4); [lia|];
-          exact (read_argc_w SEGS RPH sp0 av ev uid hw rdraw Hva Hve Hhi)
+          ltac:(eapply read_argc_w; (eassumption || (cbv [sp_window_lo sp_window_hi]; lia)))
         | apply bytes_le_to_Z_4_small; rewrite Hargc; lia ]
         | step_simpl]; vnorm.
       rewrite (v_lw_small argc) by (rewrite Hargc; lia).
@@ -140,7 +147,7 @@ Section P1.
         | addr_norm; rewrite rdn_cmem_above by region_side;
           replace (Z_to_bv 64 (bv_unsigned sp0 + 8)) with (sp0 + nat_to_word (8 + 8 * 0))
             by (rewrite word_add_nat; f_equal; lia);
-          exact (read_argv_ptr_w SEGS RPH sp0 av ev uid hw rdraw Hva Hve Hlo Hhi 0 ltac:(lia))
+          ltac:(eapply read_argv_ptr_w; (eassumption || lia || (cbv [sp_window_lo sp_window_hi]; lia)))
         | apply bytes_le_to_Z_8 ]
         | step_simpl]; vnorm.
       stepiv F_50824 D_50824 (Z_to_bv 64 (8 * Z.of_nat (length av)))

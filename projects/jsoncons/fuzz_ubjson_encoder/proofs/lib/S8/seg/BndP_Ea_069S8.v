@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: segment walks computed in the build over the widened stack bound; addresses and numbers; new lemmas. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require SegCodec.  Import SegCodec.StrNota.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
@@ -22,7 +23,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_E) ",20#$1$2$3$4$5$6$7#25#7???????$21$22#13=9<0$=$>$?$10$11##11#13=9<0#1?161#$17$18$19$1:$1;$1<$1=$1>$1?"%pstring).
-Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",<'$2#7???7?811000#800000000000&$2#10($2-70#70,$2-70#70%#10000#13:000'$21#7???7?811000#7?????????>?'$22#40#1????)$2-70#70$21#+$22#1!##13=9>0,8+$2#280!##13=9>8,8+$2#241!##13=:08,8#121=58!##695:<0,8$28"%pstring).
+Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",<'$2#7???7?811000#800000000000&$2#10($2-70#70,$2-70#70%#10000#13:000'$21#7???7?811000#7??????????6'$22#40#1????)$2-70#70$21#+$22#1!##13=9>0,8+$2#280!##13=9>8,8+$2#241!##13=:08,8#121=58!##695:<0,8$28"%pstring).
 Definition ss0 : sym_state := SS 1194420 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-112), ELit 112)].
 Definition F0L : list SR.region := [(EVar 2, (-112), 112)].
@@ -37,7 +38,8 @@ Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
-Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (SegCodec.run (SegCodec.sc_pair (SegCodec.lst SegCodec.sc_aitem) (SegCodec.sc_pair SegCodec.sc_Z SegCodec.sc_sstate)) ",1!!,2#121=94#121=94#5=#121=94,20##1239;8+$2-70$3$4$5#121=58$7$22#13=9<0$28$21$22$=$>$?$10$11##11#13=9<0#695:<0#$17$18$19$1:$1;$1<$1=$1>$1?,,15!$2-48,8$28!$2-40,8#!$2-38,8#1?161!$2-30,8#13=9<0!$2-28,8#11!$2-20,8#!$2-18,8#7???????!$2-10,8#25!$2-8,8#1239;8'$2#7???7?811000#800000000000&$2#10($2-70#70,$2-70#28%#10000#13:000'$21#7???7?811000#7?????????>?'$22#40#1????)$2-70#70$21#+$22#1!##13=9>0,8+$2#280!##13=9>8,8+$2#241!##13=:08,8#121=58!##695:<0,8$28,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
@@ -89,7 +91,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_E) ",20#$1$2$3$4$5$6$7#25#7???????$21$22#13=9<0$=$>$?$10$11##11#13=9<0#1?161$16$17$18$19$1:$1;$1<$1=$1>$1?"%pstring).
-Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",;'$2#7???7?811000#800000000000&$2#10($2-40#40,$2-40#40%#10000#13:000'$21#7???7?811000#7?????????>?'$22##3?)$2-40#40$21#+$22#1!##13=9>0,8+$2#280!##13=9>8,8+$2#241!##13=:50,4#????????"%pstring).
+Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",;'$2#7???7?811000#800000000000&$2#10($2-40#40,$2-40#40%#10000#13:000'$21#7???7?811000#7??????????6'$22##3?)$2-40#40$21#+$22#1!##13=9>0,8+$2#280!##13=9>8,8+$2#241!##13=:50,4#????????"%pstring).
 Definition ss0 : sym_state := SS 1194420 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-64), ELit 64)].
 Definition F0L : list SR.region := [(EVar 2, (-64), 64)].
@@ -104,7 +106,8 @@ Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
-Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (SegCodec.run (SegCodec.sc_pair (SegCodec.lst SegCodec.sc_aitem) (SegCodec.sc_pair SegCodec.sc_Z SegCodec.sc_sstate)) ",1!!,2#78614#78614#5=#78614,20##122854+$2-40$3$4$5$6$7#13=9<0$22+$2#241$21$22$=$>$?$10$11$21##13=9<0#1?161$16$17$18$19$1:$1;$1<$1=$1>$1?,,12!$2-38,8#1?161!$2-30,8#13=9<0!$2-28,8#11!$2-20,8#!$2-18,8#7???????!$2-10,8#25!$2-8,8#1239;8'$2#7???7?811000#800000000000&$2#10($2-40#40,$2-40#8%#10000#13:000'$21#7???7?811000#7?????????>?'$22##3?)$2-40#40$21#+$22#1!##13=9>0,8+$2#280!##13=9>8,8+$2#241!##13=:50,4#????????,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
@@ -156,7 +159,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := [ELit 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; ELit 1300928; (EVar 34); EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; ELit 0; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; (EVar 34); EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
-Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",14'$2#7???7?811000#800000000000&$2#10($2-10#50,$2-10#50%#10000#13:000'$21#7???7?811000#7?????????>?'$22##3>)$2-10#50$21#+$22#1(##13=9>8#8!##13=9>8,8+$2#281!$2#38,8#1239;8!$2#30,8#25!$2#28,8#7???????!$2#20,8#!$2#18,8#11!$2#10,8#13=9<0!$2#8,8#1?161!##13=9<0,1#5!##13=9>0,8+$2#2<0!##13=:50,4#????????"%pstring).
+Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",14'$2#7???7?811000#800000000000&$2#10($2-10#50,$2-10#50%#10000#13:000'$21#7???7?811000#7??????????6'$22##3>)$2-10#50$21#+$22#1(##13=9>8#8!##13=9>8,8+$2#281!$2#38,8#1239;8!$2#30,8#25!$2#28,8#7???????!$2#20,8#!$2#18,8#11!$2#10,8#13=9<0!$2#8,8#1?161!##13=9<0,1#5!##13=9>0,8+$2#2<0!##13=:50,4#????????"%pstring).
 Definition ss0 : sym_state := SS 1189972 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-16), ELit 80); (ELit 0, (1300968), ELit 8)].
 Definition F0L : list SR.region := [(EVar 2, (-16), 80); (ELit 0, (1300968), 8)].
@@ -171,7 +174,8 @@ Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
-Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (SegCodec.run (SegCodec.sc_pair (SegCodec.lst SegCodec.sc_aitem) (SegCodec.sc_pair SegCodec.sc_Z SegCodec.sc_sstate)) ",1!!,2#78614#78614#5=#78614,20##122854$2$3$4$5$6$7#13=9<0#1++$2$22#281#1?161#1$=$>$?$10$11#1?161##13=9<0#1?162#1#1?161$18$19#1$1;$1<$1=$1>$1?,,14!$2#8,8#1?162!$2#10,8#13=9<0!$2#18,8+$22#11!$2#20,8+@-1$22#7?????>>!$2#28,8#7???????!$2#30,8#25!$2#38,8#122?98!##13=9>8,8++$2$22#281'$2#7???7?811000#800000000000&$2#10($2-10#50,$2-10#18%#10000#13:000'$21#7???7?811000#7?????????>?'$22##3>)$2-10#50$21#+$22#1(##13=9>8#8!##13=9<0,1#5!##13=9>0,8+$2#2<0!##13=:50,4#????????,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
@@ -223,7 +227,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := [ELit 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; ELit 1300928; ELit 63; EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; ELit 0; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; ELit 63; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
-Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",15'$2#7???7?811000#800000000000&$2#10($2-30#70,$2-30#70%#10000#13:000'$21#7???7?811000#7?????????>?'$22#3?#3?)$2-30#70$21#+$22#1(##13=9>8#8!##13=9>8,8+$2#281!$2#38,8#1239;8!$2#30,8#25!$2#28,8#7???????!$2#20,8#!$2#18,8#11!$2#10,8#13=9<0!$2#8,8#1?161!##13=9<0,1#5!##13=9>0,8+$2#2<0!##13=:08,8#121=58!##695:<0,8$28"%pstring).
+Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",15'$2#7???7?811000#800000000000&$2#10($2-30#70,$2-30#70%#10000#13:000'$21#7???7?811000#7??????????6'$22#3?#3?)$2-30#70$21#+$22#1(##13=9>8#8!##13=9>8,8+$2#281!$2#38,8#1239;8!$2#30,8#25!$2#28,8#7???????!$2#20,8#!$2#18,8#11!$2#10,8#13=9<0!$2#8,8#1?161!##13=9<0,1#5!##13=9>0,8+$2#2<0!##13=:08,8#121=58!##695:<0,8$28"%pstring).
 Definition ss0 : sym_state := SS 1189972 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-48), ELit 112); (ELit 0, (1300968), ELit 8)].
 Definition F0L : list SR.region := [(EVar 2, (-48), 112); (ELit 0, (1300968), 8)].
@@ -238,7 +242,8 @@ Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
-Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (SegCodec.run (SegCodec.sc_pair (SegCodec.lst SegCodec.sc_aitem) (SegCodec.sc_pair SegCodec.sc_Z SegCodec.sc_sstate)) ",1!!,2#121=94#121=94#5=#121=94,20##122?98+$2-30$3$4$5#121=58$7#1#13=9<0$28#1?161#1$=$>$?$10$11#7?????:?#50#13=9<0#695:<0#1#1?161$18$19#1$1;$1<$1=$1>$1?,,17!$2-8,8$28!$2#,8#1!$2#8,8#1?162!$2#10,8#13=9<0!$2#18,8#50!$2#20,8#7?????:?!$2#28,8#7???????!$2#30,8#25!$2#38,8#122?98!##13=9>8,8+$2#2<0'$2#7???7?811000#800000000000&$2#10($2-30#70,$2-30#28%#10000#13:000'$21#7???7?811000#7?????????>?'$22#3?#3?)$2-30#70$21#+$22#1(##13=9>8#8!##13=9<0,1#5!##13=9>0,8+$2#2<0!##13=:08,8#121=58!##695:<0,8$28,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
@@ -290,7 +295,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := [ELit 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; (EVar 34); ELit 1300928; EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; ELit 6904512; EVar 122; EVar 123; ELit 0; EVar 125; (EVar 34); EVar 127; EVar 28; EVar 29; EVar 30; EVar 31].
-Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",2>'$2#7???7?811000#800000000000&$2#10($2-840#:?0,$2-840#:?0%#10000#13:000'$21#7???7?811000#7?????????>?'$22#40#1????)$2-840#:?0$21#+$22#1#&6$2#3#7???8046#18!##7???;>28,8#(##13=9>0#8(##13=9>8#8(##13=9?8#8!##13=:18,8+$2#2:0!##13=:20,8#50!##695:<0,8$28!$2#28,8$28!$2#68,8#1239;8!$2#60,8#25!$2#58,8#7???????!$2#50,8#!$2#48,8#11!$2#40,8#13=9<0!$2#38,8#1?161!$2#30,8#!##13=9<0,1#5!##13=:50,4#????????!##1426=9,1#1!##1419?8,8#7???8000!##13;1<0,8#12;488!$2#=0,8#695:<0!$2#220,8$28!$2#288,8#122=:8!$2#280,8#13=9<0!$2#278,8#1?14>!$2#270,8#695:<0!$2#268,8#1!$2#260,8#696298!$2#258,8#5!$2#250,8$16!$2#248,8$17!$2#240,8$18!$2#238,8$19!$2#230,8$1:!$2#228,8$1;!##13=:08,8#121=58"%pstring).
+Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",2>'$2#7???7?811000#800000000000&$2#10($2-840#:?0,$2-840#:?0%#10000#13:000'$21#7???7?811000#7??????????6'$22#40#1????)$2-840#:?0$21#+$22#1#&6$2#3#7???8046#18!##7???;>28,8#(##13=9>0#8(##13=9>8#8(##13=9?8#8!##13=:18,8+$2#2:0!##13=:20,8#50!##695:<0,8$28!$2#28,8$28!$2#68,8#1239;8!$2#60,8#25!$2#58,8#7???????!$2#50,8#!$2#48,8#11!$2#40,8#13=9<0!$2#38,8#1?161!$2#30,8#!##13=9<0,1#5!##13=:50,4#????????!##1426=9,1#1!##1419?8,8#7???8000!##13;1<0,8#12;488!$2#=0,8#695:<0!$2#220,8$28!$2#288,8#122=:8!$2#280,8#13=9<0!$2#278,8#1?14>!$2#270,8#695:<0!$2#268,8#1!$2#260,8#696298!$2#258,8#5!$2#250,8$16!$2#248,8$17!$2#240,8$18!$2#238,8$19!$2#230,8$1:!$2#228,8$1;!##13=:08,8#121=58"%pstring).
 Definition ss0 : sym_state := SS 1187308 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-2112), ELit 2800); (ELit 0, (1300960), ELit 8); (ELit 0, (1300968), ELit 8); (ELit 0, (1300984), ELit 8)].
 Definition F0L : list SR.region := [(EVar 2, (-2112), 2800); (ELit 0, (1300960), 8); (ELit 0, (1300968), 8); (ELit 0, (1300984), 8)].
@@ -305,7 +310,8 @@ Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
-Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (SegCodec.run (SegCodec.sc_pair (SegCodec.lst SegCodec.sc_aitem) (SegCodec.sc_pair SegCodec.sc_Z SegCodec.sc_sstate)) ",1!!,2#121=94#121=94#5=#121=94,20##122=<8+$2#220$3$4#2$6$7##13=9<0$28###121=58##1#1#:#695:<0#1#696298#695:<0$16$17$18$19$1:$1;$1<$1=$1>$1?,,3?!$2#248,8$28!$2#250,8$16!$2#258,8#!$2#260,8#696298!$2#268,8#1!$2#270,8#695:<0!$2#278,8+$22#12!$2#280,8#13=9<0!$2#288,8#122=<8!##13=9>8,8+$2#2:1!$2#2:0,1#:!$2-20,8#!$2-18,8#1?161!$2-10,8#1!$2-8,8#1?162!$2#,8#13=9<0!$2#8,8#!$2#10,8#1?161!$2#18,8#1!$2#20,8#13=9<0!$2#28,8#122854!$2#38,8#1?162!$2#40,8#13=9<0!$2#48,8+$22#11!$2#50,8+@-1$22#7?????>>!$2#58,8#7???????!$2#60,8#25!$2#68,8#122?98!##13=9?8,8+$2#2:0!##13=9>0,8+$2#2?0'$2#7???7?811000#800000000000&$2#10($2-840#:?0,$2-840#820,$2#30#8,$2#70#1=8,$2#290#10,$2#2:1#?%#10000#13:000'$21#7???7?811000#7?????????>?'$22#40#1????)$2-840#:?0$21#+$22#1#&6$2#3#7???8046#18!##7???;>28,8#(##13=9>0#8(##13=9>8#8(##13=9?8#8!##13=:18,8+$2#2:0!##13=:20,8#50!##695:<0,8$28!$2#30,8#!##13=9<0,1#5!##13=:50,4#????????!##1426=9,1#1!##1419?8,8#7???8000!##13;1<0,8#12;488!$2#=0,8#695:<0!$2#220,8$28!$2#240,8$18!$2#238,8$19!$2#230,8$1:!$2#228,8$1;!##13=:08,8#121=58,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
@@ -357,7 +363,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := [ELit 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; ELit 1300928; ELit 1; EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; ELit 0; EVar 20; EVar 21; ELit 1; EVar 123; EVar 124; EVar 125; ELit 1; EVar 127; EVar 28; EVar 29; EVar 30; EVar 31].
-Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",22'$2#7???7?811000#800000000000&$2#10($2-10#270,$2-10#270%#10000#13:000'$21#7???7?811000#7?????????>?'$22##3>)$2-10#270$21#+$22#1(##13=9>8#8!##13=9>8,8++$2$22#281!$2#38,8#122?98!$2#30,8#25!$2#28,8#7???????!$2#20,8&1#7?????>>$22!$2#18,8+$22#11!$2#10,8#13=9<0!$2#8,8#1?162!$2#:0,8#695:<0!##695:<0,8$28!$2#1?0,8$28!$2#258,8#122=:8!$2#250,8#13=9<0!$2#248,8#1?14>!$2#240,8#695:<0!$2#238,8#1!$2#230,8#696298!$2#228,8#5!$2#220,8$16!$2#218,8$17!$2#210,8$18!$2#208,8$19!$2#200,8$1:!$2#1?8,8$1;!##13=:08,8#121=58"%pstring).
+Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",22'$2#7???7?811000#800000000000&$2#10($2-10#270,$2-10#270%#10000#13:000'$21#7???7?811000#7??????????6'$22##3>)$2-10#270$21#+$22#1(##13=9>8#8!##13=9>8,8++$2$22#281!$2#38,8#122?98!$2#30,8#25!$2#28,8#7???????!$2#20,8&1#7?????>>$22!$2#18,8+$22#11!$2#10,8#13=9<0!$2#8,8#1?162!$2#:0,8#695:<0!##695:<0,8$28!$2#1?0,8$28!$2#258,8#122=:8!$2#250,8#13=9<0!$2#248,8#1?14>!$2#240,8#695:<0!$2#238,8#1!$2#230,8#696298!$2#228,8#5!$2#220,8$16!$2#218,8$17!$2#210,8$18!$2#208,8$19!$2#200,8$1:!$2#1?8,8$1;!##13=:08,8#121=58"%pstring).
 Definition ss0 : sym_state := SS 1189972 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-16), ELit 624); (ELit 0, (1300968), ELit 8)].
 Definition F0L : list SR.region := [(EVar 2, (-16), 624); (ELit 0, (1300968), 8)].
@@ -372,7 +378,8 @@ Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
-Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (SegCodec.run (SegCodec.sc_pair (SegCodec.lst SegCodec.sc_aitem) (SegCodec.sc_pair SegCodec.sc_Z SegCodec.sc_sstate)) ",1!!,2#121=94#121=94#5=#121=94,20##122=<8+$2#1?0$3$4$5$6$7##13=9<0$28###121=58$>$?$10$11#695:<0#1#696298#695:<0$16$17$18$19$1:$1;$1<$1=$1>$1?,,22!$2#218,8$28!$2#220,8$16!$2#228,8#!$2#230,8#696298!$2#238,8#1!$2#240,8#695:<0!$2#248,8+$22#12!$2#250,8#13=9<0!$2#258,8#122=<8!##13=9>8,8++$2$22#282'$2#7???7?811000#800000000000&$2#10($2-10#270,$2-10#228%#10000#13:000'$21#7???7?811000#7?????????>?'$22##3>)$2-10#270$21#+$22#1(##13=9>8#8!$2#38,8#122?98!$2#30,8#25!$2#28,8#7???????!$2#20,8&1#7?????>>$22!$2#18,8+$22#11!$2#10,8#13=9<0!$2#8,8#1?162!$2#:0,8#695:<0!##695:<0,8$28!$2#1?0,8$28!$2#210,8$18!$2#208,8$19!$2#200,8$1:!$2#1?8,8$1;!##13=:08,8#121=58,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
@@ -424,7 +431,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := [ELit 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; ELit 0; ELit 1300928; EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 118; EVar 119; EVar 120; ELit 6904512; EVar 122; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
-Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",27'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13:000'$21#7???7?811000#7?????????>?'$22##3>)$2-10#10$21#+$22#1(##13=9<0#4(##13=9>0#8(##13=9>8#8(##13=9?8#8(##13=:18#8(##13=:20#8!##13=:18,8+$2#80!##13=:20,8#50!##695:<0,8$28!$2#28,8$28!$2#68,8#122=<8!$2#60,8#13=9<0!$2#58,8+$22#12!$2#50,8#695:<0!$2#48,8#1!$2#40,8#696298!$2#38,8#!$2#30,8$16!##13=9<0,4#5!$2#1:0,8$28!$2#1=8,8#68<?4!$2#1=0,8#1?14>!$2#1<8,8#13=9<0!$2#1<0,8+$2#220!$2#1;8,8$13!$2#1;0,8$14!$2#1:8,8$15!$2#218,8#:86><!$2#210,8$8!$2#208,8$9!$2#200,8$12"%pstring).
+Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",27'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13:000'$21#7???7?811000#7??????????6'$22##3>)$2-10#10$21#+$22#1(##13=9<0#4(##13=9>0#8(##13=9>8#8(##13=9?8#8(##13=:18#8(##13=:20#8!##13=:18,8+$2#80!##13=:20,8#50!##695:<0,8$28!$2#28,8$28!$2#68,8#122=<8!$2#60,8#13=9<0!$2#58,8+$22#12!$2#50,8#695:<0!$2#48,8#1!$2#40,8#696298!$2#38,8#!$2#30,8$16!##13=9<0,4#5!$2#1:0,8$28!$2#1=8,8#68<?4!$2#1=0,8#1?14>!$2#1<8,8#13=9<0!$2#1<0,8+$2#220!$2#1;8,8$13!$2#1;0,8$14!$2#1:8,8$15!$2#218,8#:86><!$2#210,8$8!$2#208,8$9!$2#200,8$12"%pstring).
 Definition ss0 : sym_state := SS 1187308 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-16), ELit 16); (ELit 0, (1300928), ELit 4); (ELit 0, (1300960), ELit 8); (ELit 0, (1300968), ELit 8); (ELit 0, (1300984), ELit 8); (ELit 0, (1301016), ELit 8); (ELit 0, (1301024), ELit 8)].
 Definition F0L : list SR.region := [(EVar 2, (-16), 16); (ELit 0, (1300928), 4); (ELit 0, (1300960), 8); (ELit 0, (1300968), 8); (ELit 0, (1300984), 8); (ELit 0, (1301016), 8); (ELit 0, (1301024), 8)].
@@ -439,7 +446,8 @@ Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
-Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (SegCodec.run (SegCodec.sc_pair (SegCodec.lst SegCodec.sc_aitem) (SegCodec.sc_pair SegCodec.sc_Z SegCodec.sc_sstate)) ",1!!,2#11:3?<#11:3?<#5=#11:3?<,20##:8718+$2#250$3$4$5$6$7$8$9#2$28$28$=$>$?$10$11$12$13$14$15$16$17$18$19$1:$1;$1<$1=$1>$1?,,2:!##13=9<0,4#5!##13=:20,8#!##13=:18,8#696298!##13=9?8,8#!##13=9>8,8#!##13=9>0,8#'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13:000'$21#7???7?811000#7?????????>?'$22##3>)$2-10#10$21#+$22#1(##13=9<0#4(##13=9>0#8(##13=9>8#8(##13=9?8#8(##13=:18#8(##13=:20#8!##695:<0,8$28!$2#28,8$28!$2#68,8#122=<8!$2#60,8#13=9<0!$2#58,8+$22#12!$2#50,8#695:<0!$2#48,8#1!$2#40,8#696298!$2#38,8#!$2#30,8$16!$2#1:0,8$28!$2#1=8,8#68<?4!$2#1=0,8#1?14>!$2#1<8,8#13=9<0!$2#1<0,8+$2#220!$2#1;8,8$13!$2#1;0,8$14!$2#1:8,8$15!$2#218,8#:86><!$2#210,8$8!$2#208,8$9!$2#200,8$12,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
@@ -491,7 +499,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := [ELit 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; ELit 1; ELit 1300928; EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; ELit 6904512; EVar 122; EVar 123; EVar 124; EVar 125; ELit 1; EVar 127; EVar 28; EVar 29; EVar 30; EVar 31].
-Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",27'$2#7???7?811000#800000000000&$2#10($2-10#2:0,$2-10#2:0%#10000#13:000'$21#7???7?811000#7?????????>?'$22#3?#3?)$2-10#2:0$21#+$22#1(##13=9>0#8(##13=9>8#8(##13=9?8#8!##13=:18,8+$2#2:0!##13=:20,8#50!##695:<0,8$28!$2#28,8$28!$2#68,8#122?98!$2#60,8#25!$2#58,8#7???????!$2#50,8#7?????:?!$2#48,8#50!$2#40,8#13=9<0!$2#38,8#1?162!$2#30,8#1!$2#=0,8#695:<0!$2#220,8$28!$2#288,8#122=:8!$2#280,8#13=9<0!$2#278,8#1?14>!$2#270,8#695:<0!$2#268,8#1!$2#260,8#696298!$2#258,8#5!$2#250,8$16!$2#248,8$17!$2#240,8$18!$2#238,8$19!$2#230,8$1:!$2#228,8$1;!##13=:08,8#121=58"%pstring).
+Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",27'$2#7???7?811000#800000000000&$2#10($2-10#2:0,$2-10#2:0%#10000#13:000'$21#7???7?811000#7??????????6'$22#3?#3?)$2-10#2:0$21#+$22#1(##13=9>0#8(##13=9>8#8(##13=9?8#8!##13=:18,8+$2#2:0!##13=:20,8#50!##695:<0,8$28!$2#28,8$28!$2#68,8#122?98!$2#60,8#25!$2#58,8#7???????!$2#50,8#7?????:?!$2#48,8#50!$2#40,8#13=9<0!$2#38,8#1?162!$2#30,8#1!$2#=0,8#695:<0!$2#220,8$28!$2#288,8#122=:8!$2#280,8#13=9<0!$2#278,8#1?14>!$2#270,8#695:<0!$2#268,8#1!$2#260,8#696298!$2#258,8#5!$2#250,8$16!$2#248,8$17!$2#240,8$18!$2#238,8$19!$2#230,8$1:!$2#228,8$1;!##13=:08,8#121=58"%pstring).
 Definition ss0 : sym_state := SS 1187308 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-16), ELit 672); (ELit 0, (1300960), ELit 8); (ELit 0, (1300968), ELit 8); (ELit 0, (1300984), ELit 8)].
 Definition F0L : list SR.region := [(EVar 2, (-16), 672); (ELit 0, (1300960), 8); (ELit 0, (1300968), 8); (ELit 0, (1300984), 8)].
@@ -506,7 +514,8 @@ Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
-Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (SegCodec.run (SegCodec.sc_pair (SegCodec.lst SegCodec.sc_aitem) (SegCodec.sc_pair SegCodec.sc_Z SegCodec.sc_sstate)) ",1!!,2#121=94#121=94#5=#121=94,20##122=<8+$2#220$3$4$5$6$7##13=9<0$28###121=58$>$?$10$11#695:<0#1#696298#695:<0$16$17$18$19$1:$1;$1<$1=$1>$1?,,2:!$2#248,8$28!$2#250,8$16!$2#258,8#!$2#260,8#696298!$2#268,8#1!$2#270,8#695:<0!$2#278,8#51!$2#280,8#13=9<0!$2#288,8#122=<8!##13=9?8,8+$2#2:0!##13=9>8,8+$2#2:0!##13=9>0,8+$2#2?0'$2#7???7?811000#800000000000&$2#10($2-10#2:0,$2-10#258%#10000#13:000'$21#7???7?811000#7?????????>?'$22#3?#3?)$2-10#2:0$21#+$22#1(##13=9>0#8(##13=9>8#8(##13=9?8#8!##13=:18,8+$2#2:0!##13=:20,8#50!##695:<0,8$28!$2#28,8$28!$2#68,8#122?98!$2#60,8#25!$2#58,8#7???????!$2#50,8#7?????:?!$2#48,8#50!$2#40,8#13=9<0!$2#38,8#1?162!$2#30,8#1!$2#=0,8#695:<0!$2#220,8$28!$2#240,8$18!$2#238,8$19!$2#230,8$1:!$2#228,8$1;!##13=:08,8#121=58,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
@@ -558,7 +567,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := [ELit 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; ELit 0; ELit 1300928; EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 118; EVar 119; EVar 120; ELit 6904512; EVar 122; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
-Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",27'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13:000'$21#7???7?811000#7?????????>?'$22#3?#3?)$2-10#10$21#+$22#1(##13=9<0#4(##13=9>0#8(##13=9>8#8(##13=9?8#8(##13=:18#8(##13=:20#8!##13=:18,8+$2#80!##13=:20,8#50!##695:<0,8$28!$2#28,8$28!$2#68,8#122=<8!$2#60,8#13=9<0!$2#58,8#51!$2#50,8#695:<0!$2#48,8#1!$2#40,8#696298!$2#38,8#!$2#30,8$16!##13=9<0,4#5!$2#1:0,8$28!$2#1=8,8#68<?4!$2#1=0,8#1?14>!$2#1<8,8#13=9<0!$2#1<0,8+$2#220!$2#1;8,8$13!$2#1;0,8$14!$2#1:8,8$15!$2#218,8#:86><!$2#210,8$8!$2#208,8$9!$2#200,8$12"%pstring).
+Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",27'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13:000'$21#7???7?811000#7??????????6'$22#3?#3?)$2-10#10$21#+$22#1(##13=9<0#4(##13=9>0#8(##13=9>8#8(##13=9?8#8(##13=:18#8(##13=:20#8!##13=:18,8+$2#80!##13=:20,8#50!##695:<0,8$28!$2#28,8$28!$2#68,8#122=<8!$2#60,8#13=9<0!$2#58,8#51!$2#50,8#695:<0!$2#48,8#1!$2#40,8#696298!$2#38,8#!$2#30,8$16!##13=9<0,4#5!$2#1:0,8$28!$2#1=8,8#68<?4!$2#1=0,8#1?14>!$2#1<8,8#13=9<0!$2#1<0,8+$2#220!$2#1;8,8$13!$2#1;0,8$14!$2#1:8,8$15!$2#218,8#:86><!$2#210,8$8!$2#208,8$9!$2#200,8$12"%pstring).
 Definition ss0 : sym_state := SS 1187308 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-16), ELit 16); (ELit 0, (1300928), ELit 4); (ELit 0, (1300960), ELit 8); (ELit 0, (1300968), ELit 8); (ELit 0, (1300984), ELit 8); (ELit 0, (1301016), ELit 8); (ELit 0, (1301024), ELit 8)].
 Definition F0L : list SR.region := [(EVar 2, (-16), 16); (ELit 0, (1300928), 4); (ELit 0, (1300960), 8); (ELit 0, (1300968), 8); (ELit 0, (1300984), 8); (ELit 0, (1301016), 8); (ELit 0, (1301024), 8)].
@@ -573,7 +582,8 @@ Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
-Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (SegCodec.run (SegCodec.sc_pair (SegCodec.lst SegCodec.sc_aitem) (SegCodec.sc_pair SegCodec.sc_Z SegCodec.sc_sstate)) ",1!!,2#11:3?<#11:3?<#5=#11:3?<,20##:8718+$2#250$3$4$5$6$7$8$9#2$28$28$=$>$?$10$11$12$13$14$15$16$17$18$19$1:$1;$1<$1=$1>$1?,,2:!##13=9<0,4#5!##13=:20,8#!##13=:18,8#696298!##13=9?8,8#!##13=9>8,8#!##13=9>0,8#'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13:000'$21#7???7?811000#7?????????>?'$22#3?#3?)$2-10#10$21#+$22#1(##13=9<0#4(##13=9>0#8(##13=9>8#8(##13=9?8#8(##13=:18#8(##13=:20#8!##695:<0,8$28!$2#28,8$28!$2#68,8#122=<8!$2#60,8#13=9<0!$2#58,8#51!$2#50,8#695:<0!$2#48,8#1!$2#40,8#696298!$2#38,8#!$2#30,8$16!$2#1:0,8$28!$2#1=8,8#68<?4!$2#1=0,8#1?14>!$2#1<8,8#13=9<0!$2#1<0,8+$2#220!$2#1;8,8$13!$2#1;0,8$14!$2#1:8,8$15!$2#218,8#:86><!$2#210,8$8!$2#208,8$9!$2#200,8$12,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
@@ -625,7 +635,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := [ELit 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; ELit 0; ELit 1300928; EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 118; EVar 119; EVar 120; ELit 6904512; EVar 122; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
-Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",27'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13:000'$21#7???7?811000#7?????????>?'$22#40#1????)$2-10#10$21#+$22#1(##13=9<0#4(##13=9>0#8(##13=9>8#8(##13=9?8#8(##13=:18#8(##13=:20#8!##13=:18,8+$2#80!##13=:20,8#50!##695:<0,8$28!$2#28,8$28!$2#68,8#122=<8!$2#60,8#13=9<0!$2#58,8+$22#12!$2#50,8#695:<0!$2#48,8#1!$2#40,8#696298!$2#38,8#!$2#30,8$16!##13=9<0,4#5!$2#1:0,8$28!$2#1=8,8#68<?4!$2#1=0,8#1?14>!$2#1<8,8#13=9<0!$2#1<0,8+$2#220!$2#1;8,8$13!$2#1;0,8$14!$2#1:8,8$15!$2#218,8#:86><!$2#210,8$8!$2#208,8$9!$2#200,8$12"%pstring).
+Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",27'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13:000'$21#7???7?811000#7??????????6'$22#40#1????)$2-10#10$21#+$22#1(##13=9<0#4(##13=9>0#8(##13=9>8#8(##13=9?8#8(##13=:18#8(##13=:20#8!##13=:18,8+$2#80!##13=:20,8#50!##695:<0,8$28!$2#28,8$28!$2#68,8#122=<8!$2#60,8#13=9<0!$2#58,8+$22#12!$2#50,8#695:<0!$2#48,8#1!$2#40,8#696298!$2#38,8#!$2#30,8$16!##13=9<0,4#5!$2#1:0,8$28!$2#1=8,8#68<?4!$2#1=0,8#1?14>!$2#1<8,8#13=9<0!$2#1<0,8+$2#220!$2#1;8,8$13!$2#1;0,8$14!$2#1:8,8$15!$2#218,8#:86><!$2#210,8$8!$2#208,8$9!$2#200,8$12"%pstring).
 Definition ss0 : sym_state := SS 1187308 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-16), ELit 16); (ELit 0, (1300928), ELit 4); (ELit 0, (1300960), ELit 8); (ELit 0, (1300968), ELit 8); (ELit 0, (1300984), ELit 8); (ELit 0, (1301016), ELit 8); (ELit 0, (1301024), ELit 8)].
 Definition F0L : list SR.region := [(EVar 2, (-16), 16); (ELit 0, (1300928), 4); (ELit 0, (1300960), 8); (ELit 0, (1300968), 8); (ELit 0, (1300984), 8); (ELit 0, (1301016), 8); (ELit 0, (1301024), 8)].
@@ -640,7 +650,8 @@ Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
-Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (SegCodec.run (SegCodec.sc_pair (SegCodec.lst SegCodec.sc_aitem) (SegCodec.sc_pair SegCodec.sc_Z SegCodec.sc_sstate)) ",1!!,2#11:3?<#11:3?<#5=#11:3?<,20##:8718+$2#250$3$4$5$6$7$8$9#2$28$28$=$>$?$10$11$12$13$14$15$16$17$18$19$1:$1;$1<$1=$1>$1?,,2:!##13=9<0,4#5!##13=:20,8#!##13=:18,8#696298!##13=9?8,8#!##13=9>8,8#!##13=9>0,8#'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13:000'$21#7???7?811000#7?????????>?'$22#40#1????)$2-10#10$21#+$22#1(##13=9<0#4(##13=9>0#8(##13=9>8#8(##13=9?8#8(##13=:18#8(##13=:20#8!##695:<0,8$28!$2#28,8$28!$2#68,8#122=<8!$2#60,8#13=9<0!$2#58,8+$22#12!$2#50,8#695:<0!$2#48,8#1!$2#40,8#696298!$2#38,8#!$2#30,8$16!$2#1:0,8$28!$2#1=8,8#68<?4!$2#1=0,8#1?14>!$2#1<8,8#13=9<0!$2#1<0,8+$2#220!$2#1;8,8$13!$2#1;0,8$14!$2#1:8,8$15!$2#218,8#:86><!$2#210,8$8!$2#208,8$9!$2#200,8$12,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).

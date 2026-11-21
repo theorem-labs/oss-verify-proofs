@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_rate/lib/A/RtPgLeaf.v at 09da091ee285
-   (lf_kept_run, here ccs_kept_run) and of proofs/reac-pw/fuzz_rate/lib/A/RtPgCheckList.v at 09da091ee285 (the .got
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_rate/lib/A/RtPgLeaf.v
+   (lf_kept_run, here ccs_kept_run) and of proofs/reac-pw/fuzz_rate/lib/A/RtPgCheckList.v (the .got
    and cell regions of cl_entry, here in ccs_p1_entry), for the walk of check_csv's segment S0 on image A. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address below is measured on its unstripped
    twin sha256 0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, whose loaded bytes are the same): segment

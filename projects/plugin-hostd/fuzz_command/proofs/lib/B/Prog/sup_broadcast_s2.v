@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the recorder facts of the sup_broadcast walk on fuzz_command.asan-ubsan, over
-   readers and block lists only, made from a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s2.v at a5a5ff08765): every
+   readers and block lists only, made from a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s2.v): every
    block the representation names is a live block of at least one byte, the old answer g_rec.answer holds, and the
    block bookkeeping of the call's post-condition. On B the recorder after record() is record_c.v's post
    (rec_repA (rec_record R fn []) O' with O' = O less the freed F) and after arg_line RecBridge.v's rec_bridge_add
    ((p, n) :: O'), so the A walk's sb_rep_slot / sb_rep_spill are not needed; the block bookkeeping is the A walk's
    sb_post_blocks in those forms, with the conclusions in the B statement's forms (sup_broadcast_c.v:117, :124). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

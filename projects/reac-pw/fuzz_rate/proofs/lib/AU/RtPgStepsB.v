@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b01 (its code table, wx / segs_low lemmas, save-slot region, ck_sr / ck_facts / regs_ok_override / ck_regs_ok / ck_lit / ck_atom, the entry-state lemma, same_io_wvb_ck, ck_kept_run and the run / keep / leaf tactics) and proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v at 5afd8b87436 (pa_i_memset_at, pa_i_regs_kept, pa_i_region_nth, pa_i_field, pa_i_soff, pa_i_cs / pa_i_notin / pa_i_pres and the reg / region tactics) for reac-pw/fuzz_rate's image B (fuzz_rate.asan-ubsan): the image is AsanUbsan, the table is pod_write_ent's 194 words, the frame is 48 bytes, the intrinsic lemma is stated for both memory operations, and the read-only extents are image B's GOT slot and shadow-offset cell. *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v (its code table, wx / segs_low lemmas, save-slot region, ck_sr / ck_facts / regs_ok_override / ck_regs_ok / ck_lit / ck_atom, the entry-state lemma, same_io_wvb_ck, ck_kept_run and the run / keep / leaf tactics) and proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v (pa_i_memset_at, pa_i_regs_kept, pa_i_region_nth, pa_i_field, pa_i_soff, pa_i_cs / pa_i_notin / pa_i_pres and the reg / region tactics) for reac-pw/fuzz_rate's image B (fuzz_rate.asan-ubsan): the image is AsanUbsan, the table is pod_write_ent's 194 words, the frame is 48 bytes, the intrinsic lemma is stated for both memory operations, and the read-only extents are image B's GOT slot and shadow-offset cell. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/AU/PweKit.v; 1663 of its 1755 lines of code are new or changed and 176 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSteps.v at 6bdf633122fe for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSteps.v for reac-pw/fuzz_rate's
    image A: module paths changed; the image is fuzz_rate.asan (images.Asan) instead of a lib/A/Img0 module; the jump
    table's site, table and targets and the fuzz_u32 sites are rate's (their registers: the cursor in s9, the shadow
    offset in s2, the original byte count in a5 / a7, no frame cell); the prefix rl_ becomes rts_; the image facts
    wx_segs_nowrap / segs-low and same_io_wvb are stated here instead of taken from a cfg walk file; the block-chaining
-   lemmas and helpers (from proofs/reac-pw/fuzz_role/lib/A/RPgW6aBase.v and RPgW6aHead.v at ef33766f272a), the
+   lemmas and helpers (from proofs/reac-pw/fuzz_role/lib/A/RPgW6aBase.v and RPgW6aHead.v), the
    intrinsic call adapter (RPgW6aHead.v w6h_intrin, for both OSet and OCpy), the generic ecall adapter, the class-3
    frame arithmetic and the frame write rights are added. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgSteps.v at 43406476cb20 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgSteps.v for the same unit's
    image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; every pc, table and literal is image B's (the jump
    table 0x20f6c at 0x8143c with the kind byte in a3, the fuzz_u32 sites, the intrinsic and wrapper entries); the
    frame is class 4 (1024 bytes, 128 shadow bytes) instead of class 3; the prefix rts_ becomes rtsb_, and the
    image-specific unprefixed helpers take a jtb_ / u32b_ prefix; PART 2a (the trap-step lemmas of the 91 UBSan trap
    branches, the 8 shapes) and PART 5 (the pod_write_ent call adapter and its three site-premise lemmas) are new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address below is measured on its unstripped
    twin sha256 a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, whose loaded bytes are the same): the

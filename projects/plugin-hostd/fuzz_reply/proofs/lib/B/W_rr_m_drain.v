@@ -25,7 +25,7 @@
    rmbud's peak over the rest then follows by W_tr_peak.v tr_peak_app.  The tr_alloc helpers the sum form needed
    (the key run's nonnegative allocations, rmd_keys_alloc_nonneg and its chain) are gone. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 in the room form (the image-A twin's conversion, a Theorem Labs lane
-   f4cd818e98d lib/A/W_rr_m_drain.v): hop DRAIN over ANY allocator relation ARx, in place (Section c is
+   lib/A/W_rr_m_drain.v): hop DRAIN over ANY allocator relation ARx, in place (Section c is
    W_rr_match_cx.v's generic block, verbatim); rr_m_drain : hop_drain_stmt B PST ARx MT RP MMAX RG.  The laws, the
    journal and its lemmas are their _x twins (the head set Hp after each state, RLIVE's journal at RR_STK_x), drain
    is called at dr_spec_x (DRAIN_STK_x) through W_rr_m_kit.v rm_gx_callS, and the shadow fact of the eof field is
@@ -42,6 +42,7 @@
    charge of MT_rk is 1; A: rmd_nn_meas MT_rk rmd_rk_laws over its request-size facts); the call helper is the kit's
    rm_gx_callS, whose continuation carries the head set (A: W_gestures_end.gse_callS_x and HP0 at the return); the
    unused KR (g_rng outside g_s kept across drain) is dropped. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -202,7 +203,7 @@ lazymatch goal with HF : frame_of ?E ?rs ?m (ms_mem ?x) |- _ =>
   pose proof (frame_of_read_only E rs m (ms_mem x) ltac:(vm_compute; reflexivity) HF) as Em end;
 repeat match goal with Hx : frame_of _ _ _ _ |- _ => clear Hx | Hx : mem_grows _ _ |- _ => clear Hx end.
 
-(* env_agree survives the fresh atoms a run introduces (k3's tp_env_agree_ewset, lib/A/W_rig_top.v:460) *)
+(* env_agree survives the fresh atoms a run introduces (k3's tp_env_agree_ewset, lib/A/W_rig_top.v:461) *)
 Lemma rmd_env_agree_ewset : forall R E n w, env_agree 32 R E -> (32 <= n)%nat -> env_agree 32 R (ewset E n w).
 Proof. intros R E n w [HA HD] Hn. split; [|exact HD]. intros k Hk. rewrite ew_ewset_other by lia. apply HA. exact Hk. Qed.
 

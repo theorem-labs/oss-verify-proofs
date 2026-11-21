@@ -5,26 +5,27 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths and module names changed; 761 of its 797 lines of code are new or changed and 360 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F29.v, with its module paths and module names changed; 33 of its 73 lines of code are new or changed and 757 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F29.v d3deb22c0e79 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F29.v d3deb22c0e79 (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: f29_evt_of_F re-derives F29.f29_evt at ExecF.RNG_all; f29_evt_of_F_verbatim checks by constr_eq that its
    type is the type of F29.f29_evt. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only.
-   Adopted from a working branch b8e262d898 and re-fitted to this base: F29.v d3deb22c0e79 (the blob this tree had at release c5e779efe8c)
-   at the Source pin (:5) and f180975499ba on a working branch 494a11ec7af, a COMMENT-ONLY difference (the header's v1.9 status
+   Adopted from a working branch and re-fitted to this base: F29.v d3deb22c0e79 (the blob this tree had at release)
+   at the Source pin (:5) and f180975499ba on a working branch, a COMMENT-ONLY difference (the header's v1.9 status
    line), so the run and its statement are the same text; the verbatim pin below checks that in the kernel.
    F29.sl_run_lib (Appendix A's other row) concludes SR, not evt, so it has no _F form under this spec: it is the
    slot engine's evt -> SR bridge, which the ported walk replaces. *)
 (* The footprint twin of F29.v f29_evt: the same run (the three one-byte stores 0x82750, 0x82754, 0x82758 of the low
    byte of s11 to S3+16, S3+17, S3+20) as an ExecF.evtF under a footprint RNG, with one rng premise for the five shadow
    bytes S3+16 .. S3+20 the run writes. The statement follows f29_evt as a Theorem Labs lane re-fitted it onto the official
-   cuts (a working branch d44a36fcf9, final 5fe947ede6): no mem_inv premise and no mem_inv conjunct in the post
+   cuts (a working branch, final): no mem_inv premise and no mem_inv conjunct in the post
    (the three stores do not need it, and the official cut's FRA carries ro_agree instead, SlotInv.v:160).
    f29_evt_of_F re-derives f29_evt's exact statement from f29_evt_F with RNG_all.
-   v1.9.0 (2026-10-28): moved onto a Theorem Labs lane's v1.9 f29_evt (Seg/F29.v (at head lib/A/Prog/Seg/F29.v:527; written on a working branch 6143ff020f5)); the
+   v1.9.0 (2026-10-28): moved onto a Theorem Labs lane's v1.9 f29_evt (Seg/F29.v (at head lib/A/Prog/Seg/F29.v:528; written on a working branch)); the
    run is unchanged except its pcs (v1.8 0x826a4 .. 0x826b0 -> v1.9 0x82750 .. 0x8275c); the footprint is the same
    rng (S3 + 16) 5. f29_evt_of_F_verbatim checks with constr_eq that f29_evt_of_F states F29.f29_evt's exact text. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

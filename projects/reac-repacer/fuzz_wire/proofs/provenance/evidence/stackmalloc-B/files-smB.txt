@@ -1,6 +1,6 @@
 # reac-repacer/fuzz_wire image-B __asan_stack_malloc_0 / _1 contracts: the donor files (fuzz_grant's RELEASED lib,
 # normalised by ../core-B/mkdon.sh: lib/B/Rt/* -> Rt/*, lib/Reusable/* -> root). Each donor blob is the same at
-# recipes 4f87de75d67 (proofs/libreac/fuzz_grant/lib/...) and at origin/ossv/recipes 283c35cdd4dc
+# recipes (proofs/libreac/fuzz_grant/lib/...) and
 # (projects/libreac/fuzz_grant/proofs/lib/...):
 #   Rt/StackMalloc0.v    <- lib/B/Rt/StackMalloc0.v    blob 5fa59c37a532 (tfib_stack_malloc_at, stack_malloc0_contract)
 #   Rt/StackMalloc0Tbl.v <- lib/B/Rt/StackMalloc0Tbl.v blob edb042b027b7 (the class-0 constants, probe points, cells)

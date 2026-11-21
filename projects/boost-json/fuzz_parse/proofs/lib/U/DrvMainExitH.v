@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -27,6 +28,9 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section MainExitH.
   Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
   Variable model : ltac2:(zQ "10!jne$0").
+  (* LPS 75d69e00: the exit flush needs the launch's channel reader
+     (DrvExitH.ref_exitH_Z's premise), constant over the run. *)
+  Hypothesis Hrdr : m_channel_reader model = true.
   Theorem main_return_exitH : ltac2:(zQ "ha2!h9!jc!l5!p4!pb!q0!q7!qc!se!vb!hj9!hkc!ho1!hr8!hs0!hs7!ig8!il4!im0!ima!iqb!iud!jja!jm0!jm7!jn0&@3$4@1$0#5+2Kv$2@2$5@1$0#5+2&@3$4@1$0#5+4Kv$2@2$5@1$0#5+4>4regs@2$9@1$0#5@1$1@1$0#k0>3mem>0@1$1@1$0#k0@1$b@1$1@1$0#8>2sp@1$1@1$0#k0>6status@1$1@1$0#k0>5slots@1$8@1$1@1$0#k0>7pending@1$8@1$1@1$0#8>0@3$6@1$1@1$0#k0@2$3^6~0^4>0@3$6@1$1@1$0#k0@2$3^7@3$4@1$0#5+8Kv$2@2$5@1$0#5+8^4>0@3$h6^7^6^4>0>5regs'@2$9@1$0#5@1$1@1$0#k0>0@3$6@1$1@1$0#k0@2$3^1~0@2$7@1$0#k0@2$h7@2$h9@1$0#k0^8+l0>0@3$6@1$1@1$0#k0@2$3^2~1@2$3^b~1>0@3$6@1$1@1$0#k0@2$3^3@3$4@1$0#5+aKv$2@2$5@1$0#5+a^9@5$h5^4^c?5model^a^8@4$h1$a$h0@2$c@5$e?2fx^a@2$7@1$0#k0+knhu0^9@1$f$a?5model@2$h2@2$h4+1^5@2$h3@3$h8@1$0#k0^7@2$7@1$0#k0+vf@1$d?5model").
   Proof.
     intros regs mem sp status slots pending Hsp Hs0 MFH HPRE.
@@ -43,7 +47,7 @@ Section MainExitH.
     clear HR HK. intros R' M' HR HK EQM.
     change (s_pc (fst (fst x_r))) with 0xddc64%Z. change (s_regs (fst (fst x_r))) with x_srF in HR.
     assert (EM : M' = mem) by (rewrite EQM; reflexivity). rewrite EM. clear EQM EM.
-    apply ref_exitH_Z. apply HPRE.
+    apply ref_exitH_Z; [apply HPRE | exact Hrdr].
     - regv HR (2 : reg). cbn [edenot ev ENV]. rewrite alu_add, vadd_wZ. reflexivity.
     - regv HR (4 : reg). cbn [edenot]. rewrite (x_ev_junk regs sp slots 13 HL) by lia. f_equal; apply bv_eq; reflexivity.
     - regv HR (10 : reg). cbn [edenot]. rewrite (x_ev_junk regs sp slots 17 HL) by lia. rewrite <- Hs0. f_equal; apply bv_eq; reflexivity.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO layer: Hnv : vdso_text_seg segs = None in both Step sections and the vvar case of a failed read in interp_sh; RomBase.sys_rob at the system-call nodes, carried across cfg_eqv by sys_rob_eqv and star_rob_eqv). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -146,13 +147,15 @@ End Shape.
 
 Section Step.
 Variable segs : list Segment.
+(* LPS 727298f3: no vDSO text in the walked list ([Qod2]'s same hypothesis) *)
+Hypothesis Hnv : vdso_text_seg segs = None.
 
 Lemma interp_sh : forall R0 F0 t, eff_sh R0 F0 t -> forall m r,
 interp_eff_accesses segs t m = MachineOk r -> sh R0 F0 true true (fst (@access_value _ r)).
 Proof.
 intros R0 F0 t H. induction H as [c Hc|c|c|c|c|c|n a k Hk IH|n a v k Hk IH]; intros m r E; cbn [interp_eff_accesses] in E; try discriminate.
 - injection E as <-. cbn. exact Hc.
-- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
 destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r'| |] eqn:E'; try discriminate.
 injection E as <-. cbn. exact (IH _ m r' E').
 - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -244,24 +247,24 @@ Proof.
 apply (Q1lV.srealizes_slbody_mutind segs
 (fun c T _ => forall c', cfg_eqv c c' -> Q1lV.srealizes segs c' T)
 (fun V T c _ => forall c', cfg_eqv c c' -> Q1lV.slbody segs (eclo V) T c')).
--  intros c I evs nx T i0 Hnode Hcont IH c' Heqv.
-destruct (node_ok_tr segs c c' I evs nx Heqv Hnode) as [Hnode' Hnx].
-apply (Q1lV.srz_node segs c' I evs (fun i => nx_tr segs c' (nx i)) T i0 Hnode'). intros i. apply (IH i). apply Hnx.
+-  intros c I evs nx T i0 Hnode Hrob Hcont IH c' Heqv.
+destruct (node_ok_tr segs Hnv c c' I evs nx Heqv Hnode) as [Hnode' Hnx].
+apply (Q1lV.srz_node segs c' I evs (fun i => nx_tr segs c' (nx i)) T i0 Hnode' (sys_rob_eqv segs c c' Heqv Hrob)). intros i. apply (IH i). apply Hnx.
 -  intros c Hh [ms' md'] [_ Hmd]. apply Q1lV.srz_halt. cbn in Hmd |- *. rewrite <- Hmd. exact Hh.
 -  intros [ms md] Hs Hh [ms' md'] [Hms Hmd]. cbn in Hmd, Hs, Hh, Hms. subst md'.
 apply Q1lV.srz_spin; cbn; [exact (to_spin_eqv ms md Hs ms' Hms)| exact Hh].
 -  intros c T T' H IH Heq c' Heqv. eapply Q1lV.srz_conseq; [apply IH; exact Heqv| exact Heq].
 -  intros V T c c_e HV Hbody IHbody Hstar He IHe c' Heqv.
-destruct (star_eqv segs c [] c_e Hstar c' Heqv) as (c_e' & Hstar' & He').
+destruct (star_rob_eqv segs c c_e Hstar c' Heqv) as (c_e' & Hstar' & He').
 apply (Q1lV.srz_loop segs (eclo V) T c' c_e').
 + exists c. split; [exact HV| exact Heqv].
 + intros c1 (c0 & HV0 & H01). exact (IHbody c0 HV0 c1 H01).
 + exact Hstar'.
 + apply IHe. exact He'.
 -  intros V T c H IH c' Heqv. apply Q1lV.slb_exit. apply IH. exact Heqv.
--  intros V T c I nx k Hnode Hk IHk Hv c' Heqv.
-destruct (node_ok_tr segs c c' I (fun _ => []) nx Heqv Hnode) as [Hnode' Hnx].
-apply (Q1lV.slb_node segs (eclo V) T c' I (fun i => nx_tr segs c' (nx i)) k Hnode').
+-  intros V T c I nx k Hnode Hrob Hk IHk Hv c' Heqv.
+destruct (node_ok_tr segs Hnv c c' I (fun _ => []) nx Heqv Hnode) as [Hnode' Hnx].
+apply (Q1lV.slb_node segs (eclo V) T c' I (fun i => nx_tr segs c' (nx i)) k Hnode' (sys_rob_eqv segs c c' Heqv Hrob)).
 + intros i Hi. apply (IHk i Hi). apply Hnx.
 + intros i Hi. exists (nx i). split; [exact (Hv i Hi)| apply Hnx].
 Qed.
@@ -421,13 +424,15 @@ End Shape.
 
 Section Step.
 Variable segs : list Segment.
+(* LPS 727298f3: no vDSO text in the walked list ([Qod2]'s same hypothesis) *)
+Hypothesis Hnv : vdso_text_seg segs = None.
 
 Lemma interp_sh : forall R0 F0 t, eff_sh R0 F0 t -> forall m r,
 interp_eff_accesses segs t m = MachineOk r -> sh R0 F0 true true (fst (@access_value _ r)).
 Proof.
 intros R0 F0 t H. induction H as [c Hc|c|c|c|c|c|n a k Hk IH|n a v k Hk IH]; intros m r E; cbn [interp_eff_accesses] in E; try discriminate.
 - injection E as <-. cbn. exact Hc.
-- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
 destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r'| |] eqn:E'; try discriminate.
 injection E as <-. cbn. exact (IH _ m r' E').
 - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -519,24 +524,24 @@ Proof.
 apply (Q1lV.srealizes_slbody_mutind segs
 (fun c T _ => forall c', cfg_eqv c c' -> Q1lV.srealizes segs c' T)
 (fun V T c _ => forall c', cfg_eqv c c' -> Q1lV.slbody segs (eclo V) T c')).
--  intros c I evs nx T i0 Hnode Hcont IH c' Heqv.
-destruct (node_ok_tr segs c c' I evs nx Heqv Hnode) as [Hnode' Hnx].
-apply (Q1lV.srz_node segs c' I evs (fun i => nx_tr segs c' (nx i)) T i0 Hnode'). intros i. apply (IH i). apply Hnx.
+-  intros c I evs nx T i0 Hnode Hrob Hcont IH c' Heqv.
+destruct (node_ok_tr segs Hnv c c' I evs nx Heqv Hnode) as [Hnode' Hnx].
+apply (Q1lV.srz_node segs c' I evs (fun i => nx_tr segs c' (nx i)) T i0 Hnode' (sys_rob_eqv segs c c' Heqv Hrob)). intros i. apply (IH i). apply Hnx.
 -  intros c Hh [ms' md'] [_ Hmd]. apply Q1lV.srz_halt. cbn in Hmd |- *. rewrite <- Hmd. exact Hh.
 -  intros [ms md] Hs Hh [ms' md'] [Hms Hmd]. cbn in Hmd, Hs, Hh, Hms. subst md'.
 apply Q1lV.srz_spin; cbn; [exact (to_spin_eqv ms md Hs ms' Hms)| exact Hh].
 -  intros c T T' H IH Heq c' Heqv. eapply Q1lV.srz_conseq; [apply IH; exact Heqv| exact Heq].
 -  intros V T c c_e HV Hbody IHbody Hstar He IHe c' Heqv.
-destruct (star_eqv segs c [] c_e Hstar c' Heqv) as (c_e' & Hstar' & He').
+destruct (star_rob_eqv segs c c_e Hstar c' Heqv) as (c_e' & Hstar' & He').
 apply (Q1lV.srz_loop segs (eclo V) T c' c_e').
 + exists c. split; [exact HV| exact Heqv].
 + intros c1 (c0 & HV0 & H01). exact (IHbody c0 HV0 c1 H01).
 + exact Hstar'.
 + apply IHe. exact He'.
 -  intros V T c H IH c' Heqv. apply Q1lV.slb_exit. apply IH. exact Heqv.
--  intros V T c I nx k Hnode Hk IHk Hv c' Heqv.
-destruct (node_ok_tr segs c c' I (fun _ => []) nx Heqv Hnode) as [Hnode' Hnx].
-apply (Q1lV.slb_node segs (eclo V) T c' I (fun i => nx_tr segs c' (nx i)) k Hnode').
+-  intros V T c I nx k Hnode Hrob Hk IHk Hv c' Heqv.
+destruct (node_ok_tr segs Hnv c c' I (fun _ => []) nx Heqv Hnode) as [Hnode' Hnx].
+apply (Q1lV.slb_node segs (eclo V) T c' I (fun i => nx_tr segs c' (nx i)) k Hnode' (sys_rob_eqv segs c c' Heqv Hrob)).
 + intros i Hi. apply (IHk i Hi). apply Hnx.
 + intros i Hi. exists (nx i). split; [exact (Hv i Hi)| apply Hnx].
 Qed.

@@ -6,13 +6,14 @@
    cgif_file's own lib/Reusable/YG0e.v is a different file with the same name.
 
    The size-dependent stack-malloc contract. The shared stack-free contract (astack_free_realizes) is
-   lib/Reusable/StackFreeDef.v (libreac/fuzz_grant c3bfa00452c) and the set-shadow contract (aset_shadow_realizes) is
+   lib/Reusable/StackFreeDef.v (libreac/fuzz_grant) and the set-shadow contract (aset_shadow_realizes) is
    a Theorem Labs lane's SetShadowDef.v (identical to cgif_rgb YG0e.v:48); Require those directly. Generic in the class id and the entry pc; it
    holds no fuzz_scene address. The pc / cid arguments are explicit on purpose: the code record (Tfib_code, pc_stack_malloc)
    maps only classes 1 and 2, so do not "fix" this by editing that record. fuzz_scene's instance (class 8, entry
    __asan_stack_malloc_8) lives in a separate file.
 
    Statement only. It type-checks over the relocated framework (a Theorem Labs lane's output), which this branch does not yet carry. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

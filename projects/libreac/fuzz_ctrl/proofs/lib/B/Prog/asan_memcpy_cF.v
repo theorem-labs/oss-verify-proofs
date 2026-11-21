@@ -15,7 +15,7 @@ Module ExF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.ExecF.
 (* Footprint form (D) of the checked copy helper __asan_memcpy of build B (asan-ubsan) at ASAN_MEMCPY = 0x52164.
 
    FORM (ROUTE1.md (a working note, not in this delivery), which USES
-   a working branch 71968bf11a; and a Theorem Labs lane's rewalk-F-policy.md (a working note, not in this delivery)):
+   a working branch; and a Theorem Labs lane's rewalk-F-policy.md (a working note, not in this delivery)):
    the binders, the premises and the post of asan_memcpy_contract (lib/B/Prog/asan_memcpy_c.v) are repeated
    UNCHANGED -- that file is frozen and this one does not touch it -- with
      - the footprint RNG universally quantified, FIRST among the binders;

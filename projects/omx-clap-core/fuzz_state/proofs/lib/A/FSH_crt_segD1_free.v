@@ -1,5 +1,5 @@
 (* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St17 :521 / St18 :535 and
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St17 :521 / St18 :535 and
    check_round_trip_sd16.v :541, the bespoke ASan proof of THIS function on THESE bytes).
 
    check_round_trip 0x81a9c, fs.asan (image tfibsegs, the pinned fuzz_state.asan sha256 64b53ff86172bb07...), lane D1,

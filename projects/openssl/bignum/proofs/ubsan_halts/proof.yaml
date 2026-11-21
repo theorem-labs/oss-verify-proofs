@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: openssl/bignum/ubsan_halts
+fingerprint: 4609c257355e0e697372775911518c430b6dc6d2524c54252d4052d765a42a90

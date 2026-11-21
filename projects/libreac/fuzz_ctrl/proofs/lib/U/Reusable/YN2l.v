@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2l.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed Zify, b, open_BN). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -18,7 +19,10 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable.R Require Import Cfg.
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+(* The allocation mode: these facts hold for the ledger of either mode. *)
+Context {AM : AllocMode}.
 Lemma match_last : forall (l : list sptr) d, l <> [] ->
 (match l with [] => None | x :: t => Some (last (x :: t) d) end) = Some (last l d).
 Proof. intros [|x l] d H; [exfalso; exact (H eq_refl) | reflexivity]. Qed.
@@ -383,6 +387,7 @@ Hypothesis VL3 : vm_limit (m_vmmaps md3) = vm_limit h.
 Hypothesis VT3 : alloc_top (m_vmmaps md3) = alloc_top h.
 Hypothesis MD3 : m_halted md3 = None /\ m_vm_lazy md3 = [] /\ m_vm_materialized md3 = [].
 Hypothesis MDW3 : exists vm', md3 = with_vmmaps vm' md.
+Hypothesis VMB3 : vm_mmap_base (m_vmmaps md3) = vm_mmap_base h.
 Let p := SP N PGSZ.
 Let L' := Lset L A (bv_unsigned b).
 Definition sBN : astate := brk2_st A0.
@@ -402,7 +407,8 @@ assert (ROo : forall k, (k < N)%nat -> region_of sBN k = region_of A k) by (intr
 assert (ROhi : forall k rg, region_of sBN k = Some rg -> (k < N)%nat /\ region_of A k = Some rg \/ k = N /\ rg = mkRegion RkBrk (2 * PGSZ) [] true).
 { intros k rg Hk. rewrite RO in Hk. destruct (Nat.ltb_spec k N); [left; auto|]. destruct (Nat.eqb_spec k N); [injection Hk as <-; right; auto | discriminate]. }
 assert (LGX : ledger_ok B L' sBN md3 /\ ledger_x L' sBN md3).
-{ destruct MD3 as (_ & ML3 & MM3). exact (ledger_new_brk B L A md LG LX NN sBN md3 Hbk Gfree ER eq_refl VM3 VN3 VNX3 VR3 VS3 VB3 VL3 VT3 ML3 MM3). }
+{ destruct MD3 as (_ & ML3 & MM3). exact (ledger_new_brk B L A md LG LX NN sBN md3 Hbk Gfree ER eq_refl VM3 VN3 VNX3 VR3 VS3 VB3 VL3 VT3 ML3 MM3
+  ltac:(destruct MDW3 as [vm' ->]; reflexivity) VMB3). }
 pose proof (fresh_region L A md LX b (2 * PGSZ) ltac:(lia) ltac:(lia) ltac:(lia) Gfree) as FRG.
 pose proof (fresh_img B L A md LG b (2 * PGSZ) ltac:(lia) ltac:(lia) ltac:(lia) Gfree) as FI.
 assert (Ep : ptr_addr L' p = bv_unsigned b + PGSZ).

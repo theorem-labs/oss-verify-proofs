@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the head-amp table layout and the contract and walk of reac_headamp_tx_effective on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/HeadampTxEffective.v; 4 of its 175 lines of code are new or changed and 391 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The layout of the head-amp table struct reac_headamp_tx, and the facts about it, address-free, for the walks of
    BOTH images.
 
@@ -15,7 +16,7 @@
 
    The same C struct is laid out the same way in every build of the unit, so nothing here holds an address or an
    image value: `segs` is a Variable and no statement names an image. Ported VERBATIM, with their proofs, from
-   image A's walk lib/A/Prog/HeadampTxEffective.v (a working branch d98082bd58b): the layout and its helpers :33-107,
+   image A's walk lib/A/Prog/HeadampTxEffective.v (a working branch): the layout and its helpers :33-107,
    Section L :109-202, and lay_inside_TX / tx_fbyte_range :263-273, which lie inside that file's walk section but
    name none of its section variables. Image A's file keeps its own copy; this one is what an image-B file uses,
    so that no image-A module enters an image-B Require closure. *)

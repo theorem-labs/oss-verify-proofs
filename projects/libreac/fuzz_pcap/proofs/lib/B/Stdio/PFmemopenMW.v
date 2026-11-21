@@ -1,16 +1,17 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane): the ASAN-UBSAN-image walk of musl fmemopen for
    libreac/fuzz_pcap v1.9.0 -- the proof of lib/A/Stdio/PFmemopenM.v's rfmemopen_contract, STATEMENT
    UNCHANGED, at the musl entry 0x8e73c (PFMEMOPEN_U), with ra = 0x8e7d8 (FM_MALLOC_RA_U) and the
    __strchrnul window [0x10350, 0x10370).  Theorem pcapu_rfmemopen_contract below is
    `rfmemopen_contract SK tfibsegs B pcap_KS MT CTX 0x8e73c 0x8e7d8 0x10350 0x10370`, which is exactly
-   the Section hypothesis RFM that a Theorem Labs lane's lib/B/Stdio/PFmemopenI.v (a working branch
-   1ca6244287d:301) takes at the REAL call.
+   the Section hypothesis RFM that a Theorem Labs lane's lib/B/Stdio/PFmemopenI.v (a working branch:
+   301) takes at the REAL call.
 
    PORTED BY SYMBOL + OFFSET, never by a numeric delta, from a Theorem Labs lane's own PROVED ASan walk
-   lib/A/Stdio/PFmemopenMW.v (a working branch 4fb0ca3e563, theorem rfmemopen_contract_pcap):
+   lib/A/Stdio/PFmemopenMW.v (a working branch, theorem rfmemopen_contract_pcap):
    its structure, case split, phases and tactics.  The PLAIN released files (lib/Prog/fmemopen*.v)
    supplied the asan walk's case split and pcs and are NOT imported here.
    rule 24: the released-proof lookup for fmemopen was run UNPIPED (ossv proof index v5, built
@@ -22,11 +23,11 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    WHERE EACH CONSTANT COMES FROM.
      PFMEMOPEN_U = 0x8e73c and FM_MALLOC_RA_U = 0x8e7d8 (fmemopen+0x9c, the return of its first
        `jal 52c28 <__interceptor_trampoline_malloc>` at 0x8e7d4): lib/B/Stdio/PStdioImgB.v, the single
-       home of the asan-ubsan stdio pcs, at a working branch b4439851fa3 (moved there from
-       lib/A/Stdio/PFmemopenM.v, which no longer names an image address since a working branch
-       beb05bac2a3).  Never re-declared locally.
+       home of the asan-ubsan stdio pcs, at a working branch (moved there from
+       lib/A/Stdio/PFmemopenM.v, which no longer names an image address since a working branch).
+       Never re-declared locally.
      pcap_KS, the asan-ubsan symbol record KS_U: lib/B/Stdio/PSourceK.v at a working branch
-       d6edf2117df (auditor PASSED 18/18) -- as_mode 0x20d40, as_rwa 0x20026, as_threaded 0x5f4a21,
+       (auditor PASSED 18/18) -- as_mode 0x20d40, as_rwa 0x20026, as_threaded 0x5f4a21,
        as_need_locks 0x5f4a23, as_ofl_lock 0x5f4e80, as_ofl_head 0x5f4e88, and the four FILE callbacks
        as_close / as_read / as_seek (the values PStdioImgB names PMCLOSE_U / PMREAD_U / PMSEEK_U) and
        as_write (PCAP_MWRITE).  fm_syms_is_KS re-checks the six cells this file
@@ -148,18 +149,18 @@ Definition FM_MC_LO  : Z := (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 0x70)%Z).
 Definition FM_MC_HI  : Z := (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 0x90)%Z).   (* A/AE39.v MC_HI *)
 Definition FPT : list (Z * Z) := [YI16.sink_token].
 
-(* 1b. a Theorem Labs lane's strchr vocabulary (lib/A/AE2j.v, a working branch 3d021bf51e6), restated at
+(* 1b. a Theorem Labs lane's strchr vocabulary (lib/A/AE2j.v, a working branch), restated at
    THIS image's addresses, because no asan-ubsan twin of AE2j exists on any ref.  Each constant was
    re-measured on the asan-ubsan pin, never moved by a numeric delta:
      SCU_ENTRY 0x415b8  nm `__interceptor_trampoline_strchr` (asan 0x41568);
      SCU_WIN   2176     the interceptor's frame, unchanged (the two bodies are mnemonic-identical);
-     AU_RWA    0x20026  musl's "rwa\0", the SAME address in both images (PSourceK.v:69-73);
+     AU_RWA    0x20026  musl's "rwa\0", the SAME address in both images (PSourceK.v:70-74);
      AU_RB     0x20d40  pcap's "rb\0" literal, as_mode pcap_KS, likewise the same address;
      stu_cells the four cells strchr reads: the interception cell 0x9b408 -> 0x92f24 (nm `strchr` W
-               at 0x92f24, YF0m.v:243; asan 0x9b540 -> 0x93058), the shadow words 0x7fffc000 and
+               at 0x92f24, YF0m.v:244; asan 0x9b540 -> 0x93058), the shadow words 0x7fffc000 and
                0x7fffc1a8 (shadow of 0x20000 and of 0x20d40: both literals keep their addresses, so
-               both shadow words keep theirs; YF0m.v:298-304 + Tfib_zero_shadow), and the 8 bytes at
-               AU_RB (the literal plus five redzone zeroes, YF0m.v:263-267). *)
+               both shadow words keep theirs; YF0m.v:299-305 + Tfib_zero_shadow), and the 8 bytes at
+               AU_RB (the literal plus five redzone zeroes, YF0m.v:264-268). *)
 Definition SCU_ENTRY : Z := (symaddr Symbols.AsanUbsan.s___wrap_strchr).
 Definition SCU_WIN   : Z := 2176.
 Definition AU_RWA    : Z := (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 0xfd46)%Z).
@@ -443,7 +444,7 @@ Local Abbreviation STK := RFMEMOPEN_STK.
 
 (* NAMED SECTION HYPOTHESES. *)
 (* The read stream's image laws (a Theorem Labs lane's lib/A/Stdio/PSourceMeta.v, image-generic) for the
-   ASAN-UBSAN symbol record pcap_KS = KS_U (lib/B/Stdio/PSourceK.v, a working branch d6edf2117df,
+   ASAN-UBSAN symbol record pcap_KS = KS_U (lib/B/Stdio/PSourceK.v, a working branch,
    auditor PASSED 18/18); discharged once against the core's B. *)
 Hypothesis ASIL : asource_img_laws SK tfibsegs B pcap_KS.
 (* The core's symbol record for pcap's ASAN-UBSAN image (lib/Reusable/YF0m.v, the au twin of AF0m,
@@ -462,7 +463,7 @@ getr regs1 10 = w64 res /\ getr regs1 1 = getr regs 1 /\ getr regs1 2 = getr reg
 
 (* The strchr contract at the ASAN-UBSAN interceptor trampoline 0x415b8 (SCU_ENTRY).  NAMED
    HYPOTHESIS, owner a Theorem Labs lane: its PROVED ASan contract is tfib_strchr_lit (lib/A/AE2j.v,
-   a working branch 3d021bf51e6) and NO asan-ubsan twin of that file exists on any ref
+   a working branch) and NO asan-ubsan twin of that file exists on any ref
    (searched 2026-10-29).  The text below is that theorem restated at this image's addresses --
    premises, post and argument order unchanged, every constant relocated by symbol + offset and
    re-measured here (SCU_ENTRY / stu_cells / AU_RWA / AU_RB above).  a Theorem Labs lane discharges it. *)
@@ -488,8 +489,8 @@ Qed.
 (* 5.0 PaJournalFs.v's two lemmas, re-proved here.  lib/A/Prog/PaJournalFs.v states them already, but
    it Requires lib/A/W_journal.v, whose own Requires (PcapSyms / PcapPa / PcapPaLib, the ASan program
    listing) are image-bearing and so are barred from a lib/B Require closure.  The texts below are
-   PaJournalFs.v:39-47 (ajournal_closed_fs, cgif lib/A/ACfh.v ajournal_closed_io) and
-   PaJournalFs.v:75-104 (amalloc04_sub_fs = YC85G.amalloc04_sub plus that exactness), unchanged. *)
+   PaJournalFs.v:40-48 (ajournal_closed_fs, cgif lib/A/ACfh.v ajournal_closed_io) and
+   PaJournalFs.v:76-105 (amalloc04_sub_fs = YC85G.amalloc04_sub plus that exactness), unchanged. *)
 Lemma fm_journal_closed_fs : forall STK0 sp0 FP ly S W mem md own ly' S' W' mem' md' k,
   ~ YI16.sink_open_fp FP ->
   AJ STK0 sp0 FP ly S W mem md own ly' S' W' mem' md' k ->

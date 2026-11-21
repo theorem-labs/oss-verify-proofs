@@ -9,3 +9,5 @@ name in their own image, and the decision.
 | reloc-bz.tsv | image A, files under lib/A/Bz/ (fuzz_command.asan -> fuzz_headamp.asan) |
 | derive-B-rt.tsv | image B, the lib/AU/Rt/ twins derived from image A (fuzz_headamp.asan -> fuzz_headamp.asan-ubsan) |
 | derive-B-bz.tsv | image B, the lib/AU/Bz/ twins derived from image A |
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

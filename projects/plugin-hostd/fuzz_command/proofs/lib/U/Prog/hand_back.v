@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/Prog/mread.v, with its module paths and numbers changed; 989 of its 1017 lines of code are new or changed and 233 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/Prog/chain_words.v, with its module paths, module names, addresses and numbers changed; 684 of its 782 lines of code are new or changed and 919 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/U/Prog/arg_s.v, with its addresses and numbers changed; 1437 of its 1551 lines of code are new or changed and 668 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed hb_auxv_nil, hand_back_holds). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -537,8 +538,8 @@ Proof. intros segs m m' a v MU W k Hk. rewrite <- (W k Hk). unfold mbyte. rewrit
 
 Lemma hb_auxv_nil : forall B s lo m m', munch [] m m' -> auxv_pre B s lo m -> auxv_pre B s lo m'.
 Proof.
-  intros B s lo m m' MU (av & ar & W1 & W2 & W3 & W4 & R).
-  exists av, ar. split; [exact (hb_wm_nil _ _ _ _ _ MU W1)|].
+  intros B s lo m m' MU (rs & av & ar & W1 & W2 & W3 & W4 & R).
+  exists rs, av, ar. split; [exact (hb_wm_nil _ _ _ _ _ MU W1)|].
   split; [intros k Hk; exact (hb_wm_nil _ _ _ _ _ MU (W2 k Hk))|].
   split; [exact (hb_wm_nil _ _ _ _ _ MU W3)|].
   split; [exact (hb_wm_nil _ _ _ _ _ MU W4)|]. exact R.
@@ -707,8 +708,8 @@ Proof using SEGS FREE_PC ERRNO_LOW GOTG REC_IMG REC_FREE AX CTX BSP FREE FREE0 S
     - exact Hmat. }
   assert (AUX1 : st_init_done A = false -> auxv_pre B (ly_sec L) (bv_unsigned sp - 48) m1).
   { intros HI. pose proof (HAUX HI) as HAX.
-    destruct HAX as (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
-    exists av, ar.
+    destruct HAX as (rs & av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
+    exists rs, av, ar. pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
     split.
     { eapply word_mem_munch; [exact MU1 | | exact W1]. intros k Hk.
       assert (SO : owned B L A (ms_libc B + 8 + Z.of_nat k)) by (right; unfold static_owned; lia).

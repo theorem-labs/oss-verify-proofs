@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte zero-filled stack window): changed knRE0; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/U/Pm10ReadErr_defs_u.v, lines 39-45. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -47,7 +48,13 @@ Definition srRE0 : list expr := Eval vm_compute in sr_after_call_j srRE_base KEP
 (* [comment removed for export] *)
 Definition knRE0 : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   (* THE ZERO-FILLED WINDOW, old beside new: [KWr (SA (EVar 0) (-8388608)) 8388608] ->
+      [KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN], DRV_ZWIN = 6144513 = StoreOk.stack_window_depth
+      (Pm6MainEntry_u5).  The 8 MiB row is FALSE at LPS 75d69e00 (wrap_mem zero-fills only to
+      MemSplit.wok_lo sp0 = sp0 - 6144513).  Discharged by [Pm6ReadErr_u5.know_okRE] from
+      [stack_writable], which Pm6DrvH_u5 proves off [Pm6MainEntry_u5.kn_stack]'s narrow row.
+      This run's own stack reach is a few hundred bytes under sp0 ([BUF_LO] = -560). *)
+   KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN;
    KRange (EVar 2) 0x7fff80000000 0x800000400000;
    KWr (SA (ELit 0) 0xcb000) 0x33000;
    KImg 0x10000 0xcb538; KImg 0xcb541 0xcb589; KImg 0xdb589 0xdcf40; KImg 0xfd018 0xfd038;
@@ -59,10 +66,9 @@ Definition knRE0 : list kentry :=
    KImg 0xfd288 0xfd290; KImg 0xfd2a1 0xfd2a8; KImg 0xfd2b0 0xfd2b8; KImg 0xfd2c8 0xfd2d0;
    KWord (SA (ELit 0) 0xfd2d0) 8 (ELit 4096);
    KImg 0xfd2d8 0xfd308;
-   KImg 0xfd7d8 0xfe000;   (* [comment removed for export] *)
+   KImg 0xfd7d8 0xfe000;
    KRange (EVar 5) 1 4194303].
 
-(* [comment removed for export] *)
 Definition ssB0 : sym_state := SS 0x3a39c srRE0 [] knRE0 39.
 Definition rB := Eval vm_compute in run scr0 ssB0.
 Definition srB : list expr := Eval vm_compute in s_regs (fst (fst rB)).

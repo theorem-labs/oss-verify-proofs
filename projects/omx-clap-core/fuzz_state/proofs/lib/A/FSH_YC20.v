@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC20.v keeping only in_roP, arodata_okP (:43-48) and apost_base (:90-96), the image-independent definitions fm's program-part statements use; the rest of YC20.v names cgif's objects. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_YC20.v at a working branch 706affbdbe6 (a Theorem Labs lane), module path fuzz_manifest -> fuzz_state; fuzz_state's raw core (a working branch d579ce160e2) has no YC20.v either. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_YC20.v at a working branch (a Theorem Labs lane), module path fuzz_manifest -> fuzz_state; fuzz_state's raw core (a working branch) has no YC20.v either. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

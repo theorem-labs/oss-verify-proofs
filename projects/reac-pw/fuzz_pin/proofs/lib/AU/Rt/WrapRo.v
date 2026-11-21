@@ -1,5 +1,4 @@
 (* libreac/fuzz_identity, build asan: the read-only premise of the runtime wrappers (lib/A/Rt/StrlenDef.v,
-(* Modified by Theorem Labs, 2026-10: derived from lib/A/WrapRo.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_pin's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/WrapRo.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
    lib/A/Rt/MemchrDef.v), in the form a program walk can carry across a call.
    A wrapper may read bytes of the image's read-only segments in two ways:
    - bytes the runtime model pins (the GOT cells, the flags pointer, real_<fn>, the shadow offset): these are in
@@ -10,8 +9,9 @@
    aro_unowned is the in-segment half of arodata_okP (lib/A/Prog/IdentBase.v:20), the fact the program walks
    carry; aro_unowned_of_arodata turns one into the other. Unlike YG0d's rom_view, it says nothing about owned
    image bytes, so it survives a call whose post keeps only the bytes that are unowned before and after
-   (__asan_stack_malloc_*, YG0d.v:298-299): aro_unowned_keep. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/WrapRo.v at origin/ossv/recipes 6ebe35ba632; module paths changed to reac-pw/fuzz_pin; the Require of the program base A/Prog/IdentBase.v and the lemma aro_unowned_of_arodata that used it are removed. *)
+   (__asan_stack_malloc_*, YG0d.v:299-300): aro_unowned_keep. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/WrapRo.v; module paths changed to reac-pw/fuzz_pin; the Require of the program base A/Prog/IdentBase.v and the lemma aro_unowned_of_arodata that used it are removed. *)
+(* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/WrapRo.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_pin's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/WrapRo.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

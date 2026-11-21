@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: grant_ok also says the address is Linux's placement (linux_place, hint 0), the mmap inversions take the placement-declined premise (place_declined_b_null), and the brk step's new break is read from brk_model_next_brk. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -191,7 +192,7 @@ Proof.
     eapply (tpath_mbind _ _ s mo BrkGrown s); [eapply tpath_msys; [exact Hst | rewrite Hps; exact Hdec]|].
     cbn iota. eapply (tpath_mbind _ _ _ _ tt (set_brk_ps req s)); [apply tpath_mupd | apply tpath_mret].
   - exfalso. rewrite m_vmmaps_with_brk_next in Ha.
-    destruct (brk_model_next_grown (m_vmmaps mo) req Hb Hreq) as (_ & _ & _ & _ & P5).
+    pose proof (brk_model_next_brk (m_vmmaps mo) (Z_to_bv 64 req) (Z_to_bv 64 req)) as P5.
     rewrite P5 in Ha. apply (f_equal bv_unsigned) in Ha. rewrite unsigned_lit in Ha by lia. lia.
 Qed.
 
@@ -220,11 +221,16 @@ Proof.
   eapply (tpath_mbind _ _ s mo FxDone s); [eapply tpath_msys; [exact Hst | exact Hd]|]. apply tpath_mret.
 Qed.
 
+(** A fresh anonymous grant at [a].  At 08b1429 [mmap_spec] places it at Linux's
+    address ([Mmap.linux_place], hint 0 for the walks' [EMmap 0 ...]), so the last
+    conjunct says [a] is that address; the first four follow from it and are kept
+    for the consumers that read them. *)
 Definition grant_ok (mo : Model) (a : word) (nZ : Z) : Prop :=
   let h := m_vmmaps mo in
   bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + nZ <= alloc_top h
   /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true
-  /\ vm_backing_used mo + nZ <= vm_limit h.
+  /\ vm_backing_used mo + nZ <= vm_limit h
+  /\ linux_place h (kb_thp (m_kernel mo)) (Z_to_bv 64 0) nZ (bv_unsigned a).
 
 Lemma ev_mmap_grant_path : forall len prot s mo (a : word),
   let h := m_vmmaps mo in let nZ := page_round_up_Z len in let n := Z_to_bv 64 nZ in
@@ -236,7 +242,7 @@ Lemma ev_mmap_grant_path : forall len prot s mo (a : word),
     /\ region_free (vm_reserved h ++ vm_maps h) a n = true.
 Proof.
   intros len prot s mo a h nZ n Hlen HnZ Hprot Hmo Hck Hg.
-  pose proof Hg as (G1 & G2 & G3 & G4 & G5). fold h in G3, G4, G5 |- *.
+  pose proof Hg as (G1 & G2 & G3 & G4 & G5 & G6). fold h in G3, G4, G5, G6 |- *.
   assert (Hnr : mmap_noreserve_b (Z_to_bv 64 (Malloc.MAP_PRIVATE + MAP_ANON)) = false) by reflexivity.
   assert (Hbk : mmap_noreserve_backed_ok (Z_to_bv 64 (Malloc.MAP_PRIVATE + MAP_ANON)) mo nZ = true).
   { unfold mmap_noreserve_backed_ok. rewrite Hnr. apply Z.leb_le. exact G5. }
@@ -252,8 +258,8 @@ Proof.
                                  (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo)).
     set (eff := mkEffect a [] [(a, n)]).
     assert (Hst : nstep (NMmap 0 len PROT_RW (Malloc.MAP_PRIVATE + MAP_ANON)) mo eff mo' []).
-    { apply (proj2 (nstep_mmap_rw_inv 0 len mo eff mo' [] Hw)). split; [reflexivity|]. right.
-      exists a. rewrite HlenU. fold h nZ n. split; [| split; reflexivity]. repeat split; assumption. }
+    { apply (proj2 (nstep_mmap_rw_inv 0 len mo eff mo' [] Hw ltac:(apply place_declined_b_null; vm_compute; reflexivity))). split; [reflexivity|]. right.
+      exists a. rewrite HlenU. fold h nZ n. split; [| split; reflexivity]. exact (conj G6 Hbk). }
     destruct (nstep_dec_mmap len [] mo eff mo' [] Hlen ltac:(unfold mmap_len; exact HnZ) Hck ltac:(constructor) Hst)
       as (_ & VA & x & Hdec & Hx).
     assert (Hx' : x = MmOk (bv_unsigned a)).
@@ -271,8 +277,8 @@ Proof.
                                  (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo)).
     set (eff := mkEffectU a [] [] [(a, n)] [] []).
     assert (Hst : nstep (NMmap 0 len Malloc.PROT_NONE (Malloc.MAP_PRIVATE + MAP_ANON)) mo eff mo' []).
-    { apply (proj2 (nstep_mmap_none_inv 0 len mo eff mo' [] Hw)). split; [reflexivity|]. right.
-      exists a. rewrite HlenU. fold h nZ n. split; [| split; reflexivity]. repeat split; assumption. }
+    { apply (proj2 (nstep_mmap_none_inv 0 len mo eff mo' [] Hw ltac:(apply place_declined_b_null; vm_compute; reflexivity))). split; [reflexivity|]. right.
+      exists a. rewrite HlenU. fold h nZ n. split; [| split; reflexivity]. exact G6. }
     destruct (nstep_dec_mmap_none len [] mo eff mo' [] Hlen ltac:(unfold mmap_len; exact HnZ) Hck ltac:(constructor) Hst)
       as (_ & VA & x & Hdec & Hx).
     assert (Hx' : x = MmOk (bv_unsigned a)).

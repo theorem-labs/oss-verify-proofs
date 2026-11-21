@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the placement slack PSL is counted from task_unmapped_base, where the model's NULL-hint placement finds its free range, in place of the first page; PSL_window gives that window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -72,11 +73,14 @@ End KVM.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* LPS 727298f3: a NULL-hint mmap is granted only at Linux's own placement, which
+   [Placement.linux_place_exists] gives from a free range between [task_unmapped_base] and the
+   allocation top, so the slack is counted from there. *)
 Definition PSL (R : Z) (h : VmMaps) : Prop :=
-  4096 + NMAXA + gap_weight NMAXA (vm_reserved h ++ vm_maps h) + R <= alloc_top h.
+  Mmap.task_unmapped_base + NMAXA + gap_weight NMAXA (vm_reserved h ++ vm_maps h) + R <= alloc_top h.
 
 Lemma PSL_PSA : forall R h, 0 <= R -> PSL R h -> PSA NMAXA h.
-Proof. intros R h HR HP. unfold PSL, PSA in *. lia. Qed.
+Proof. intros R h HR HP. unfold PSL, PSA, Mmap.task_unmapped_base in *. lia. Qed.
 Lemma PSL_weaken : forall R R' h, R' <= R -> PSL R h -> PSL R' h.
 Proof. intros R R' h LE HP. unfold PSL in *. lia. Qed.
 Lemma PSL_same : forall R h h', vm_reserved h' = vm_reserved h -> vm_maps h' = vm_maps h -> alloc_top h' = alloc_top h -> PSL R h -> PSL R h'.
@@ -96,9 +100,10 @@ Proof.
 Qed.
 (* [comment removed for export] *)
 Theorem PSL_window : forall R h nZ, PSL R h -> 0 <= R -> 0 <= nZ <= NMAXA -> alloc_top h < 2^64 ->
-  page_size + nZ + gap_weight nZ (vm_reserved h ++ vm_maps h) <= alloc_top h.
+  Mmap.task_unmapped_base + nZ + gap_weight nZ (vm_reserved h ++ vm_maps h) <= alloc_top h.
 Proof.
-  intros R h nZ HP HR HnZ HT. pose proof (PSA_mono NMAXA nZ h HnZ (PSL_PSA R h HR HP)) as X. unfold PSA, page_size in *. lia.
+  intros R h nZ HP HR HnZ HT. pose proof (gap_weight_mono nZ NMAXA (vm_reserved h ++ vm_maps h) ltac:(lia)) as X.
+  unfold PSL in HP. lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -146,7 +151,7 @@ Theorem PSL_open : forall L0 RES0 mo a WS,
   AWf E [] [] a -> binv a -> AQbound a -> depot_inv E a ->
   nbig_live a <= 8000 -> dep_live a <= kInitialCredit -> as_ndepot_ins a <= kInitialCredit ->
   zlen (ae_keys0 E) <= 1000 -> 0 <= ae_frames0 E <= 4096 ->
-  4096 + NMAXA + WS + FOGW + ADYN + OPSLACK <= alloc_ceiling ->
+  Mmap.task_unmapped_base + NMAXA + WS + FOGW + ADYN + OPSLACK <= alloc_ceiling ->
   PSL OPSLACK (m_vmmaps mo).
 Proof.
   intros L0 RES0 mo a WS (KR & (fog & KP & FS & FL) & _ & _ & _ & KT) HS WF HBI QB DI NB DL DI2 NID FR NUM.
@@ -161,7 +166,7 @@ Corollary PSL_open_totals : forall L0 RES0 mo a SZ CNT,
   AWf E [] [] a -> binv a -> AQbound a -> depot_inv E a ->
   nbig_live a <= 8000 -> dep_live a <= kInitialCredit -> as_ndepot_ins a <= kInitialCredit ->
   zlen (ae_keys0 E) <= 1000 -> 0 <= ae_frames0 E <= 4096 ->
-  4096 + NMAXA + (SZ + CNT * (NMAXA + 4095)) + FOGW + ADYN + OPSLACK <= alloc_ceiling ->
+  Mmap.task_unmapped_base + NMAXA + (SZ + CNT * (NMAXA + 4095)) + FOGW + ADYN + OPSLACK <= alloc_ceiling ->
   PSL OPSLACK (m_vmmaps mo).
 Proof.
   intros L0 RES0 mo a SZ CNT KV HS HC HC0. apply (PSL_open L0 RES0 mo a (SZ + CNT * (NMAXA + 4095)) KV).
@@ -175,7 +180,7 @@ Corollary PSL_open_call : forall L0 RES0 mo (s : aps) LB SZ CNT,
   AWf E [] [] (aps_alloc s) -> binv (aps_alloc s) -> AQbound (aps_alloc s) -> depot_inv E (aps_alloc s) ->
   Permutation (map (fun b => (ab_addr b, ab_size b)) LB) (live_blocks (aps_alloc s)) -> BUDGET s LB -> nbig LB <= 8000 ->
   zlen (ae_keys0 E) <= 1000 -> 0 <= ae_frames0 E <= 4096 ->
-  4096 + NMAXA + (SZ + CNT * (NMAXA + 4095)) + FOGW + ADYN + OPSLACK <= alloc_ceiling ->
+  Mmap.task_unmapped_base + NMAXA + (SZ + CNT * (NMAXA + 4095)) + FOGW + ADYN + OPSLACK <= alloc_ceiling ->
   PSL OPSLACK (m_vmmaps mo).
 Proof.
   intros L0 RES0 mo s LB SZ CNT KV HS HC HC0 HE WF HBI QB DI BM BU NB K0 FR NUM.
@@ -187,7 +192,7 @@ Qed.
 
 (* [comment removed for export] *)
 Example PSL_open_numerics : forall SZ CNT, SZ <= 2^44 + 2^42 -> 0 <= CNT <= 64 ->
-  4096 + NMAXA + (SZ + CNT * (NMAXA + 4095)) + FOGW + ADYN + OPSLACK <= alloc_ceiling.
-Proof. intros SZ CNT HS HC. pose proof alloc_ceiling_range. unfold FOGW, ADYN, OPSLACK in *. unfold NMAXA in *. nia. Qed.
+  Mmap.task_unmapped_base + NMAXA + (SZ + CNT * (NMAXA + 4095)) + FOGW + ADYN + OPSLACK <= alloc_ceiling.
+Proof. intros SZ CNT HS HC. pose proof alloc_ceiling_range. unfold Mmap.task_unmapped_base, FOGW, ADYN, OPSLACK in *. unfold NMAXA in *. nia. Qed.
 End OPEN.
 End RC__1.

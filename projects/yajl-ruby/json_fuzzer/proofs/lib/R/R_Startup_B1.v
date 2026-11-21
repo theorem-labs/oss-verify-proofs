@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rauxv, rauxv_length and raux_cells for the launch's auxv of either CONFIG_RSEQ layout; the __init_libc tail lemma restated from the auxv loop's exit (rinit_libc_from_16db8 in place of rinit_libc_from_16d14)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -168,6 +169,25 @@ Definition rauxv20 (rnd uid hw : word) : list word :=
    Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 23; z64;
    Z_to_bv 64 25; rnd; z64; z64].
 
+(* LPS 08b1429: the auxv the launch lays ([StackLayout.auxv_entries]: 26 pairs, the two
+   CONFIG_RSEQ pairs when [la_rseq la], then AT_NULL), as words. *)
+Definition rauxv (la : LaunchAuxv) (ent uid gid hw rnd efn : word) : list word :=
+  flat_map (fun e => [fst e; snd e]) (auxv_entries la r_phdrs ent uid gid hw rnd efn).
+
+Lemma rauxv_length : forall la ent uid gid hw rnd efn,
+  length (rauxv la ent uid gid hw rnd efn) = (2 * auxv_count (la_rseq la))%nat.
+Proof. intros [ehdr c msz [|]] ent uid gid hw rnd efn; reflexivity. Qed.
+
+(* The aux[] array (AUX_CNT = 38 words) musl's [__init_libc] builds from that auxv: every
+   pair whose key is below 38 is stored at its key; the cache-geometry keys (40..47) and
+   AT_MINSIGSTKSZ (51) are skipped.  [x27], [x28] are the CONFIG_RSEQ pair values (28 and
+   32), or 0 without it. *)
+Definition raux_cells (la : LaunchAuxv) (ent uid gid hw rnd efn x27 x28 : word) : list cell :=
+  [C8 z64; C8 z64; C8 z64; C8 (Z_to_bv 64 0x10040); C8 (Z_to_bv 64 56); C8 (Z_to_bv 64 10); C8 (Z_to_bv 64 4096);
+   C8 z64; C8 z64; C8 ent; C8 z64; C8 uid; C8 uid; C8 gid; C8 gid; C8 z64; C8 hw; C8 (Z_to_bv 64 100);
+   C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 rnd; C8 z64; C8 x27; C8 x28; C8 z64; C8 z64; C8 efn;
+   C8 z64; C8 (la_sysinfo_ehdr la); C8 z64; C8 z64; C8 z64; C8 z64].
+
 End RC__2.
 Notation RENVIRON := 0x34c70%Z (only parsing).
 Notation RPROGNAME := 0x54fc0%Z (only parsing).   (* [comment removed for export] *)
@@ -251,7 +271,8 @@ Section RInitLibc.
   Variables (ra sp gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
             (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (lo : Z)
             (E : Z) (eps : list word) (R : Z) (P : Z) (s : list byte)
-            (pn0 pnf0 hw0 env0 : word) (gjunk : list byte) (uid hw : word) (b0 b1 b2 b3 b4 b5 b6 b7 : byte).
+            (pn0 pnf0 hw0 env0 : word) (gjunk : list byte) (uid hw : word) (b0 b1 b2 b3 b4 b5 b6 b7 : byte)
+            (la : LaunchAuxv) (ent gid efn : word).
   (* [comment removed for export] *)
   Let rb : list byte := [b0; b1; b2; b3; b4; b5; b6; b7].
   Hypothesis GRD : rc_guard = guard_of rb.
@@ -279,7 +300,7 @@ Section RInitLibc.
     /\ rw_cells rsegs m' RGOT3 [C8 (Z_to_bv 64 RENVIRON); C8 (Z_to_bv 64 0x54fc8); C8 (Z_to_bv 64 RPROGNAME)]
     /\ rw_cells rsegs m' RGOT_SSP [C8 (Z_to_bv 64 RGUARD)]
     /\ rw_cells rsegs m' RGOT_DYNAMIC [C8 z64]
-    /\ bytes_at rsegs m' E (u64s eps ++ le8 z64 ++ u64s (rauxv20 (Z_to_bv 64 R) uid hw))
+    /\ bytes_at rsegs m' E (u64s eps ++ le8 z64 ++ u64s (rauxv la ent uid gid hw (Z_to_bv 64 R) efn))
     /\ bytes_at rsegs m' P (s ++ [Z_to_bv 8 0])
     /\ bytes_at rsegs m' R rb
     /\ (0 < t < 4194304)%Z.
@@ -350,10 +371,12 @@ Section RInitLibc.
     end);
     lstep; lstep; ldaux AUXB ki; lstep; astep.
 
-  (* [comment removed for export] *)
-  Lemma rinit_libc_from_16d14 : forall (tp : word) (m1 : word -> option byte) (junk pad48 : list byte)
-      (x x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 : word),
-    bytes_at rsegs m1 E (u64s eps ++ le8 z64 ++ u64s (rauxv20 (Z_to_bv 64 R) uid hw)) ->
+  (* LPS 08b1429: the tail of [__init_libc] from the auxv loop's exit (0x16db8), for the aux[]
+     array [raux_cells] the walk over the 27- or 29-pair auxv leaves ([x27], [x28]: the
+     CONFIG_RSEQ values or 0). *)
+  Lemma rinit_libc_from_16db8 : forall (tp : word) (m1 : word -> option byte) (junk pad48 : list byte)
+      (x x0 x1 xs1 xa3 x5 x6 x7 x8 x9 x10 x11 x12 x27 x28 : word),
+    bytes_at rsegs m1 E (u64s eps ++ le8 z64 ++ u64s (rauxv la ent uid gid hw (Z_to_bv 64 R) efn)) ->
     bytes_at rsegs m1 P (s ++ [Z_to_bv 8 0]) ->
     bytes_at rsegs m1 R rb ->
     rw_cells rsegs m1 RPROGNAME [C8 pn0; C8 pnf0] ->
@@ -368,7 +391,7 @@ Section RInitLibc.
     rw_cells rsegs m1 RGOT_DYNAMIC [C8 z64] ->
     munch W m m1 -> wmono rsegs m m1 ->
     (0 <= bv_unsigned sp < 2 ^ 64)%Z ->
-    (0 <= E /\ E + Z.of_nat (8 * length eps + (8 + 8 * 20)) <= 2 ^ 64)%Z ->
+    (0 <= E /\ E + Z.of_nat (8 * length eps + (8 + 8 * (2 * auxv_count (la_rseq la)))) <= 2 ^ 64)%Z ->
     (0 <= P /\ P + Z.of_nat (length s + 1) <= 2 ^ 64)%Z ->
     (0 <= R /\ R + Z.of_nat 8 <= 2 ^ 64)%Z ->
     stk rsegs m1 lo (bv_unsigned sp + -384) ->
@@ -377,20 +400,17 @@ Section RInitLibc.
     mem_inv rsegs m1 ->
     rw_cells rsegs m1 RENVIRON [C8 (Z_to_bv 64 E)] ->
     rw_cells rsegs m1 RLIBC (libc_cells (Z_to_bv 8 0) (Z_to_bv 64 AUXV) z64 z64 z64) ->
-    bytes_at rsegs m1 AUXV (u64s (rauxv20 (Z_to_bv 64 R) uid hw)) ->
-    rw_cells rsegs m1 (bv_unsigned sp + -336)
-      [C8 z64; C8 z64; C8 z64; C8 (Z_to_bv 64 0x10040); C8 (Z_to_bv 64 56); C8 (Z_to_bv 64 10); C8 (Z_to_bv 64 4096); C8 z64; C8 z64; C8 z64; C8 z64; C8 uid; C8 z64; C8 z64; C8 z64; C8 z64; C8 hw; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64;
-       C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 z64] ->
+    bytes_at rsegs m1 AUXV (u64s (rauxv la ent uid gid hw (Z_to_bv 64 R) efn)) ->
+    rw_cells rsegs m1 (bv_unsigned sp + -336) (raux_cells la ent uid gid hw (Z_to_bv 64 R) efn x27 x28) ->
     evt rsegs (fun ms' : machine_state => impl rsegs (at_node rsegs) (enode NSetTid dec_set_tid) (epost rinit_libc_post) ms')
-      (MS (mkR (Z_to_bv 64 0x16d58) (Z_to_bv 64 (bv_unsigned sp + -384)) gp tp x x0 x1 (Z_to_bv 64 P) (Z_to_bv 64 (AUXV + 112))
-               (Z_to_bv 64 37) (Z_to_bv 64 12) (Z_to_bv 64 (bv_unsigned sp + -336)) uid x5 x6 x7 x8
+      (MS (mkR (Z_to_bv 64 0x16d58) (Z_to_bv 64 (bv_unsigned sp + -384)) gp tp x x0 x1 (Z_to_bv 64 P) xs1
+               (Z_to_bv 64 37) z64 (Z_to_bv 64 (bv_unsigned sp + -336)) xa3 x5 x6 x7 x8
                (Z_to_bv 64 RLIBC) s3 s4 s5 s6 s7 s8 s9 s10 s11 x9 x10 x11 x12)
-          F (Z_to_bv 64 0x16da0) fc None m1 (seg_rom rsegs)).
+          F (Z_to_bv 64 0x16db8) fc None m1 (seg_rom rsegs)).
   Proof.
-    intros tp m1 junk pad48 x x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12.
+    intros tp m1 junk pad48 x x0 x1 xs1 xa3 x5 x6 x7 x8 x9 x10 x11 x12 x27 x28.
     intros ENV STR RND G2 HW SI TDC MT DS GU GOT3 GG GD MU WM RSP EB PB RB ST FRlo FRhi MI ENVC LC AUXB AUX.
-    unfold td_cells, libc_cells in *.
- rscan_it AUXB 13%nat 14%nat. rscan_it AUXB 15%nat 16%nat. rscan_it AUXB 17%nat 18%nat.
+    unfold td_cells, libc_cells, raux_cells in *.
     (* [comment removed for export] *)
     steps_to 0x16de8%Z.
     astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.

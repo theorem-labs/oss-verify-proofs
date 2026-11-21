@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YG0g.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YG0g.v at origin/ossv/recipes 4b6f0df50aa7 (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YG0g.v (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pages; the reserved ledger with the vvar/vDSO pair); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -119,8 +120,15 @@ assert (Rb : 0 <= b /\ b + n < 2 ^ 63) by (unfold kLowShadowBeg, kLowShadowEnd, 
 assert (Ub : bv_unsigned (w64 b) = b) by (apply w64_unsigned; lia).
 assert (Un : bv_unsigned (w64 n) = n) by (apply w64_unsigned; lia).
 assert (HR : region_free (vm_reserved (m_vmmaps md)) (w64 b) (w64 n) = true).
-{ rewrite (al_reserved _ _ _ _ L). apply (region_free_reserved segs); [exact (al_img_env segs ly S md LO L) | | lia | lia].
-unfold kImgEnd, kLowShadowBeg, kHighShadowBeg in *. lia. }
+{ rewrite (al_reseq _ _ _ _ L), YK13.region_free_app. apply andb_true_intro. split.
+(* 75d69e00: image half unchanged; vDSO half from the model's own extent lemma --
+   this range is the shadow band, far below [vdso_top - vdso_len kb]. *)
+- apply (region_free_reserved segs); [exact (al_img_env segs ly S md LO L) | | lia | lia].
+unfold kImgEnd, kLowShadowBeg, kHighShadowBeg in *. lia.
+- (* 727298f3: every entry of the pair starts in high memory ([YG0n.al_vdso_hi]), above both shadows. *)
+  apply YK13.region_free_intro. intros vb vs Hin'.
+  pose proof (proj1 (Forall_forall _ _) (al_vdso_hi _ _ _ _ L) _ Hin') as Hb. cbv beta in Hb. cbn [fst] in Hb.
+  left. rewrite Ub, Un. unfold kLowShadowBeg, kLowShadowEnd, kHighShadowBeg, kHighShadowEnd in *. lia. }
 destruct Hin as [[I1 I2]|[I1 I2]].
 - apply (madvise_gate_intro _ (wiv (kLowShadowBeg, kLowShadowEnd - kLowShadowBeg))).
 + apply (al_band _ _ _ _ L). left. reflexivity.

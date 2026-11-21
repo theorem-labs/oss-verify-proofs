@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: adapted from cgif's lib/A/ACgq.v and lib/A/ACk8.v (file header, walk tactic forms) for reac_ctrl_parse of libreac's fuzz_grant. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse of fuzz_scene's ASan+UBSan build (fuzz_scene.asan-ubsan 0x84028, sha256
    e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f): the walk of its contract tctrl_parse_spec
    (P_reac_ctrl_parse.v, in the caller-journal form: it writes the caller's `struct reac_ctrl_parsed`) on the
@@ -12,7 +13,7 @@
    4-byte jump __interceptor_trampoline_bcmp, jal @0x84220) once and kind_of_link1 (jal @0x845b8) once; its 21
    UBSan guards, which all branch to the unimp @0x84824, are refuted in the segments. The return code and the
    36 bytes it writes are Pau's model `ctrlparse` (lib/Prog/RcParse.v). Ported from a Theorem Labs lane's
-   proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParse.v at 603e40683a4 with the segment files'
+   proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParse.v with the segment files'
    renames (Grant* -> Scene*, GS___ -> SS___, grant_listing -> scene_listing, PL_grant -> PL_scene,
    KindOfLink1 -> P_kind_of_link1; B257 / B258 and Hob16 / Hob17 are the facts of the shadow-base cell and the
    use-after-return flag, listing objects 16 and 17); the listing modules are lib.AU.Prog's and YCbq lib.AU's

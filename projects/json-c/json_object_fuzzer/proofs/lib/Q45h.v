@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main-entry states of both CONFIG_RSEQ values in HSCLASS_S, HS2s indexed by the value, HSCLASS_R with HS2s_class_R for the states of one value, and the map objects OBJS_W read from the computed states' maps). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -27,21 +28,42 @@ Import AX2. Import AX2S. Import APC. Import AP. Import APS.
 Open Scope Z_scope.
 
 Definition HSCLASS_S (w : bool) (ch : acs) : Prop :=
-if w then ch = HS2sA_1 \/ ch = HS2sA_2 else ch = HS2sB_3 \/ ch = HS2sB_4.
+if w then ch = HS2sA_1 \/ ch = HS2sA_2 \/ ch = HS2sA_1R \/ ch = HS2sA_2R
+else ch = HS2sB_3 \/ ch = HS2sB_4 \/ ch = HS2sB_3R \/ ch = HS2sB_4R.
 
-Definition HS2s (h : nat) : option acs := match HS2sA h with Some c => Some c | None => HS2sB h end.
-Lemma HS2s_class : forall h ch, HS2s h = Some ch -> exists w, HSCLASS_S w ch.
+Definition HS2s (r : Z) (h : nat) : option acs := match HS2sA r h with Some c => Some c | None => HS2sB r h end.
+Lemma HS2s_class : forall r h ch, HS2s r h = Some ch -> exists w, HSCLASS_S w ch.
 Proof.
-intros h ch H. unfold HS2s, HS2sA, HS2sB in H.
-destruct h as [|[|[|[|[|h]]]]]; cbn in H; try discriminate; injection H as <-;
-[exists true; left | exists true; right | exists false; left | exists false; right]; reflexivity.
+intros r h ch H. unfold HS2s, HS2sA, HS2sB in H. revert H.
+destruct (Z.eqb r 1); destruct h as [|[|[|[|[|h]]]]]; intros H; cbv beta iota in H; try discriminate H; injection H as <-;
+[exists true; right; right; left | exists true; right; right; right | exists false; right; right; left | exists false; right; right; right
+|exists true; left | exists true; right; left | exists false; left | exists false; right; left];
+reflexivity.
+Qed.
+
+(* the main-entry states of one CONFIG_RSEQ value b: the states a run at that value hands main *)
+Definition HSCLASS_R (b w : bool) (ch : acs) : Prop :=
+if b then (if w then ch = HS2sA_1R \/ ch = HS2sA_2R else ch = HS2sB_3R \/ ch = HS2sB_4R)
+else (if w then ch = HS2sA_1 \/ ch = HS2sA_2 else ch = HS2sB_3 \/ ch = HS2sB_4).
+Lemma HSCLASS_R_S : forall b w ch, HSCLASS_R b w ch -> HSCLASS_S w ch.
+Proof.
+intros [|] [|] ch [-> | ->];
+[right; right; left | right; right; right | right; right; left | right; right; right
+|left | right; left | left | right; left]; reflexivity.
+Qed.
+Lemma HS2s_class_R : forall b h ch, HS2s (rseq_z b) h = Some ch -> exists w, HSCLASS_R b w ch.
+Proof.
+intros b h ch H. unfold HS2s, HS2sA, HS2sB in H. revert H.
+destruct b; destruct h as [|[|[|[|[|h]]]]]; intros H; cbn [rseq_z Z.eqb Pos.eqb] in H; try discriminate H; injection H as <-;
+[exists true; left | exists true; right | exists false; left | exists false; right
+|exists true; left | exists true; right | exists false; left | exists false; right]; reflexivity.
 Qed.
 
 Definition MAPS_A : list amap := Eval vm_compute in a_maps HS2sA_1.
 Definition MAPS_B : list amap := Eval vm_compute in a_maps HS2sB_3.
 Definition MAPS_W (w : bool) : list amap := if w then MAPS_A else MAPS_B.
 Lemma MAPS_W_eq : forall w ch, HSCLASS_S w ch -> a_maps ch = MAPS_W w.
-Proof. intros [|] ch [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 Lemma MAPS_W_exact : forall w, forallb (fun m => negb (is_fog m)) (MAPS_W w) = true.
 Proof. intros [|]; vm_compute; reflexivity. Qed.
 
@@ -49,11 +71,16 @@ Definition e_high (E : env) : word * word := (edenot E (ELit 2201439137792), ede
 Definition e_gap (E : env) : word * word := (edenot E (ELit 2415882240), edenot E (ELit 2199023255552)).
 Definition e_low (E : env) : word * word := (edenot E (ELit 2147446784), edenot E (ELit 268435456)).
 
-Definition OBJS_W (w : bool) : list (nat * Z) :=
-[(2113%nat, 4096); (496%nat, 4096); (479%nat, 8388608); (478%nat, 1048576)]
-++ (if w then [(423%nat, 4096); (5%nat, 8192)] else [(424%nat, 4096); (423%nat, 8192)])
-++ [(406%nat, 11571200); (330%nat, 4096); (265%nat, 4096); (238%nat, 65536); (237%nat, 4096); (236%nat, 8388608);
-(208%nat, 137439023104); (207%nat, 3727360); (78%nat, 65536)].
+(* the objects the main-entry states map, (v, n) for a region of n bytes at 4096 * EVar v, read off the
+   computed maps in their order *)
+Definition obj_of (m : amap) : list (nat * Z) :=
+match am_base m, am_len m with
+| EMd Instr.M_MUL (ELit 4096) (EVar v), ELit n => [(v, n)]
+| _, _ => []
+end.
+Definition OBJS_A : list (nat * Z) := Eval vm_compute in flat_map obj_of MAPS_A.
+Definition OBJS_B : list (nat * Z) := Eval vm_compute in flat_map obj_of MAPS_B.
+Definition OBJS_W (w : bool) : list (nat * Z) := if w then OBJS_A else OBJS_B.
 Definition obj_e (E : env) (o : nat * Z) : word * word := (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar (fst o))), edenot E (ELit (snd o))).
 
 Lemma MAPS_W_objs : forall w E, map (amap_den E) (MAPS_W w) = map (obj_e E) (OBJS_W w) ++ [e_high E; e_gap E; e_low E].

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte zero-filled stack window): changed iter1A, pf_premsA; removed AUXV; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm8DrvE2.v, lines 293-296, 584-586, 598. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -311,7 +312,10 @@ Section DrvE2.
     let S := usp + PSO in
     (usp - 4096 <= S /\ S + 32 <= usp /\ S mod 16 = 0 /\ 0 <= bv_unsigned can < 2 ^ 64)
     /\ (getr R 1%bv = Z_to_bv 64 722244 /\ getr R 2%bv = Z_to_bv 64 S /\ getr R 10%bv = Z_to_bv 64 86575 /\ getr R 11%bv = Z_to_bv 64 (S + 24))
-    /\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+    (* WINDOW, old beside new: was [usp - 8388608 <= a]; the zero-filled window is DRV_ZWIN
+       (Pm4DrvEntry).  CWS / DW / CWSA / DWA above keep 8388608: they are WRITE FOOTPRINTS
+       (regions_ok frame sets), true at any width covering the frames, not window claims. *)
+    /\ (forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
     /\ (forall i, 65536 <= i < 1449984 -> MV (Z_to_bv 64 i) = None)
     /\ rdn ASEGS MV (Z_to_bv 64 7069712) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned can)))
     /\ rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)).
@@ -335,7 +339,6 @@ Section DrvE2.
     rewrite <- zero4_of_zero8. exact (SeqExec.rdn_firstn ASEGS MV 8%nat _ _ 4%nat X ltac:(lia)).
   Qed.
 
-  (* [comment removed for export] *)
   Lemma pf_siteKA : forall (fx' : PropExec.FPState) knX vals R M (model : Model) A (A1 PTR OWN k : Z) (j : nat) LB LK cr g K,
     pf_kn_ok knX = true -> e_valsA 134 vals A1 PTR OWN k -> 1 <= k -> Z.of_nat j + 1 + k <= 4 ->
     regs_ok (ENVG vals) srPA R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knX ->
@@ -611,8 +614,10 @@ Section DrvE2.
   #[local] Notation CALLS := (Pm4DrvD.CALLSA fdata).
   #[local] Notation cr1 := (Pm4DrvD.cr1A L fdata crC).
   #[local] Notation lh1_kA := (Pm4DrvD.lh1_kA scfg L ar HI sp0 fs0 fdata p0 p1 can M0 LK0 A0 CAP crC).
-  (* [comment removed for export] *)
-  Hypothesis AUXV : auxv_atA sp0 p0 M0.
+
+  (* DROPPED, old beside new: [Hypothesis AUXV : auxv_atA sp0 p0 M0].  Its only use was
+     [lib_init_at_call]'s auxv premise, which is gone (Pm4DrvLibInit, LibIface): the
+     ten-pair auxv at [p0 - 160] is false at LPS 75d69e00 and no consumer reads it. *)
   Hypothesis HROOM1 : lib_roomA CALLS LK0 cr1.
   (* [comment removed for export] *)
   Hypothesis TAILX : forall j : nat, SSPA 1 (Z.of_nat j) (EA j).
@@ -623,13 +628,13 @@ Section DrvE2.
     intros fx' vals R M model A A1 PTR OWN LB EV HR HK HBLK HC HPAY DI HINC F1 F2 HFP.
     change (e_valsA 102 vals A1 PTR OWN CALLS) in EV.
     pose proof EV as (HL & HV & _). pose proof HV as (P0 & P1 & _). pose proof Hsp as Hsp'. pose proof (CALLSA_range sp0 fdata) as HKr.
-    (* [comment removed for export] *)
-    destruct (lib_init_at_call scfg L ar C IL HI HIok sp0 Hsp DL M0 Lay (dlla_L Lay L DLL) DLC vals _ knLH1A LB LK0 cr1 A M model p0 HK ltac:(vm_compute; reflexivity) P1 DI AUXV)
+
+    destruct (lib_init_at_call scfg L ar C IL HI HIok sp0 Hsp DL M0 Lay (dlla_L Lay L DLL) DLC vals _ knLH1A LB LK0 cr1 A M model p0 HK ltac:(vm_compute; reflexivity) P1 DI)
       as (av & uid & rnd & tid & cny & hw & LIF).
     destruct (atexit_init_at_call scfg L ar C IL HI HIok sp0 Hsp DL M0 Lay (dlla_L Lay L DLL) vals _ knLH1A LB LK0 cr1 A M model HK ltac:(vm_compute; reflexivity) DI
                 (dlla_atexit Lay L DLL) (dlla_hs0 Lay L DLL) (dlla_need_locks Lay L DLL)) as (AT0 & NL0).
     pose proof (lioa_init _ _ _ _ _ _ LIOK av uid rnd tid cny hw M LIF AT0 NL0) as HLS.
-    (* [comment removed for export] *)
+
     drv_blockT0 HIok Hsp DL HR HK DI P0 scr0 102%nat.
     all: Pm4DrvD.r23_store_side.
     lazymatch type of EQM with _ = mem_denot _ _ ?lg => pose proof (block_frame_stkA vals _ A M M1 model lg P0 ltac:(vm_compute; reflexivity) EQM EQH) as FRB end.
@@ -641,7 +646,7 @@ Section DrvE2.
     intros fx2 vals' R' M' model' A' LK' cr' g' EV' HR' HK' HC' HPAY' DI' HINC' Q1 Q2 HLS' HROOM' HIMG' HFP2.
     pose proof EV' as (HL' & HV' & _). pose proof HV' as (P0' & _).
     clear HRb HKb DIb HC HPAY HLS HIMG' G1 G2.
-    (* [comment removed for export] *)
+
     drv_blockT0 HIok Hsp DL HR' HK' DI' P0' scr0 134%nat.
     all: Pm4DrvD.r23_store_side.
     lazymatch type of EQM with _ = mem_denot _ _ ?lg => pose proof (block_frame_stkA vals' _ A' M' M1 model' lg P0' ltac:(vm_compute; reflexivity) EQM EQH) as FRS end.
@@ -651,7 +656,6 @@ Section DrvE2.
              HKnil HSS HFP2).
   Qed.
 
-  (* [comment removed for export] *)
   Lemma SS_realA : forall (n j : nat), (1 <= n)%nat -> Z.of_nat j + Z.of_nat n <= 4 -> SSPA (Z.of_nat n) (Z.of_nat j) (EA (j + n - 1)%nat).
   Proof.
     induction n as [|n IH]; intros j Hn Hjn; [lia|].

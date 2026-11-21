@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lemmas added for the revision. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -15,6 +16,16 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 
 Module SA2.
+(* LPS 727298f3: as [SA.seg_auto], the no-progress test also compares the registers (musl's
+   static [dl_iterate_phdr] auxv loop turns on its own pc, storing nothing, for every key above
+   AT_MINSIGSTKSZ of the revision-layout vector). *)
+Fixpoint regs_eqb (a b : list expr) : bool :=
+  match a, b with
+  | [], [] => true
+  | x :: a', y :: b' => (expr_eqb x y && regs_eqb a' b')%bool
+  | _, _ => false
+  end.
+
 Section WithSegs.
 Variable segs : ltac2:(zQ "20!jb!lse@1$0$1").
 Variable IT : ltac2:(zQ "10!lt9$0").
@@ -57,7 +68,7 @@ Fixpoint seg_auto (fuel : nat) (first : bool) (ends : list Z) (ss : sym_state) (
            else match step1 ends ss w with
                 | Some (ss', w') =>
                     (* [comment removed for export] *)
-                    if (Z.eqb (s_pc ss') (s_pc ss) && Nat.eqb (length w') (length w))%bool then None
+                    if (Z.eqb (s_pc ss') (s_pc ss) && Nat.eqb (length w') (length w) && regs_eqb (s_regs ss') (s_regs ss))%bool then None
                     else seg_auto f false ends (prune ss') w'
                 | None => None
                 end
@@ -104,7 +115,7 @@ Proof.
     nexists fx, E, R. split; [reflexivity|]. split; [apply XSegLib.APS.env_agree_refl|]. split; [lia|]. split; [exact HINV|]. split; [exact Hc|].
     apply mst_refl.
   - destruct (step1 ends ss w) as [[ss1 w1]|] eqn:Hs; [|discriminate].
-    destruct (Z.eqb (s_pc ss1) (s_pc ss) && Nat.eqb (length w1) (length w))%bool; [discriminate|].
+    destruct (Z.eqb (s_pc ss1) (s_pc ss) && Nat.eqb (length w1) (length w) && regs_eqb (s_regs ss1) (s_regs ss))%bool; [discriminate|].
     unfold step1 in Hs.
     assert (STEP : exists (fx1 : FPState) E1 R1, @fp_csr fx1 = @fp_csr fx /\ env_agree (s_next ss) E E1 /\ (s_next ss <= s_next ss1)%nat
               /\ INV segs E1 ss1 w1 R1 M /\

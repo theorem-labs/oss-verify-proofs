@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: SEG_HEAD of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput OVER ARx (a Theorem Labs lane's route
    (b), step 7). lf_seg_head_x is the text of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v Section w's hypothesis SEG_HEAD,
    so lib/A/W_LLVMFuzzerTestOneInput_top_x.v can take it in place of that hypothesis. It is the ARx conversion of W8's
-   AR proof lf_seg_head (lib/A/W_LLVMFuzzerTestOneInput_head.v, Qed at a working branch 44de651f71b), which is NOT
+   AR proof lf_seg_head (lib/A/W_LLVMFuzzerTestOneInput_head.v, Qed at a working branch), which is NOT
    edited; the template is the converted check_bounded (convert_cb.py (sha256 e0f45fdf5a36; internal record)).
    - The Section header is cut_x's Section w header (B .. ARx, hl, LAWS, HP0, HG, LSx, RINV), then the AR file's own
      hypotheses, each text verbatim with LS named LSx: HGnout, HERRNO, RI_head_nout, LS_head_nout, HZS, RI_head_skip,
@@ -76,7 +77,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* ---- cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:191-235) ---- *)
+(* ---- cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:192-236) ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -1223,7 +1224,7 @@ Qed.
 Definition lf_seg_head_x_plugs := fun SEG_PRO =>
   lf_contract_of_segments_x B MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv LIBROOM NP G_fr fr_FP PST ARx
     LAWS HG LSx RINV SEG_PRO lf_seg_head_x_check.
-(* lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:453-455 SEG_HEAD_R, its text with cut_x's Section w / wR arguments written out; lf_contract_of_segments_xR
+(* lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:454-456 SEG_HEAD_R, its text with cut_x's Section w / wR arguments written out; lf_contract_of_segments_xR
    (cut_x.v:525) takes it as its SEG_HEAD_R argument.  The theorem's arguments: lf_seg_head_x's, then R R_refl R_trans
    WLE_R. *)
 Section chkR.

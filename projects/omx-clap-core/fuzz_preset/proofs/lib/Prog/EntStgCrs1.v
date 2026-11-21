@@ -17,8 +17,8 @@ Local Open Scope Z_scope.
 
 (* The check_reject_clean_starved stage of LLVMFuzzerTestOneInput on the #102 plain pin, on the rc = 0 path after
    check_round_trip returned 0 (fuzz_preset.c:832-833). check_reject_clean_starved (0x13c08) is called at 0x13770 with
-   (data, size, took, &doc), doc = sp = S - 112; its contract (check_reject_clean_starved_c @ rw102-crcs
-   6d86620145430ef7) needs both flag bytes 0, which the stage has (ent_flags). It returns to 0x13774, which jumps to
+   (data, size, took, &doc), doc = sp = S - 112; its contract (check_reject_clean_starved_c @ rw102-crcs)
+   needs both flag bytes 0, which the stage has (ent_flags). It returns to 0x13774, which jumps to
    0x136ec: pj_free(&doc) (EntSegA.ent_segE3), the next stage stg_pjf_st. *)
 
 Lemma ecrs1_rk : forall regs0 r1 r2, regs_preserved r1 r2 -> ent_rk regs0 r1 -> ent_rk regs0 r2.

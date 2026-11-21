@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the call of send_message in LLVMFuzzerTestOneInput's ASan walk (plugin-hostd/fuzz_command, jal at 0x86714, back at 0x86718), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v:122-290 (a program call through cl_callS, the callee's statement applied, the caller's facts carried past it). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/LLVMFuzzerTestOneInput_s30.v, with its module paths and module names changed; 674 of its 724 lines of code are new or changed and 291 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the kit of the
    walk of segments S11 (0x85868 .. 0x85980: the probe loop, the "nosuch0" pair, checks 24 and 25, the UBSan trap
    branches 0x858c0 / 0x858c8, calloc(cap + 1, 18)) and S12 (0x85984 .. 0x85990: calloc(cap + 1, 20)) of the test
@@ -49,7 +50,7 @@
    KIT-3 with image B's frame (S1 352 .. 383 bytes below SP0), slots (LT_LC, 120, 176) and lt_img carried by RELRO
    in the image (s20_img_relro, a field of image B's SegRecBase.seg_img_facts) and the stack-protector cells re-read
    from AR at the later state (SegRecCells.seg_rec_cells: the .got word gotwA is runtime-owned in the regenerated
-   listing, the image-B listing owner's commit ec20d5d4e1df). *)
+   listing, the image-B listing owner). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -272,7 +273,7 @@ Variable B : asyms.
 Variable MT : ameter_ops.
 (* AR's record law over B (a theorem of image B's kit copy: lib/B/YG0q.v:809 AR_laws_ok) *)
 Let LAWS : AR_laws SEGS B := YG0q.AR_laws_ok SEGS B.
-(* the image facts: image B's record SegRecBase.seg_img_facts (lib/B/Prog/SegRecBase.v, the image-B listing owner's commit c4abdaee306f),
+(* the image facts: image B's record SegRecBase.seg_img_facts (lib/B/Prog/SegRecBase.v, the image-B listing owner),
    taken whole; lt_img at a later reader needs RELRO in the image (cif_relro_img; RLO_A / RHI_A are SEG_RLO /
    SEG_RHI) and, through SegRecCells.seg_rec_cells, the guard's ROM bytes (cif_guard_rom, guardA = 0x5ff838) *)
 Hypothesis IMGF : seg_img_facts SEGS B.

@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of ctrl_finish on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/YC20.v. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) walk of ctrl_finish. B's ctrl_finish is 244 bytes, 188 shorter than A's 432, because it calls the two checksum stamps out of line; the entry state, the row's shadow entry and the final tcj_kept follow lib/A/Prog/CtrlFinish.v, and the caller-journal lemmas (tcj_kept composition, garr8 / region transport) follow lib/A/Prog/CtrlStampHeadamp.v, both of a working branch 5aae1e8a0ce (AB01 1e6f4323d1e; the whole lib Require closure of the two files is 187 files with 0 Admitted / admit / Axiom / Parameter); every address, slot and constant is read from image B's listing (lib/B/Prog/GrantList.v). *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) walk of ctrl_finish. B's ctrl_finish is 244 bytes, 188 shorter than A's 432, because it calls the two checksum stamps out of line; the entry state, the row's shadow entry and the final tcj_kept follow lib/A/Prog/CtrlFinish.v, and the caller-journal lemmas (tcj_kept composition, garr8 / region transport) follow lib/A/Prog/CtrlStampHeadamp.v, both of a working branch (AB01 1e6f4323d1e; the whole lib Require closure of the two files is 187 files with 0 Admitted / admit / Axiom / Parameter); every address, slot and constant is read from image B's listing (lib/B/Prog/GrantList.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_finish on image B (fuzz_grant.asan-ubsan, bin sha256 fde52226dc48, symbols 5a5ee7c02b4e), 0x83fdc =
    BASE + AF_ctrl_finish (AF_ctrl_finish = 0x35a0, listing base 0x80a3c): the walk of lib/B/Prog/
    GrantBContracts.v's walk_ctrl_finish.
 
-   Image A inlines the two checksum stamps (lib/A/Prog/CtrlFinish.v of a working branch 5aae1e8a0ce); image B calls
+   Image A inlines the two checksum stamps (lib/A/Prog/CtrlFinish.v of a working branch); image B calls
    them out of line, so this walk takes one contract per program callee and has no summation loop of its own:
      0x84074  jal  reac_ctrl_record_cksum_stamp (a0 = p + 34, a1 = 6)   writes the record's byte at p + 39
      0x84094  j    reac_ctrl_block_cksum_stamp  (a0 = p + 18)           writes the block's byte at p + 49,
@@ -247,7 +248,7 @@ Hypothesis HREC : tb_reac_ctrl_record_cksum_stamp_spec B.
 Hypothesis HBLK : tb_reac_ctrl_block_cksum_stamp_spec B.
 
 (* ---- the caller-journal bookkeeping (image B restatement of the shapes lib/A/Prog/CtrlStampHeadamp.v
-   of a working branch 5aae1e8a0ce states for image A's walks) --------------------------------------------- *)
+   of a working branch states for image A's walks) --------------------------------------------- *)
 (* A step that changes no byte but this call's own machine-stack window keeps everything tcj_kept names:
    every block, frame, frame shadow and image byte lies below alloc_ceiling, hence below the window. *)
 Lemma cf_tcj_of_keep : forall STK lyc Sc W memc mdc m2 sp (E : Z -> Prop),

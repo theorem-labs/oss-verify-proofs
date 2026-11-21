@@ -7,6 +7,7 @@
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN35.v, with its module paths and addresses changed. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN3v.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from Reusable/YP0n.v, YP03.v, YP04.v, YN35.v and YN3v.v: their realizes lemmas and tactics that the driver's usage path uses, restated over BudgetWit.Rzb.rzb. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed rzb_chk1_silent, rzb_ret_only_copyins_silent, rzb_set_tid_first). *)
 
 (** * The run, branch and exit lemmas of [YP0n], [YP03], [YP04] and [YN35] over [rzb]
 
@@ -63,8 +64,11 @@ From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import DispatchCom
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import YK16 YK0n YK11 YK0i YK0h YK14 YK0v YK0p YK02 YK15.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import YM00.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable.Z Require Import Placement.
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YP0n.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable.R Require Import Place Cfg.
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import RomBase RomWritev.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import YP0n.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.BudgetWit Require Import Rzb.
 Import ListNotations.
@@ -85,11 +89,12 @@ m_halted m' = None -> m_vm_lazy m' = [] ->
 (forall eff2 m2 evs2,
 check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff2 model
 = CheckOk m2 evs2 -> eff2 = eff /\ m2 = m' /\ evs2 = []) ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 rzb segs (mkCfg (mkst (regupd regs 10 (eff_ret eff)) (v_addi pc 4)
 (effmem mem eff) rom) m') T ->
 rzb segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof using.
-intros regs pc mem rom model eff m' T Hh Hlz Hok Hg Hh' Hlz' Huniq Hc.
+intros regs pc mem rom model eff m' T Hh Hlz Hok Hg Hh' Hlz' Huniq Hrob Hc.
 eapply rzb_silent1.
 - apply (node_chk segs (pend_at regs pc mem rom) model (getr regs 17) unit tt
 (fun _ => eff) (fun _ => m') (fun _ => []) Hh eq_refl
@@ -97,6 +102,7 @@ eapply rzb_silent1.
 + intros eff2 m2 evs2 H2. exists tt. apply Huniq. exact H2.
 + intros []. apply nonspurious_of_unique. intros eff2 m2 evs2 Hs2.
 apply check_syscall_ok_iff in Hs2. apply Huniq in Hs2 as (-> & _ & _). reflexivity.
++ exact Hrob.
 - exact Hg.
 - cbn. rewrite adv_pend. exact Hc.
 Qed.
@@ -106,16 +112,18 @@ m_halted model = None -> m_vm_lazy model = [] ->
 = check_ret_only_copyins reads eff r m' []) ->
 grant_ok segs (mkCfg (pend_at regs pc mem rom) model) ->
 m_halted m' = None -> m_vm_lazy m' = [] ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 rzb segs (mkCfg (mkst (regupd regs 10 r) (v_addi pc 4) mem rom) m') T ->
 rzb segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof using.
-intros regs pc mem rom model reads r m' T Hh Hlz Hchk Hg Hh' Hlz' Hc.
+intros regs pc mem rom model reads r m' T Hh Hlz Hchk Hg Hh' Hlz' Hrob Hc.
 apply (rzb_chk1_silent regs pc mem rom model (with_copyins reads (mkEffect r [] [])) m' T Hh Hlz).
 - rewrite Hchk. apply check_ret_only_copyins_refl.
 - exact Hg.
 - exact Hh'.
 - exact Hlz'.
 - intros eff2 m2 evs2 H2. rewrite Hchk in H2. apply check_ret_only_copyins_ok_iff. exact H2.
+- exact Hrob.
 - cbn [eff_ret with_copyins]. rewrite effmem_copyins_ret_only. exact Hc.
 Qed.
 Lemma rzb_exit_at : forall regs pc mem rom model,
@@ -170,6 +178,8 @@ cbn [andb] in Hk. inversion Hk; subst.
 apply Z.ltb_lt in E1. apply Z.ltb_lt in E2.
 exists (exist _ r (conj E1 E2)). cbn [proj1_sig]. auto.
 + exact (fun _ => mcfg_nonspurious_no _ _ _ _ _ _ Hno eq_refl).
++ (* 727298f3: node_ok's read-only backing obligation ([RomBase.sys_rob]) *)
+  exact (YP0n.rob_pend_mf segs regs pc mem rom model ltac:(rewrite Hno; exact memfree_96)).
 - exact (grant_ok_no segs (pend_at regs pc mem rom) model (getr regs 17) 96%Z
 (pend_svc regs pc mem rom) Hno eq_refl).
 - intros [tid Ht]. cbn [proj1_sig]. rewrite adv_pend. cbn [eff_ret].

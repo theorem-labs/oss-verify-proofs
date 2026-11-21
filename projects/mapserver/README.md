@@ -3,15 +3,15 @@
 
 [mapserver.org](https://mapserver.org) · OSS-Fuzz: [projects/mapserver](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/mapserver)
 
-**Status: available.** 4 of OSS-Fuzz's 4 fuzz targets have statements. 16 binaries, 655 MB. 28 statements: 0 proved, 0 known false, 0 suspected false, 0 blocked by the model, 28 open.
+**Status: available.** 4 of OSS-Fuzz's 4 fuzz targets have statements. 16 binaries, 655 MB. 28 statements: 0 proved, 0 known false, 0 suspected false, 14 blocked by the model, 14 open.
 
 Built from MapServer (commit `fbcb5754`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [configfuzzer](configfuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
-| [mapfuzzer](mapfuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
+| [configfuzzer](configfuzzer/) | Writes the input (Size from 10 to 10240 bytes) to a new file named by CPLGenerateTempFilename(NULL) with .config appended, loads it as a MapServer config file with msLoadConfig and frees what that returns with msFreeConfig, then deletes the file with VSIUnlink, frees the name and clears MapServer's error list with msResetErrorList. It returns -1 for an input with Size below 10 or above 10240, returns 0 without loading anything when fopen cannot open the file for writing, and drops the results of fwrite, fclose and VSIUnlink. | none | 7, 7 blocked by the model |
+| [mapfuzzer](mapfuzzer/) | Writes the input (Size from 10 to 10240 bytes) to a new file named by CPLGenerateTempFilename(NULL) with .map (a suffix msLoadMap's default mapfile name pattern accepts) appended, loads it as a mapfile with msLoadMap(filename, NULL, NULL) and frees what that returns with msFreeMap, then deletes the file with VSIUnlink, frees the name and clears MapServer's error list with msResetErrorList. It returns -1 for an input with Size below 10 or above 10240, returns 0 without loading anything when fopen cannot open the file for writing, and drops the results of fwrite, fclose and VSIUnlink. | none | 7, 7 blocked by the model |
 | [owsfuzzer](owsfuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
 | [shapefuzzer](shapefuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
 
@@ -20,17 +20,20 @@ Built from MapServer (commit `fbcb5754`).
 - **`<build>_agrees`**: on every input on which the plain build is never refused memory for exceeding its budget (a premise), neither build reaches an error, and the two have the same set of observable behaviours: every sequence of writes and exit status one can show, the other can too. A sanitizer report aborts, so this rules out every error the sanitizer build's configuration detects. It does not rule out a run that never ends; only a halts statement does.
 
 ## Known issues
-None known.
+| statement | status | why |
+|---|---|---|
+| configfuzzer: every statement | blocked by the model | each binary removes files or directories and opens files other than its input |
+| mapfuzzer: every statement | blocked by the model | each binary removes files or directories, opens files other than its input and asks for its working directory |
 
 ## Get and run the binaries
     ./oft fetch mapserver
     ./oft verify-sha mapserver
 
-By hand: download `mapserver-bin.tar.zst` from release [v2026.10.0](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0), unpack it into `projects/mapserver/bin/`, and check each file against its SHA-256 in the harness's `harness.yaml`. Each binary is run as `<file> <input-file>` under qemu-user 10; an OSS-Fuzz testcase needs the six-byte header `00 00 00 00 00 00` in front ([docs/running.md](../../docs/running.md)).
+By hand: download `mapserver-bin.tar.zst` from release [v2026.11.3](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.11.3), unpack it into `projects/mapserver/bin/`, and check each file against its SHA-256 in the harness's `harness.yaml`. Each binary is run as `<file> <input-file>` under qemu-user 10; an OSS-Fuzz testcase needs the six-byte header `00 00 00 00 00 00` in front ([docs/running.md](../../docs/running.md)).
 
 ## How these binaries were built
 - Library: [MapServer/MapServer](https://github.com/MapServer/MapServer) at `fbcb5754b105707bd8cb639512e15f5b12ebd88c`, built with CMake
-- Harnesses: unmodified
+- Harnesses: the harness files are modified in `configfuzzer` and `mapfuzzer` (see each harness page); the others are unmodified
 - Everywhere: static riscv64 compiled for RV64G, musl, clang 20.1.8 with `-Os -g`, and a small driver that reads the input file ([docs/running.md](../../docs/running.md)). The sanitizer flags and options are in [docs/building.md](../../docs/building.md). Each harness page lists what else its builds change, and which of its checks were confirmed in the binaries.
 - Builder image: `ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b`. A binary whose SHA-256 differs after a rebuild with it is a bug: please open an issue.
 

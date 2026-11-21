@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed as0_usage_closed; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm9UsageArm.v, lines 59-62. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -62,5 +63,8 @@ Theorem as0_usage_closed : forall scfg (L : asan_layout) (C : asan_statics_cells
   usage_stmt scfg.
 Proof.
   intros scfg L C IL ILX BUDGET B1 B2 INST FN H4 ICPT DLA CONSTS.
-  exact (as0_usage scfg L C IL ILX BUDGET B1 B2 INST FN H4 ICPT DLA CONSTS (dg_usage_ok scfg L C IL)).
+  (* was positional over UsagePhase's Section list; [as0_usage] (Pm5UsageEntry) is now reached by
+     [eapply .. with] so its discharged arity (what its proof uses) is not load-bearing. *)
+  pose proof (dg_usage_ok scfg L C IL) as DG.
+  eapply as0_usage with (L := L) (C := C) (IL := IL) (ILX := ILX) (BUDGET := BUDGET); eassumption.
 Qed.

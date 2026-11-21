@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (str_reg_ok's bound on a launch string's end, [TOP9], is 2^47 - 9, the bound the launch gives at this revision, where it was 2^47 - 16). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
@@ -15,7 +16,9 @@ Open Scope Z_scope.
 
 Module StrRegC.
 Definition ZARG_ID : int := 14%uint63.
-Definition TOP16 : w64 := wlit 140737488355312%uint63.
+(* A launch string ends at most 9 bytes below 2^47 at LPS 727298f3 ([Glue.InitLib.f_a0_end9] / [f_a1_end9]):
+   the exec name, its NUL and an 8-byte slot sit above the argument strings. *)
+Definition TOP9 : w64 := wlit 140737488355319%uint63.
 
 Definition str_region (r : region) (j js : int) : bool :=
   PrimInt63.eqb (rg_lo r) 0%uint63 && negb (rg_w r)
@@ -30,7 +33,7 @@ Definition str_reg_ok (st : sstate) (wl : list (int * sv * w64)) (k : int) (r : 
       && match CtrA.win_lookup wl k with None => true | Some _ => false end
       && match ActrA.sp_region st with Some (ks, _, _) => negb (PrimInt63.eqb k ks) | None => false end
       && known_leu (s_facts st) (sv_alu ALU_ADD az (VL (wlit 72%uint63))) (VP k wzero)
-      && known_leu (s_facts st) (sv_alu ALU_ADD (VP k wzero) (rg_hi r)) (VL TOP16)
+      && known_leu (s_facts st) (sv_alu ALU_ADD (VP k wzero) (rg_hi r)) (VL TOP9)
   | _ => false
   end.
 
@@ -57,7 +60,8 @@ Open Scope Z_scope.
 
 Module StrRegC.
 Definition ZARG_ID : int := 14%uint63.
-Definition TOP16 : w64 := wlit 140737488355312%uint63.
+(* the launch's string-end bound, as above *)
+Definition TOP9 : w64 := wlit 140737488355319%uint63.
 
 Definition str_region (r : region) (j js : int) : bool :=
   PrimInt63.eqb (rg_lo r) 0%uint63 && negb (rg_w r)
@@ -72,7 +76,7 @@ Definition str_reg_ok (st : sstate) (wl : list (int * sv * w64)) (k : int) (r : 
       && match CtrA.win_lookup wl k with None => true | Some _ => false end
       && match ActrA.sp_region st with Some (ks, _, _) => negb (PrimInt63.eqb k ks) | None => false end
       && known_leu (s_facts st) (sv_alu ALU_ADD az (VL (wlit 72%uint63))) (VP k wzero)
-      && known_leu (s_facts st) (sv_alu ALU_ADD (VP k wzero) (rg_hi r)) (VL TOP16)
+      && known_leu (s_facts st) (sv_alu ALU_ADD (VP k wzero) (rg_hi r)) (VL TOP9)
   | _ => false
   end.
 

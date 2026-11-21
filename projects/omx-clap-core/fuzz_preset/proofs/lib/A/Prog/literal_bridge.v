@@ -1,26 +1,27 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: fuzz_preset literal, image A' (#102 asan pin 1be0f53d96cb, unstripped twin bff8519bbe3e; facts
-   8f3e7e1a07f1): the BRIDGE from the memnorm-keeping leaf walk literal_x_holds_mnI (lib/A/Prog/literal_mn.v, statement
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: fuzz_preset literal, image A' (#102 asan pin 1be0f53d96cb, unstripped twin bff8519bbe3e; facts):
+   the BRIDGE from the memnorm-keeping leaf walk literal_x_holds_mnI (lib/A/Prog/literal_mn.v, statement
    tliteral_leafXmn of lib/Prog/literal_xs_mn.v at VRA = 4: tliteral_leafX with (YAkMemnorm.memnorm segs memc ->
-   YAkMemnorm.memnorm segs mem2) last in the post) to the caller-facing m-form text tliteral_specX at the kit of record
-   decff67d721f, instantiated as the image-A texts are: (cp := CfParams_preset) (PI := prh_img_A)
+   YAkMemnorm.memnorm segs mem2) last in the post) to the caller-facing m-form text tliteral_specX at the kit of record,
+   instantiated as the image-A texts are: (cp := CfParams_preset) (PI := prh_img_A)
    (RL := prh_room_live_a8) (PA := PI_prog_A).
-   #102: relocated from the old-pin bridge (commit 34b0f96319c6, pin d83eb25dbf0d) by the
+   #102: relocated from the old-pin bridge (pin d83eb25dbf0d) by the
    alreloc of record c4338d099cfb8025 (no numeral of this file moved); the listings are the #102 ones of this tree's base
-   commit 6240a87c3eb7 (Listing_prog 7ed1529926bd, PAImg_prog 505a51ff7d08, PAImg_leaves
+   (Listing_prog 7ed1529926bd, PAImg_prog 505a51ff7d08, PAImg_leaves
    9c07e1905609; PRH_Img of record 934516a622e8).
    The text, read BY PATH:
-    git rev-parse decff67d721f:proofs/omx-clap-core/fuzz_preset/lib/A/PRH_FnReader.v
-     -> 0af3032ed375 (tliteral_specX :246-275, post fpostWm with S' = S; since the donor's kit 04388d628fb the text
+    git rev-parse:proofs/omx-clap-core/fuzz_preset/lib/A/PRH_FnReader.v
+     -> 0af3032ed375 (tliteral_specX :246-275, post fpostWm with S' = S; since the donor's kit the text
      quantifies `most own` and its ledger prh_ledger .. ran most own carries #102's g_most / g_own_ran_out cells), its
      predicates
-    git rev-parse decff67d721f:proofs/omx-clap-core/fuzz_preset/lib/A/PRH_Base.v
-     -> 3004a98fe2d9 (fpre and fpostWm = fpostW at fQmn unchanged since 04388d628fb; prh_glob gains prh_most / prh_own,
+    git rev-parse:proofs/omx-clap-core/fuzz_preset/lib/A/PRH_Base.v
+     -> 3004a98fe2d9 (fpre and fpostWm = fpostW at fQmn unchanged; prh_glob gains prh_most / prh_own,
      prh_pst gains (pi_g_most, ..) and (pi_g_own_ran_out, ..) as its 6th and 7th rows) and lib/A/PRH_Reader.v
      91d2dbd40054 (unchanged).
-   The proof is the a3bdeca3920-text bridge's (lib/A/Prog/literal_bridge.v at origin/cold/h-verbs-1-lit-onrelocB
-   6a1549f9a5bd) with three changes: fpre's fourth conjunct (raZ regs < alloc_ceiling) is unused; the post's witnesses
+   The proof is the-text bridge's (lib/A/Prog/literal_bridge.v)
+   with three changes: fpre's fourth conjunct (raZ regs < alloc_ceiling) is unused; the post's witnesses
    are ly' := ly, S' := S, Hp' := Hp (literal calls only strlen and bcmp: no allocation, no fake frame), so S' = S is
    reflexivity; the fQmn keep is the leaf's last post conjunct. The leaf's call texts are the memnorm twins
    YGcallMxmn.astrlen_realizes_xrom / abcmp_realizes_xm (lib/Reusable/YGcallMxmn.v b47cf7942c3d), so ASTRLEN / ABCMP are
@@ -28,8 +29,8 @@
    READ-ONLY MEMORY (2026-10-29): the leaf takes PresetRodata.arodata_okP SEGS rlo rhi B (aview ..) (lib/Prog/literal_xs.v),
    at rlo / rhi := PI_literal's relro range, = PI_prog_A's (lit_br_relro); fpre's second conjunct HROD (PRH_Base.v
    arodata_okP at pa_relro_lo / pa_relro_hi, the same body) is that premise. The former premise pal_rom_ok (no owned
-   static and no errno byte in a read-only segment), which turned HROD into rom_view, is gone: it is FALSE at TfibB
-   (68059ec877b).
+   static and no errno byte in a read-only segment), which turned HROD into rom_view, is gone: it is FALSE at TfibB.
+   
    TRANSPORT PI_prog_A -> PI_literal (the leaf's listing instance; both have pa_segs := rsegs): by vm_compute over
    named values only (the lit_br_ Remarks); the leaf's PALibCore comes from PALib at PI_prog_A through palib_core.
    SECTION HYPOTHESES: LAWS (AR_laws_x, head length HL implicit), PAL (PALib at PI_prog_A), ASTRLEN / ABCMP.

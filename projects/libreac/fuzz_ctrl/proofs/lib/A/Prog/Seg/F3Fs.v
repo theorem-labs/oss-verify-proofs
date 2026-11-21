@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 823 of its 864 lines of code are new or changed and 970 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F3F.v, with its addresses changed; 244 of its 469 lines of code are new or changed and 639 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F3.v 7267394c6d6f (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7 (the same blob the
-   glue base carries), Seg/F3F.v at a working branch e1ece7d93f27.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F3.v 7267394c6d6f (the blob this tree had at release) (the same blob the
+   glue base carries), Seg/F3F.v at a working branch.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: f3_call_of_pre_post / f3_calln_of_pre_post re-derive F3.f3_call / F3.f3_calln from the two stretches and
    the PLAIN callee contract; the two _verbatim pins check by constr_eq that their types are the types of F3.f3_call
    and F3.f3_calln. Mechanical re-cut, route (a) (lead 22:15Z); input to the ported walk only.
@@ -35,7 +36,7 @@
      of record, proved from the narrowed ones): the four instructions 0x81dec mv a0,s7 ; 0x81df0 mv a1,s2 ;
      0x81df4 ld a2,248(s1) ; 0x81df8 jal reac_ctrl_parse, ending in the CALLEE ENTRY state (pc =
      Z_to_bv 64 REAC_CTRL_PARSE, x1 = Z_to_bv 64 0x81dfc, a0 = f, a1 = N, a2 = o).  This is the source's
-     `step. step. step. step.` prefix (F3.v:1063 / F3F.v:f3_call_F), with the one access it makes -- the 8-byte
+     `step. step. step. step.` prefix (F3.v:1064 / F3F.v:f3_call_F), with the one access it makes -- the 8-byte
      prologue spill read [A + 248, A + 256) -- as its single rng premise.
      THE NARROWED PREMISES (narrowed-stretch rule, a Theorem Labs lane 04:23Z via a Theorem Labs lane 04:34Z, relayed by
      a Theorem Labs lane): ONLY the ones that prefix uses (0 <= A, A + 256 <= 2 ^ 64 for the address form of the load, and
@@ -64,7 +65,7 @@
      F3.v's own position), then post_F, re-deriving F3.f3_call; pinned by constr_eq.
    - f3_calln_of_pre_post: F3.f3_calln's own script with `f3_call` replaced by `f3_call_of_pre_post` and its tail
      replaced by f3_calln_post_F; pinned by constr_eq.  THE CUT IS STILL THE ONE AT THE JAL: F3.f3_calln reaches
-     the contract on the NORMALIZED memory (MemNorm.evt_normalize from ro_agree, F3.v:1137-1140), because the
+     the contract on the NORMALIZED memory (MemNorm.evt_normalize from ro_agree, F3.v:1138-1141), because the
      machine-level contract's mem_inv premise is false on the caller's own memory; so the only place the plain
      contract can be applied in a re-derivation of f3_calln is where the source applies it, inside the normalized
      run.  The normalization is the source's own two script lines, copied, and no reasoning is added.  (The walk
@@ -123,7 +124,7 @@ Proof.
   replace (a + Z.of_nat 0) with a in E by lia. exact E.
 Qed.
 
-(* F3.v's Section S (F3.v:42-51), declaration for declaration, so every lemma below discharges over the same
+(* F3.v's Section S (F3.v:43-52), declaration for declaration, so every lemma below discharges over the same
    variables in the same order and the two _verbatim pins can compare whole types. *)
 Section S.
 Context {fx : A.Reusable.YK11.FPState} {LS : A.Reusable.YO09.lib_shape} {rc : A.Reusable.YM05.RunCeil}.
@@ -132,7 +133,7 @@ Variable APIf : forall rc : A.Reusable.YM05.RunCeil, AC.AsanAllocAPI AC.ASYMS As
 Context {SH : A.Reusable.YI16.sink_head} {SK : sink_syms}.
 Variables ra empty : Z.
 Hypothesis FF : frame_facts B APIf LS SH SK ra empty.
-(* The callee contract, PLAIN, in F3.v's own position (F3.v:51). *)
+(* The callee contract, PLAIN, in F3.v's own position (F3.v:52). *)
 Hypothesis HPARSE : reac_ctrl_parse_contract.
 
 (* ---- The pre stretch: 0x81dec .. the jal, ending at the callee entry with x1 = the return point.
@@ -465,7 +466,7 @@ Proof.
              t3 t4 t5 t6 Fr fc m A f N o S HA0 HAhi HRDcur).
     apply ExecF.rng_all; lia. }
   intros ms' ->.
-  (* the callee, on the PLAIN contract, exactly as F3.v:1066-1070 applies it *)
+  (* the callee, on the PLAIN contract, exactly as F3.v:1067-1071 applies it *)
   pose proof HPARSE as HP. unfold reac_ctrl_parse_contract, REAC_CTRL_PARSE in HP.
   eapply evt_cut.
   { eapply HP with (f := f) (n := N) (o := o) (S := S) (FS := FS) (fr := bs) (junk := junk);

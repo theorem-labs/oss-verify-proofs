@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: top_ubsan_closed takes srealizes_top's new launch premises (valid_launch, entry_launch_ok_va, in_channel_reader, valid_input_either) and passes the first three to ub_top in its new order. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -23,8 +24,8 @@ drv_lib_layout_top1 (LIB1_of_packages packages_ub) (fun sp _ => PMUXC.top_lsx) b
 Qed.
 Lemma top_ubsan_closed : top_ubsan cfg0 target_alloc_limit.
 Proof.
-intros sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds _ _.
-exact (ub_top sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds).
+intros sp brk mbase rdraw inp Hsp Hbrk Hmb _ Hvl Hlau Hrd Hargv Henvp Hfs Hcreds _ _ _.
+exact (ub_top sp brk mbase rdraw inp Hsp Hbrk Hmb Hvl Hlau Hargv Henvp Hfs Hcreds Hrd).
 Qed.
 Theorem ubjson_pm_halts_ubsan :
 halts_allowed_T_scfg_budgets forced_only_cfg ShippedBudgets.lim_source halts_codes

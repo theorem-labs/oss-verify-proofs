@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lemmas added for the revision. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import Decode.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Spec Require Import KInv.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
@@ -96,3 +98,43 @@ Proof.
   specialize (Hfree (e, sz) He). unfold elo, ehi in Hfree. cbn in Hfree. rewrite Ua, Un. lia.
 Qed.
 (* [comment removed for export] *)
+
+(* 08b1429: an anonymous hint-0 mmap is placed by Linux's rule ([Checks.Placement.linux_place]),
+   so a grant needs the placed address, not merely a free one.  The grid gap lies at or above
+   [grid_floor] (0x2aaaaaaab000), inside the [task_unmapped_base, alloc_top) window, so a
+   placement exists ([Placement.linux_place_exists]) and it has the four admissibility facts
+   ([Placement.linux_place_admissible]). *)
+Lemma gap_exists_place : forall (h : VmMaps) (nZ : Z) (thp : bool),
+  0 < nZ <= GRID_W -> nZ mod 4096 = 0 ->
+  (forall e, In e (vm_reserved h ++ vm_maps h) -> elo e < ehi e /\ ehi e - elo e <= GRID_W) ->
+  Z.of_nat (length (vm_reserved h ++ vm_maps h)) < GRID_J ->
+  CEIL_MIN <= alloc_top h ->
+  exists a : word,
+    bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + nZ <= alloc_top h
+    /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true
+    /\ Placement.linux_place_is h thp (Z_to_bv 64 0) nZ a = true.
+Proof.
+  intros h nZ thp HS Hal HE HL HT.
+  destruct (grid_gap (vm_reserved h ++ vm_maps h) nZ HS HE HL) as (g & Hg & Hf & Hc & Hfree).
+  pose proof grid_floor_pos as FP. unfold GRID_W in HS.
+  assert (Rg : 0 <= g < 2^64) by (unfold grid_floor, CEIL_MIN in *; lia).
+  assert (Ug : bv_unsigned (Z_to_bv 64 g) = g) by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
+  assert (Un : bv_unsigned (Z_to_bv 64 nZ) = nZ) by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
+  assert (Hps : nZ mod page_size = 0) by (unfold page_size; exact Hal).
+  destruct (Placement.linux_place_exists h thp (Z_to_bv 64 0) nZ ltac:(lia) Hps) as [a Hp].
+  { exists g. right. unfold gap_fits.
+    split; [unfold page_size; exact Hg|].
+    split; [unfold task_unmapped_base, grid_floor in *; lia|].
+    split; [unfold grid_floor, CEIL_MIN in *; lia|].
+    apply region_free_introZ; intros e sz He.
+    specialize (Hfree (e, sz) He). unfold elo, ehi in Hfree. cbn in Hfree. rewrite Ug, Un. lia. }
+  destruct (Placement.linux_place_admissible h thp (Z_to_bv 64 0) nZ a ltac:(lia) Hps Hp)
+    as (A1 & A2 & A3 & A4).
+  pose proof (Placement.alloc_top_lt_two_pow_64 h) as AT.
+  assert (Ua : bv_unsigned (Z_to_bv 64 a) = a)
+    by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus, two_pow_64 in *; lia).
+  exists (Z_to_bv 64 a). rewrite Ua.
+  split; [exact A1|]. split; [exact A2|]. split; [exact A3|]. split; [exact A4|].
+  apply (proj2 (Placement.linux_place_is_iff h thp (Z_to_bv 64 0) nZ (Z_to_bv 64 a) ltac:(lia) Hps)).
+  rewrite Ua. exact Hp.
+Qed.

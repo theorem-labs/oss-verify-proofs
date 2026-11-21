@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, PIN sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa5):
    SEGMENT L5c of LLVMFuzzerTestOneInput (entry 0x816cc), check_round_trip's result tested and the starved check on
@@ -22,7 +23,7 @@
              and the kit's post (Lam' ~ Lam, the blocks unchanged, the ledger, the tree at &doc, ran' = 0, the count growth
              at most ck_crcs_max, the exact advance by |ec_rej E ++ ec_sw E t|).
    (A' 0x818e8 -> 0x81900; B' 0x819d4 -> 0x819ec.)
-   STATEMENT: lib/A/Ent102CutsB.v blob 856984d6c3cd (a working branch b1bc025047ea, CUT STABLE of the
+   STATEMENT: lib/A/Ent102CutsB.v blob 856984d6c3cd (a working branch, CUT STABLE of the
    decff kit sync on the exact room position: ec_inv's ledger is `exists most own, prh_ledger .. most own`):
    seg_L5c_stmt, cut_crt, cut_free, cut_crs1, ec_hyps (by its part names), ec_pre's
    parts by TYPE (l5c_pre: the e_i0 and e_sm ties among them); ec_img's ei_sio / ei_sio_frame / ei_frame / ei_pst_ro
@@ -30,8 +31,8 @@
    LISTING: lib/B/Listing_prog.v blob 1ab147923c5d with the PAListing PL_102_B of lib/A/Ent102PLB.v; the image half
    stays generic ({PA : PAImg B_prog_listing}; lib/A/PAImg_prog.v is not loaded, no vm_compute on pa_val / pa_sigma).
    THE BATCH KIT'S TEXT: lib/A/PRH_FnCheck.v
-   tcheck_reject_clean_starved_specX, read at commit
-   b1ed4e6c944d + the CallA / CallB re-fit 3ea93d01b97c. THE WILD BUDGET: as
+   tcheck_reject_clean_starved_specX, read
+    + the CallA / CallB re-fit. THE WILD BUDGET: as
    seg_L5b_B (budgeted ec_inv journal, the local ajw_wvb step, aj_call_xWFb, ec_room_at, wbudget_app). No DW; its run is at ReaderRes.jr_strtod,
    so the cut's facts over e_sm E are rewritten through ec_pre's tie Hsm, including the post's position. Its post
    keeps `ran' = ran \/ ran' = 1` and adds `ran' = ran`. Its ledger premise `prh_ledger .. most 0` is ec_inv's
@@ -53,7 +54,7 @@
    NUMERALS: 0x308 .. 0x320 and 0x1bc are this lane's slot offsets (DERIVED: EC_AR_CRT - EC_BASE, +4 each, and
    EC_FREE - EC_BASE); 128 / 120 / 104 / 88 / 56 / 32 / 16 / 8 are LENGTHs; 144 is EC_SAVE + 16; 32768 is LLVMF_STK;
    3 * 2 ^ 20, 2 ^ 24, 2 ^ 28 and 32 are the text's length and depth bounds; 2 ^ 40, 2 ^ 47, 2 ^ 62, 2 ^ 64 and the
-   ASan band constants are the engine's range facts. No ADDRESS.    THE B' TWIN of lib/A/Prog/Ent102L5cA.v (row LL5c, seg_L5c_A, Qed at 6372b4085c4d (a working branch)), made with
+   ASan band constants are the engine's range facts. No ADDRESS.    THE B' TWIN of lib/A/Prog/Ent102L5cA.v (row LL5c, seg_L5c_A, Qed (a working branch)), made with
    a Theorem Labs lane's port/a2b.py and then re-pointed at image B' by hand: L := B_prog_listing with the PAListing
    PL_102_B of lib/B/Ent102PLB.v, the statement from lib/AU/Ent102CutsB.v, and the two image-side helper
    modules swapped for their B twins (lib/AU/Prog/Ent102CallB.v, Ent102L6BfLem.v, same lemma names). The kit
@@ -134,7 +135,7 @@ Local Ltac l5c_pre H := clear - H; unfold ec_pre in H; ec_conj_pick H.
 (* The cut's journal is budgeted (YCbqGwild.ajournal_xw at the spent wild budget WS). A step's
    materialized model keeps it at the same WS: rebased to the empty budget (YCbqGwild.ajournal_xw_rebase),
    materialized there (YCbqG.ajournal_x_materialize), put back on WS by its own wild inclusion
-   (YCbqGwild.ajournal_xw_unbase0 with ajx_wild) - a Theorem Labs lane's l5d_ajw_wvb (LL5dB at commit 1e05beefe2a1) *)
+   (YCbqGwild.ajournal_xw_unbase0 with ajx_wild) - a Theorem Labs lane's l5d_ajw_wvb (LL5dB) *)
 (* over the world relation R of the journal (this lane's is wle', the free move) *)
 Lemma l5c_ajw_wvb : forall {R : world SEGS -> world SEGS -> Prop} STK sp0 FP ly S Hp (W : world SEGS) mem md own ly' S'
   Hp' (W' : world SEGS) mem' md' k WS X,

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: relocated from the walk of the same function of libreac's fuzz_grant (the two are the same code at other addresses); the entry lemma is restated on fuzz_disco's premises for f and o, which name no frame. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The symbolic state of reac_ctrl_parse (0x6464) of fuzz_disco's ASan build at its entry, and the facts
    its walk (CtrlParseWalk.v) needs about the caller's memory it keeps. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
@@ -550,7 +551,7 @@ intros lyc Sc W memc slo shi o Hp.
 split; [intros; reflexivity|]. split; [intros; reflexivity|]. split; [intros; reflexivity|]. split; [intros; reflexivity|].
 split; [intros a _ _ H; exact H|]. intros a Ha; exact (Hp a Ha).
 Qed.
-(* Across a call that gives acall_kept (__asan_stack_malloc_1: aj_stack_malloc_atS, YC85.v:291) whose
+(* Across a call that gives acall_kept (__asan_stack_malloc_1: aj_stack_malloc_atS, YC85.v:292) whose
    window is inside the walk's and whose excepted bytes are in the out struct. *)
 Lemma pz_kept_trans : forall lyc Sc W memc memX memY slo shi slo' shi' o (Eo' : Z -> Prop),
 alloc_ceiling <= slo -> shi <= 2 ^ 64 ->

@@ -4,13 +4,14 @@
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0n.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YP0n.v, with its module paths and module names changed; 967 of its 1043 lines of code are new or changed and 1914 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Cno102B_Base.v, with its module names changed; 658 of its 729 lines of code are new or changed and 972 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (#102 pins: asan sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): segment CA9 Cmp
    of the re-walk of check_no_overread (cno, entry 0x81904) against the text tcheck_no_overread_specX, re-fit to the
    cut by a Theorem Labs lane (first walked by another Theorem Labs lane, under a Theorem Labs session; plan, the internal file PLAN-cno-caw-102.md 5.1 row CA9).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
-   INPUTS (the cut of record 7cdbb61b5fa0; every path at the cut's blob but this row's
-   files): the contract lib/A/Prog/Cno102A_Base.v (statements, blob ba76a7bc31c9 at a working branch
-   4b59cadb07a1): cn_pre CTX0 D without the run-word list (DW-SPLIT); cn_base .. k wk, the journal cn_J at the wild
+   INPUTS (the cut of record; every path at the cut's blob but this row's
+   files): the contract lib/A/Prog/Cno102A_Base.v (statements, blob ba76a7bc31c9 at a working branch):
+   cn_pre CTX0 D without the run-word list (DW-SPLIT); cn_base .. k wk, the journal cn_J at the wild
    budget wk, 6 from the compare on; cn_at_cmp with own = 0, the readings' grants o1 o2 o0 LAST and the readings'
    free-order ties cn_fo for d1 / d2 / d3; cn_at_free with ownl and, under ownl = 0, the copies non-NULL, the events,
    the structs against the grants and the three ties, under ownl <> 0 the copies' events, the structs zero and cn_cdead
@@ -209,7 +210,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 Variable CTX0 : list (list Z).
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 Hypothesis IMG : cn_img B.
-(* the callee texts, for any float state (the kit cut 7cdbb61b5fa0: PRH_FnAlloc.v 4d8aeba047e5 / PRH_FnEx.v
+(* the callee texts, for any float state (the kit cut: PRH_FnAlloc.v 4d8aeba047e5 / PRH_FnEx.v
    be1dd5ecaaf6) *)
 Hypothesis HRO : forall fz : YK11.FPState, @tfuzz_alloc_ran_out_specX fz rc cp prh_img_A RL A_prog_listing PA B ARx SK.
 Hypothesis HSAME : forall fz : YK11.FPState, @tsame_specX fz rc cp prh_img_A RL A_prog_listing PA B ARx SK DOC_D.

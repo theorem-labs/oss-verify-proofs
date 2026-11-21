@@ -1,9 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the store-conditional failure lemmas step_sc_fail and step_sc_mismatch are removed. *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -14,8 +12,6 @@ Import ListNotations.
 Open Scope bv_scope.
 Section FPX_1. Context {fx : PropExec.FPState}.
 
-
-(* [comment removed for export] *)
 Definition mkst_r (regs : bvmap 5 word) (pc : word) (mem rom : word -> option byte) (r : word)
     : machine_state :=
   {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
@@ -26,24 +22,17 @@ Lemma mkst_r_svc : forall regs pc mem rom r, ms_svc_pending (mkst_r regs pc mem 
 Proof. reflexivity. Qed.
 End FPX_1.
 
-
 Ltac atomic_pipeline Hfetch Hecall Hdecode :=
   unfold mkst_r;
   step_pipeline Hfetch Hecall Hdecode;
   cbv beta iota zeta delta [amo_aligned amo_bytes ms_fregs ms_fcsr];
   rewrite ?bv_eqb0_is_x0.
 
-(* [comment removed for export] *)
 Ltac norm_pc_r :=
   try lazymatch goal with
       | |- CatSim.msteps _ (mkst_r _ ?p _ _ _) _ => wlit p
       end.
 Section FPX_2. Context {fx : PropExec.FPState}.
-
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma step_lr_w : forall segs regs pc mem rom w aq rl rd rs bs v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
@@ -87,11 +76,6 @@ Proof.
   destruct (is_x0 rd); cbv beta iota; reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma step_sc_w_ok : forall segs regs pc mem rom w aq rl rd rs1 rs2 r,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Sc AW aq rl rd rs1 rs2, 4%Z) ->
@@ -114,7 +98,6 @@ Proof.
   destruct (is_x0 rd); cbv beta iota; reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma step_sc_d_ok : forall segs regs pc mem rom w aq rl rd rs1 rs2 r,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Sc AD aq rl rd rs1 rs2, 4%Z) ->
@@ -137,45 +120,6 @@ Proof.
   destruct (is_x0 rd); cbv beta iota; reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Lemma step_sc_fail : forall segs regs pc mem rom w wd aq rl rd rs1 rs2,
-  fetch_word segs pc = Some w -> is_ecall w = false ->
-  decode_any w = Some (Sc wd aq rl rd rs1 rs2, 4%Z) ->
-  (bv_unsigned (getr regs rs1) mod amo_bytes wd = 0)%Z ->
-  RiscvSemantics.step segs (mkst regs pc mem rom) =
-  MachineOk (mkst (if bv_eqb rd 0 then regs else regupd regs rd (Z_to_bv 64 1)) (v_addi pc 4) mem rom).
-Proof.
-  intros segs regs pc mem rom w wd aq rl rd rs1 rs2 Hfetch Hecall Hdecode Hal.
-  atomic_pipeline Hfetch Hecall Hdecode.
-  change (if is_x0 rs1 then Z_to_bv 64 0 else reg_get regs rs1) with (getr regs rs1).
-  unfold amo_bytes in Hal. rewrite Hal. change (negb (0 =? 0)%Z) with false. cbv beta iota.
-  rewrite b_npc4. unfold regupd.
-  destruct (is_x0 rd); cbv beta iota; reflexivity.
-Qed.
-
-(* [comment removed for export] *)
-Lemma step_sc_mismatch : forall segs regs pc mem rom w wd aq rl rd rs1 rs2 r,
-  fetch_word segs pc = Some w -> is_ecall w = false ->
-  decode_any w = Some (Sc wd aq rl rd rs1 rs2, 4%Z) ->
-  (bv_unsigned (getr regs rs1) mod amo_bytes wd = 0)%Z ->
-  (bv_unsigned r =? bv_unsigned (getr regs rs1))%Z = false ->
-  RiscvSemantics.step segs (mkst_r regs pc mem rom r) =
-  MachineOk (mkst (if bv_eqb rd 0 then regs else regupd regs rd (Z_to_bv 64 1)) (v_addi pc 4) mem rom).
-Proof.
-  intros segs regs pc mem rom w wd aq rl rd rs1 rs2 r Hfetch Hecall Hdecode Hal Hne.
-  atomic_pipeline Hfetch Hecall Hdecode.
-  change (if is_x0 rs1 then Z_to_bv 64 0 else reg_get regs rs1) with (getr regs rs1).
-  unfold amo_bytes in Hal. rewrite Hal. change (negb (0 =? 0)%Z) with false. cbv beta iota.
-  rewrite Hne. cbv beta iota.
-  rewrite b_npc4. unfold regupd.
-  destruct (is_x0 rd); cbv beta iota; reflexivity.
-Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma step_branch_tk_r : forall segs regs pc mem rom r w c rs1 rs2 (imm : bv 13),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Branch c rs1 rs2 imm, 4%Z) ->
@@ -252,7 +196,6 @@ Proof.
   apply (step_branch_ft_r segs regs pc mem rom r w BC_EQ rs1 rs2 imm Hf He Hd). exact Hc.
 Qed.
 
-(* [comment removed for export] *)
 Lemma step_opimm_r : forall segs regs pc mem rom r w op rd rs (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (OpImm op rd rs imm, 4%Z) ->
@@ -269,7 +212,6 @@ Proof.
     rewrite ?b_npc4; reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma step_op_r : forall segs regs pc mem rom r w op rd rs1 rs2,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Op op rd rs1 rs2, 4%Z) ->

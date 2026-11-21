@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, the fuzz_reply.asan-ubsan twin of lib/A/AD1x_fp.v (RelocA-2,
-   a working branch 50f0c528115): the exit's after-loop view IMG_XLF built on B/YD2f_fp.v's clipped
+   a working branch): the exit's after-loop view IMG_XLF built on B/YD2f_fp.v's clipped
    after-call view IMG_LF instead of IMG_L, so that the exit premise does not assert a byte of fuzz_reply's program globals
    G_fr_c TfibB; its data checks, the exit state S_JXF that starts from it (at B's exit 0x8cb34, return 0x8cb38: B/YD28.v
    S_JX), and ex_consts_chkF over B/YE23.v's ex_consts. Text copied from B/YD1x.v, YD28.v and YD1j.v as AD1x_fp copies
    their A twins; the count is read by vm_compute on this image. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

@@ -1,4 +1,4 @@
-(* CARRIED from commit 9e2e0be6e3e5010921fb7ec0e30341da3a6c3da2,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfInstWalkSig.v, sha256 63bb82b7d82aa9da22858b83004947fc29ee6e7f70cd2b8c583b90ea2bd4d3c2 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the
    module paths only: OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib M -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable M, except lib.B (the asan-ubsan image twin of lib/A/YGcfInstWalkSig.v)
@@ -6,6 +6,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* DRAFT (lane M, a working branch): the SEAM between a unit's relocated walk and the generic cf instance layer.
 
    The layer is generic over CfParams / CfImg and the opaque allocator relation ARX; a unit's walk is NOT, because
@@ -13,14 +14,14 @@
    tops, and this record is exactly what the layer consumes.  The field texts are a Theorem Labs lane's walk tops
    (a Theorem Labs lane's walk-tops list for a working branch; the lines are cited below), with
    [tfibsegs] replaced by the section's [segs] and the A' numeral 0x32524 by CfImg's [cf_pc_allocate]:
-   - wsa_hit    A/MemnormHitG.v:188   ARM_HITG_em
-   - wsa_hitk   A/MemnormHitK.v:143   ARM_HITK_em
-   - wsa_missg  A/MemnormMissG0.v:307 alloc_missg_cf_em (inner A/MemnormMissG.v:559)
-   - wsa_missk  A/MemnormMissK0.v:305 alloc_missk_cf_em (inner A/MemnormMissK.v:364)
-   - wsa_sec    A/AGioM.v:76          alloc_sec_w_em    (arms A/AGk0M.v:275 / :531 / :584)
+   - wsa_hit    A/MemnormHitG.v:189   ARM_HITG_em
+   - wsa_hitk   A/MemnormHitK.v:144   ARM_HITK_em
+   - wsa_missg  A/MemnormMissG0.v:308 alloc_missg_cf_em (inner A/MemnormMissG.v:560)
+   - wsa_missk  A/MemnormMissK0.v:306 alloc_missk_cf_em (inner A/MemnormMissK.v:365)
+   - wsa_sec    A/AGioM.v:77          alloc_sec_w_em    (arms A/AGk0M.v:275 / :531 / :584)
    The refill is NOT a field: A11's miss arms carry it as their own Section hypothesis (RFm), discharged on the
    unit's side when it instantiates them, and the wrapper-segment entry facts are the unit's rows A1 / A2.
-   The Deallocate half (A/MemnormDnull.v:198, A/MemnormDcommon.v:120, A/MemnormDmid.v:154 / :210, A/DGg1.v:571)
+   The Deallocate half (A/MemnormDnull.v:199, A/MemnormDcommon.v:121, A/MemnormDmid.v:155 / :211, A/DGg1.v:572)
    is lane F2's record, in its own file: its common and null arms end in MemnormDleaf.dealloc_leaf_raw_eem, which
    is not in this branch's base yet, and one writer owns one file.
 
@@ -59,7 +60,7 @@ Variable lmax : Z.
 Variable lpost : astate -> Prop.
 Variable cf : Z.
 
-(* a Theorem Labs lane's check against preset (A11 a working branch 89ce03e835, 2026-10-29 23:49Z): the call-site
+(* a Theorem Labs lane's check against preset (A11 a working branch, 2026-10-29 23:49Z): the call-site
    arguments are alignment 8 and alloc_type 1 only (YGcfInstBase.al_cf / atp_cf), the entry is CfImg's
    cf_pc_allocate and the out-of-memory byte is as_oom_byte B; every arm takes `cf = 0 \/ cf = 1` (one generic
    instance for both can_fill values).  The uninited-cache refutation (MemnormAtop's UNINIT) is the interface's
@@ -113,7 +114,7 @@ Record WalkSigA : Prop := {
       (LEAF inst ly S W regs mem md n tr)
 }.
 
-(* The four arms are MemnormAtop's hypotheses (A/MemnormAtop.v:66-81) at MP := MPA (the hit arms ignore it), so a unit
+(* The four arms are MemnormAtop's hypotheses (A/MemnormAtop.v:67-82) at MP := MPA (the hit arms ignore it), so a unit
    that has WalkSigA has MemnormT.aalloc_prim_realizes_em's inputs; the secondary field is AllocGtopM's. *)
 Lemma wsa_prim_arms : WalkSigA ->
   (forall inst so bp ly S W regs mem md n tr l off, cf = 0 \/ cf = 1 ->

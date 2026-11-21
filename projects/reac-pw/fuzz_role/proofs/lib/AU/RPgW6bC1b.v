@@ -1,14 +1,14 @@
 (* Modified by Theorem Labs, 2026-10: the shadow entry over e and the regions based at F follow
-   proofs/reac-pw/fuzz_role/lib/A/RPgEntBKit.v at 1fdaf126acfb (eb_SH, eb_shok, eb_rE), and reading a
-   stored value back out of a final region follows proofs/reac-pw/fuzz_role/lib/A/RPgW6aTail.v at e261793226b4 (tl_val_at), for
+   proofs/reac-pw/fuzz_role/lib/A/RPgEntBKit.v (eb_SH, eb_shok, eb_rE), and reading a
+   stored value back out of a final region follows proofs/reac-pw/fuzz_role/lib/A/RPgW6aTail.v (tl_val_at), for
    reac-pw/fuzz_rate's image A: rate's pcs, registers and cells; e is two written regions (the header and the three
    bytes after the copied string). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1Tail.v at 32f84792c2a6; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1Tail.v; for image B
    (fuzz_rate.asan-ubsan): the pcs, the registers and the real-frame cells are image B's; the pod object is e62
    (F + 0x210) in the class-4 frame (4, pos); the kind byte and what is left come from the spill cells [R+0x128] and
    [R+0x70]; the three UBSan tests against the cell [R+0x100] are decided by the engine from that cell's closed
    bounds; the prefix c1t_ becomes c1bt_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6bC1TailB.v at a191d52e2a9a for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6bC1TailB.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths changed (lib/AU/Img0.rsegs, lib/A/RPgBase and
    RPgCSpec, lib/AU/RPgSteps.v rl_ names); every pc, register and real-frame cell is role B's: the shadow offset is
    s11, l is in s2 and s8 and e62.body in s10 (the three pinned); the real-frame cells read are [R+0x58] (the

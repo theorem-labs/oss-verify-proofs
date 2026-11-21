@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-31: fuzz_preset: preset's malloc at image B' (#102 pin
    fuzz_preset.asan-ubsan d663f82d7f48, twin c90d4fa54d43) in KEEP form, at B''s record B := lib/Reusable/YD2l.TfibB,
    the cf instance CfImg_B / CfParams_preset.  The B' twin of lib/A/CfMallocKeepA.v.
@@ -9,7 +10,7 @@
    amalloc_realizes_cf_of_parts_m_keep (lib/Reusable/YGcfMallocComposeKeep.v:216) at nmax := cf_malloc_max, al := 8,
    atp := 1, acf := 1 (malloc's call), ARX := YGcfInstBase.ARXq_cf TfibB (fun i => i = as_inst TfibB) at AImg_cgif,
    from:
-   - the wrapper walk: lib/AU/WrapMallocBInst.v:46 wrap_malloc_walk_keep_cf_B, closed, at that same relation (no
+   - the wrapper walk: lib/AU/WrapMallocBInst.v:47 wrap_malloc_walk_keep_cf_B, closed, at that same relation (no
      bridge) and K := WrapMallocBM1.K_B;
    - Allocate: lib/AU/AllocGtopPresetMB.v aalloc_realizes_cf_em_m_TfibB_B;
    - the relation's facts YGcfInstBase.ARXq_cf_ARcf / ARXq_cf_xs, nmax_cf_ok (YGcfMallocComposeE.nmax_cf_ok_of_w),

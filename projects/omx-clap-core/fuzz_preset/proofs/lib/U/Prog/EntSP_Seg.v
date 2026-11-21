@@ -25,7 +25,7 @@ Qed.
 
 (* 0x1383c (rc = 0) on the #102 ubsan pin (twin 27566683952ebd54...): read_members(&doc) (0x13e94, out of line since
    #102; lib/U/Prog/read_members_c.v), then the argument of check_round_trip(&doc) (0x1408c). The doc is at sp + 0.
-   The plain walk of lib/Prog/EntSP_Seg.v (cold/h-rw-pre-4-rw102-ent f3c1596d9c63) at the ubsan addresses. *)
+   The plain walk of lib/Prog/EntSP_Seg.v at the ubsan addresses. *)
 Section D.
 Hypothesis HRM : read_members_contract.
 

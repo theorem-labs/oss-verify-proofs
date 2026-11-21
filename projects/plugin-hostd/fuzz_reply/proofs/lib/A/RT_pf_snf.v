@@ -1,6 +1,6 @@
 (* ___interceptor_snprintf at fuzz_reply.asan: RT_pf_stmt.v snprintf_icpt_stmt, at __wrap_snprintf 0x421dc, assembled
    from pieces that are already proved - no function is walked here:
-   - R4Printf's RELOCATED Bz walk (a working branch 5247aa4d0b9, lib/A/Bz/K/I_snprintfw.v): snprintf_walkA (the
+   - R4Printf's RELOCATED Bz walk (a working branch, lib/A/Bz/K/I_snprintfw.v): snprintf_walkA (the
      trampoline, the frame of 96, the va_start spill of a3..a7 at [q-40, q), TryAsanInitFromRtl, to the call of
      ___interceptor_vsnprintf 0x464e0 with va_list = q-40) and snprintf_walkB (the epilogue);
    - the vsnprintf interceptor's own statement entered at its body 0x464e0, taken as the Section hypothesis VSNI

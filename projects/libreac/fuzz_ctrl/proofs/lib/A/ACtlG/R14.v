@@ -5,14 +5,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 2252 of its 2377 lines of code are new or changed and 886 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R10A.v, with its numbers changed; 2171 of its 2324 lines of code are new or changed and 2224 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/R10.v; 643 of its 727 lines of code are new or changed and 2240 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R14.v -- GLUE for stage seg_R14 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
-   (lib/A/ACtl.v (at head lib/A/ACtl.v:692) (an earlier version, blob c4edf0be7fe, not in this delivery), a Theorem Labs lane's route (C) walk shell (from a working branch 8ce82d7e310)).
+   (lib/A/ACtl.v (at head lib/A/ACtl.v:692) (an earlier version, blob c4edf0be7fe, not in this delivery), a Theorem Labs lane's route (C) walk shell (from a working branch)).
    Written by a Theorem Labs lane (claimed in FREE-PIECES.md (a working note, not in this delivery));
    single writer.
    rule 24: no function proved.  proves no function (kind: segment lemma).
    Pattern: glue-pattern.md sections 3, 4, 8 (a working note, not in this delivery), for a cgif-form callee,
-   shape of lib/A/ACtlG/A5.v; the callee site follows a Theorem Labs lane's lib/A/ACtlG/P6.v (a working branch
-   708ab9aac34), the one walk stage that already cites a cgif-form callee spec.
+   shape of lib/A/ACtlG/A5.v; the callee site follows a Theorem Labs lane's lib/A/ACtlG/P6.v (a working branch),
+   the one walk stage that already cites a cgif-form callee spec.
 
    WHAT IT PROVES
      glue_seg_R14 : forall POST (b : nat),
@@ -27,11 +28,11 @@
      -> glue_seg_R14: 0 named, 0 by address, 0 related, 0 lemmas; seg_R14: 0 named, 6 lemmas (ctrl's own Seg/R14.v
         twins); r14_call / r14_head: 0 named, 8 unreleased (a Theorem Labs lane's Seg/R14F.v heads); reac_box_catalogue_match:
         4 named, 2 by address, 2 lemmas (the callee's contract files and a Theorem Labs lane's spec); treac_box_catalogue_match_spec:
-        0 released, 2 unreleased (a Theorem Labs lane's cmg heads).  Index v5 built 04:26Z (f4cc67298b7, ossv/recipes
-        e5e7eba2cc0), lemma index 05:56Z, cold heads 06:06Z.  No released glue of this stage exists; the pieces below
+        0 released, 2 unreleased (a Theorem Labs lane's cmg heads).  Index v5 built 04:26Z (),
+        lemma index 05:56Z, cold heads 06:06Z.  No released glue of this stage exists; the pieces below
         are cited by name.
-   At ossv/recipes c5e779efe8c (2026-10-31), r14_call / r14_head / treac_box_catalogue_match_spec are defined only in
-   this unit (lib/A/Prog/Seg/R14.v:712 / :671, lib/A/Prog/C_reac_box_catalogue_match.v:116,
+   At (2026-10-31), r14_call / r14_head / treac_box_catalogue_match_spec are defined only in
+   this unit (lib/A/Prog/Seg/R14.v:712 / :671, lib/A/Prog/C_reac_box_catalogue_match.v:117,
    lib/B/Prog/C_reac_box_catalogue_match.v:77).
 
    THE RUNS (all Required, none assumed)
@@ -44,8 +45,8 @@
      PROVED here by stepping.  The base's R14F.v carries no pre / post split of r14_call (its r14_call_F takes the
      callee's contract_F, which the walk does not use), so nothing of r14_call is taken from it.
    - THE CALLEE: a Theorem Labs lane's cgif-form A.Prog.C_reac_box_catalogue_match.treac_box_catalogue_match_spec, Required
-     qualified from the glue base (lib/A/Prog/C_reac_box_catalogue_match.v 7d25cf12319 (the blob this tree had at release c5e779efe8c), a Theorem Labs lane's statement-only split,
-     a working branch 43728b681c5), as the named Section hypothesis CM_SPEC.  The file states the spec only
+     qualified from the glue base (lib/A/Prog/C_reac_box_catalogue_match.v 7d25cf12319 (the blob this tree had at release), a Theorem Labs lane's statement-only split,
+     a working branch), as the named Section hypothesis CM_SPEC.  The file states the spec only
      (no pb_ theorem), so CM_SPEC stays open.
      No post stretch: the spec's continuation returns to 0x8183c, the exit cut.
 
@@ -85,7 +86,7 @@
      GLOBS := [(A_CM_TBL, CM_ROWS)] (the spec's own `In (A_CM_TBL, CM_ROWS) GLOBS` premise).
 
    START-UP TABLE VALUES READ (a Theorem Labs lane 06:06Z): TFIB_ERRNO = 0x5db76c and Tfib_owned_static (through A.AF0m's ts_errno /
-   ts_owned), both checked against the RECORD AF0m at a working branch e56483f863b: errno equal;
+   ts_owned), both checked against the RECORD AF0m at a working branch: errno equal;
    on the record's owned list no owned range meets [0x9e800, 0x9f4b8).  The proof checks that disjointness by
    computation over whichever list AF0m holds (r14g_cat_not_owned below).
 

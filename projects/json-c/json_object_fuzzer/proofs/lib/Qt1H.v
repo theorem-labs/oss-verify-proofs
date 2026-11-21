@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the calls of the set callees (ST_, SD, SS), stack_malloc_full, TOKPARSE, hiA_free, hiA_strdup and tok_reset_level_B_cps discharge it (jo_preA's conjunct for the set callees and TOKPARSE); PE_STATIC_A's conjunct HBTs). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run Fs.
@@ -117,7 +118,7 @@ pose proof (bv_unsigned_in_range 64 sp0) as SP0R. change (bv_modulus 64) with (2
 unfold hstateA.
 eapply ST_ with (A := A) (BS := BS) (LB := LK ++ LB0) (r := r) (lo := lo) (errv := errv);
 [ split; [exact HP|]; rewrite unsigned_lit by lia;
-split; [exact ST|]; split; [exact LO|]; split; [lia|]; split; [exact SP16|]; split; [lia|];
+split; [exact ST|]; split; [exact LO|]; split; [first [assumption | lia]|]; split; [lia|]; split; [exact SP16|]; split; [lia|];
 split; [exact ERR|]; split; [reflexivity | rewrite unsigned_lit by lia; exact Hret2]
 | exact RR | reflexivity |].
 intros ms' md' m' rv (RS & VM' & ST' & HPR' & [errv' ERR']) ERRx RR' HP'.
@@ -490,7 +491,7 @@ step. step. evt_done5.
 pose proof (ca_SETD _ _ _ _ _ _ _ CA) as SD. unfold jo_set_double_A_stmt, JO_SET_DOUBLE_A, JO_SETDBL_STK_A in SD. unfold JO_SETDBL_COSTB_A, JO_SETDBL_COSTD_A in *.
 eapply SD with (A := A) (BS := BS) (LB := LK ++ LB0) (r := r) (lo := lo) (errv := errv1);
 [ split; [exact HP1|]; rewrite unsigned_lit by lia;
-split; [exact ST1|]; split; [exact LO|]; split; [lia|]; split; [exact sp1_16'|]; split; [lia|];
+split; [exact ST1|]; split; [exact LO|]; split; [first [assumption | lia]|]; split; [lia|]; split; [exact sp1_16'|]; split; [lia|];
 split; [exact ERR1|]; split; [reflexivity | vm_compute; reflexivity]
 | exact RR1 | lia | lia | reflexivity |].
 intros ms' md' m' rv A' B' BS' (RS & VM' & ST' & HPR' & [errv' ERR']) [CHB CHD] ERRx RR' HP' BSEQ.
@@ -712,7 +713,7 @@ evt_done5.
 pose proof (ca_SETS _ _ _ _ _ _ _ CA) as SS. unfold jo_set_string_A_stmt, JO_SET_STRING_A, JO_SETSTR_STK_A, jo_setstr_costB in SS. unfold JO_SETSTR_COSTD_A in *.
 eapply SS with (A := A) (BS := BS) (LB := LK ++ LB0) (FRS := [(Fr, 2)]) (B := B) (lo := lo) (p := p) (S := Fr + 96 + 1) (sb := str3) (slack := rest3) (r := r) (errv := errv3).
 - split; [exact HP3|]. rewrite unsigned_lit by lia.
-split; [exact ST3|]. split; [exact LO|]. split; [lia|]. split; [exact sp1_16'|]. split; [lia|].
+split; [exact ST3|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [lia|]. split; [exact sp1_16'|]. split; [lia|].
 split; [exact ERR3|]. split; [reflexivity | vm_compute; reflexivity].
 - exact RR3.
 - split; [exact SB|]. split; [apply Forall_forall; intros b Hb E0; apply NONUL3; replace (Z_to_bv 8 0) with b by (apply bv_eq; rewrite E0; reflexivity); exact Hb|].
@@ -876,7 +877,7 @@ pose proof (ca_SETSL _ _ _ _ _ _ _ CA) as SS. unfold jo_set_string_len_A_stmt, J
 assert (LSB : Z.of_nat (length (firstn (Z.to_nat n3) (str3 ++ Z_to_bv 8 0 :: rest3))) = n3) by (rewrite firstn_length_le by lia; lia).
 eapply SS with (A := A) (BS := BS) (LB := LK ++ LB0) (FRS := [(Fr, 2)]) (B := B) (lo := lo) (p := p) (S := Fr + 160 + 1) (sb := firstn (Z.to_nat n3) (str3 ++ Z_to_bv 8 0 :: rest3)) (r := r) (errv := errv3).
 - split; [exact HP3|]. rewrite unsigned_lit by lia.
-split; [exact ST3|]. split; [exact LO|]. split; [lia|]. split; [exact sp1_16'|]. split; [lia|].
+split; [exact ST3|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [lia|]. split; [exact sp1_16'|]. split; [lia|].
 split; [exact ERR3|]. split; [reflexivity | vm_compute; reflexivity].
 - exact RR3.
 - split; [exact SBn|]. split; [exists Fr, 2; split; [left; reflexivity|]; rewrite Q1Ey.fr_size_2; lia|].
@@ -1006,6 +1007,7 @@ all: rewrite ?unsigned_lit by lia.
 1: cbn [length]; lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA1; Z.div_mod_to_equations; lia.
 1: lia.
@@ -1147,7 +1149,7 @@ assert (GA4 : GA_jo m4) by (exact (GAO m1 m4 _ GA1 MU4 WM4 WOK)).
 evt_done5.
 eapply TPA with (A := A1) (LBc := LB) (FRS := [(Fr, 2)]) (B := B) (sb := Fr + 32 + 1) (lo := lo) (str0 := str1) (slack := rest1) (errv := errv4) (u := UWpaid).
 - split; [exact HP4|]. rewrite unsigned_lit by lia.
-split; [lazymatch goal with H : stk asegs m4 lo sp1 |- _ => exact H end|]. split; [exact LO|]. split; [lia|]. split; [clear - SPA1; Z.div_mod_to_equations; lia|]. split; [lia|].
+split; [lazymatch goal with H : stk asegs m4 lo sp1 |- _ => exact H end|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [lia|]. split; [clear - SPA1; Z.div_mod_to_equations; lia|]. split; [lia|].
 split; [exact ERR4|]. split; [reflexivity | vm_compute; reflexivity].
 - rewrite unsigned_lit by lia. exact SPA1.
 - exact LML.
@@ -1275,7 +1277,7 @@ Hypothesis GA_pres : forall LB SP m m', heap_pres A4H LB SP m m' -> GA m -> GA m
 Hypothesis PUT : put_stmt_A HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1690,7 +1692,7 @@ Proof.
 intros until fc. intros STC WIN PBK COST S0V RAV HV UWK RA K.
 pose proof WIN as (CORE & BASE & LVo & CUR & Eobj). pose proof BASE as (HP1 & ST1 & ERR1 & _).
 pose proof CORE as (_ & _ & _ & _ & _ & _ & _ & _ & FR1).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 assert (SPF : lo <= pf_spf pf - 4096 /\ pf_spf pf mod 16 = 0 /\ pf_spf pf < hiA_top A4L HIx + 64 /\ 0 <= pf_spf pf < 2^62 /\ 0 <= pa_sp0 pa < 2^63).
 { clear - LOS HT Gle Gspf SP0. split; [lia|]. split; [Z.div_mod_to_equations; lia|]. split; [lia|]. split; lia. }
 destruct SPF as (SPF1 & SPF2 & SPF3 & SPF4 & SPF5).
@@ -1699,7 +1701,7 @@ assert (HPa : HEAPA A4L HIx A ((p, n) :: RB) LM ((pa_F pa, 2) :: FRS) B m md).
 { eapply (heapA_perm A4L HIx); [exact HP1 | | apply Permutation_refl | apply Permutation_refl]. exact (perm_blocks_tsF pf q LB0 ts [(p, n)] Eobj). }
 pose proof (pe_uw_at HIx pf pa lo m cb nb pj sv v2 ra2 STC FR1 S0V RAV (proj1 HV) (proj2 HV)) as UWA.
 eapply (hiA_free A4L HIx) with (p := p) (u := UWfp ra2 v2) (lo := lo) (errv := errv);
-[ exact HPa | right; exists n; left; reflexivity | rewrite unsigned_lit by lia; exact ST1 | exact LO | rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; exact SPF1
+[ exact HPa | right; exists n; left; reflexivity | rewrite unsigned_lit by lia; exact ST1 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; exact SPF1
 | rewrite unsigned_lit by lia; exact SPF2 | rewrite unsigned_lit by lia; exact SPF3 | exact ERR1 | reflexivity | reflexivity
 | split; [rewrite !unsigned_lit by lia; apply (uw_at_pre0 _ _ _ _ _ _ UWA); lia | exact UWK] | exact COST
 | cbn [uw_cost]; destruct (p =? 0); exact (proj2 (heapA_budget A4L HIx _ _ _ _ _ _ _ HP1)) | ].
@@ -1748,7 +1750,7 @@ Hypothesis GA_pres : forall LB SP m m', heap_pres A4H LB SP m m' -> GA m -> GA m
 Hypothesis PUT : put_stmt_A HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1784,7 +1786,7 @@ PE_WIN HIx GA pf pa q LB0 LM FRS payload me lo m' md' A' B' (ts_lvl ts lvl_reset
 Proof.
 intros pf pa q LB0 LM FRS payload me lo m m' md md' A A' B B' ts p s BS cb nb pj sv errv dp STC (CORE & BASE & LVo & CUR & Eobj & PP) Ed VM HP2 PP2 TSK2 TOK2 ST2 HPR ERR2 AG.
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
 destruct CUR as (lc & Hlc & BARE). rewrite Ed in Hlc.
 assert (EBLK : pe_blocksA pf q LB0 (tsF (ts_lvl ts lvl_reset) BS) = pe_blocksA pf q LB0 (tsF ts BS)).
 { apply (pe_blocksA_tsF_lvl pf q LB0 ts BS lc lvl_reset); [rewrite Ed; exact Hlc|].
@@ -1986,6 +1988,7 @@ eapply (heapA_perm A4L HIx); [exact HP1' | apply perm_blocks_tsF; exact Eobj0 | 
 { exact TOK1'. }
 { rewrite unsigned_lit by lia. exact ST1'. }
 { exact LO. }
+{ first [assumption | lia]. }
 { rewrite unsigned_lit by lia. unfold put_stk_A. clear - LOS. lia. }
 { rewrite unsigned_lit by lia. clear - Gspf. Z.div_mod_to_equations. lia. }
 { rewrite unsigned_lit by lia. clear - HT Gle. lia. }
@@ -2121,7 +2124,7 @@ Proof.
 intros until fc. intros STC WIN PBK COST S0V RAV HV UWK RA K.
 pose proof WIN as (CORE & BASE & LVo & CUR & Eobj). pose proof BASE as (HP1 & ST1 & ERR1 & _).
 pose proof CORE as (_ & _ & _ & _ & _ & _ & _ & _ & FR1).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 assert (SPF : lo <= pf_spf pf - 4096 /\ pf_spf pf mod 16 = 0 /\ pf_spf pf < hiA_top A4L HIx + 64 /\ 0 <= pf_spf pf < 2^62 /\ 0 <= pa_sp0 pa < 2^63).
 { clear - LOS HT Gle Gspf SP0. split; [lia|]. split; [Z.div_mod_to_equations; lia|]. split; [lia|]. split; lia. }
 destruct SPF as (SPF1 & SPF2 & SPF3 & SPF4 & SPF5).
@@ -2130,7 +2133,7 @@ assert (HPa : HEAPA A4L HIx A ((p, n) :: RB) LM ((pa_F pa, 2) :: FRS) B m md).
 { eapply (heapA_perm A4L HIx); [exact HP1 | | apply Permutation_refl | apply Permutation_refl]. exact (perm_blocks_tsF pf q LB0 ts [(p, n)] Eobj). }
 pose proof (pe_uw_at HIx pf pa lo m cb nb pj sv v2 ra2 STC FR1 S0V RAV (proj1 HV) (proj2 HV)) as UWA.
 eapply (hiA_free A4L HIx) with (p := p) (u := UWfp ra2 v2) (lo := lo) (errv := errv);
-[ exact HPa | right; exists n; left; reflexivity | rewrite unsigned_lit by lia; exact ST1 | exact LO | rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; exact SPF1
+[ exact HPa | right; exists n; left; reflexivity | rewrite unsigned_lit by lia; exact ST1 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; exact SPF1
 | rewrite unsigned_lit by lia; exact SPF2 | rewrite unsigned_lit by lia; exact SPF3 | exact ERR1 | reflexivity | reflexivity
 | split; [rewrite !unsigned_lit by lia; apply (uw_at_pre0 _ _ _ _ _ _ UWA); lia | exact UWK] | exact COST
 | cbn [uw_cost]; destruct (p =? 0); exact (proj2 (heapA_budget A4L HIx _ _ _ _ _ _ _ HP1)) | ].
@@ -2237,7 +2240,7 @@ Proof.
 intros until fc. intros STC WIN PBK INB SZ L32 STR NN COST S0V RAV HV UWK RA K.
 pose proof WIN as (CORE & BASE & LVo & CUR & Eobj). pose proof BASE as (HP1 & ST1 & ERR1 & _).
 pose proof CORE as (_ & _ & _ & _ & _ & _ & _ & _ & FR1).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 assert (SPF : lo <= pf_spf pf - 4096 /\ pf_spf pf mod 16 = 0 /\ pf_spf pf < hiA_top A4L HIx + 64 /\ 0 <= pf_spf pf < 2^62 /\ 0 <= pa_sp0 pa < 2^63).
 { clear - LOS HT Gle Gspf SP0. split; [lia|]. split; [Z.div_mod_to_equations; lia|]. split; [lia|]. split; lia. }
 destruct SPF as (SPF1 & SPF2 & SPF3 & SPF4 & SPF5).
@@ -2248,7 +2251,7 @@ assert (INbuf : In (buf, size) RB) by (unfold RB, pe_blocksA, tstate_blocks; app
 pose proof (pe_uw_at HIx pf pa lo m cb nb pj sv v2 ra2 STC FR1 S0V RAV (proj1 HV) (proj2 HV)) as UWA.
 eapply (hiA_strdup A4L HIx) with (LB := RB) (ab := buf) (nb := size) (src := buf) (str := str) (u := UWfp ra2 v2) (lo := lo) (errv := errv);
 [ exact HPa | exact INbuf | lia | lia | exact STR | exact NN | exact L32 | rewrite unsigned_lit by lia; exact ST1 | exact LO
-| rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; exact SPF1 | rewrite unsigned_lit by lia; exact SPF2 | rewrite unsigned_lit by lia; exact SPF3 | exact ERR1 | reflexivity | reflexivity
+| first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; exact SPF1 | rewrite unsigned_lit by lia; exact SPF2 | rewrite unsigned_lit by lia; exact SPF3 | exact ERR1 | reflexivity | reflexivity
 | rewrite !unsigned_lit by lia; apply (uw_at_pre0 _ _ _ _ _ _ UWA); lia | exact UWK | exact COST
 | cbn [uw_cost]; exact (proj2 (heapA_budget A4L HIx _ _ _ _ _ _ _ HP1)) | ].
 intros ms2 m2 md2 A2 r errv2 RS2 VM2 ST2 HPR2 ERR2 OUT2.
@@ -2406,7 +2409,7 @@ Proof.
 intros until fc. intros STC WIN PBK INB SZ L32 STR NN COST S0V RAV HV UWK RA K.
 pose proof WIN as (CORE & BASE & LVo & CUR & Eobj). pose proof BASE as (HP1 & ST1 & ERR1 & _).
 pose proof CORE as (_ & _ & _ & _ & _ & _ & _ & _ & FR1).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 assert (SPF : lo <= pf_spf pf - 4096 /\ pf_spf pf mod 16 = 0 /\ pf_spf pf < hiA_top A4L HIx + 64 /\ 0 <= pf_spf pf < 2^62 /\ 0 <= pa_sp0 pa < 2^63).
 { clear - LOS HT Gle Gspf SP0. split; [lia|]. split; [Z.div_mod_to_equations; lia|]. split; [lia|]. split; lia. }
 destruct SPF as (SPF1 & SPF2 & SPF3 & SPF4 & SPF5).
@@ -2417,7 +2420,7 @@ assert (INbuf : In (buf, size) RB) by (unfold RB, pe_blocksA, tstate_blocks; app
 pose proof (pe_uw_at HIx pf pa lo m cb nb pj sv v2 ra2 STC FR1 S0V RAV (proj1 HV) (proj2 HV)) as UWA.
 eapply (hiA_strdup A4L HIx) with (LB := RB) (ab := buf) (nb := size) (src := buf) (str := str) (u := UWfp ra2 v2) (lo := lo) (errv := errv);
 [ exact HPa | exact INbuf | lia | lia | exact STR | exact NN | exact L32 | rewrite unsigned_lit by lia; exact ST1 | exact LO
-| rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; exact SPF1 | rewrite unsigned_lit by lia; exact SPF2 | rewrite unsigned_lit by lia; exact SPF3 | exact ERR1 | reflexivity | reflexivity
+| first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; exact SPF1 | rewrite unsigned_lit by lia; exact SPF2 | rewrite unsigned_lit by lia; exact SPF3 | exact ERR1 | reflexivity | reflexivity
 | rewrite !unsigned_lit by lia; apply (uw_at_pre0 _ _ _ _ _ _ UWA); lia | exact UWK | exact COST
 | cbn [uw_cost]; exact (proj2 (heapA_budget A4L HIx _ _ _ _ _ _ _ HP1)) | ].
 intros ms2 m2 md2 A2 r errv2 RS2 VM2 ST2 HPR2 ERR2 OUT2.

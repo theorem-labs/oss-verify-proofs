@@ -1,37 +1,39 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed grant_ok_na_pin_of_grant_ok; removed grant_ok_na_pin_eq; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/KitNodesS.v, lines 10, 27-34. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
-From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import AsanAcct.   (* [comment removed for export] *)
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import AsanAcct.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import
   SimInv ExitSim PropExec CatExec CatSim MmapSim AllocSim Scfg ShapeAlg SpinAlg Nodes RefNodes.
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
-(* [comment removed for export] *)
 Definition alloc_enomem_sysno_b (n : Z) : bool :=
   match injected_arm n with Some _ => true | None => false end.
-(* [comment removed for export] *)
+
 Definition alloc_mm_sysno_b (n : Z) : bool := (n =? 222)%Z || (n =? 226)%Z.
 
-(* [comment removed for export] *)
 Definition grant_ok_na_pin (m : Model) (a : word) (n : Z) : bool :=
   (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n).
 
-Lemma grant_ok_na_pin_eq : forall hint m a n, grant_ok_na_pin m a n = grant_ok_na hint m a n.
-Proof. reflexivity. Qed.
-
+(* 08b1429: [RefNodes.grant_ok_na] now leads with the placement test
+   ([Placement.linux_place_is]), so [grant_ok_na_pin] (admissibility only) is its tail,
+   not equal to it. *)
 Lemma grant_ok_na_pin_of_grant_ok : forall hint m a n, grant_ok hint m a n = true -> grant_ok_na_pin m a n = true.
-Proof. intros hint m a n H. rewrite (grant_ok_na_pin_eq hint). apply grant_ok_grant_ok_na. exact H. Qed.
+Proof.
+  intros hint m a n H. unfold grant_ok in H. unfold grant_ok_na_pin.
+  rewrite !andb_true_iff in H. destruct H as [[[[[_ H1] H2] H3] H4] _].
+  rewrite H1, H2, H3, H4. reflexivity.
+Qed.
 
 Lemma grant_na_pin_not_errno : forall m a n,
   (0 <= n)%Z -> grant_ok_na_pin m a n = true -> errno_ret_in mmap_errnos a = false.
@@ -60,7 +62,6 @@ Lemma alloc_nonrefusal_step : forall ms model x8 eff,
   ~ spurious_refusal_cfg scfg (sys_input segs ms x8) model eff.
 Proof. intros. apply not_spurious_nonrefusal. assumption. Qed.
 
-(* [comment removed for export] *)
 Lemma sstep_cfg_of_check_noacc : forall ms model x8 eff m' evs,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
@@ -78,7 +79,6 @@ Proof.
   - rewrite Hacc. apply materialize_model_accesses_nil.
 Qed.
 
-(* [comment removed for export] *)
 Lemma node_chk_ev_gen : forall ms model x8 (I : Type)
     (effs : I -> SyscallEffect) (ms' : I -> Model) (evs : I -> list event),
   m_halted model = None -> ms_svc_pending ms = Some x8 ->
@@ -108,7 +108,6 @@ Proof.
     + exfalso. exact (Hnu eff Hc).
 Qed.
 
-(* [comment removed for export] *)
 Lemma node_chk_ev_gen_noacc : forall ms model x8 (I : Type)
     (effs : I -> SyscallEffect) (ms' : I -> Model) (evs : I -> list event),
   (forall m, materialize_model_accesses m [] = Some m) ->
@@ -138,7 +137,6 @@ Proof.
     + exfalso. exact (Hnu eff Hc).
 Qed.
 
-(* [comment removed for export] *)
 Lemma refusal_b_mmap_sys : forall ms x8 model r,
   bv_unsigned x8 = 222%Z ->
   refusal_b (sys_input segs ms x8) model r = errno_ret_in mmap_errnos r.
@@ -149,7 +147,6 @@ Qed.
 Section Alloc.
 Hypothesis Halloc : sc_alloc scfg = false.
 
-(* [comment removed for export] *)
 Lemma alloc_refusal_unforced : forall ms model x8 eff effS mS evS,
   alloc_mm_sysno_b (bv_unsigned x8) = true ->
   check_syscall (sys_input segs ms x8) effS model = CheckOk mS evS ->

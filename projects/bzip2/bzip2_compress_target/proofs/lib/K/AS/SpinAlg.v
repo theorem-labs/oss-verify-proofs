@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of mmap, RomBase.sys_rob in the srz node and munmap over the config-filtered step). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -10,6 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.K.AS Require Import
   SimInv ExitSim CatSim MmapSim ShapeAlg DivergeSim LazyFrame SymTac.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common Require Import CfgStep.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -23,6 +25,7 @@ Inductive srealizes : config -> TSet -> Prop :=
 | srz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                     (T : I -> TSet) (i0 : I),
     node_ok segs c I evs nx ->
+    RomBase.sys_rob segs c ->   (* LPS 08b1429: the node's syscall reads the same over a larger backing *)
     (forall i, srealizes (nx i) (T i)) ->
     srealizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | srz_halt : forall c,
@@ -40,8 +43,8 @@ Lemma srealizes_of_realizes : forall c T,
   realizes segs c T -> srealizes c T.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
-  - exact (srz_node c I evs nx T i0 Hnode IH).
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
+  - exact (srz_node c I evs nx T i0 Hnode Hrob IH).
   - exact (srz_halt c Hh).
   - exact (srz_conseq c T T' IH Heq).
 Qed.
@@ -55,7 +58,7 @@ Proof. intros c [Hspin Hh]. exact (srz_spin c Hspin Hh). Qed.
 Lemma srealizes_nonempty : forall c T, srealizes c T -> T [].
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hspin Hh | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
@@ -67,7 +70,7 @@ Lemma srealizes_pclosed : forall c T, srealizes c T ->
   forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hspin Hh | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
@@ -86,7 +89,7 @@ Lemma srealizes_star_only : forall c T, srealizes c T ->
   forall tr c', star_cfg segs kit_cfg c tr c' -> T tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hspin Hh | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
@@ -108,7 +111,7 @@ Lemma srealizes_admits : forall c T, srealizes c T ->
   forall tr, T tr -> obs_trace_cfg segs kit_cfg c tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hspin Hh | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
@@ -140,7 +143,7 @@ Lemma srealizes_step : forall c T e c',
   srealizes c T -> sstep_cfg segs kit_cfg c e (SNext c') -> exists T', srealizes c' T'.
 Proof.
   intros c T e c' H; revert e c';
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hspin Hh | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
@@ -159,7 +162,7 @@ Lemma srealizes_no_sserror : forall c T e,
   srealizes c T -> ~ sstep_cfg segs kit_cfg c e SError.
 Proof.
   intros c T e H; revert e;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hspin Hh | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
@@ -187,12 +190,13 @@ Qed.
 (* [comment removed for export] *)
 Lemma srz_silent1 : forall c c' T,
   node_ok segs c unit (fun _ => []) (fun _ => c') ->
+  RomBase.sys_rob segs c ->
   srealizes c' T ->
   srealizes c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (srz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -245,19 +249,22 @@ Lemma node_munmap : forall ms model x8,
                                   model)).
 Proof.
   intros ms model x8 Hh Hlazy Hsvc Hno Hargs.
-  apply node_ok_of_u; [apply (kit_pending_on_sysno segs ms model x8 215 Hsvc Hno); reflexivity |].
+  (* munmap is an alloc-family injected call at the revision: the node
+     lives over the config-filtered step (see [sstep_cfg_munmap_inv]). *)
   split.
-  - intros []. apply (sstep_syscall segs ms model x8 (munmap_eff ms)
+  - intros []. apply (sstep_cfg_syscall segs kit_cfg ms model x8 (munmap_eff ms)
                         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
                         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
     + exact Hh.
     + exact Hsvc.
     + apply munmap_ok; assumption.
+    + apply spurious_refusal_not_refusal. unfold munmap_eff. cbn [eff_ret].
+      exact (munmap_ret0_not_refusal segs ms model x8 Hno).
     + rewrite munmap_model_halted; exact Hh.
     + apply materialize_model_accesses_no_lazy.
       exact (munmap_model_no_lazy _ _ _ Hlazy).
   - intros e st Hss.
-    destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
+    destruct (sstep_cfg_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
       as [-> ->].
     exists tt. split; reflexivity.
 Qed.
@@ -311,6 +318,12 @@ Hypothesis Hfd : fd1chan model.
 Hypothesis Hsvc : ms_svc_pending ms = Some x8.
 Hypothesis Hno : bv_unsigned x8 = 222%Z.
 Hypothesis Hargs : mmap_args_ok ms.
+(* LPS 727298f3 (#144/#146): a declined placement above [State.alloc_top] is
+   unmodeled, so [check_mmap] is a conditional on [place_declined_b]; the
+   hypothesis is the model's own, 727298f3:theories/Common/SpinAlg.v:832. *)
+Hypothesis Hdecl :
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false.
 (* [comment removed for export] *)
 Hypothesis Hrefuse : forall e, In e mmap_errnos ->
   to_spin segs (advance_past_svc (set_gpr0 ms (errno_ret e))) model.

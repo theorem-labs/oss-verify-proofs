@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: EB, VB and wrap_mem take the launch's inputs, mfacts' reserved list adds the vDSO pair VD with mf_resx and mf_kern, and mfacts carries the launch's channel reader (mf_rdr), mmap placement goes through grant_ok_na_pin with the NULL hint, a page-multiple length and the 0x154555557000 bound (placed, pru_mod, gap_weight_vdso, region_free_sub and vdso_top_launch added), and rg_block matches the four-argument EB, in both copies. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -91,6 +92,37 @@ Proof.
   split; apply negb_true_iff; apply andb_false_iff; destruct Hap; [left | right | left | right]; apply Z.ltb_ge; lia.
 Qed.
 
+(* LPS 727298f3: the mmap length [grant_ok_na_pin] places is a page multiple. *)
+Lemma pru_mod : forall len, page_round_up_Z len mod page_size = 0.
+Proof. intros len. unfold page_round_up_Z, page_size. apply Z_mod_mult. Qed.
+
+(* The launch's vDSO pair ([State.init_reserved]) weighs at most two gaps and its twenty pages
+   in the placement scan ([grant_exists_between]). *)
+Lemma gap_weight_vdso : forall kb t nZ, 0 <= nZ ->
+  gap_weight nZ (vdso_reserved kb t) <= 2 * (nZ + 4095) + 81920.
+Proof.
+  intros kb t nZ HnZ. unfold vdso_reserved. cbv zeta.
+  pose proof (vdso_text_pages_pos kb). pose proof (vdso_text_pages_le kb).
+  destruct (t - vdso_len kb <? page_size); cbn [gap_weight]; [lia|].
+  rewrite !u_small by (unfold vdso_vvar_pages, page_size; lia). unfold vdso_vvar_pages, page_size. lia.
+Qed.
+
+(* A range inside a region that misses every entry of a list misses them too. *)
+Lemma region_free_sub : forall l (b n lo m : word),
+  region_free l b n = true -> bv_unsigned b <= bv_unsigned lo ->
+  bv_unsigned lo + bv_unsigned m <= bv_unsigned b + bv_unsigned n -> region_free l lo m = true.
+Proof.
+  intros l b n lo m H H1 H2. apply RefNodes.region_free_intro. intros qb qs Hq.
+  pose proof (RefNodes.region_free_In l b n qb qs H Hq). lia.
+Qed.
+
+(* What a placement gives a range ([grant_ok_na_pin_unpack]'s conclusion at LPS 727298f3, where
+   [grant_ok_na_pin] is Linux's own answer for the hint); a brk growth gives the same facts
+   ([brk_grow_adm_unpack]). *)
+Definition placed (m : Model) (a : word) (n : Z) : Prop :=
+  bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + n <= alloc_top (m_vmmaps m)
+  /\ region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n) = true.
+
 Section Theorems.
   Variables (sp brk mbase : word) (draw : EntryDraw) (lim : Z) (inp : ProcInput).
   Hypothesis VI : valid_input inp.
@@ -104,26 +136,33 @@ Section Theorems.
 
   #[using="brk mbase draw inp VI VE"] Lemma SL' : 0x7fff80000000 <= usp. Proof. exact (SL sp brk mbase draw inp VI VE). Qed.
   #[using="brk mbase draw inp VI VE"] Lemma SH' : usp <= 0x800000000000. Proof. exact (SH sp brk mbase draw inp VI VE). Qed.
+  (* The launch's vDSO pair: [State.init_reserved] appends it to the binary's reservations. *)
+  Definition VD : list (word * word) :=
+    vdso_reserved (in_kernel inp) (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size))).
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
+  (* [vals0] is 23 entries at 75d69e00, not 7, so the slots above it move:
+     V_TLS/V_TID/V_CANARY are 23/24/25 (A3/BootKn1__A3.v) and [js] starts
+     at 23+3+NPL = 32.  [entry] is the start PC, spelled as the landed
+     E2/AS/MainEntry__AS.v:670 spells it. *)
   Definition VB (a tid c : word) (pl : placements) (js : list word) : list word :=
-    vals0 PH sp draw argv envp uid hw ++ [a; tid; c] ++ pl_list pl ++ js.
-  Definition EB (a tid c : word) (pl : placements) (js : list word) : env := Env (vals_ev (VB a tid c pl js)) (blobs0 draw argv).
+    vals0 inp mbase (Z_to_bv 64 (Z.of_N PC0)) sp draw ++ [a; tid; c] ++ pl_list pl ++ js.
+  Definition EB (a tid c : word) (pl : placements) (js : list word) : env := Env (vals_ev (VB a tid c pl js)) (blobs0 inp draw).
 
-  #[using="Type"] Lemma EB_EJ : forall a tid c pl js, EB a tid c pl js = EJ sp draw inp a tid c pl js.
+  #[using="Type"] Lemma EB_EJ : forall a tid c pl js, EB a tid c pl js = EJ sp mbase draw inp a tid c pl js.
   Proof. reflexivity. Qed.
-  #[using="Type"] Lemma EB_app : forall a tid c pl js ks, EB a tid c pl (js ++ ks) = Env (vals_ev (VB a tid c pl js ++ ks)) (blobs0 draw argv).
+  #[using="Type"] Lemma EB_app : forall a tid c pl js ks, EB a tid c pl (js ++ ks) = Env (vals_ev (VB a tid c pl js ++ ks)) (blobs0 inp draw).
   Proof. intros. unfold EB, VB. rewrite <- !app_assoc. reflexivity. Qed.
   #[using="Type"] Lemma ev_EB_sp : forall a tid c pl js, ev (EB a tid c pl js) 0%nat = sp. Proof. reflexivity. Qed.
   #[using="Type"] Lemma ev_EB_tls : forall a tid c pl js, ev (EB a tid c pl js) V_TLS = a. Proof. reflexivity. Qed.
-  #[using="usp"] Lemma length_VB : forall a tid c pl js, length (VB a tid c pl js) = (16 + length js)%nat.
+  #[using="usp"] Lemma length_VB : forall a tid c pl js, length (VB a tid c pl js) = (32 + length js)%nat.
   Proof. intros. unfold VB. rewrite !length_app. cbn. unfold vals0. cbn. lia. Qed.
-  #[using="usp"] Lemma ev_EB_js : forall a tid c pl js k, ev (EB a tid c pl js) (16 + k)%nat = nth k js (Z_to_bv 64 0).
+  #[using="usp"] Lemma ev_EB_js : forall a tid c pl js k, ev (EB a tid c pl js) (32 + k)%nat = nth k js (Z_to_bv 64 0).
   Proof.
     intros. unfold EB, VB. cbn [ev].
-    replace (16 + k)%nat with (length (vals0 PH sp draw argv envp uid hw ++ [a; tid; c] ++ pl_list pl) + k)%nat
+    replace (32 + k)%nat with (length (vals0 inp mbase (Z_to_bv 64 (Z.of_N PC0)) sp draw ++ [a; tid; c] ++ pl_list pl) + k)%nat
       by (rewrite !length_app; cbn; unfold vals0; cbn; lia).
     rewrite (app_assoc _ [a; tid; c]), (app_assoc _ (pl_list pl)), vals_ev_app_r. reflexivity.
   Qed.
@@ -133,7 +172,7 @@ Section Theorems.
   (* [comment removed for export] *)
   Record mfacts (E : env) (tid : word) (L : ledger) (mdl : Model) : Prop := MFacts {
     mf_halted : m_halted mdl = None;
-    mf_res    : vm_reserved (m_vmmaps mdl) = segments_reserved SEGS;
+    mf_res    : vm_reserved (m_vmmaps mdl) = segments_reserved SEGS ++ VD;
     mf_isp    : vm_init_sp (m_vmmaps mdl) = sp;
     mf_lim    : vm_limit (m_vmmaps mdl) = lim;
     mf_sbrk   : vm_start_brk (m_vmmaps mdl) = brk;
@@ -146,15 +185,23 @@ Section Theorems.
     mf_fds    : m_fds mdl = FDS0;
     mf_tid    : m_tid mdl = Some tid;
     mf_wf     : model_ivs_wf mdl;
-    mf_na     : na_clear mdl }.
+    mf_na     : na_clear mdl;
+    (* every ledger map is apart from every reserved entry, the binary's and the launch's vDSO pair *)
+    mf_resx   : forall iv, In iv (vm_maps (m_vmmaps mdl)) -> region_free (vm_reserved (m_vmmaps mdl)) (fst iv) (snd iv) = true;
+    (* the launch's kernel build, which no step changes (the vDSO pair's size reads it) *)
+    mf_kern   : m_kernel mdl = in_kernel inp;
+    (* the launch's channel reader, seeded by [init_model] and written by no step *)
+    mf_rdr    : m_channel_reader mdl = in_channel_reader inp }.
 
   #[using="Type"] Lemma mfacts_sbm : forall E tid L m m', mfacts E tid L m -> same_but_materialized m m' -> mfacts E tid L m'.
   Proof.
-    intros E tid L m m' [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15] HS.
+    intros E tid L m m' [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18] HS.
     pose proof (same_but_materialized_frame m m' HS) as (_ & Svm & Slz & _ & _ & _ & _ & _ & Sfds & _ & _ & Sfs & Sh & Stid & _ & _ & Se).
     constructor; rewrite ?Svm, ?Slz, ?Sfds, ?Sfs, ?Sh, ?Stid, ?Se; try assumption.
     - unfold model_ivs_wf in *. rewrite Svm, Slz. exact F14.
     - unfold na_clear in *. rewrite Svm. exact F15.
+    - unfold same_but_materialized in HS. rewrite HS. exact F17.
+    - unfold same_but_materialized in HS. rewrite HS. exact F18.
   Qed.
 
   #[using="Type"] Lemma ivs_apart_lits : forall l, ivs_apart l <-> OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.A3RW__A3.BootLedgerA.apart_all l.
@@ -164,13 +211,37 @@ Section Theorems.
     ledger_vars_lt (length (VB a tid c pl js)) L = true ->
     mfacts (EB a tid c pl js) tid L m -> mfacts (EB a tid c pl (js ++ ks)) tid L m.
   Proof.
-    intros a tid c pl js ks L m HL [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15].
+    intros a tid c pl js ks L m HL [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18].
     unfold ledger_vars_lt in HL.
     constructor; try assumption; rewrite EB_app; unfold EB in *; rewrite dl_app_env by assumption; assumption.
   Qed.
 
   #[using="Type"] Lemma mfacts_alloc_top : forall E tid L m, mfacts E tid L m -> alloc_top (m_vmmaps m) = usp - stack_max_size.
   Proof. intros E tid L m F. unfold alloc_top. rewrite (mf_isp _ _ _ _ F). reflexivity. Qed.
+
+  (* The model's own vDSO top is the one [State.init_reserved] placed the launch's pair under:
+     [vm_mmap_base] and [vm_init_sp] never change, and the base is a page. *)
+  #[using="draw VI VE usp"] Lemma vdso_top_launch : forall E tid L m, mfacts E tid L m ->
+    vdso_top (m_vmmaps m) = page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)).
+  Proof.
+    intros E tid L m F. destruct (VE48 sp brk mbase draw inp VI VE) as (_ & _ & [_ [_ Hmal]] & _).
+    unfold vdso_top, mmap_top. rewrite (mf_mb _ _ _ _ F), (mfacts_alloc_top _ _ _ _ F). unfold usp.
+    set (x := bv_unsigned sp - stack_max_size).
+    assert (Hx : page_round_down_Z x <= x < page_round_down_Z x + 4096)
+      by (unfold page_round_down_Z, page_size; pose proof (Z.div_mod x 4096 ltac:(lia)); pose proof (Z.mod_pos_bound x 4096 ltac:(lia)); lia).
+    assert (Hpd : forall y, y mod 4096 = 0 -> page_round_down_Z y = y)
+      by (intros y Hy; unfold page_round_down_Z, page_size; pose proof (Z.div_mod y 4096 ltac:(lia)); lia).
+    assert (Hpx : page_round_down_Z x mod 4096 = 0) by (unfold page_round_down_Z, page_size; apply Z_mod_mult).
+    unfold page_size in Hmal.
+    destruct (Z.le_gt_cases (bv_unsigned mbase) (page_round_down_Z x)) as [C|C].
+    - rewrite (Z.min_l _ (page_round_down_Z x)) by exact C. rewrite (Z.min_l (bv_unsigned mbase) x) by lia. reflexivity.
+    - rewrite (Z.min_r _ (page_round_down_Z x)) by lia.
+      assert (Hxm : x < bv_unsigned mbase).
+      { pose proof (Z.div_mod (bv_unsigned mbase) 4096 ltac:(lia)) as Dm.
+        assert (Hb : page_round_down_Z x = x / 4096 * 4096) by reflexivity.
+        lia. }
+      rewrite (Z.min_r (bv_unsigned mbase) x) by lia. apply Hpd. exact Hpx.
+  Qed.
 
   (* [comment removed for export] *)
   Definition map_ok (E : env) (p : expr * Z) : Prop :=
@@ -252,7 +323,7 @@ Section Theorems.
                (R : bvmap 5 word) (M : word -> option byte) (mdl : Model) : Prop := BootS {
     s_regs  : regs_ok (EB a tid c pl js) sr R;
     s_know  : know_ok SEGS (EB a tid c pl js) (mrestrict H M) kn;
-    s_above : forall x : word, usp <= bv_unsigned x -> M x = wrap_mem PH sp argv envp uid hw draw x;
+    s_above : forall x : word, usp <= bv_unsigned x -> M x = wrap_mem inp mbase PH (Z_to_bv 64 (Z.of_N PC0)) sp draw x;
     s_hid   : hf_ok H M hc;
     s_lazy  : m_vm_lazy mdl = lz;
     s_minv  : MInv A mdl;
@@ -291,10 +362,10 @@ Section Theorems.
     log_below_b 0%nat lows log = true ->
     lows_ok (EB a tid c pl js) usp lows ->
     (forall x : word, usp <= bv_unsigned x -> H x = false) ->
-    (forall x : word, usp <= bv_unsigned x -> M x = wrap_mem PH sp argv envp uid hw draw x) ->
+    (forall x : word, usp <= bv_unsigned x -> M x = wrap_mem inp mbase PH (Z_to_bv 64 (Z.of_N PC0)) sp draw x) ->
     hf_ok H M hc ->
     let M0 := munrestrict H M (mem_denot (EB a tid c pl js) (mrestrict H M) log) in
-    (forall x : word, usp <= bv_unsigned x -> M0 x = wrap_mem PH sp argv envp uid hw draw x)
+    (forall x : word, usp <= bv_unsigned x -> M0 x = wrap_mem inp mbase PH (Z_to_bv 64 (Z.of_N PC0)) sp draw x)
     /\ hf_ok H M0 hc.
   Proof.
     intros H a tid c pl js M log hc lows Hlog Hlows Hvis HA HZ M0. pose proof SL'. pose proof SH'. split.
@@ -338,16 +409,25 @@ Section Theorems.
   Proof. vmeq_refl. Qed.
 
   (* [comment removed for export] *)
+  (* LPS 727298f3: the NULL hint's placement is searched below [mmap_top], which the launch puts at
+     or above [mmap_base_min]; the vDSO pair, reserved just below it, is in the scan's weight. *)
   #[using="draw VI VE usp"] Lemma grant_exists_L : forall E tid L mdl nZ,
-    mfacts E tid L mdl -> 0 < nZ -> sivs_sizes_ok (l_maps L) = true ->
-    IMG_HI + nZ + gws nZ (l_maps L) <= 0x7fff80000000 - stack_max_size ->
-    exists p, grant_ok_na_pin mdl p nZ = true.
+    mfacts E tid L mdl -> 0 < nZ -> nZ mod page_size = 0 -> sivs_sizes_ok (l_maps L) = true ->
+    IMG_HI + nZ + gws nZ (l_maps L) + 2 * (nZ + 4095) + 81920 <= 0x154555557000 ->
+    exists p, grant_ok_na_pin (Z_to_bv 64 0) mdl p nZ = true.
   Proof.
-    intros E tid L mdl nZ F HnZ Hs Hw. pose proof SL' as SL. pose proof SH' as SH.
-    apply (grant_exists_between mdl nZ IMG_HI HnZ ltac:(unfold IMG_HI; lia) ltac:(reflexivity)).
-    rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), (mfacts_alloc_top _ _ _ _ F).
-    rewrite filter_app, reserved_dead_above, app_nil_l.
+    intros E tid L mdl nZ F HnZ Hnm Hs Hw. pose proof SL' as SL. pose proof SH' as SH.
+    destruct (VE48 sp brk mbase draw inp VI VE) as (_ & _ & [Hmb _] & _).
+    assert (Htop : 0x154555557000 <= mmap_top (m_vmmaps mdl)).
+    { unfold mmap_top. rewrite (mf_mb _ _ _ _ F), (mfacts_alloc_top _ _ _ _ F).
+      unfold mmap_base_min in Hmb. unfold page_round_down_Z, page_size, stack_max_size, usp in *.
+      Z.div_mod_to_equations. lia. }
+    apply (grant_exists_between (Z_to_bv 64 0) mdl nZ IMG_HI HnZ Hnm ltac:(unfold IMG_HI, page_size; lia) ltac:(reflexivity)).
+    rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F).
+    rewrite !filter_app, reserved_dead_above, app_nil_l, gap_weight_app.
     pose proof (gap_weight_filter_le nZ (live_at IMG_HI) (dl E (l_maps L)) ltac:(lia)) as Hle.
+    pose proof (gap_weight_filter_le nZ (live_at IMG_HI) VD ltac:(lia)) as Hle2.
+    assert (Hvd : gap_weight nZ VD <= 2 * (nZ + 4095) + 81920) by (unfold VD; apply gap_weight_vdso; lia).
     rewrite (gap_weight_dl E nZ (l_maps L) Hs) in Hle. unfold usp in *. lia.
   Qed.
 
@@ -360,21 +440,21 @@ Section Theorems.
 
   #[using="draw VI VE usp"] Lemma DS_std_claims : forall E tid L mdl nZ,
     mfacts E tid L mdl -> H_in_maps H2 E L -> ev E 0%nat = sp -> sivs_sizes_ok (l_maps L) = true -> 0 < nZ ->
-    dsj_claims E (fun p => grant_ok_na_pin mdl p nZ = true) nZ (DS_std L).
+    dsj_claims E (fun p => placed mdl p nZ) nZ (DS_std L).
   Proof.
     intros E tid L mdl nZ F HSB Hsp Hs HnZ. pose proof SL' as SL. pose proof SH' as SH.
     unfold dsj_claims, DS_std, DS_maps. apply Forall_app. split.
     - constructor; [|constructor; [|constructor; [|constructor]]]; cbn [fst snd]; intros p Hp;
-        destruct (grant_ok_na_pin_unpack _ _ _ Hp) as (Hal & Hpos & Htop & Hrf);
+        destruct Hp as (Hal & Hpos & Htop & Hrf);
         rewrite (mfacts_alloc_top _ _ _ _ F) in Htop; unfold estart, elenZ; cbn [a_base a_off edenot].
       + rewrite Hsp. unfold stack_max_size in Htop. rewrite u_small by lia. unfold usp in *. lia.
-      + rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app in Hrf. apply andb_prop in Hrf as [Hrf _].
+      + rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app, region_free_app in Hrf. apply andb_prop in Hrf as [Hrf _]. apply andb_prop in Hrf as [Hrf _].
         pose proof (u64_range p). pose proof img_hull as IH.
         rewrite !u_small by (unfold A_img_lo, A_img_hi; lia). change (bv_unsigned (Z_to_bv 64 0)) with 0.
         destruct (reserved_apart p nZ HnZ ltac:(unfold stack_max_size, usp in *; lia) Hrf); lia.
       + (* [comment removed for export] *)
         pose proof (u64_range p) as Hpr. unfold SHB_LO, SHB_HI. rewrite !u_small by lia. change (bv_unsigned (Z_to_bv 64 0)) with 0.
-        rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app in Hrf. apply andb_prop in Hrf as [_ Hrf].
+        rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app, region_free_app in Hrf. apply andb_prop in Hrf as [_ Hrf].
         destruct (Z.lt_ge_cases (bv_unsigned p + nZ) (0x7fff7000 + 1)) as [|C1]; [lia|].
         destruct (Z.lt_ge_cases (bv_unsigned p) 0x10007fff8000) as [C2|]; [|lia]. exfalso.
         set (xz := Z.max (bv_unsigned p) 0x7fff7000).
@@ -388,8 +468,8 @@ Section Theorems.
                       ltac:(unfold dl; apply in_map_iff; exists (e, n); split; [reflexivity | exact Hin])) as Hov.
         rewrite !u_small in Hov by (unfold stack_max_size in *; lia). lia.
     - apply Forall_forall. intros d Hd p Hp. apply in_map_iff in Hd as ([e n] & <- & Hin). cbn [fst snd].
-      destruct (grant_ok_na_pin_unpack _ _ _ Hp) as (Hal & Hpos & Htop & Hrf).
-      rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app in Hrf. apply andb_prop in Hrf as [_ Hrf].
+      destruct Hp as (Hal & Hpos & Htop & Hrf).
+      rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app, region_free_app in Hrf. apply andb_prop in Hrf as [_ Hrf].
       pose proof (proj1 (forallb_forall _ _) Hs _ Hin) as Hn. cbn [snd] in Hn. apply andb_prop in Hn as [H0 H1].
       apply Z.leb_le in H0. apply Z.ltb_lt in H1.
       rewrite (mfacts_alloc_top _ _ _ _ F) in Htop. unfold stack_max_size, usp in *. pose proof SH.
@@ -402,7 +482,7 @@ Section Theorems.
   (* [comment removed for export] *)
   #[using="draw VI VE usp"] Lemma grant_misses_shadow : forall E tid L mdl p nZ,
     mfacts E tid L mdl -> H_in_maps H2 E L -> ev E 0%nat = sp -> sivs_sizes_ok (l_maps L) = true -> 0 < nZ ->
-    grant_ok_na_pin mdl p nZ = true -> bv_unsigned p + nZ <= SHB_LO \/ SHB_HI <= bv_unsigned p.
+    placed mdl p nZ -> bv_unsigned p + nZ <= SHB_LO \/ SHB_HI <= bv_unsigned p.
   Proof.
     intros E tid L mdl p nZ F HSB Hsp Hs HnZ Hp.
     pose proof (DS_std_claims E tid L mdl nZ F HSB Hsp Hs HnZ) as C. unfold dsj_claims, DS_std in C.
@@ -414,16 +494,18 @@ Section Theorems.
   (* [comment removed for export] *)
   #[using="usp"] Lemma grant_visible_L : forall H E tid L mdl p nZ,
     mfacts E tid L mdl -> H_in_maps H E L -> sivs_sizes_ok (l_maps L) = true -> 0 <= nZ ->
-    grant_ok_na_pin mdl p nZ = true -> range_visible H p nZ.
+    placed mdl p nZ -> range_visible H p nZ.
   Proof.
-    intros H E tid L mdl p nZ F Hin Hs HnZ Hp.
-    apply (grant_visible_of_hidden_mapped H mdl p nZ); [| exact HnZ | exact Hp].
-    intros x Hx. destruct (Hin x Hx) as ([e n] & Hi & Hr). cbn [fst snd] in Hr.
+    intros H E tid L mdl p nZ F Hin Hs HnZ (Hal & Hpos & Htop & Hrf) x Hx.
+    destruct (H x) eqn:EH; [|reflexivity]. exfalso.
+    destruct (Hin x EH) as ([e n] & Hi & Hr). cbn [fst snd] in Hr.
     pose proof (proj1 (forallb_forall _ _) Hs _ Hi) as Hn. cbn [snd] in Hn. apply andb_prop in Hn as [H0 H1].
     apply Z.leb_le in H0. apply Z.ltb_lt in H1.
-    exists (edenot E e, Z_to_bv 64 n). split.
-    - rewrite (mf_maps _ _ _ _ F). unfold dl. apply in_map_iff. exists (e, n). split; [reflexivity | exact Hi].
-    - cbn [fst snd]. rewrite u_small by lia. exact Hr.
+    rewrite region_free_app, (mf_maps _ _ _ _ F) in Hrf. apply andb_prop in Hrf as [_ Hrf].
+    pose proof (RefNodes.region_free_In _ p (Z_to_bv 64 nZ) (edenot E e) (Z_to_bv 64 n) Hrf
+                  ltac:(unfold dl; apply in_map_iff; exists (e, n); split; [reflexivity | exact Hi])) as Hov.
+    pose proof (alloc_top_room (m_vmmaps mdl)) as Hroom. unfold two_pow_64, stack_max_size in Hroom.
+    pose proof (u64_range p). rewrite !u_small in Hov by lia. lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -450,7 +532,7 @@ Section Theorems.
     sr_get sr 17%bv = ELit 222 -> sr_get sr 10%bv = ELit 0 -> sr_get sr 11%bv = ELit len -> sr_get sr 12%bv = ELit 3 ->
     sr_get sr 13%bv = ELit 34 -> sr_get sr 14%bv = ELit (2 ^ 64 - 1) -> sr_get sr 15%bv = ELit 0 ->
     0 < len -> l_eager L + nZ + A_bytes A <= lim ->
-    IMG_HI + nZ + gws nZ (l_maps L) <= 0x7fff80000000 - stack_max_size ->
+    IMG_HI + nZ + gws nZ (l_maps L) + 2 * (nZ + 4095) + 81920 <= 0x154555557000 ->
     (forall p R' M' mdl', bootS H A a tid c pl (js ++ [p]) (sr_upd sr 10 (EVar v)) (kn_grant L v nZ kn) (lgrant L v nZ) zr lz R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 (pc + 4)) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 pc) M ROM) mdl) K.
@@ -470,7 +552,8 @@ Section Theorems.
               (G _ _ S17) (G _ _ S11) ltac:(lia) (G _ _ S12) (G _ _ S13) eq_refl).
     - rewrite (G _ _ S14). apply bv_eq. reflexivity.
     - exact (G _ _ S15).
-    - exact (grant_exists_L E tid L mdl nZ F ltac:(lia) Hs Hroom).
+    - exact (G _ _ S10).
+    - exact (grant_exists_L E tid L mdl nZ F ltac:(lia) (pru_mod len) Hs Hroom).
     - (* [comment removed for export] *)
       unfold mmap_noreserve_backed_ok. cbn [mmap_noreserve_b]. change (negb _) with false. cbn [negb].
       apply Z.leb_le. rewrite vm_backing_used_split, (mf_lim _ _ _ _ F).
@@ -479,16 +562,17 @@ Section Theorems.
       pose proof (mf_eager _ _ _ _ F). rewrite (mf_lim _ _ _ _ F) in N5. lia.
     - (* [comment removed for export] *)
       intros p Hp. rewrite pc_lit_add4 by lia. rewrite with_mmap_backing_eager by reflexivity. fold nZ. fold nZ in Hp.
-      destruct (grant_ok_na_pin_unpack _ _ _ Hp) as (Hal & Hpos & Htop & Hrf).
+      pose proof (grant_ok_na_pin_unpack (Z_to_bv 64 0) mdl p nZ ltac:(lia) (pru_mod len) Hp) as Hpl.
+      pose proof Hpl as (Hal & Hpos & Htop & Hrf).
       rewrite (mfacts_alloc_top _ _ _ _ F) in Htop.
       pose proof (u64_range p) as Hpr.
-      assert (Hvis : range_visible H p nZ) by (apply (grant_visible_L H E tid L mdl p nZ F HIN Hs ltac:(lia) Hp)).
+      assert (Hvis : range_visible H p nZ) by (apply (grant_visible_L H E tid L mdl p nZ F HIN Hs ltac:(lia) Hpl)).
       assert (Hev : edenot (EB a tid c pl (js ++ [p])) (EVar v) = p).
       { rewrite EB_app. cbn [edenot ev]. unfold v. rewrite <- (Nat.add_0_r (length _)), vals_ev_app_r. reflexivity. }
       set (n := Z_to_bv 64 nZ) in *.
       assert (Hun : bv_unsigned n = nZ) by (unfold n; apply u_small; unfold stack_max_size in Htop; unfold usp in *; lia).
       assert (Himg : bv_unsigned p + nZ <= A_img_lo \/ A_img_hi <= bv_unsigned p).
-      { rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app in Hrf. apply andb_prop in Hrf as [Hrf _].
+      { rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app, region_free_app in Hrf. apply andb_prop in Hrf as [Hrf _]. apply andb_prop in Hrf as [Hrf _].
         apply (reserved_apart p nZ); [lia | unfold stack_max_size, usp in *; lia | exact Hrf]. }
       apply (HK p). constructor.
       + (* [comment removed for export] *)
@@ -503,8 +587,8 @@ Section Theorems.
         { intros V. rewrite EB_app. unfold v. apply kfacts_grant; try assumption; unfold stack_max_size, usp in *; lia. }
         assert (KD : forall V, know_ok SEGS (EB a tid c pl (js ++ [p])) V (dsj_entries v nZ (DS_std L))).
         { intros V. rewrite EB_app. unfold v.
-          apply (dsj_entries_ok SEGS (VB a tid c pl js) (blobs0 draw argv) V _ nZ (DS_std L) p ltac:(lia)
-                   ltac:(unfold stack_max_size, usp in *; lia) (DS_std_claims E tid L mdl nZ F Hshd (ev_EB_sp a tid c pl js) Hs ltac:(lia)) Hp).
+          apply (dsj_entries_ok SEGS (VB a tid c pl js) (blobs0 inp draw) V _ nZ (DS_std L) p ltac:(lia)
+                   ltac:(unfold stack_max_size, usp in *; lia) (DS_std_claims E tid L mdl nZ F Hshd (ev_EB_sp a tid c pl js) Hs ltac:(lia)) Hpl).
           unfold DS_std, DS_maps. apply Forall_app. split.
           - constructor; [cbn; split; reflexivity|]. constructor; [cbn; split; reflexivity|]. constructor; [cbn; split; reflexivity|]. constructor.
           - apply Forall_forall. intros d Hd. apply in_map_iff in Hd as ([e en] & <- & Hin). cbn [fst snd]. split; [|reflexivity].
@@ -565,6 +649,11 @@ Section Theorems.
         * unfold model_ivs_wf. rewrite mmap_model_vm, mmap_model_lazy. cbn [vm_maps vm_noaccess vm_init_sp].
           split; [apply ivs_wf_cons; [apply iv_wf_intro; rewrite Hun; lia | exact W1]|]. split; [exact W2|]. split; [exact W3|]. exact W4.
         * unfold na_clear. rewrite mmap_model_vm. cbn [vm_noaccess]. exact (mf_na _ _ _ _ F).
+        * (* the new map is placed clear of the reserved entries; the old ones keep [mf_resx] *)
+          intros iv [<- | Hiv]; [cbn [fst snd] | exact (mf_resx _ _ _ _ F iv Hiv)].
+          rewrite region_free_app in Hrf. apply andb_prop in Hrf as [Hrf1 _]. exact Hrf1.
+        * exact (mf_kern _ _ _ _ F).
+        * exact (mf_rdr _ _ _ _ F).
       + (* [comment removed for export] *)
         unfold maps_ok, lgrant. cbn [l_maps]. constructor.
         * unfold map_ok. cbn [fst snd]. rewrite Hev. unfold stack_max_size, page_size in *.
@@ -601,7 +690,7 @@ Ltac rg_block VI VE HB HK RUN CAR :=
     run_block_K HR HKN HM HL Hh HH Hwx HAW RUN CAR;
     lazymatch goal with |- srealizes _ (mkCfg (mkst _ _ ?m _) _) _ =>
       let body := eval unfold m in m in
-      lazymatch body with munrestrict ?H ?M (mem_denot (EB _ _ _ ?a ?tid ?c ?pl ?js) _ ?lg) =>
+      lazymatch body with munrestrict ?H ?M (mem_denot (EB _ _ _ _ ?a ?tid ?c ?pl ?js) _ ?lg) =>
         lazymatch type of F with mfacts _ _ _ _ _ _ _ ?L _ =>
           lazymatch type of HZ with hf_ok _ _ ?hc =>
             destruct (frame_blockS sp brk mbase draw inp VI VE H a tid c pl js M lg hc (lows_of L) ltac:(vmeq_refl)
@@ -705,6 +794,32 @@ Proof.
   split; apply negb_true_iff; apply andb_false_iff; destruct Hap; [left | right | left | right]; apply Z.ltb_ge; lia.
 Qed.
 
+(* twin of the three helpers above [Section Theorems] in the A3 copy *)
+Lemma pru_mod : forall len, page_round_up_Z len mod page_size = 0.
+Proof. intros len. unfold page_round_up_Z, page_size. apply Z_mod_mult. Qed.
+
+Lemma gap_weight_vdso : forall kb t nZ, 0 <= nZ ->
+  gap_weight nZ (vdso_reserved kb t) <= 2 * (nZ + 4095) + 81920.
+Proof.
+  intros kb t nZ HnZ. unfold vdso_reserved. cbv zeta.
+  pose proof (vdso_text_pages_pos kb). pose proof (vdso_text_pages_le kb).
+  destruct (t - vdso_len kb <? page_size); cbn [gap_weight]; [lia|].
+  rewrite !u_small by (unfold vdso_vvar_pages, page_size; lia). unfold vdso_vvar_pages, page_size. lia.
+Qed.
+
+Lemma region_free_sub : forall l (b n lo m : word),
+  region_free l b n = true -> bv_unsigned b <= bv_unsigned lo ->
+  bv_unsigned lo + bv_unsigned m <= bv_unsigned b + bv_unsigned n -> region_free l lo m = true.
+Proof.
+  intros l b n lo m H H1 H2. apply RefNodes.region_free_intro. intros qb qs Hq.
+  pose proof (RefNodes.region_free_In l b n qb qs H Hq). lia.
+Qed.
+
+(* twin of the A3 copy's [placed] *)
+Definition placed (m : Model) (a : word) (n : Z) : Prop :=
+  bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + n <= alloc_top (m_vmmaps m)
+  /\ region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n) = true.
+
 Section Theorems.
   Variables (sp brk mbase : word) (draw : EntryDraw) (lim : Z) (inp : ProcInput).
   Hypothesis VI : valid_input inp.
@@ -718,26 +833,30 @@ Section Theorems.
 
   #[using="brk mbase draw inp VI VE"] Lemma SL' : 0x7fff80000000 <= usp. Proof. exact (SL sp brk mbase draw inp VI VE). Qed.
   #[using="brk mbase draw inp VI VE"] Lemma SH' : usp <= 0x800000000000. Proof. exact (SH sp brk mbase draw inp VI VE). Qed.
+  (* The launch's vDSO pair: [State.init_reserved] appends it to the binary's reservations. *)
+  Definition VD : list (word * word) :=
+    vdso_reserved (in_kernel inp) (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size))).
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
+  (* twin of :115-117; same reason, same numbers *)
   Definition VB (a tid c : word) (pl : placements) (js : list word) : list word :=
-    vals0 PH sp draw argv envp uid hw ++ [a; tid; c] ++ pl_list pl ++ js.
-  Definition EB (a tid c : word) (pl : placements) (js : list word) : env := Env (vals_ev (VB a tid c pl js)) (blobs0 draw argv).
+    vals0 inp mbase (Z_to_bv 64 (Z.of_N PC0)) sp draw ++ [a; tid; c] ++ pl_list pl ++ js.
+  Definition EB (a tid c : word) (pl : placements) (js : list word) : env := Env (vals_ev (VB a tid c pl js)) (blobs0 inp draw).
 
-  #[using="Type"] Lemma EB_EJ : forall a tid c pl js, EB a tid c pl js = EJ sp draw inp a tid c pl js.
+  #[using="Type"] Lemma EB_EJ : forall a tid c pl js, EB a tid c pl js = EJ sp mbase draw inp a tid c pl js.
   Proof. reflexivity. Qed.
-  #[using="Type"] Lemma EB_app : forall a tid c pl js ks, EB a tid c pl (js ++ ks) = Env (vals_ev (VB a tid c pl js ++ ks)) (blobs0 draw argv).
+  #[using="Type"] Lemma EB_app : forall a tid c pl js ks, EB a tid c pl (js ++ ks) = Env (vals_ev (VB a tid c pl js ++ ks)) (blobs0 inp draw).
   Proof. intros. unfold EB, VB. rewrite <- !app_assoc. reflexivity. Qed.
   #[using="Type"] Lemma ev_EB_sp : forall a tid c pl js, ev (EB a tid c pl js) 0%nat = sp. Proof. reflexivity. Qed.
   #[using="Type"] Lemma ev_EB_tls : forall a tid c pl js, ev (EB a tid c pl js) V_TLS = a. Proof. reflexivity. Qed.
-  #[using="usp"] Lemma length_VB : forall a tid c pl js, length (VB a tid c pl js) = (16 + length js)%nat.
+  #[using="usp"] Lemma length_VB : forall a tid c pl js, length (VB a tid c pl js) = (32 + length js)%nat.
   Proof. intros. unfold VB. rewrite !length_app. cbn. unfold vals0. cbn. lia. Qed.
-  #[using="usp"] Lemma ev_EB_js : forall a tid c pl js k, ev (EB a tid c pl js) (16 + k)%nat = nth k js (Z_to_bv 64 0).
+  #[using="usp"] Lemma ev_EB_js : forall a tid c pl js k, ev (EB a tid c pl js) (32 + k)%nat = nth k js (Z_to_bv 64 0).
   Proof.
     intros. unfold EB, VB. cbn [ev].
-    replace (16 + k)%nat with (length (vals0 PH sp draw argv envp uid hw ++ [a; tid; c] ++ pl_list pl) + k)%nat
+    replace (32 + k)%nat with (length (vals0 inp mbase (Z_to_bv 64 (Z.of_N PC0)) sp draw ++ [a; tid; c] ++ pl_list pl) + k)%nat
       by (rewrite !length_app; cbn; unfold vals0; cbn; lia).
     rewrite (app_assoc _ [a; tid; c]), (app_assoc _ (pl_list pl)), vals_ev_app_r. reflexivity.
   Qed.
@@ -747,7 +866,7 @@ Section Theorems.
   (* [comment removed for export] *)
   Record mfacts (E : env) (tid : word) (L : ledger) (mdl : Model) : Prop := MFacts {
     mf_halted : m_halted mdl = None;
-    mf_res    : vm_reserved (m_vmmaps mdl) = segments_reserved SEGS;
+    mf_res    : vm_reserved (m_vmmaps mdl) = segments_reserved SEGS ++ VD;
     mf_isp    : vm_init_sp (m_vmmaps mdl) = sp;
     mf_lim    : vm_limit (m_vmmaps mdl) = lim;
     mf_sbrk   : vm_start_brk (m_vmmaps mdl) = brk;
@@ -760,15 +879,23 @@ Section Theorems.
     mf_fds    : m_fds mdl = FDS0;
     mf_tid    : m_tid mdl = Some tid;
     mf_wf     : model_ivs_wf mdl;
-    mf_na     : na_clear mdl }.
+    mf_na     : na_clear mdl;
+    (* every ledger map is apart from every reserved entry, the binary's and the launch's vDSO pair *)
+    mf_resx   : forall iv, In iv (vm_maps (m_vmmaps mdl)) -> region_free (vm_reserved (m_vmmaps mdl)) (fst iv) (snd iv) = true;
+    (* the launch's kernel build, which no step changes (the vDSO pair's size reads it) *)
+    mf_kern   : m_kernel mdl = in_kernel inp;
+    (* the launch's channel reader, seeded by [init_model] and written by no step *)
+    mf_rdr    : m_channel_reader mdl = in_channel_reader inp }.
 
   #[using="Type"] Lemma mfacts_sbm : forall E tid L m m', mfacts E tid L m -> same_but_materialized m m' -> mfacts E tid L m'.
   Proof.
-    intros E tid L m m' [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15] HS.
+    intros E tid L m m' [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18] HS.
     pose proof (same_but_materialized_frame m m' HS) as (_ & Svm & Slz & _ & _ & _ & _ & _ & Sfds & _ & _ & Sfs & Sh & Stid & _ & _ & Se).
     constructor; rewrite ?Svm, ?Slz, ?Sfds, ?Sfs, ?Sh, ?Stid, ?Se; try assumption.
     - unfold model_ivs_wf in *. rewrite Svm, Slz. exact F14.
     - unfold na_clear in *. rewrite Svm. exact F15.
+    - unfold same_but_materialized in HS. rewrite HS. exact F17.
+    - unfold same_but_materialized in HS. rewrite HS. exact F18.
   Qed.
 
   #[using="Type"] Lemma ivs_apart_lits : forall l, ivs_apart l <-> OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.A3RW__A3.BootLedgerA.TwB.apart_all l.
@@ -778,13 +905,36 @@ Section Theorems.
     ledger_vars_lt (length (VB a tid c pl js)) L = true ->
     mfacts (EB a tid c pl js) tid L m -> mfacts (EB a tid c pl (js ++ ks)) tid L m.
   Proof.
-    intros a tid c pl js ks L m HL [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15].
+    intros a tid c pl js ks L m HL [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18].
     unfold ledger_vars_lt in HL.
     constructor; try assumption; rewrite EB_app; unfold EB in *; rewrite dl_app_env by assumption; assumption.
   Qed.
 
   #[using="Type"] Lemma mfacts_alloc_top : forall E tid L m, mfacts E tid L m -> alloc_top (m_vmmaps m) = usp - stack_max_size.
   Proof. intros E tid L m F. unfold alloc_top. rewrite (mf_isp _ _ _ _ F). reflexivity. Qed.
+
+  (* twin of the A3 copy's [vdso_top_launch] *)
+  #[using="draw VI VE usp"] Lemma vdso_top_launch : forall E tid L m, mfacts E tid L m ->
+    vdso_top (m_vmmaps m) = page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)).
+  Proof.
+    intros E tid L m F. destruct (VE48 sp brk mbase draw inp VI VE) as (_ & _ & [_ [_ Hmal]] & _).
+    unfold vdso_top, mmap_top. rewrite (mf_mb _ _ _ _ F), (mfacts_alloc_top _ _ _ _ F). unfold usp.
+    set (x := bv_unsigned sp - stack_max_size).
+    assert (Hx : page_round_down_Z x <= x < page_round_down_Z x + 4096)
+      by (unfold page_round_down_Z, page_size; pose proof (Z.div_mod x 4096 ltac:(lia)); pose proof (Z.mod_pos_bound x 4096 ltac:(lia)); lia).
+    assert (Hpd : forall y, y mod 4096 = 0 -> page_round_down_Z y = y)
+      by (intros y Hy; unfold page_round_down_Z, page_size; pose proof (Z.div_mod y 4096 ltac:(lia)); lia).
+    assert (Hpx : page_round_down_Z x mod 4096 = 0) by (unfold page_round_down_Z, page_size; apply Z_mod_mult).
+    unfold page_size in Hmal.
+    destruct (Z.le_gt_cases (bv_unsigned mbase) (page_round_down_Z x)) as [C|C].
+    - rewrite (Z.min_l _ (page_round_down_Z x)) by exact C. rewrite (Z.min_l (bv_unsigned mbase) x) by lia. reflexivity.
+    - rewrite (Z.min_r _ (page_round_down_Z x)) by lia.
+      assert (Hxm : x < bv_unsigned mbase).
+      { pose proof (Z.div_mod (bv_unsigned mbase) 4096 ltac:(lia)) as Dm.
+        assert (Hb : page_round_down_Z x = x / 4096 * 4096) by reflexivity.
+        lia. }
+      rewrite (Z.min_r (bv_unsigned mbase) x) by lia. apply Hpd. exact Hpx.
+  Qed.
 
   (* [comment removed for export] *)
   Definition map_ok (E : env) (p : expr * Z) : Prop :=
@@ -866,7 +1016,7 @@ Section Theorems.
                (R : bvmap 5 word) (M : word -> option byte) (mdl : Model) : Prop := BootS {
     s_regs  : regs_ok (EB a tid c pl js) sr R;
     s_know  : know_ok SEGS (EB a tid c pl js) (mrestrict H M) kn;
-    s_above : forall x : word, usp <= bv_unsigned x -> M x = wrap_mem PH sp argv envp uid hw draw x;
+    s_above : forall x : word, usp <= bv_unsigned x -> M x = wrap_mem inp mbase PH (Z_to_bv 64 (Z.of_N PC0)) sp draw x;
     s_hid   : hf_ok H M hc;
     s_lazy  : m_vm_lazy mdl = lz;
     s_minv  : MInv A mdl;
@@ -905,10 +1055,10 @@ Section Theorems.
     log_below_b 0%nat lows log = true ->
     lows_ok (EB a tid c pl js) usp lows ->
     (forall x : word, usp <= bv_unsigned x -> H x = false) ->
-    (forall x : word, usp <= bv_unsigned x -> M x = wrap_mem PH sp argv envp uid hw draw x) ->
+    (forall x : word, usp <= bv_unsigned x -> M x = wrap_mem inp mbase PH (Z_to_bv 64 (Z.of_N PC0)) sp draw x) ->
     hf_ok H M hc ->
     let M0 := munrestrict H M (mem_denot (EB a tid c pl js) (mrestrict H M) log) in
-    (forall x : word, usp <= bv_unsigned x -> M0 x = wrap_mem PH sp argv envp uid hw draw x)
+    (forall x : word, usp <= bv_unsigned x -> M0 x = wrap_mem inp mbase PH (Z_to_bv 64 (Z.of_N PC0)) sp draw x)
     /\ hf_ok H M0 hc.
   Proof.
     intros H a tid c pl js M log hc lows Hlog Hlows Hvis HA HZ M0. pose proof SL'. pose proof SH'. split.
@@ -952,16 +1102,24 @@ Section Theorems.
   Proof. vmeq_refl. Qed.
 
   (* [comment removed for export] *)
+  (* twin of the A3 copy's [grant_exists_L] *)
   #[using="draw VI VE usp"] Lemma grant_exists_L : forall E tid L mdl nZ,
-    mfacts E tid L mdl -> 0 < nZ -> sivs_sizes_ok (l_maps L) = true ->
-    IMG_HI + nZ + gws nZ (l_maps L) <= 0x7fff80000000 - stack_max_size ->
-    exists p, grant_ok_na_pin mdl p nZ = true.
+    mfacts E tid L mdl -> 0 < nZ -> nZ mod page_size = 0 -> sivs_sizes_ok (l_maps L) = true ->
+    IMG_HI + nZ + gws nZ (l_maps L) + 2 * (nZ + 4095) + 81920 <= 0x154555557000 ->
+    exists p, grant_ok_na_pin (Z_to_bv 64 0) mdl p nZ = true.
   Proof.
-    intros E tid L mdl nZ F HnZ Hs Hw. pose proof SL' as SL. pose proof SH' as SH.
-    apply (grant_exists_between mdl nZ IMG_HI HnZ ltac:(unfold IMG_HI; lia) ltac:(reflexivity)).
-    rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), (mfacts_alloc_top _ _ _ _ F).
-    rewrite filter_app, reserved_dead_above, app_nil_l.
+    intros E tid L mdl nZ F HnZ Hnm Hs Hw. pose proof SL' as SL. pose proof SH' as SH.
+    destruct (VE48 sp brk mbase draw inp VI VE) as (_ & _ & [Hmb _] & _).
+    assert (Htop : 0x154555557000 <= mmap_top (m_vmmaps mdl)).
+    { unfold mmap_top. rewrite (mf_mb _ _ _ _ F), (mfacts_alloc_top _ _ _ _ F).
+      unfold mmap_base_min in Hmb. unfold page_round_down_Z, page_size, stack_max_size, usp in *.
+      Z.div_mod_to_equations. lia. }
+    apply (grant_exists_between (Z_to_bv 64 0) mdl nZ IMG_HI HnZ Hnm ltac:(unfold IMG_HI, page_size; lia) ltac:(reflexivity)).
+    rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F).
+    rewrite !filter_app, reserved_dead_above, app_nil_l, gap_weight_app.
     pose proof (gap_weight_filter_le nZ (live_at IMG_HI) (dl E (l_maps L)) ltac:(lia)) as Hle.
+    pose proof (gap_weight_filter_le nZ (live_at IMG_HI) VD ltac:(lia)) as Hle2.
+    assert (Hvd : gap_weight nZ VD <= 2 * (nZ + 4095) + 81920) by (unfold VD; apply gap_weight_vdso; lia).
     rewrite (gap_weight_dl E nZ (l_maps L) Hs) in Hle. unfold usp in *. lia.
   Qed.
 
@@ -974,21 +1132,21 @@ Section Theorems.
 
   #[using="draw VI VE usp"] Lemma DS_std_claims : forall E tid L mdl nZ,
     mfacts E tid L mdl -> H_in_maps H2 E L -> ev E 0%nat = sp -> sivs_sizes_ok (l_maps L) = true -> 0 < nZ ->
-    dsj_claims E (fun p => grant_ok_na_pin mdl p nZ = true) nZ (DS_std L).
+    dsj_claims E (fun p => placed mdl p nZ) nZ (DS_std L).
   Proof.
     intros E tid L mdl nZ F HSB Hsp Hs HnZ. pose proof SL' as SL. pose proof SH' as SH.
     unfold dsj_claims, DS_std, DS_maps. apply Forall_app. split.
     - constructor; [|constructor; [|constructor; [|constructor]]]; cbn [fst snd]; intros p Hp;
-        destruct (grant_ok_na_pin_unpack _ _ _ Hp) as (Hal & Hpos & Htop & Hrf);
+        destruct Hp as (Hal & Hpos & Htop & Hrf);
         rewrite (mfacts_alloc_top _ _ _ _ F) in Htop; unfold estart, elenZ; cbn [a_base a_off edenot].
       + rewrite Hsp. unfold stack_max_size in Htop. rewrite u_small by lia. unfold usp in *. lia.
-      + rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app in Hrf. apply andb_prop in Hrf as [Hrf _].
+      + rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app, region_free_app in Hrf. apply andb_prop in Hrf as [Hrf _]. apply andb_prop in Hrf as [Hrf _].
         pose proof (u64_range p). pose proof img_hull as IH.
         rewrite !u_small by (unfold A_img_lo, A_img_hi; lia). change (bv_unsigned (Z_to_bv 64 0)) with 0.
         destruct (reserved_apart p nZ HnZ ltac:(unfold stack_max_size, usp in *; lia) Hrf); lia.
       + (* [comment removed for export] *)
         pose proof (u64_range p) as Hpr. unfold SHB_LO, SHB_HI. rewrite !u_small by lia. change (bv_unsigned (Z_to_bv 64 0)) with 0.
-        rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app in Hrf. apply andb_prop in Hrf as [_ Hrf].
+        rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app, region_free_app in Hrf. apply andb_prop in Hrf as [_ Hrf].
         destruct (Z.lt_ge_cases (bv_unsigned p + nZ) (0x7fff7000 + 1)) as [|C1]; [lia|].
         destruct (Z.lt_ge_cases (bv_unsigned p) 0x10007fff8000) as [C2|]; [|lia]. exfalso.
         set (xz := Z.max (bv_unsigned p) 0x7fff7000).
@@ -1002,8 +1160,8 @@ Section Theorems.
                       ltac:(unfold dl; apply in_map_iff; exists (e, n); split; [reflexivity | exact Hin])) as Hov.
         rewrite !u_small in Hov by (unfold stack_max_size in *; lia). lia.
     - apply Forall_forall. intros d Hd p Hp. apply in_map_iff in Hd as ([e n] & <- & Hin). cbn [fst snd].
-      destruct (grant_ok_na_pin_unpack _ _ _ Hp) as (Hal & Hpos & Htop & Hrf).
-      rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app in Hrf. apply andb_prop in Hrf as [_ Hrf].
+      destruct Hp as (Hal & Hpos & Htop & Hrf).
+      rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app, region_free_app in Hrf. apply andb_prop in Hrf as [_ Hrf].
       pose proof (proj1 (forallb_forall _ _) Hs _ Hin) as Hn. cbn [snd] in Hn. apply andb_prop in Hn as [H0 H1].
       apply Z.leb_le in H0. apply Z.ltb_lt in H1.
       rewrite (mfacts_alloc_top _ _ _ _ F) in Htop. unfold stack_max_size, usp in *. pose proof SH.
@@ -1016,7 +1174,7 @@ Section Theorems.
   (* [comment removed for export] *)
   #[using="draw VI VE usp"] Lemma grant_misses_shadow : forall E tid L mdl p nZ,
     mfacts E tid L mdl -> H_in_maps H2 E L -> ev E 0%nat = sp -> sivs_sizes_ok (l_maps L) = true -> 0 < nZ ->
-    grant_ok_na_pin mdl p nZ = true -> bv_unsigned p + nZ <= SHB_LO \/ SHB_HI <= bv_unsigned p.
+    placed mdl p nZ -> bv_unsigned p + nZ <= SHB_LO \/ SHB_HI <= bv_unsigned p.
   Proof.
     intros E tid L mdl p nZ F HSB Hsp Hs HnZ Hp.
     pose proof (DS_std_claims E tid L mdl nZ F HSB Hsp Hs HnZ) as C. unfold dsj_claims, DS_std in C.
@@ -1028,16 +1186,18 @@ Section Theorems.
   (* [comment removed for export] *)
   #[using="usp"] Lemma grant_visible_L : forall H E tid L mdl p nZ,
     mfacts E tid L mdl -> H_in_maps H E L -> sivs_sizes_ok (l_maps L) = true -> 0 <= nZ ->
-    grant_ok_na_pin mdl p nZ = true -> range_visible H p nZ.
+    placed mdl p nZ -> range_visible H p nZ.
   Proof.
-    intros H E tid L mdl p nZ F Hin Hs HnZ Hp.
-    apply (grant_visible_of_hidden_mapped H mdl p nZ); [| exact HnZ | exact Hp].
-    intros x Hx. destruct (Hin x Hx) as ([e n] & Hi & Hr). cbn [fst snd] in Hr.
+    intros H E tid L mdl p nZ F Hin Hs HnZ (Hal & Hpos & Htop & Hrf) x Hx.
+    destruct (H x) eqn:EH; [|reflexivity]. exfalso.
+    destruct (Hin x EH) as ([e n] & Hi & Hr). cbn [fst snd] in Hr.
     pose proof (proj1 (forallb_forall _ _) Hs _ Hi) as Hn. cbn [snd] in Hn. apply andb_prop in Hn as [H0 H1].
     apply Z.leb_le in H0. apply Z.ltb_lt in H1.
-    exists (edenot E e, Z_to_bv 64 n). split.
-    - rewrite (mf_maps _ _ _ _ F). unfold dl. apply in_map_iff. exists (e, n). split; [reflexivity | exact Hi].
-    - cbn [fst snd]. rewrite u_small by lia. exact Hr.
+    rewrite region_free_app, (mf_maps _ _ _ _ F) in Hrf. apply andb_prop in Hrf as [_ Hrf].
+    pose proof (RefNodes.region_free_In _ p (Z_to_bv 64 nZ) (edenot E e) (Z_to_bv 64 n) Hrf
+                  ltac:(unfold dl; apply in_map_iff; exists (e, n); split; [reflexivity | exact Hi])) as Hov.
+    pose proof (alloc_top_room (m_vmmaps mdl)) as Hroom. unfold two_pow_64, stack_max_size in Hroom.
+    pose proof (u64_range p). rewrite !u_small in Hov by lia. lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -1064,7 +1224,7 @@ Section Theorems.
     sr_get sr 17%bv = ELit 222 -> sr_get sr 10%bv = ELit 0 -> sr_get sr 11%bv = ELit len -> sr_get sr 12%bv = ELit 3 ->
     sr_get sr 13%bv = ELit 34 -> sr_get sr 14%bv = ELit (2 ^ 64 - 1) -> sr_get sr 15%bv = ELit 0 ->
     0 < len -> l_eager L + nZ + A_bytes A <= lim ->
-    IMG_HI + nZ + gws nZ (l_maps L) <= 0x7fff80000000 - stack_max_size ->
+    IMG_HI + nZ + gws nZ (l_maps L) + 2 * (nZ + 4095) + 81920 <= 0x154555557000 ->
     (forall p R' M' mdl', bootS H A a tid c pl (js ++ [p]) (sr_upd sr 10 (EVar v)) (kn_grant L v nZ kn) (lgrant L v nZ) zr lz R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 (pc + 4)) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 pc) M ROM) mdl) K.
@@ -1084,7 +1244,8 @@ Section Theorems.
               (G _ _ S17) (G _ _ S11) ltac:(lia) (G _ _ S12) (G _ _ S13) eq_refl).
     - rewrite (G _ _ S14). apply bv_eq. reflexivity.
     - exact (G _ _ S15).
-    - exact (grant_exists_L E tid L mdl nZ F ltac:(lia) Hs Hroom).
+    - exact (G _ _ S10).
+    - exact (grant_exists_L E tid L mdl nZ F ltac:(lia) (pru_mod len) Hs Hroom).
     - (* [comment removed for export] *)
       unfold mmap_noreserve_backed_ok. cbn [mmap_noreserve_b]. change (negb _) with false. cbn [negb].
       apply Z.leb_le. rewrite vm_backing_used_split, (mf_lim _ _ _ _ F).
@@ -1093,16 +1254,17 @@ Section Theorems.
       pose proof (mf_eager _ _ _ _ F). rewrite (mf_lim _ _ _ _ F) in N5. lia.
     - (* [comment removed for export] *)
       intros p Hp. rewrite pc_lit_add4 by lia. rewrite with_mmap_backing_eager by reflexivity. fold nZ. fold nZ in Hp.
-      destruct (grant_ok_na_pin_unpack _ _ _ Hp) as (Hal & Hpos & Htop & Hrf).
+      pose proof (grant_ok_na_pin_unpack (Z_to_bv 64 0) mdl p nZ ltac:(lia) (pru_mod len) Hp) as Hpl.
+      pose proof Hpl as (Hal & Hpos & Htop & Hrf).
       rewrite (mfacts_alloc_top _ _ _ _ F) in Htop.
       pose proof (u64_range p) as Hpr.
-      assert (Hvis : range_visible H p nZ) by (apply (grant_visible_L H E tid L mdl p nZ F HIN Hs ltac:(lia) Hp)).
+      assert (Hvis : range_visible H p nZ) by (apply (grant_visible_L H E tid L mdl p nZ F HIN Hs ltac:(lia) Hpl)).
       assert (Hev : edenot (EB a tid c pl (js ++ [p])) (EVar v) = p).
       { rewrite EB_app. cbn [edenot ev]. unfold v. rewrite <- (Nat.add_0_r (length _)), vals_ev_app_r. reflexivity. }
       set (n := Z_to_bv 64 nZ) in *.
       assert (Hun : bv_unsigned n = nZ) by (unfold n; apply u_small; unfold stack_max_size in Htop; unfold usp in *; lia).
       assert (Himg : bv_unsigned p + nZ <= A_img_lo \/ A_img_hi <= bv_unsigned p).
-      { rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app in Hrf. apply andb_prop in Hrf as [Hrf _].
+      { rewrite (mf_res _ _ _ _ F), (mf_maps _ _ _ _ F), region_free_app, region_free_app in Hrf. apply andb_prop in Hrf as [Hrf _]. apply andb_prop in Hrf as [Hrf _].
         apply (reserved_apart p nZ); [lia | unfold stack_max_size, usp in *; lia | exact Hrf]. }
       apply (HK p). constructor.
       + (* [comment removed for export] *)
@@ -1117,8 +1279,8 @@ Section Theorems.
         { intros V. rewrite EB_app. unfold v. apply kfacts_grant; try assumption; unfold stack_max_size, usp in *; lia. }
         assert (KD : forall V, know_ok SEGS (EB a tid c pl (js ++ [p])) V (dsj_entries v nZ (DS_std L))).
         { intros V. rewrite EB_app. unfold v.
-          apply (dsj_entries_ok SEGS (VB a tid c pl js) (blobs0 draw argv) V _ nZ (DS_std L) p ltac:(lia)
-                   ltac:(unfold stack_max_size, usp in *; lia) (DS_std_claims E tid L mdl nZ F Hshd (ev_EB_sp a tid c pl js) Hs ltac:(lia)) Hp).
+          apply (dsj_entries_ok SEGS (VB a tid c pl js) (blobs0 inp draw) V _ nZ (DS_std L) p ltac:(lia)
+                   ltac:(unfold stack_max_size, usp in *; lia) (DS_std_claims E tid L mdl nZ F Hshd (ev_EB_sp a tid c pl js) Hs ltac:(lia)) Hpl).
           unfold DS_std, DS_maps. apply Forall_app. split.
           - constructor; [cbn; split; reflexivity|]. constructor; [cbn; split; reflexivity|]. constructor; [cbn; split; reflexivity|]. constructor.
           - apply Forall_forall. intros d Hd. apply in_map_iff in Hd as ([e en] & <- & Hin). cbn [fst snd]. split; [|reflexivity].
@@ -1179,6 +1341,11 @@ Section Theorems.
         * unfold model_ivs_wf. rewrite mmap_model_vm, mmap_model_lazy. cbn [vm_maps vm_noaccess vm_init_sp].
           split; [apply ivs_wf_cons; [apply iv_wf_intro; rewrite Hun; lia | exact W1]|]. split; [exact W2|]. split; [exact W3|]. exact W4.
         * unfold na_clear. rewrite mmap_model_vm. cbn [vm_noaccess]. exact (mf_na _ _ _ _ F).
+        * (* the new map is placed clear of the reserved entries; the old ones keep [mf_resx] *)
+          intros iv [<- | Hiv]; [cbn [fst snd] | exact (mf_resx _ _ _ _ F iv Hiv)].
+          rewrite region_free_app in Hrf. apply andb_prop in Hrf as [Hrf1 _]. exact Hrf1.
+        * exact (mf_kern _ _ _ _ F).
+        * exact (mf_rdr _ _ _ _ F).
       + (* [comment removed for export] *)
         unfold maps_ok, lgrant. cbn [l_maps]. constructor.
         * unfold map_ok. cbn [fst snd]. rewrite Hev. unfold stack_max_size, page_size in *.
@@ -1215,7 +1382,7 @@ Ltac rg_block VI VE HB HK RUN CAR :=
     run_block_K HR HKN HM HL Hh HH Hwx HAW RUN CAR;
     lazymatch goal with |- srealizes _ (mkCfg (mkst _ _ ?m _) _) _ =>
       let body := eval unfold m in m in
-      lazymatch body with munrestrict ?H ?M (mem_denot (EB _ _ _ ?a ?tid ?c ?pl ?js) _ ?lg) =>
+      lazymatch body with munrestrict ?H ?M (mem_denot (EB _ _ _ _ ?a ?tid ?c ?pl ?js) _ ?lg) =>
         lazymatch type of F with mfacts _ _ _ _ _ _ _ ?L _ =>
           lazymatch type of HZ with hf_ok _ _ ?hc =>
             destruct (frame_blockS sp brk mbase draw inp VI VE H a tid c pl js M lg hc (lows_of L) ltac:(vmeq_refl)

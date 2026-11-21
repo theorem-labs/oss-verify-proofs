@@ -7,6 +7,7 @@
    the image facts on G_SL and the " end\0" literal.  The composition is made over any allocator relation ARx
    (route (b), step 3; CONVERSION.md (sha256 1015972e02a9; internal record)) from the three pieces' generic forms, pb_gestures_end_closed_x;
    pb_gestures_end_closed, the AR statement, is re-derived from it at ARi0 (Section cAR). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -76,8 +77,8 @@ Hypothesis HOUTG : forall r a, In r (aout_fp B RG 0 0) -> fst r <= a < snd r -> 
    is FALSE at the instance (partial granule: shadow byte 5 at 0x7fffc1e0, W3's measurement) and was never needed. *)
 Hypothesis HEND5I : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 -> in_img SEGS a.
 (* HEND5G holds for EXACTLY [VAL A_lit_end5, VAL A_lit_end5 + 5) = [0x20f00, 0x20f05) on both images and MUST NOT BE
-   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch
-   5fab70f4113; ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
+   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch;
+   ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
    (0x20f05, 0x1b) - the literal's two redzones - end and start exactly at its edges.  One byte more on either side,
    or rounding the range to 8 bytes or an aligned word, makes that clause FALSE. *)
 Hypothesis HEND5G : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 ->
@@ -152,8 +153,8 @@ Hypothesis HOUTG : forall r a, In r (aout_fp B RG 0 0) -> fst r <= a < snd r -> 
    is FALSE at the instance (partial granule: shadow byte 5 at 0x7fffc1e0, W3's measurement) and was never needed. *)
 Hypothesis HEND5I : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 -> in_img SEGS a.
 (* HEND5G holds for EXACTLY [VAL A_lit_end5, VAL A_lit_end5 + 5) = [0x20f00, 0x20f05) on both images and MUST NOT BE
-   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch
-   5fab70f4113; ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
+   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch;
+   ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
    (0x20f05, 0x1b) - the literal's two redzones - end and start exactly at its edges.  One byte more on either side,
    or rounding the range to 8 bytes or an aligned word, makes that clause FALSE. *)
 Hypothesis HEND5G : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 ->

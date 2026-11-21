@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) B-LOCAL COPY of the A walk's object lemmas, copied from
-   a working branch 4480a5df1ae proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items_obj.v
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items_obj.v
    (a Theorem Labs lane). It has no B twin. The lemmas take each step's memory effect as hypotheses and name no instruction
    address; the changes are the imports (lib/A image modules -> their lib/B twins, A's lib/A/Prog FSW_pj_set_heads ->
    lib/B/Prog FSW_pj_set_heads); statements and proofs verbatim.
    The A header, kept: *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER lane (a Theorem Labs lane): the OBJECT lemmas of parse_items' member loop
    (A 0x84a04), for parse_items_spec's composition. One member is grow, parse_string (the key), the walk's store
    keys[n] := key, __asan_memset of the kid, parse_value (level k + 1) of the kid, the walk's store v->n := n + 1. These

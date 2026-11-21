@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: FI_std reads m_fds through the with_vdso wrapper of the run's initial model. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -263,7 +264,7 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 Lemma FI_std segs lim en inp mo nx : m_fds mo = m_fds (mo0 segs lim en inp) -> FI nx [] [] libc_init mo.
 Proof.
-  intros EF. apply FI_init; rewrite EF; unfold mo0; rewrite m_fds_init_model.
+  intros EF. apply FI_init; rewrite EF; unfold mo0; change (m_fds (with_vdso ?v ?m)) with (m_fds m); rewrite m_fds_init_model.
   - cbn. assert (D : forall a b, Z_to_bv 64 a = Z_to_bv 64 b -> 0 <= a < 3 -> 0 <= b < 3 -> a = b).
     { intros a b E Ha Hb. apply (f_equal bv_unsigned) in E. rewrite !unsigned_lit in E by lia. exact E. }
     constructor. { intros [H|[H|[]]]; [pose proof (D _ _ H ltac:(lia) ltac:(lia))| pose proof (D _ _ H ltac:(lia) ltac:(lia))]; lia. }

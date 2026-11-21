@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bndiv/lib/Lib/MState.v, with its module paths changed; 1 of its 130 lines of code is new or changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Bz/Lib/MState.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Bz/Lib/MState.v; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/Bz/Lib/MState.v of this library by derive_y.py b7b132fb12a7: module paths lib.A -> lib.AU, the image module Asan -> AsanUbsan and Img0 -> Img0U, addresses moved from fuzz_headamp's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Bz/Lib/MState.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pair in the initial model and its reservations); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.AU.Bz Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -47,7 +48,7 @@ Fixpoint interp_eff (segs : list Segment) (t : eff) (m : word -> option byte)
   | ELoad n a k =>
       match ov_read_bytes segs m a (width_bytes n) with
       | Some bs => interp_eff segs (k (bv_extract 0 n (le_bytes_to_word bs))) m
-      | None => MachineFault
+      | None => if range_meets_vvar segs a (width_bytes n) then MachineUnmodeled else MachineFault
       end
   | EStore n a v k =>
       if store_ok segs m a (width_bytes n)
@@ -60,7 +61,7 @@ Lemma interp_eff_spec : forall segs t m,
 Proof.
   intros segs t. unfold RiscvSemantics.interp_eff.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m; cbn [interp_eff interp_eff_accesses drop_access_report]; try reflexivity.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|reflexivity].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); reflexivity].
     rewrite <- IH. destruct (interp_eff_accesses segs (k _) m) as [r| |]; reflexivity.
   - destruct (store_ok segs m a (width_bytes n)); [|reflexivity].
     rewrite <- IH. destruct (interp_eff_accesses segs k _) as [r| |]; reflexivity.

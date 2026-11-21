@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -36,7 +37,7 @@ Section World.
     nw_art    : ART RT (snd w) (wm w);
     nw_frames : (length (rt_frames RT (snd w)) + NUMA_FRAMES <= FRAMES_MAX)%nat;
     nw_credit : NUMA_CREDIT <= rt_credit RT (snd w);
-    nw_win    : rt_sp0 RT (snd w) - STACK_WIN <= e_lo E0;
+    nw_win    : rt_sp0 RT (snd w) - STACK_WIN + STACK_GAP <= e_lo E0;
     nw_room   : e_lo E0 + NUMA_STACK <= e_spa E0;
     nw_top    : bv_unsigned (e_sp E0) + 16 <= USTACK_TOP;
     nw_tp     : e_tp E0 = Z_to_bv 64 0x646eb0;

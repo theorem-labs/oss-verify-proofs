@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the callee's trace premise in the P'' form (YG01.v admits), from the fixed trace through admits_fix, as fuzz_preset's own copy of this file does at commit 116f6c4dab1. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the callee's trace premise in the P'' form (YG01.v admits), from the fixed trace through admits_fix, as fuzz_preset's own copy of this file does. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCe5.v, with its module paths changed; off_img's image bounds cite fuzz_reply.asan's (YImgTop.IMG_LO, YImgTop.IMG_TOP_A) in place of cgif_file's 0x10000 and 0x5fb000. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

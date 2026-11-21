@@ -1,4 +1,4 @@
-# port_addr_check 3d2eee813cce (tools registry 9278eb49a9d) lib/A (renamed tokens, lib/A numerals) -> lib/AU on image B: the 138 flagged rows, each read (full TSV sha256 and summary: port_addr_check-B3.log)
+# port_addr_check 3d2eee813cce (tools registry) lib/A (renamed tokens, lib/A numerals) -> lib/AU on image B: the 138 flagged rows, each read (full TSV sha256 and summary: port_addr_check-B3.log)
 verdict	file	line	source value	ported value	note	reading
 UNRESOLVED	YB1w.v	601	0x10040	0x10040	value unchanged (a copied literal?); both side unnamed; (seg0:gap: unnamed)	tfib_at_ph_addr_z = the program-header address 0x10040 (images/AsanUbsan.v ph_addr), same in both images; unnamed gap (UNRESOLVED in the donor-vs-donor control too: a tool limit)
 SAME-VALUE-DIFFERENT-OBJECT	YD1f.v	125	0xbd400	0xbd400	value unchanged (a copied literal?); the value denotes __sanitizer::internal_alloc_placeholder+0x17440 in the donor but __sanitizer::internal_alloc_placeholder+0x16fc0 in the target; same symbol __san	image span / 8 = (0x5fa000 - 0x10000) / 8 = 0xbd400, a LENGTH (shadow span), same in both images; the tool reads it as an address

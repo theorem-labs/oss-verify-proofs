@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (9 recorded proofs replaced by written proofs (bytes_at_write_other_n, rw_cells_frame_n, ro_cells_frame_n and 6 more)). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -144,62 +145,54 @@ Lemma bytes_at_write_other_n : forall m a bs c cs (n : Z),
   bytes_at segs m c cs ->
   (c + Z.of_nat (length cs) <= a \/ a + n <= c)%Z ->
   bytes_at segs (write_to_mem m (wa a) bs) c cs.
-Proof.
-ltac2:(KReplay.run1 (kr_t_StoreFast ()) ["WithSegs"] "h01nh11Hh22H0h32Hah42Hdh52Hlh61ah72bsh81ch92csh:1mp;1p;2p;3p;4p;:p;6g0000j11Tg000Uj18Tg0013j17Tg001Vj1;Tg0028j1ATg002Xj22Tg0038j13Tg003Xj3<Tg0042j20Tg004Nj24Tg004kj16Tg005Ij2:Tg005fj45Tg006[j29Tg0075j1@Tg007dj3?Tg008hl:=Tg009ij6>Tg00:E#1R0#1#1R1#1#1#1R2#8#7%81#7R1#;[g00:jR3%A1R4f3R5,21#3f0R65<3P3f4R7,21#3g00;HR8f6R9'0f7R:f1R;'4%60%62':R2'0p,4segsR0f9R<P9f5R=C51219#3,4:/0<14<5/0:'9P0f;f:R>#@;?<f8R?P:C5[[[[X03108=121=#3,49R8/02P0P?P=P7C5108?121:#3,4?/09'9P0P>P<P?P:P9P;P5f2P6M:=W4W1W5W3P;P6E>W2X03X94X83W7W6W:o"). Qed.
+Proof. intros m a bs c cs n <- Ha Hl H Hd. apply bytes_at_write_other; assumption. Qed.
 
 Lemma rw_cells_frame_n : forall m A cs (a : Z) bs (n : Z),
   Z.of_nat (length bs) = n -> (0 <= a)%Z -> (a + n <= 2^64)%Z ->
   rw_cells segs m A cs ->
   (A + Z.of_nat (cells_size cs) <= a \/ a + n <= A)%Z ->
   rw_cells segs (write_to_mem m (wa a) bs) A cs.
-Proof.
-ltac2:(KReplay.run1 (kr_t_StoreFast ()) ["WithSegs"] "h01nh11Ah21Hh32H0h42Hah52Hdh62Hlh71ah82bsh92csh:1mp;1p;2p;3p;4p;:p;6g0000j13Tg000Uj1;Tg0013j18Tg001Vj1=Tg0028j17Tg002Xj24Tg0038j12Tg003Xj3>Tg0042j20Tg004Nj21Tg004kj16Tg005Ij2<Tg00;fj45Tg00<\j1:Tg006[j29Tg0075j1BTg007dj3ATg00=Ul:@Tg009ij6?Tg00:E#3R0#3#3R1#3#3#3R2#;#8%;1#8R1#=[g00:jR3g00>Q#7%71f1R4,41#2f0R55>3P3f2R6,41#2g00;HR7f4R8'0f5R9/14%60%62'<R2'0p,4segsR0f9R:f8R;f7R<C5%:;#2,1:/0<f3R=,1</0:'9P0f;%B;;A<f:R>P:C5[[[[X03107=141=#2,18/02P0P;P<f6R2C5%:<#2,1;/021419#2,12/0;'9P0P>P:P;P<P2P4P=P6P5M:@W5W2W6W4P4P5E?W3X03W8X73W9W1W:o"). Qed.
+Proof. intros m A cs a bs n <- Ha Hl H Hd. apply rw_cells_frame; assumption. Qed.
 
 Lemma ro_cells_frame_n : forall m A cs (a : Z) bs (n : Z),
   Z.of_nat (length bs) = n -> (0 <= a)%Z -> (a + n <= 2^64)%Z ->
   ro_cells segs m A cs ->
   (A + Z.of_nat (cells_size cs) <= a \/ a + n <= A)%Z ->
   ro_cells segs (write_to_mem m (wa a) bs) A cs.
-Proof.
-ltac2:(KReplay.run1 (kr_t_StoreFast ()) ["WithSegs"] "h01nh11Ah21Hh32H0h42Hah52Hdh62Hlh71ah82bsh92csh:1mp;1p;2p;3p;4p;:p;6g0000j13Tg000Uj1;Tg0013j18Tg001Vj1=Tg0028j17Tg002Xj24Tg0038j12Tg003Xj3>Tg0042j20Tg004Nj21Tg004kj16Tg005Ij2<Tg00?Fj45Tg00<\j1:Tg006[j29Tg0075j1BTg007dj3ATg00@<l:@Tg009ij6?Tg00:E#3R0#3#3R1#3#3#3R2#;#8%;1#8R1#=[g00:jR3g00>Q#7%71f1R4,41#2f0R55>3P3f2R6,41#2g00;HR7f4R8'0f5R9/14%60%62'<R2'0p,4segsR0f9R:f8R;f7R<C5%:;#2,1:/0<f3R=,1</0:'9P0f;%B;;A<f:R>P:C5[[[[X03107=141=#2,18/02P0P;P<f6R2C5%:<#2,1;/021419#2,12/0;'9P0P>P:P;P<P2P4P=P6P5M:@W5W2W6W4P4P5E?W3X03W8X73W9W1W:o"). Qed.
+Proof. intros m A cs a bs n <- Ha Hl H Hd. apply ro_cells_frame; assumption. Qed.
 
 Lemma u8arr_frame_n : forall m A bs a xs (n : Z),
   Z.of_nat (length xs) = n -> (0 <= a)%Z -> (a + n <= 2^64)%Z ->
   u8arr segs m A bs ->
   (A + Z.of_nat (length bs) <= a \/ a + n <= A)%Z ->
   u8arr segs (write_to_mem m (wa a) xs) A bs.
-Proof.
-ltac2:(KReplay.run1 (kr_t_StoreFast ()) ["WithSegs"] "h01nh11Ah21Hh32H0h42Hah52Hdh62Hlh71ah82bsh91mh:2xsp;1p;2p;3p;4p;:p;6g0000j12Tg000Uj18Tg0013j17Tg001Vj1;Tg0028j1ATg002Xj21Tg0038j13Tg003Xj3<Tg0042j20Tg004Nj24Tg004kj16Tg005Ij2:Tg00A8j45Tg006[j29Tg0075j1@Tg007dj3?Tg00Ajl:=Tg009ij6>Tg00:E#2R0#2#2R1#2#2#2R2#8#7%81#7R1#;[g00:jR3%A1R4f1R5,11#3f0R65<3P3f2R7,11#3g00;HR8f4R9'0f5R:/45%60%62':R2'0p,4segsR0f9R;f8R<f7R=C5111<#3,4;/0=f3R>,4=/0;'9P0f;%@<;?=f:R?P;C5[[[[X03108>111>#3,49/02P0P<P=f6R2C5111=#3,4</02111:#3,42/0<'9P0P?P;P<P=P2P5P>P7P6M:=W5W2W6W4P5P6E>W3X03X:4X73W8W1W9o"). Qed.
+Proof. intros m A bs a xs n <- Ha Hl H Hd. apply u8arr_frame; assumption. Qed.
 
 Lemma u32arr_frame_n : forall m A ws a xs (n : Z),
   Z.of_nat (length xs) = n -> (0 <= a)%Z -> (a + n <= 2^64)%Z ->
   u32arr segs m A ws ->
   (A + 4 * Z.of_nat (length ws) <= a \/ a + n <= A)%Z ->
   u32arr segs (write_to_mem m (wa a) xs) A ws.
-Proof.
-ltac2:(KReplay.run1 (kr_t_StoreFast ()) ["WithSegs"] "h01nh11Ah21Hh32H0h42Hah52Hdh62Hlh71ah81mh92wsh:2xsp;1p;2p;3p;4p;:p;6g0000j14Tg000Uj1;Tg0013j19Tg001Vj1=Tg0028j18Tg002Xj22Tg0038j11Tg003Xj3>Tg0042j20Tg004Nj23Tg004kj15Tg005Ij2<Tg00Bbj46Tg00CUj2:Tg006[j27Tg0075j1BTg007dj3ATg00D2l:@Tg009ij6?Tg00:E#4R0#4R1#4R2#4#4#4R3#;#9R4%;2#9R2#=[g00:jR5%84%82f1R6,22#1f0R75>5P5f2R8,22#1g00;HR9f4R:'0f5R;/36%50%53'<R3'0p,4segsR0f9R<f8R=f7R>C6%51R1124=#1':,3</0>f3R?,3>/0<'7P0f;%B=;A>f:R@P<C6[[[[X05109?122?#1,3:/03P0P=P>f6R3C6124>#1,:1,3=/03122;#1,33/0='7P0P@P<P=P>P3P6P?P8P7M:@W5W2W6W4P6P7E?W3X05W:X75W9W1W8o"). Qed.
+Proof. intros m A ws a xs n <- Ha Hl H Hd. apply u32arr_frame; assumption. Qed.
 
 Lemma u64arr_frame_n : forall m A ws a xs (n : Z),
   Z.of_nat (length xs) = n -> (0 <= a)%Z -> (a + n <= 2^64)%Z ->
   u64arr segs m A ws ->
   (A + 8 * Z.of_nat (length ws) <= a \/ a + n <= A)%Z ->
   u64arr segs (write_to_mem m (wa a) xs) A ws.
-Proof.
-ltac2:(KReplay.run1 (kr_t_StoreFast ()) ["WithSegs"] "h01nh11Ah21Hh32H0h42Hah52Hdh62Hlh71ah81mh92wsh:2xsp;1p;2p;3p;4p;:p;6g0000j14Tg000Uj1;Tg0013j19Tg001Vj1=Tg0028j18Tg002Xj22Tg0038j11Tg003Xj3>Tg0042j20Tg004Nj23Tg004kj15Tg005Ij2<Tg00Dkj46Tg00CUj2:Tg006[j27Tg0075j1BTg007dj3ATg00E^l:@Tg009ij6?Tg00:E#4R0#4#4R1#4#4#4R2#;#9R3%;1#9R4#=[g00:jR5%83%84f1R6,24#1f0R75>5P5f2R8,24#1g00;HR9f4R:'0f5R;/36%50%52'<R2'0p,4segsR0f9R<f8R=f7R>C6%51R1123=#1':,3</0>f3R?,3>/0<'7P0f;%B=;A>f:R@P<C6[[[[X05109?124?#1,3:/02P0P=P>f6R2C6123>#1,:1,3=/02124;#1,32/0='7P0P@P<P=P>P2P6P?P8P7M:@W5W2W6W4P6P7E?W3X05W:X75W9W1W8o"). Qed.
+Proof. intros m A ws a xs n <- Ha Hl H Hd. apply u64arr_frame; assumption. Qed.
 
 Lemma u8ro_frame_n : forall m A bs a xs (n : Z),
   Z.of_nat (length xs) = n -> (0 <= a)%Z -> (a + n <= 2^64)%Z ->
   u8ro segs m A bs ->
   (A + Z.of_nat (length bs) <= a \/ a + n <= A)%Z ->
   u8ro segs (write_to_mem m (wa a) xs) A bs.
-Proof.
-ltac2:(KReplay.run1 (kr_t_StoreFast ()) ["WithSegs"] "h01nh11Ah21Hh32H0h42Hah52Hdh62Hlh71ah82bsh91mh:2xsp;1p;2p;3p;4p;:p;6g0000j12Tg000Uj18Tg0013j17Tg001Vj1;Tg0028j1ATg002Xj21Tg0038j13Tg003Xj3<Tg0042j20Tg004Nj24Tg004kj16Tg005Ij2:Tg00FWj45Tg006[j29Tg0075j1@Tg007dj3?Tg00GHl:=Tg009ij6>Tg00:E#2R0#2#2R1#2#2#2R2#8#7%81#7R1#;[g00:jR3%A1R4f1R5,11#3f0R65<3P3f2R7,11#3g00;HR8f4R9'0f5R:/45%60%62':R2'0p,4segsR0f9R;f8R<f7R=C5111<#3,4;/0=f3R>,4=/0;'9P0f;%@<;?=f:R?P;C5[[[[X03108>111>#3,49/02P0P<P=f6R2C5111=#3,4</02111:#3,42/0<'9P0P?P;P<P=P2P5P>P7P6M:=W5W2W6W4P5P6E>W3X03X:4X73W8W1W9o"). Qed.
+Proof. intros m A bs a xs n <- Ha Hl H Hd. apply u8ro_frame; assumption. Qed.
 
 Lemma stk_write_n : forall m lo hi a bs (n : Z),
   Z.of_nat (length bs) = n -> (0 <= a)%Z -> (a + n <= 2^64)%Z ->
   stk segs m lo hi -> stk segs (write_to_mem m (wa a) bs) lo hi.
-Proof.
-ltac2:(KReplay.run1 (kr_t_StoreFast ()) ["WithSegs"] "h01nh11Hh22H0h32Hah42Hlh51ah62bsh72hih82loh91mp;1p;2p;3p;4p;9p;6g0000j10Tg000Uj18Tg0013j16Tg001Vj1:Tg0028j1@Tg002Xj24Tg0038j12Tg003Xj3;Tg0042j21Tg004Nj27Tg004kj15Tg005Ij29Tg00H?j43Tg0075j1?Tg007dj3>Tg00I1l9=Tg009ij6<Tg00:E#0R0#0#0R1#0#0#0R2#8#6%81#6R1#:[g00:jR3%@1f1R4,41#2f0R55;3P3f2R6,41#2g00;HR7f4R8'1f5R9/74%50%52'9R2'1p,4segsR0f9R:f8R;f7R<C3P0f:%?<f6R=3>P:P;C3[[[X03f3R>,17141>#2,78/12P0P;P<P=C3P0P:P;P<P=P9P5P6P4M9=W1W4W3P4P5E<W2X03W6X53X73W8W9o"). Qed.
+Proof. intros m lo hi a bs n <- Ha Hl H. apply stk_write; assumption. Qed.
 
 End WithSegs.
 
@@ -207,8 +200,7 @@ Lemma munch_write_n : forall W m0 m a bs (n : Z),
   Z.of_nat (length bs) = n -> (0 <= a)%Z -> (a + n <= 2^64)%Z ->
   munch W m0 m -> inside W a n ->
   munch W m0 (write_to_mem m (wa a) bs).
-Proof.
-ltac2:(KReplay.run1 (kr_t_StoreFast ()) [] "h01nh11Hh22H0h32Hah43Hinh52Hlh61Wh71ah82bsh91mh:2m0p;1p;2p;3p;9p;6g0028j19Tg0000j10Tg000Uj16Tg0013j18Tg001Vj1ATg002Xj23Tg0038j11Tg003Xj3<Tg0042j22Tg004Nj27Tg004kj15Tg005Ij2;Tg00Iij34Tg00J]j3:Tg0075j1@Tg007dj3?Tg00KRl9=Tg009ij6>Tg00LL#9g00:E#0R0#0#0R1#0#0#0R2#6#8%61#8R1#A[R3g00:jR4%91f1R5,31#1f0R65<4P4f2R7,31#1g00;HR8f4R9'2f5R:/75%50%52';R2'2f9R0f8R;f7R<34f:R=f3R>7:<f;%@;=?0<74=[[[[X04128>131>#1,79/22f6R294;<131:#19:02P=P0P;P<P2P5P>P7P6M9=W4W1W5W3P5P6E>W2X04W8W7X93W:W6o"). Qed.
+Proof. intros W m0 m a bs n <- Ha Hl H Hin. apply munch_write; assumption. Qed.
 
 (* [comment removed for export] *)
 Ltac is_natlit n := lazymatch n with O => idtac | S ?k => is_natlit k end.

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco (origin/cold/h-rw-dis-7-rt 91c9538449b, proofs/libreac/fuzz_disco/lib/A/Rt/MemchrMusl.v) to fuzz_identity.asan by an address map recorded by the porting lane; module paths, the record class TfibSyms (unchanged). *)
+(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco (proofs/libreac/fuzz_disco/lib/A/Rt/MemchrMusl.v) to fuzz_identity.asan by an address map recorded by the porting lane; module paths, the record class TfibSyms (unchanged). *)
 (* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/A/AE3a.v's walk of musl memchr, generalised to any byte c in a1 and to a window that may hold no c at all (the count runs out); AE3a's fetch/decode lemmas, constants and step tactics are used as AE3a states them. *)
 (* Modified by Theorem Labs, 2026-10-29: for r-identity's acceptance (cold/h-rw-ide-6-wrapacc), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE 05:31Z: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/A/Rt/MemchrMusl.v (donor image sha256 c954b804786c), with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: derived from lib/A/MemchrMusl.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_pin's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/MemchrMusl.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/MemchrMusl.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_pin's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/MemchrMusl.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

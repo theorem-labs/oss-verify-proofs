@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-interval ledger): changed GU, GU_shrunk, NSEG_val and 3 more. *)
 (* The musl heap instance of the ubsan target at vm_limit = target_alloc_limit = 2^39: the invariant hi_heapU (the
    relocated PmHeapInst6 invariant plus the global byte cap and the map-count cap GU), the layout L0U, the lemmas
    that layer over the surviving PmHeapInst6 proofs, and the per-call helpers of the malloc/aligned/free proofs. *)
@@ -21,8 +22,9 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Ltac splits := repeat (lazymatch goal with |- _ /\ _ => split | |- _ => fail end).
 
-(* Values of the blob-defined constants of the instance. *)
-Lemma NSEG_val : NSEG = 4.
+(* Values of the blob-defined constants of the instance. LPS 727298f3: NSEG counts the image's four
+   reservations and the vDSO pair [State.init_reserved] appends. *)
+Lemma NSEG_val : NSEG = 6.
 Proof. vm_compute. reflexivity. Qed.
 Lemma KPM_val : KPM = 8.
 Proof. reflexivity. Qed.
@@ -31,8 +33,9 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma BOV_val : BOV = 3609042.
 Proof. vm_compute. reflexivity. Qed.
 
-Lemma RESV_live : live_bytes RESV <= RESVMAX.
-Proof. rewrite RESV_eq. apply Z.leb_le. vm_compute. reflexivity. Qed.
+(* The bytes of the image's reservations (LPS 727298f3: the launch ledger adds the vDSO pair to them). *)
+Lemma RESV_live : live_bytes RESV = 974848.
+Proof. rewrite RESV_eq. vm_compute. reflexivity. Qed.
 
 (* Per-call mapping-count cap of the embedding (CAPK) for credit cr. *)
 Definition CAPKU (cr : credit) : Z := K0U + NSEG - fst cr + KPM.
@@ -41,16 +44,21 @@ Lemma CAPKU_ok : forall cr, KPM <= fst cr -> CAPKU cr <= CAPKMAX.
 Proof. intros cr H. unfold CAPKU. rewrite NSEG_val. unfold K0U, CAPKMAX. lia. Qed.
 
 (* The global conjuncts: live heap mappings plus byte credit under CAPG; mappings plus call credit under
-   K0U + NSEG (bounds the count of live mappings for the address-room argument). *)
+   K0U + NSEG (bounds the count of live mappings for the address-room argument); the reserved ledger's bytes
+   under RESVMAX (LPS 727298f3: the ledger is the image's reservations and the vDSO pair, so it is no longer
+   RESV itself; the heap never changes it). *)
 Definition GU (cr : credit) (VM : VmMaps) : Prop :=
      live_bytes (vm_maps VM) + snd cr <= CAPG
-  /\ Z.of_nat (length (vm_reserved VM ++ vm_maps VM)) + fst cr <= K0U + NSEG.
+  /\ Z.of_nat (length (vm_reserved VM ++ vm_maps VM)) + fst cr <= K0U + NSEG
+  /\ live_bytes (vm_reserved VM) <= RESVMAX.
 
 (* A call that only shrinks the mappings (free) keeps GU at unchanged credit. *)
 Lemma GU_shrunk : forall cr VM h', GU cr VM -> vm_shrunk VM h' -> GU cr h'.
 Proof.
-  intros cr VM h' [G1 G2] (S1 & S2 & S3 & S4 & S5 & S6 & S7). split; [lia|].
-  rewrite length_app in *. rewrite S1. lia.
+  intros cr VM h' (G1 & G2 & G3) (S1 & S2 & S3 & S4 & S5 & S6 & S7). unfold GU. splits.
+  - lia.
+  - rewrite length_app in *. rewrite S1. lia.
+  - rewrite S1. exact G3.
 Qed.
 
 Section LAYOUTU.
@@ -113,11 +121,10 @@ Lemma RIU_pre : forall {RUNp : RunP} (L : mled) (pbrk : Z) (VM : VmMaps) (cr : c
   GU cr VM -> 0 <= n <= NBU -> n + BOV <= snd cr -> KPM <= fst cr -> PA <= POTMAX + AMC ->
   RI (CAPKU cr) (live_bytes (vm_maps VM) + CALLB n PA) EVM (CALLB n PA) VM.
 Proof.
-  intros RUNp L pbrk VM cr n PA HK FA LIVE FITM [G1 G2] Hn HB HKc HPA.
+  intros RUNp L pbrk VM cr n PA HK FA LIVE FITM (G1 & G2 & G3) Hn HB HKc HPA.
   destruct (CALLB_le n PA ltac:(lia) HPA) as [CB0 CB1].
   assert (HSP : sp_window_lo <= bv_unsigned (vm_init_sp VM)) by (eapply KL2_init_sp_window; exact HK).
-  assert (HR : vm_reserved VM = RESV) by (eapply k2_resv_img; exact HK).
-  pose proof RESV_live as HRL. pose proof BOV_val as HBOV.
+  pose proof BOV_val as HBOV.
   unfold RI, CAPKU. splits.
   - unfold KPM in *. lia.
   - exact FA.
@@ -128,7 +135,7 @@ Proof.
   - exact FITM.
   - lia.
   - unfold BBMAX, NBU in *. lia.
-  - rewrite HR. exact HRL.
+  - exact G3.
 Qed.
 
 (* The global conjuncts after the call, from the embedding invariant at its end; also the old count conjunct. *)
@@ -138,7 +145,7 @@ Lemma RIU_post : forall (VM h' : VmMaps) (cr : credit) (n PA : Z),
   GU (debit L0U cr n) h'
   /\ Z.of_nat (length (vm_reserved h' ++ vm_maps h')) + fst (debit L0U cr n) <= K0 + NSEG.
 Proof.
-  intros VM h' cr n PA [G1 G2] HB HKc HPA Hn (Q1 & Q2 & Q3 & Q4 & Q6 & Q7 & Q8 & Q9 & Q10 & Q11).
+  intros VM h' cr n PA (G1 & G2 & G3) HB HKc HPA Hn (Q1 & Q2 & Q3 & Q4 & Q6 & Q7 & Q8 & Q9 & Q10 & Q11).
   destruct (CALLB_le n PA Hn HPA) as [CB0 CB1].
   pose proof K0_val as HK0. unfold CAPKU in Q1. cbn [Z.of_nat] in Q1.
   unfold debit, GU. rewrite L0U_kpm, L0U_bov. cbn [fst snd]. unfold K0U in *. splits; lia.

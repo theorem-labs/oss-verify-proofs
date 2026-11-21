@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the world sections take the output channel's reader, the launch's mmap base and process input; each ledger is the launch's, with the vDSO/vvar pair; argv[1] sits at the top of the launch block; the stack window is the launch's 1500 pages, not 8 MiB). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -358,7 +359,7 @@ Ltac oom_exit_pre HL P0 MFS :=
     end
   end.
 
-Ltac oom_stdio_exit HL P0 RES_EQ FD2 MFS :=
+Ltac oom_stdio_exit HL P0 RES_EQ FD2 RDR MFS :=
   (* [comment removed for export] *)
   lazymatch goal with
   | HR : regs_ok ?E _ _, HK : know_ok _ _ _ _ |- _ =>
@@ -390,6 +391,7 @@ Ltac oom_stdio_exit HL P0 RES_EQ FD2 MFS :=
                    _ _ 0x19557 19 HK eq_refl) by (cbn; lia);
         apply msg_oom_img
       | apply FD2
+      | apply RDR
       | first [reflexivity | assumption]
       | first [reflexivity | assumption]
       | apply t_exit_has_nil
@@ -417,6 +419,8 @@ Section World.
   Variable envv : list (list byte).
   Variable uid : word.   (* [comment removed for export] *)
   Variable rdraw : EntryDraw.   (* [comment removed for export] *)
+  Variable inp : ProcInput.
+  Variable entry : word.
   Variable tid : word.
   Variable regs0 : bvmap 5 word.
   Variable mem0 : word -> option byte.
@@ -433,9 +437,15 @@ Section World.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
   (* [comment removed for export] *)
   Hypothesis Hbrk : valid_brk RSEGS brk.
+  (* LPS 727298f3: the launch's mmap base, below which the vDSO/vvar pair sits ([State.init_reserved]) *)
+  Hypothesis Hmb : valid_mmap_base mbase.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hpne : path <> [].
   Hypothesis Hplen : (length path <= 4095)%nat.
+  (* LPS 08b1429: a write to a channel with no reader raises SIGPIPE.
+     [stdin0] is [amb_of inp] at every call site, so the run supplies this through
+     [valid_input_channel_reader] (Run.v:4951).  A SEPARATE hypothesis, never a new conjunct. *)
+  Hypothesis Hrdr : ia_channel_reader stdin0 = true.
   (* [comment removed for export] *)
   Variable mode : bool.
   Variable Q : config -> Prop.
@@ -455,7 +465,7 @@ Section World.
 
   #[local] Notation ENVv := (ENV a0s path rdraw).
   (* [comment removed for export] *)
-  #[local] Notation RES := (segments_reserved RSEGS).
+  #[local] Notation RES := (init_reserved (segments_reserved RSEGS) mbase sp0 (ia_kernel stdin0)).
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -497,6 +507,8 @@ Section World.
   Lemma mV_fds : forall VM, m_fds (modelV VM) = fdsV.  Proof. reflexivity. Qed.
   Lemma mV_fd2 : forall VM, fd_lookup (m_fds (modelV VM)) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
   Proof. reflexivity. Qed.
+  Lemma mV_rdr : forall VM, m_channel_reader (modelV VM) = true.
+  Proof. intros VM. exact Hrdr. Qed.
 
   (* [comment removed for export] *)
   Definition model1V : Model := mkModelA fdsV (mkVmMapsFull RES [] [] brk brk lim mbase sp0) stdin0 fs0 None (Some tid) None.
@@ -505,7 +517,7 @@ Section World.
   Definition brk_ok_entry (KB : TSet) : Prop :=
     forall vals R M,
       length vals = 74%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 73 = brk ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      vals_ev vals 1 = p0 a0s path envv rdraw inp -> vals_ev vals 2 = p1 a0s path envv rdraw inp ->
       vals_ev vals 5 = tid ->
       regs_ok (ENVv vals) srD2 R -> know_ok RSEGS (ENVv vals) M knD2 -> SI M ->
       GG RSEGS mode Q KB
@@ -518,7 +530,7 @@ Section World.
   Definition mmap_ok_entry (KB : TSet) : Prop :=
     forall vals R M (hint a : word),
       length vals = 74%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 73 = brk ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      vals_ev vals 1 = p0 a0s path envv rdraw inp -> vals_ev vals 2 = p1 a0s path envv rdraw inp ->
       vals_ev vals 5 = tid ->
       regs_ok (ENVv vals) srE R -> know_ok RSEGS (ENVv vals) M knE -> SI M ->
       grant_ok_na hint model1V a 8192 = true ->
@@ -540,7 +552,7 @@ Section World.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in *.
     run_block scr0 75%nat.
-    oom_stdio_exit HL P0 resX_eq (mV_fd2 VM) (mV_fs VM).
+    oom_stdio_exit HL P0 resX_eq (mV_fd2 VM) (mV_rdr VM) (mV_fs VM).
   Qed.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -551,7 +563,7 @@ Section World.
   (* [comment removed for export] *)
 (* [comment removed for export] *)
   Definition w65_vm (VM : VmMaps) (mb gm : word) : Prop :=
-    vm_reserved VM = RES /\ (LIM <= vm_limit VM)%Z /\ vm_init_sp VM = sp0 /\    (* [comment removed for export] *)
+    res_vm VM /\ (LIM <= vm_limit VM)%Z /\ vm_init_sp VM = sp0 /\    (* [comment removed for export] *)
     (bv_unsigned gm + 69632 <= bv_unsigned sp0 - 8388608)%Z /\
     ((vm_maps VM = [(gm, Z_to_bv 64 69632); (mb, Z_to_bv 64 8192)]
       /\ (bv_unsigned gm + 69632 <= bv_unsigned mb \/ bv_unsigned mb + 8192 <= bv_unsigned gm)%Z)
@@ -560,7 +572,7 @@ Section World.
 
   Definition exitG_branch : Prop :=
     forall vals R M VM,
-      length vals = 108%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      length vals = 108%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 a0s path envv rdraw inp ->
       vals_ev vals 73 = brk -> vals_ev vals 5 = tid ->
       regs_ok (ENVv vals) srZ R -> know_ok RSEGS (ENVv vals) M knZ ->
       vm_pre VM sp0 brk (Z_to_bv 64 (bv_unsigned brk + 8192)) (vals_ev vals 75) -> w65_vm VM brk (vals_ev vals 75) -> SI M ->
@@ -568,7 +580,7 @@ Section World.
 
   Lemma w65_G : forall vals R M VM,
     exitG_branch ->
-    length vals = 76%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+    length vals = 76%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 a0s path envv rdraw inp ->
     vals_ev vals 73 = brk -> vals_ev vals 5 = tid ->
     regs_ok (ENVv vals) srG0 R -> know_ok RSEGS (ENVv vals) M knG0 ->
     vm_pre VM sp0 brk (Z_to_bv 64 (bv_unsigned brk + 8192)) (vals_ev vals 75) -> w65_vm VM brk (vals_ev vals 75) -> SI M ->
@@ -688,7 +700,7 @@ Section World.
     set (vals2 := vals ++ junk_vals R2) in *.
     assert (HL2 : length vals2 = 108%nat) by (subst vals2; rewrite length_app, junk_vals_length, HL; reflexivity).
     assert (Q0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-    assert (Q2 : vals_ev vals2 2 = p1 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+    assert (Q2 : vals_ev vals2 2 = p1 a0s path envv rdraw inp) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
     assert (Q70 : vals_ev vals2 73 = brk) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).
     assert (Q5 : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5).
     assert (Q72 : vals_ev vals2 75 = gm) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); reflexivity).
@@ -719,9 +731,12 @@ Section World.
                  (Z_to_bv 64 (bv_unsigned brk + 8192)) lim mbase sp0.
   Definition vm_mid (VM : VmMaps) : Prop := VM = VMk \/ VM = VMo \/ VM = VMd.
 
-  Lemma RES_eq : RES = [(Z_to_bv 64 65536, Z_to_bv 64 835584); (Z_to_bv 64 901120, Z_to_bv 64 1699840);
-                        (Z_to_bv 64 2600960, Z_to_bv 64 380928); (Z_to_bv 64 2981888, Z_to_bv 64 221184)].
-  Proof. vm_compute. reflexivity. Qed.
+  (* LPS 727298f3: each of these ledgers is the launch's, so it holds the vDSO/vvar pair *)
+  Lemma vm_mid_res : forall VM, vm_mid VM -> res_vm VM.
+  Proof.
+    intros VM HV. destruct HV as [-> | [-> | ->]];
+      apply (res_vm_init _ mbase sp0 (ia_kernel stdin0) Hmb Hvsp); reflexivity.
+  Qed.
 
   Lemma vm_mid_shape : forall VM, vm_mid VM ->
     vm_reserved VM = RES /\ vm_limit VM = lim /\ vm_init_sp VM = sp0
@@ -746,10 +761,13 @@ Section World.
     apply grant_exists.
     - unfold init_sp_ok. rewrite mV_vmmaps, Hsp. unfold sp_window_lo. lia.
     - lia.
-    - rewrite mV_vmmaps, Hr, Hm, RES_eq. repeat constructor; cbn [snd]; rewrite ?u64_lit by lia; lia.
-    - rewrite mV_vmmaps, Hr, Hm, RES_eq. cbn [length app Z.of_nat Pos.of_succ_nat Pos.succ]. lia.
+    - pose proof (res_vm_top VM (vm_mid_res VM HV)) as VT.
+      rewrite mV_vmmaps, (res_vm_list VM (vm_mid_res VM HV)), Hm. repeat constructor; cbn [snd fst]; rewrite ?u64_lit by lia; lia.
+    - rewrite mV_vmmaps, (res_vm_list VM (vm_mid_res VM HV)), Hm. cbn [length app Z.of_nat Pos.of_succ_nat Pos.succ]. lia.
     - apply grant_budget_intro; [reflexivity | reflexivity |]. rewrite mV_vmmaps.
       unfold vm_live_bytes. rewrite Hm, Hl. cbn [live_bytes]. pose proof LIM_ge. pose proof lim_ge. lia.
+    - vm_compute. reflexivity.
+    - vm_compute. reflexivity.
   Qed.
 
   (* [comment removed for export] *)
@@ -762,7 +780,7 @@ Section World.
     intros hint VM a HV Hg. pose proof (brk_lo brk Hbrk) as Blo. pose proof (brk_hi path brk Hbrk Hplen) as Bhi.
     destruct (vm_mid_shape VM HV) as (Hr & Hl & Hsp & mp & ms & Hm & Hms).
     destruct (grant_ok_unpack _ _ _ _ Hg) as (Hal & Hpos & Hce & Hrf & Hlive).
-    rewrite mV_vmmaps in Hrf. rewrite Hr, Hm, RES_eq in Hrf. rewrite mV_vmmaps in Hce. unfold alloc_top in Hce. rewrite Hsp, stack_max_size_val in Hce.
+    rewrite mV_vmmaps in Hrf. rewrite (res_vm_list VM (vm_mid_res VM HV)), Hm in Hrf. rewrite mV_vmmaps in Hce. unfold alloc_top in Hce. rewrite Hsp, stack_max_size_val in Hce.
     unfold page_size in Hal. pose proof (u64_range a) as Ha.
     assert (Hn : bv_unsigned (Z_to_bv 64 69632) = 69632%Z) by (apply u64_lit; lia).
     pose proof (region_free_In _ _ _ (Z_to_bv 64 65536) (Z_to_bv 64 835584) Hrf ltac:(cbn [In app]; tauto)) as D1.
@@ -781,7 +799,7 @@ Section World.
 
   Lemma w65_mid : forall vals R M VM,
     exitG_branch ->
-    length vals = 75%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+    length vals = 75%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 a0s path envv rdraw inp ->
     vals_ev vals 73 = brk -> vals_ev vals 5 = tid ->
     regs_ok (ENVv vals) srM R -> know_ok RSEGS (ENVv vals) M knM -> VM = VMo -> SI M ->     (* [comment removed for export] *)
     GG RSEGS mode Q K     (* [comment removed for export] *)
@@ -807,6 +825,7 @@ Section World.
     - regv HR (13 : reg). reflexivity.
     - regv HR (14 : reg). apply bv_eq. reflexivity.
     - regv HR (15 : reg). reflexivity.
+    - regv HR (10 : reg). reflexivity.
     - apply vm_mid_grant_exists. exact HV.
     - (* [comment removed for export] *)
       intros Hmode e He. assert (e = ENOMEM) as -> by (destruct He as [<-|[]]; reflexivity).
@@ -827,7 +846,7 @@ Section World.
       set (vals2 := vals ++ [a]) in *.
       assert (HL2 : length vals2 = 76%nat) by (subst vals2; rewrite length_app, HL; reflexivity).
       assert (Q0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-      assert (Q2 : vals_ev vals2 2 = p1 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+      assert (Q2 : vals_ev vals2 2 = p1 a0s path envv rdraw inp) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
       assert (Q70 : vals_ev vals2 73 = brk) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).
       assert (Q5 : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5).
       assert (Q72 : vals_ev vals2 75 = a).
@@ -852,18 +871,22 @@ Section World.
       apply (w65_G vals2 _ _ _ EXIT HL Q0 Q2 Q70 Q5 HR HK).
       3:{ si_fill HSI. }
       2:{ rewrite Q72. destruct (vm_mid_shape VM HV) as (Hr & Hl & Hsp & mp & ms & Hm & Hms).
-          unfold w65_vm, mmap_model. rewrite ?with_vmmaps_vm, ?mV_vmmaps. cbn [vm_reserved vm_limit vm_init_sp vm_maps]. rewrite Hr, Hl, Hsp, Hm.
-          split; [reflexivity|]. split; [exact lim_ge|]. split; [reflexivity|]. split; [lia|].   (* [comment removed for export] *)
+          unfold w65_vm, mmap_model. rewrite ?with_vmmaps_vm, ?mV_vmmaps.
+          split; [apply (res_vm_transport VM); [reflexivity | reflexivity | reflexivity | exact (vm_mid_res VM HV)]|].
+          cbn [vm_reserved vm_limit vm_init_sp vm_maps]. rewrite Hl, Hsp, Hm.
+          split; [exact lim_ge|]. split; [reflexivity|]. split; [lia|].   (* [comment removed for export] *)
           specialize (Gsep mp ms Hm). pose proof (u64_range mp).
           destruct Hms as [[Hms1 ->] | [Hms1 Hmp]].
           - left. split; [rewrite <- (Z_to_bv_bv_unsigned 64 ms), Hms1; reflexivity | lia].
           - right. split; [rewrite <- (Z_to_bv_bv_unsigned 64 ms), Hms1, <- (Z_to_bv_bv_unsigned 64 mp), Hmp; reflexivity | lia]. }
       (* [comment removed for export] *)
       rewrite Q72. destruct (vm_mid_shape VM HV) as (Hr & Hl & Hsp & mp & ms & Hm & Hms).
-      unfold vm_pre, mmap_model. rewrite ?with_vmmaps_vm, ?mV_vmmaps. cbn [vm_reserved vm_limit vm_init_sp vm_maps vm_noaccess vm_start_brk vm_brk].
-      rewrite Hr, Hl, Hsp, Hm.
+      unfold vm_pre, mmap_model. rewrite ?with_vmmaps_vm, ?mV_vmmaps.
+      split; [apply (res_vm_transport VM); [reflexivity | reflexivity | reflexivity | exact (vm_mid_res VM HV)]|].
+      cbn [vm_reserved vm_limit vm_init_sp vm_maps vm_noaccess vm_start_brk vm_brk].
+      rewrite Hl, Hsp, Hm.
       assert (Hn : bv_unsigned (Z_to_bv 64 69632) = 69632%Z) by (apply u64_lit; lia).
-      split; [reflexivity|]. split; [exact lim_ge|]. split; [reflexivity|]. split; [apply map_has_head|].   (* [comment removed for export] *)
+      split; [exact lim_ge|]. split; [reflexivity|]. split; [apply map_has_head|].   (* [comment removed for export] *)
       pose proof (u64_range mp) as Hmpr. pose proof (Gsep mp ms Hm) as Gsp.
       split.
       { constructor; [cbn [fst snd]; rewrite ?Hn; lia|]. constructor; [|constructor].
@@ -890,8 +913,8 @@ Section World.
       split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
       split; [apply u64_lit; lia|]. split; [rewrite rtop; lia|].
       split; [exact Gal|]. split; [lia|]. split; [lia|].
-      destruct (grant_ok_unpack _ _ _ _ Hg) as (_ & _ & _ & Hrf & _). rewrite mV_vmmaps, Hr in Hrf.
-      rewrite LedgerCfg.region_free_app in Hrf. apply andb_prop in Hrf. split; [exact (proj1 Hrf)|].
+      destruct (grant_ok_unpack _ _ _ _ Hg) as (_ & _ & _ & Hrf & _). rewrite mV_vmmaps in Hrf.
+      rewrite LedgerCfg.region_free_app in Hrf. apply andb_prop in Hrf. split; [rewrite HVo in Hrf; exact (proj1 Hrf)|].
       injection Emp as -> ->. rewrite (u64_lit 8192) in Gsp by lia.
       split; [lia | exact (proj1 (proj2 Hbrk))].     (* [comment removed for export] *)
   Qed.
@@ -914,7 +937,7 @@ Section World.
         set (vals2 := vals ++ [getr R' 10]) in *;
         assert (HL2 : length vals2 = 75%nat) by (subst vals2; rewrite length_app, HL; reflexivity);
         assert (Q0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0);
-        assert (Q2 : vals_ev vals2 2 = p1 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2);
+        assert (Q2 : vals_ev vals2 2 = p1 a0s path envv rdraw inp) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2);
         assert (Q70 : vals_ev vals2 73 = brk) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70);
         assert (Q5 : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5);
         assert (Q71 : vals_ev vals2 74 = getr R' 10)
@@ -971,7 +994,9 @@ Section World.
     - regv HR (13 : reg). reflexivity.
     - regv HR (14 : reg). apply bv_eq. reflexivity.
     - regv HR (15 : reg). reflexivity.
-    - rewrite mV_vmmaps. cbn [VMk vm_reserved]. apply region_free_above_top. rewrite rtop. lia.
+    - rewrite mV_vmmaps. apply (res_vm_rf_add VMk); [exact (vm_mid_res VMk (or_introl eq_refl)) | cbn [VMk vm_reserved] |].
+      + apply region_free_above_top. rewrite rtop. lia.
+      + try change (page_round_up_Z 4096) with 4096%Z. rewrite ?u64_lit by lia. unfold mmap_base_min. lia.
     - rewrite mV_vmmaps. cbn [VMk vm_maps]. change (page_round_up_Z 4096) with 4096%Z.
       apply map_contains_head; rewrite ?u64_lit by lia; lia.
     - (* [comment removed for export] *)
@@ -994,24 +1019,26 @@ Section World.
 End World.
 
 (* [comment removed for export] *)
-Theorem brk_ok_world_g sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim   (* [comment removed for export] *)
+Theorem brk_ok_world_g sp0 a0s path envv rdraw (inp : ProcInput) tid mem0 brk mbase fs0 stdin0 lim   (* [comment removed for export] *)
   (lim_ge : (LIM <= lim)%Z)
   (Hvsp : valid_sp sp0) (Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z) (Hbrk : valid_brk RSEGS brk)
-  (Hplen : (length path <= 4095)%nat) mode Q fd3 K :
-  exitG_branch sp0 a0s path envv rdraw tid brk fs0 stdin0 mode Q fd3 (above_eq sp0 mem0) K ->
-  brk_ok_branch_G sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim mode Q fd3 K.
+  (Hmb : valid_mmap_base mbase) (Hplen : (length path <= 4095)%nat)
+  (Hrdr : ia_channel_reader stdin0 = true) mode Q fd3 K :
+  exitG_branch sp0 a0s path envv rdraw inp tid brk fs0 stdin0 mode Q fd3 (above_eq sp0 mem0) K ->
+  brk_ok_branch_G sp0 a0s path envv rdraw inp tid mem0 brk mbase fs0 stdin0 lim mode Q fd3 K.
 Proof.
-  intros EXIT. exact (brk_ok_worldV sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim lim_ge Hvsp Htid Hbrk Hplen mode Q fd3
+  intros EXIT. exact (brk_ok_worldV sp0 a0s path envv rdraw inp tid mem0 brk mbase fs0 stdin0 lim lim_ge Hvsp Htid Hbrk Hmb Hplen Hrdr mode Q fd3
                         (above_eq sp0 mem0) (above_eq_step sp0 mem0) K EXIT).
 Qed.
 
-Theorem brk_ok_world sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim   (* [comment removed for export] *)
+Theorem brk_ok_world sp0 a0s path envv rdraw (inp : ProcInput) tid mem0 brk mbase fs0 stdin0 lim   (* [comment removed for export] *)
   (lim_ge : (LIM <= lim)%Z)
   (Hvsp : valid_sp sp0) (Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z) (Hbrk : valid_brk RSEGS brk)
-  (Hplen : (length path <= 4095)%nat) mode Q K :
-  exitG_branch sp0 a0s path envv rdraw tid brk fs0 stdin0 mode Q (FdFile path (Z_to_bv 64 0)) (above_eq sp0 mem0) K ->
-  brk_ok_branch_M sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim mode Q K.
-Proof. exact (brk_ok_world_g sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim lim_ge Hvsp Htid Hbrk Hplen mode Q (FdFile path (Z_to_bv 64 0)) K). Qed.
+  (Hmb : valid_mmap_base mbase) (Hplen : (length path <= 4095)%nat)
+  (Hrdr : ia_channel_reader stdin0 = true) mode Q K :
+  exitG_branch sp0 a0s path envv rdraw inp tid brk fs0 stdin0 mode Q (FdFile path (Z_to_bv 64 0)) (above_eq sp0 mem0) K ->
+  brk_ok_branch_M sp0 a0s path envv rdraw inp tid mem0 brk mbase fs0 stdin0 lim mode Q K.
+Proof. exact (brk_ok_world_g sp0 a0s path envv rdraw inp tid mem0 brk mbase fs0 stdin0 lim lim_ge Hvsp Htid Hbrk Hmb Hplen Hrdr mode Q (FdFile path (Z_to_bv 64 0)) K). Qed.
 End H0W65.
 
 (* [comment removed for export] *)
@@ -1284,6 +1311,8 @@ Section World.
   Variable envv : list (list byte).
   Variable uid : word.   (* [comment removed for export] *)
   Variable rdraw : EntryDraw.   (* [comment removed for export] *)
+  Variable inp : ProcInput.
+  Variable entry : word.
   Variable tid : word.
   Variable regs0 : bvmap 5 word.
   Variable mem0 : word -> option byte.
@@ -1299,9 +1328,16 @@ Section World.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
   Hypothesis Hbrk : valid_brk RSEGS brk.
+  (* LPS 727298f3: the launch's mmap base, below which the vDSO/vvar pair sits ([State.init_reserved]) *)
+  Hypothesis Hmb : valid_mmap_base mbase.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hpne : path <> [].
   Hypothesis Hplen : (length path <= 4095)%nat.
+  (* LPS 08b1429: see the first World section. *)
+  Hypothesis Hrdr : ia_channel_reader stdin0 = true.
+  (* LPS 727298f3: argv[1] sits at the top of the launch block, whose place the entry draw and the
+     exec name fix, so its bound comes from the launch ([main_str] at the callers) *)
+  Hypothesis Hp1 : (0x7fff80000000 <= bv_unsigned (p1 a0s path envv rdraw inp) <= 0x800000400000)%Z.
   (* [comment removed for export] *)
   Variable mode : bool.
   Variable Q : config -> Prop.
@@ -1318,7 +1354,7 @@ Section World.
 
   (* [comment removed for export] *)
   Definition vm_small (VM : VmMaps) (gm : word) : Prop :=
-    vm_reserved VM = segments_reserved RSEGS /\ (LIM <= vm_limit VM)%Z   (* [comment removed for export] *)
+    res_vm VM /\ (LIM <= vm_limit VM)%Z   (* [comment removed for export] *)
     /\ (length (vm_maps VM) <= 4)%nat
     /\ In (gm, Z_to_bv 64 69632) (vm_maps VM)
     /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 69632)%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) (vm_maps VM)
@@ -1328,7 +1364,7 @@ Section World.
   Definition after_malloc (K : TSet) : Prop :=
     forall (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (mb bw gm can sec : word) (area brkv mas : Z),
       area = (bv_unsigned mb + 4096)%Z -> bv_unsigned bw = brkv ->
-      read_pre sp0 (p1 sp0 a0s path envv) mb bw gm can sec R M ->
+      read_pre sp0 (p1 a0s path envv rdraw inp) mb bw gm can sec R M ->
       world0 (bv_unsigned sp0) area (bv_unsigned gm) brkv mas (bv_unsigned tid) (bv_unsigned can) (bv_unsigned sec) M ->
       main_frame (bv_unsigned sp0) M ->
       vm_pre VM sp0 mb bw gm -> vm_small VM gm ->
@@ -1339,7 +1375,7 @@ Section World.
   Definition after_malloc_gen (K : TSet) : Prop :=
     forall (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (mb bw gm can sec : word) (area brkv mas : Z),
       area = (bv_unsigned mb + 4096)%Z -> bv_unsigned bw = brkv ->
-      read_pre sp0 (p1 sp0 a0s path envv) mb bw gm can sec R M ->
+      read_pre sp0 (p1 a0s path envv rdraw inp) mb bw gm can sec R M ->
       world0 (bv_unsigned sp0) area (bv_unsigned gm) brkv mas (bv_unsigned tid) (bv_unsigned can) (bv_unsigned sec) M ->
       main_frame (bv_unsigned sp0) M ->
       vm_pre VM sp0 mb bw gm -> vm_small VM gm -> SI M ->
@@ -1350,17 +1386,12 @@ Section World.
   Proof. intros VM. reflexivity. Qed.
 
   (* [comment removed for export] *)
-  Lemma p1_range : (0x7fff80000000 <= bv_unsigned (p1 sp0 a0s path envv) <= 0x800000400000)%Z.
-  Proof.
-    pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. unfold sp_window_lo, sp_window_hi in *.
-    unfold p1. rewrite (u_cat_argv_ptr sp0 [a0s; path] envv Hva Hve) by (cbn; lia || (unfold sp_window_lo, sp_window_hi; cbn; lia)).
-    pose proof (struct_av_bound [a0s; path] envv Hva Hve).
-    pose proof (CatExec.total_arg_bytes_firstn_le 1 [a0s; path]). lia.
-  Qed.
+  Lemma p1_range : (0x7fff80000000 <= bv_unsigned (p1 a0s path envv rdraw inp) <= 0x800000400000)%Z.
+  Proof using Hva Hve Hp1. exact Hp1. Qed.
 
   Variable K : TSet.
 
-  Lemma w65_exitG : after_malloc_gen K -> exitG_branch sp0 a0s path envv rdraw tid brk fs0 stdin0 mode Q fd3 SI K.
+  Lemma w65_exitG : after_malloc_gen K -> exitG_branch sp0 a0s path envv rdraw inp tid brk fs0 stdin0 mode Q fd3 SI K.
   Proof.
     intros AM vals R M VM HL P0 P2 P70 P5 HR HK HVM HVS HSI.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
@@ -1396,7 +1427,7 @@ Section World.
       + lia.
       + lia.
       + lia.
-      + unfold stack_writable. apply (kwr_window (ENVv vals) M knZ (EVar 0) (-8388608) 8388608); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
+      + unfold stack_writable. apply (kwr_window (ENVv vals) M knZ (EVar 0) (-6144000) 6144000); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
       + unfold group_writable. apply (kwr_window (ENVv vals) M knZ gx 0 69632); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
       + unfold meta_writable. apply (kwr_window (ENVv vals) M knZ bx 4096 4096); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
       + destruct (errno_some M) as (bs & Hbs & Hlen). exists (Z_to_bv 64 (bytes_le_to_Z bs)).
@@ -1449,8 +1480,8 @@ Section World.
       constructor; [kcell HK .. | exact (SI_hi M HSI)].     (* [comment removed for export] *)
     - exact HVM.
     - (* [comment removed for export] *)
-      destruct HVS as (Hr & Hl & Hsp & Gt & Hm). unfold vm_small. rewrite Hr.
-      split; [reflexivity|]. split; [exact Hl|].   (* [comment removed for export] *)
+      destruct HVS as (Hr & Hl & Hsp & Gt & Hm). unfold vm_small.
+      split; [exact Hr|]. split; [exact Hl|].   (* [comment removed for export] *)
       assert (U1 : bv_unsigned (Z_to_bv 64 69632) = 69632%Z) by reflexivity.
       assert (U2 : bv_unsigned (Z_to_bv 64 8192) = 8192%Z) by reflexivity.
       assert (U3 : bv_unsigned (Z_to_bv 64 4096) = 4096%Z) by reflexivity.
@@ -1469,45 +1500,49 @@ Section World.
 
   (* [comment removed for export] *)
   Theorem brk_ok_semV : after_malloc_gen K ->
-    brk_ok_entry sp0 a0s path envv rdraw tid brk mbase fs0 stdin0 lim mode Q fd3 SI K.   (* [comment removed for export] *)
+    brk_ok_entry sp0 a0s path envv rdraw inp tid brk mbase fs0 stdin0 lim mode Q fd3 SI K.   (* [comment removed for export] *)
   Proof. intros AM. apply brk_ok_worldV; try assumption. apply w65_exitG, AM. Qed.
 
 End World.
 
 (* [comment removed for export] *)
-Theorem brk_ok_sem_g sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim   (* [comment removed for export] *)
+Theorem brk_ok_sem_g sp0 a0s path envv rdraw (inp : ProcInput) tid mem0 brk mbase fs0 stdin0 lim   (* [comment removed for export] *)
   (lim_ge : (LIM <= lim)%Z)
   (Hva : valid_argv [a0s; path]) (Hve : valid_envp envv)
   (Hvsp : valid_sp sp0) (Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z) (Hbrk : valid_brk RSEGS brk)
-  (Hplen : (length path <= 4095)%nat)
+  (Hmb : valid_mmap_base mbase) (Hplen : (length path <= 4095)%nat)
+  (Hrdr : ia_channel_reader stdin0 = true)
+  (Hp1 : (0x7fff80000000 <= bv_unsigned (p1 a0s path envv rdraw inp) <= 0x800000400000)%Z)
   (* [comment removed for export] *)
   (Hhi0 : exists s : Z, (bv_unsigned sp0 + 192 <= s < 2 ^ 47 - 32)%Z /\ (s mod 8 = 0)%Z /\ mem0 (Z_to_bv 64 s) = Some (Z_to_bv 8 0))
   mode Q fd3 K :
-  after_malloc_gen sp0 a0s path envv tid fs0 stdin0 mode Q fd3 (above_eq sp0 mem0) K ->
-  brk_ok_branch_G sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim mode Q fd3 K.
+  after_malloc_gen sp0 a0s path envv rdraw inp tid fs0 stdin0 mode Q fd3 (above_eq sp0 mem0) K ->
+  brk_ok_branch_G sp0 a0s path envv rdraw inp tid mem0 brk mbase fs0 stdin0 lim mode Q fd3 K.
 Proof.
   intros AM.
   assert (SIhi : forall M : word -> option byte, above_eq sp0 mem0 M ->
             exists s : Z, (bv_unsigned sp0 + 192 <= s < 2 ^ 47 - 32)%Z /\ (s mod 8 = 0)%Z /\ M (Z_to_bv 64 s) = Some (Z_to_bv 8 0)).
   { intros M HA. destruct Hhi0 as (s & Hs & Hs8 & Hz). exists s. split; [exact Hs|]. split; [exact Hs8|].
     pose proof (u64_range sp0) as Us. rewrite (HA (Z_to_bv 64 s)); [exact Hz|]. rewrite u64_lit by lia. lia. }
-  exact (brk_ok_semV sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim lim_ge Hva Hve Hvsp Htid Hbrk Hplen mode Q fd3
+  exact (brk_ok_semV sp0 a0s path envv rdraw inp tid mem0 brk mbase fs0 stdin0 lim lim_ge Hva Hve Hvsp Htid Hbrk Hmb Hplen Hrdr Hp1 mode Q fd3
                       (above_eq sp0 mem0) (above_eq_step sp0 mem0) SIhi K AM).
 Qed.
 
 
 (* [comment removed for export] *)
-Theorem brk_ok_sem sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim   (* [comment removed for export] *)
+Theorem brk_ok_sem sp0 a0s path envv rdraw (inp : ProcInput) tid mem0 brk mbase fs0 stdin0 lim   (* [comment removed for export] *)
   (lim_ge : (LIM <= lim)%Z)
   (Hva : valid_argv [a0s; path]) (Hve : valid_envp envv)
   (Hvsp : valid_sp sp0) (Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z) (Hbrk : valid_brk RSEGS brk)
-  (Hplen : (length path <= 4095)%nat)
+  (Hmb : valid_mmap_base mbase) (Hplen : (length path <= 4095)%nat)
+  (Hrdr : ia_channel_reader stdin0 = true)
+  (Hp1 : (0x7fff80000000 <= bv_unsigned (p1 a0s path envv rdraw inp) <= 0x800000400000)%Z)
   (Hhi0 : exists s : Z, (bv_unsigned sp0 + 192 <= s < 2 ^ 47 - 32)%Z /\ (s mod 8 = 0)%Z /\ mem0 (Z_to_bv 64 s) = Some (Z_to_bv 8 0))   (* [comment removed for export] *)
   mode Q K :
-  after_malloc sp0 a0s path envv tid fs0 stdin0 mode Q K ->
-  brk_ok_branch_M sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim mode Q K.
+  after_malloc sp0 a0s path envv rdraw inp tid fs0 stdin0 mode Q K ->
+  brk_ok_branch_M sp0 a0s path envv rdraw inp tid mem0 brk mbase fs0 stdin0 lim mode Q K.
 Proof.
-  intros AM. apply (brk_ok_sem_g sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim lim_ge Hva Hve Hvsp Htid Hbrk Hplen Hhi0).
+  intros AM. apply (brk_ok_sem_g sp0 a0s path envv rdraw inp tid mem0 brk mbase fs0 stdin0 lim lim_ge Hva Hve Hvsp Htid Hbrk Hmb Hplen Hrdr Hp1 Hhi0).
   intros R M VM mb bw gm can sec area brkv mas EA EB RP W MF VP VS _. exact (AM R M VM mb bw gm can sec area brkv mas EA EB RP W MF VP VS).
 Qed.
 

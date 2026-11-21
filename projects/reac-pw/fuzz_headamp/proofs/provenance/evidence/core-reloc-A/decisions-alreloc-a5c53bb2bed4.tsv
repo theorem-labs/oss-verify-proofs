@@ -1,5 +1,5 @@
 # A3 decision rows: every code numeral of the relocated A files whose headamp value is not alreloc a5c53bb2bed4's own value, or that alreloc flagged; each decided against headamp's .symtab and bytes (fuzz_headamp.asan pin f3e0669d2819, unstripped b5f352154c54)
-# source: reac-pw/fuzz_role lib/A at 9f8c843f0e03 (role asan pin 614cffc0864c); cross-check: port_core 1e42da8952ec, donors scene/identity/knock/grant (origin/ossv/recipes 6ebe35ba632) onto headamp with --slots = headamp A2 1e6517d55369
+# source: reac-pw/fuzz_role lib/A (role asan pin 614cffc0864c); cross-check: port_core 1e42da8952ec, donors scene/identity/knock/grant onto headamp with --slots = headamp A2
 # categories: moved (address, evidence = symbol+offset / string / geometry / GOT word / shadow of a symbol), flag-agree (alreloc flagged, port_core gives the same value), kept/insn-word/label-or-constant/model-constant (value kept), region-count / a2-index (from headamp A2 AD2j / AF0m), image-count / insn-count / derived / shadow-hull / func-end / rom-pair (recomputed from headamp's binary)
 file:line(role line)	token (role value)	headamp value	category	evidence	alreloc rule	port_core 1e42da8952ec value
 A/AB13.v:19	8192	12288	moved	port_core verified: GEOM:0x2000->0x3000	none	12288
@@ -90,68 +90,68 @@ A/AD1o.v:197	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM
 A/AD1o.v:249	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
 A/AD1o.v:285	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
 A/AD1w.v:135	0x1481e	0x1480d	moved	port_core value; STR:b'%d\n'+0	UNMAPPED (no symbol home)	0x1480d
-A/AD1x.v:26	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD1x.v:27	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD22.v:21	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD22.v:21	85	79	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	79
+A/AD1x.v:26	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD1x.v:27	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD22.v:21	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD22.v:21	85	79	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	79
 A/AD23.v:306	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
 A/AD23.v:308	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
 A/AD23.v:309	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
-A/AD27.v:70	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
-A/AD27.v:75	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD27.v:88	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD27.v:95	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD27.v:97	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD28.v:106	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
-A/AD28.v:107	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
-A/AD28.v:107	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
-A/AD28.v:107	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
-A/AD28.v:108	84	78	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	78
-A/AD28.v:110	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD27.v:70	83	77	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	77
+A/AD27.v:75	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD27.v:88	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD27.v:95	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD27.v:97	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD28.v:106	83	77	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	77
+A/AD28.v:107	83	77	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	77
+A/AD28.v:107	83	77	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	77
+A/AD28.v:107	83	77	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	77
+A/AD28.v:108	84	78	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	78
+A/AD28.v:110	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
 A/AD28.v:294	840	832	image-count	length of A2 region R_A3 (the .data run from oft_arg0 to asan_globals): headamp AD2j [657632, 658464) CImg 832 (role [650648, 651488) CImg 840); alreloc and port_core both kept the role value	none	840
 A/AD28.v:295	840	832	image-count	length of A2 region R_A3 (the .data run from oft_arg0 to asan_globals): headamp AD2j [657632, 658464) CImg 832 (role [650648, 651488) CImg 840); alreloc and port_core both kept the role value	none	840
-A/AD2d.v:25	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD2d.v:26	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD2d.v:25	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD2d.v:26	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
 A/AD2d.v:132	840	832	image-count	length of A2 region R_A3 (the .data run from oft_arg0 to asan_globals): headamp AD2j [657632, 658464) CImg 832 (role [650648, 651488) CImg 840); alreloc and port_core both kept the role value	none	840
-A/AD2e.v:64	81	75	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	75
-A/AD2e.v:69	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
-A/AD2e.v:69	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
-A/AD2e.v:70	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
-A/AD2e.v:70	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
-A/AD2e.v:193	81	75	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	75
-A/AD2f.v:59	79	73	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	73
-A/AD2f.v:68	85	79	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	79
-A/AD2f.v:68	79	73	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	73
-A/AD2f.v:68	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD2f.v:86	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD2f.v:95	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD2e.v:64	81	75	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	75
+A/AD2e.v:69	83	77	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	77
+A/AD2e.v:69	83	77	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	77
+A/AD2e.v:70	83	77	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	77
+A/AD2e.v:70	83	77	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	77
+A/AD2e.v:193	81	75	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	75
+A/AD2f.v:59	79	73	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	73
+A/AD2f.v:68	85	79	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	79
+A/AD2f.v:68	79	73	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	73
+A/AD2f.v:68	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD2f.v:86	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD2f.v:95	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
 A/AD2f.v:148	0x5f6a98	0x5f8458	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x0	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
 A/AD2f.v:148	0x5f6ea8	0x5f8868	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stdin_FILE	REFUSED
-A/AD2f.v:149	79	73	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	73
+A/AD2f.v:149	79	73	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	73
 A/AD2f.v:156	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
-A/AD2f.v:168	81	75	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	75
-A/AD2f.v:170	81	75	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	75
-A/AD2f.v:185	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD2f.v:185	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
-A/AD2f.v:197	70	64	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	64
-A/AD2f.v:197	70	64	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	64
-A/AD2f.v:197	71	65	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	65
-A/AD2f.v:197	71	65	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	65
-A/AD2f.v:197	75	69	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	69
-A/AD2f.v:197	75	69	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	69
-A/AD2f.v:197	79	73	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	73
-A/AD2f.v:198	70	64	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	64
-A/AD2f.v:198	70	64	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	64
-A/AD2f.v:198	71	65	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	65
-A/AD2f.v:198	71	65	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	65
-A/AD2f.v:198	79	73	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	73
+A/AD2f.v:168	81	75	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	75
+A/AD2f.v:170	81	75	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	75
+A/AD2f.v:185	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD2f.v:185	82	76	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	76
+A/AD2f.v:197	70	64	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	64
+A/AD2f.v:197	70	64	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	64
+A/AD2f.v:197	71	65	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	65
+A/AD2f.v:197	71	65	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	65
+A/AD2f.v:197	75	69	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	69
+A/AD2f.v:197	75	69	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	69
+A/AD2f.v:197	79	73	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	73
+A/AD2f.v:198	70	64	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	64
+A/AD2f.v:198	70	64	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	64
+A/AD2f.v:198	71	65	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	65
+A/AD2f.v:198	71	65	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	65
+A/AD2f.v:198	79	73	region-count	headamp A2 AD2j IMG_REGIONS has 73 regions (role-a2: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots) agrees	none	73
 A/AD2f.v:232	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
 A/AD2f.v:279	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
 A/AD2f.v:279	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
 A/AD2k.v:31	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	none	1530
 A/AD2k.v:153	6252065	6258657	moved	port_core value; SYM:__libc+0x1	UNMAPPED	6258657
 A/AD2k.v:154	6252067	6258659	moved	port_core value; SYM:__libc+0x3	UNMAPPED	6258659
-A/AE22.v:38	193	193	a2-index	index of z8 (ANum A_GOT_CANARY 0x9cff8) V_GOT_CANARY 0x5f7d90 (__stack_chk_guard) in headamp AF0m Tfib_const_abs (A2 cb68d3ec501): 193; port_core keeps the donor index 209	none	209
+A/AE22.v:38	193	193	a2-index	index of z8 (ANum A_GOT_CANARY 0x9cff8) V_GOT_CANARY 0x5f7d90 (__stack_chk_guard) in headamp AF0m Tfib_const_abs (A2): 193; port_core keeps the donor index 209	none	209
 A/AE23.v:47	0x5f63e4	0x5f7da4	moved	alreloc verified (port_core P-REFUSED): SYM:lock+0x0	copy of lock referenced from __funcs_on_exit, atexit	REFUSED
 A/AE23.v:56	0x5f63e4	0x5f7da4	moved	alreloc verified (port_core P-REFUSED): SYM:lock+0x0	copy of lock referenced from __funcs_on_exit, atexit	REFUSED
 A/AE23.v:91	0x5f63e4	0x5f7da4	moved	alreloc verified (port_core P-REFUSED): SYM:lock+0x0	copy of lock referenced from __funcs_on_exit, atexit	REFUSED

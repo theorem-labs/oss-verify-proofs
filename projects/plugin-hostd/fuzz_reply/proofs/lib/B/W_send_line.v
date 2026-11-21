@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE B (fuzz_reply.asan-ubsan) walk of fuzz_reply's send_line, closed, in
    the form of the cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/ACfj.v (segments joined at cut points).
-   Structure ported from image A's lib/A/W_send_line.v (a working branch a78a220dc8e: pb_send_line_g /
+   Structure ported from image A's lib/A/W_send_line.v (a working branch: pb_send_line_g /
    pb_send_line); no theorem crosses images.
    send_line (fuzz_reply.asan-ubsan 0x82854, 168 instructions): the entry segment (W_send_line_entry.v sl_entry)
    closed with the loop segment (W_send_line_loop.v pb_sl_loop_cut: the EINTR, dead and data rounds), whose data round
@@ -10,6 +10,7 @@
    sl_copy, J -> L or X through __asan_memcpy); every exit goes through the epilogue (W_send_line_cx.v sl_epi).
    The Section hypotheses are W_send_line_cx.v's, verbatim: runtime sites AERRNO AMEMCPY AREALLOC; instance LAWS MTL
    TL HG HGR HROMO HGO HERRNO HERRZ HERRW HERRAL; placement HV9..HV12 HH18 HH20..HH25 HRGD. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -106,7 +107,7 @@ assert (ENTRY : sl_entry_stmt B MT MMAX RG) by (eapply W_send_line_entry.sl_entr
 exact (ENTRY LOOP).
 Qed.
 
-(* An OFF send keeps g_out's block (sl_post's last conjunct, kit cand3 2d0b655a8c7 and later): every final state of
+(* An OFF send keeps g_out's block (sl_post's last conjunct, kit cand3 and later): every final state of
    send_line's walk from a state that meets sl_spec's premises has g_out = out in its aout_at when sl_live is false.
    The entry's off exits give it by sl_off_exit (W_send_line_entry.v: the three early returns to X leave the stream
    untouched), and the dead round by out' = out (W_send_line_loop.v sl_arm_dead: g_send_dead = 1 means capL = cap,

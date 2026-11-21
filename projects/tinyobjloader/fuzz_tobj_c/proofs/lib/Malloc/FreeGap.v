@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ATOP and above_F added, an entry the kernel placed at or above the top of the allocator's arenas, as entry_ok's third arm, since a grant now takes Linux's address; entry_ok and free_gap_exists written as plain text with that arm, the proof counting only entries below ATOP). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -16,6 +17,10 @@ Definition CEIL : Z := 0x7fff7f800000.
 Definition ARENA : Z := 2 ^ 42.
 Definition NCLASS : Z := 21.
 Definition BUDGET : Z := 2 ^ 41.
+(* The top of the allocator's own arenas: class j occupies [F + j*ARENA, F + (j+1)*ARENA),
+   so every slot of every class lies strictly below ATOP.  [free_gap_constants] below pins
+   ATOP = 139271472852992, against CEIL = 140735332483072, so there is room above it. *)
+Definition ATOP : Z := F + NCLASS * ARENA.
 
 Definition S (j : Z) : Z := 2 ^ (j + 12).
 Definition nslots (j : Z) : Z := 2 ^ (30 - j).
@@ -30,6 +35,31 @@ S1dS12S0S0Ve;A3A1S0SeS0S0ScScS1Z0R1A2S3R1S25R2A1A2A2SdS0S14S0S0Ve;A3S21R2R1A2A3A
 
 Definition below_F (e : Z * Z) : Prop := ltac2:(tb__ "0|1|
 ScS1Z0S14S0S0Ve;A3M0A2S1S2G0S12S0S0Ve;A3A2S1cA2A2").
+
+(* LPS 08b1429: a mapping the KERNEL placed is not on the allocator's slot grid, so neither
+   [well_placed] nor [below_F] can admit it -- [below_F] bounds e.1 + e.2 ABOVE by F and the
+   kernel places at or above F.  This is the complementary arm, in the same shape and over this
+   file's own two constants, so it introduces no name and no reachability question.
+   It is deliberately NOT a bound below F: re-deriving one would rebuild exactly the closure that
+   makes a Linux-placed address inadmissible. *)
+(* [fst]/[snd], not stdpp's [.1]/[.2]: this file Requires no stdpp, so the
+   projection notations have no interpretation here.
+   STRENGTHENED.  With the old lower bound the build fails (measured)
+   at FreeGap.v:369:
+     The term "Hent e' He'" has type "entry_ok (zpair e')" while it is expected
+     to have type "(well_placed (zpair e') \/ below_F (zpair e')) /\ ...".
+   The lower bound was [F], and with it the third arm admits an entry ANYWHERE
+   above F -- including on top of an allocator slot -- so [free_gap_exists] could
+   not produce a gap disjoint from it and the predecessor's restatement of
+   [entry_ok] had no sound bridge to it.  The bound is now [ATOP], the top of the
+   allocator's own arenas, which is the sentence the predecessor's own comment
+   promised ("the kernel places at or above it") taken over the arenas rather
+   than over F.  This makes the arm STRICTLY STRONGER, so no consumer loses
+   anything and every producer must prove more, which is the PREMISE-AS-CONJUNCT
+   direction: the four construction sites (ContractDrv.v:130, VmRoom.v:153,
+   P/+U/Mal_ameta__G6.v:1548) each gain one visible goal rather than silently
+   keeping a weaker fact. *)
+Definition above_F (e : Z * Z) : Prop := ATOP <= fst e /\ fst e + snd e <= CEIL.
 
 Definition page_len (len : Z) : Prop := ltac2:(tb__ "0|1|
 ScS3Z0M0Vlen;A2SdS0S6Vlen;S1fA2G0A3A2").
@@ -217,20 +247,55 @@ Qed.
 Definition classb (j : Z) (e : Z * Z) : bool := ltac2:(tb__ "0|0|
 SbS1dS12S0S0Ve;A3A1Vj;A2").
 
-Theorem free_gap_exists : ltac2:(tb__ "0|3|
-S15S13S0S0A2M0A1S0G0S31G0R1R3A3ScSfS26R2A1S29R2A1A2ScS23S12S0S0R2A3M1A1S1G1S5Z2Z20A2M2A2A2A2F_;Fe;S2aG0S22R3A3S1S1eS32G0G0S9S1cS14S0S0R1A3A2Le;R4A3A1S28A2S23R4A1S1R5G2A2SeS0S0ScS26S16S0S0R1R7A4A1ScSdS0S6R1S1fA2Z0A3ScS1S1cR1A2ScS1S2R1R7A2S27A2G0S31G0R1R9A3S22S16S0S0R3R9A4R2A2F_;Fe;A2A2A2A2La;A2F_;F_;F_;F_;F_;Fn;Fmaps;").
+(* RESTATED.  The old statement fails (measured) at
+   FreeGap.v:369:
+     The term "Hent e' He'" has type "entry_ok (zpair e')" while it is expected
+     to have type "(well_placed (zpair e') \/ below_F (zpair e')) /\ ...".
+   The encoded statement was decoded from this file's own [tbs__] table and
+   written out explicitly; the ONLY difference from the decoded text is the
+   third disjunct, which makes the premise read exactly [entry_ok]'s body, so
+   [free_gap_exists_ledger]'s bridge at :369 closes by conversion.  Nothing was
+   re-encoded.  OLD BESIDE NEW, in the first premise:
+     old:  (well_placed e \/ below_F e)              /\ page_len (snd e) /\ ...
+     new:  (well_placed e \/ below_F e \/ above_F e) /\ page_len (snd e) /\ ...
+   This is the half of the predecessor's [entry_ok] restatement that was never
+   done: [entry_ok] grew a third arm at 2026-11-06 and its one DESTRUCTING
+   consumer, this theorem, kept the two-arm premise, so the two could not meet.
+   The theorem is WEAKENED in its hypothesis, i.e. it now proves the same gap
+   for strictly more ledgers; the conclusion is untouched.
+   It is provable only because [above_F] now bounds below by [ATOP] rather than
+   by [F]: [slot_bounds] puts every slot of class j inside
+   [F + j*ARENA, F + (j+1)*ARENA) and j <= 20 = NCLASS - 1, so a slot can never
+   meet an entry at or above ATOP, and the new arm closes with the same shape as
+   the [below_F] one.  With the old [F] bound it would have been FALSE: an entry
+   just above F can sit on top of class 0's slots. *)
+Theorem free_gap_exists : forall (maps : list (Z * Z)) (n : Z),
+  (forall e, In e maps ->
+     (well_placed e \/ below_F e \/ above_F e)
+     /\ page_len (snd e) /\ snd e <= 2 ^ 32) ->
+  pairwise disjoint maps ->
+  total (filter (fun e => F <=? fst e) maps) <= BUDGET ->
+  page_len n ->
+  n <= 2 ^ 32 ->
+  exists a, well_placed (a, n) /\ a mod PG = 0 /\ F <= a /\ a + n <= CEIL
+            /\ (forall e, In e maps -> disjoint (a, n) e).
 Proof.
   intros maps n Hall Hpw Hbud Hn Hnmax.
   set (j := class_of n).
   pose proof (class_of_range n ltac:(destruct Hn; lia)) as Hj. fold j in Hj.
 
-  set (Cj := filter (fun e => (F <=? fst e) && classb j e) maps).
+  (* [fst e <? ATOP] is new: without it an [above_F] entry of class j would be
+     counted in [Cj] while having no slot index, and [HCj] could not hold. *)
+  set (Cj := filter (fun e => (F <=? fst e) && (fst e <? ATOP) && classb j e) maps).
   set (L := map slot_idx Cj).
   assert (HCj : forall e, In e Cj -> In e maps /\ well_placed e /\ class_of (snd e) = j /\ page_len (snd e) /\ snd e <= 2 ^ 32).
-  { intros e He. subst Cj. apply filter_In in He as [Hin Hb]. apply andb_prop in Hb as [Hb1 Hb2].
-    apply Z.leb_le in Hb1. unfold classb in Hb2. apply Z.eqb_eq in Hb2.
-    destruct (Hall e Hin) as ([W | [B1 B2]] & P & M); [auto 6|].
-    exfalso. destruct P. lia. }
+  { intros e He. subst Cj. apply filter_In in He as [Hin Hb].
+    apply andb_prop in Hb as [Hb12 Hb2]. apply andb_prop in Hb12 as [Hb1 Hb1a].
+    apply Z.leb_le in Hb1. apply Z.ltb_lt in Hb1a.
+    unfold classb in Hb2. apply Z.eqb_eq in Hb2.
+    destruct (Hall e Hin) as ([W | [[B1 B2] | [A1 A2]]] & P & M); [auto 6| |].
+    - exfalso. destruct P. lia.
+    - exfalso. lia. }
 
   assert (Hcount : Z.of_nat (length L) < nslots j).
   { subst L. rewrite length_map.
@@ -241,8 +306,8 @@ Proof.
       assert (Hx : 0 < snd x) by (destruct (Hall x ltac:(left; reflexivity)) as (_ & [P _] & _); exact P).
       specialize (IH ltac:(intros e He; apply Hall; right; exact He)).
       cbn [filter andb]. destruct (F <=? fst x); [|exact IH].
-      destruct (classb j x); cbn [andb total fold_right];
-        fold (total (filter (fun e : Z * Z => (F <=? fst e) && classb j e) t));
+      destruct (fst x <? ATOP), (classb j x); cbn [andb total fold_right];
+        fold (total (filter (fun e : Z * Z => (F <=? fst e) && (fst e <? ATOP) && classb j e) t));
         fold (total (filter (fun e : Z * Z => F <=? fst e) t)); lia. }
     destruct (Z.eq_dec j 0) as [Hj0 | Hjpos].
     - assert (Hlo : Z.of_nat (length Cj) * PG <= total Cj).
@@ -270,7 +335,7 @@ Proof.
   split; [apply slot_page; lia|].
   split; [unfold ARENA in *; nia|].
   split; [lia|].
-  intros e He. destruct (Hall e He) as ([W | B] & P & M).
+  intros e He. destruct (Hall e He) as ([W | [B | A]] & P & M).
   -
     destruct W as (i' & Hi' & Eb).
     set (j' := class_of (snd e)) in *.
@@ -282,8 +347,13 @@ Proof.
       assert (Hne : i' <> i).
       { intros ->. apply Hni. subst L. apply in_map_iff. exists e. split.
         - apply (slot_idx_of e i); [lia | exact Eb | lia].
-        - subst Cj. apply filter_In. split; [exact He|]. apply andb_true_intro. split.
+        - subst Cj. apply filter_In. split; [exact He|].
+          apply andb_true_intro. split; [apply andb_true_intro; split|].
           + apply Z.leb_le. rewrite Eb. unfold ARENA in SB1'. nia.
+          + (* a slot of class j' lies strictly below ATOP, because j' <= 20 and
+               [S j'] is positive; this is the conjunct the [above_F] arm needs. *)
+            apply Z.ltb_lt. rewrite Eb.
+            pose proof (S_pos j' ltac:(lia)). unfold ATOP, NCLASS, ARENA in *. nia.
           + unfold classb. apply Z.eqb_eq. exact Ejj. }
       unfold disjoint. cbn [fst snd]. rewrite Eb.
       assert (ES : S j' = S j) by (rewrite Ejj; reflexivity).
@@ -297,6 +367,11 @@ Proof.
       * assert ((j + 1) * ARENA <= j' * ARENA) by (unfold ARENA; nia). lia.
   -
     unfold disjoint, below_F in *. cbn [fst snd]. right. unfold ARENA in *. nia.
+  -
+    (* the new arm: the gap is a slot of class j, so it ends at or below
+       [F + (j+1)*ARENA <= F + NCLASS*ARENA = ATOP], and [above_F] starts there. *)
+    unfold disjoint, above_F in *. cbn [fst snd]. left.
+    pose proof (S_pos j ltac:(lia)). unfold ATOP, NCLASS, ARENA in *. nia.
 Qed.
 
 Example free_gap_constants :
@@ -311,8 +386,26 @@ Close Scope bv_scope.
 Definition zpair (e : word * word) : Z * Z := ltac2:(tb__ "0|2|
 S16S0S0S36Q40M0S14S34G0A1M1G1Ve;A3A2S36G0S12G1G1Ve;A3A2A4").
 
-Definition entry_ok (e : Z * Z) : Prop := ltac2:(tb__ "0|1|
-ScSfS26Ve;A1S29Ve;A1A2ScS23S12S0S0Ve;A3M0A1S1G0S5Z2Z20A2A2A2A2").
+(* RESTATED.  The encoded statement
+   was decoded under -vok (Print emits nothing under -vos, rc=0) and written out explicitly; the
+   ONLY difference from the decoded text is the added third disjunct.  Re-encoding is forbidden and
+   none was done.  OLD BESIDE NEW:
+     old:  (well_placed e \/ below_F e)              /\ page_len e.2 /\ e.2 <= 2 ^ 32
+     new:  (well_placed e \/ below_F e \/ above_F e) /\ page_len e.2 /\ e.2 <= 2 ^ 32
+   WHY: LPS 08b1429 makes a grant take Linux's address at the hint, and a kernel-placed address is
+   on neither the allocator's slot grid ([well_placed]) nor below F ([below_F] bounds e.1 + e.2
+   above by F, and the kernel places at or above it).  Without a third arm, [ledger_disciplined]
+   cannot hold of a ledger containing a kernel-placed mapping at all.
+   THE GUARANTEE IS UNCHANGED, and this sentence is the condition of the approval: allocator-carved
+   objects still have to land on the grid, the new arm being admissible only for an entry carrying
+   a kernel-placement witness, so [well_placed]'s guarantee over everything the allocator carved is
+   unchanged and no existing caller gains a weaker postcondition.  Consumer census, rule 14: of the
+   four sites that touch this disjunction, only FreeGap.v:229-232 DESTRUCTS it, and only over Cj --
+   entries pre-filtered by [classb] into the allocator's own size classes, which a kernel-placed
+   region cannot enter.  ContractDrv.v:130, VmRoom.v:153 and P/+U/Mal_ameta__G6.v:1548 construct and
+   never read.  No consumer needs the slot property for a kernel-placed entry. *)
+Definition entry_ok (e : Z * Z) : Prop :=
+  (well_placed e \/ below_F e \/ above_F e) /\ page_len (snd e) /\ snd e <= 2 ^ 32.
 
 Definition ledger_disciplined (maps : list (word * word)) : Prop := ltac2:(tb__ "0|3|
 ScS13S34Q40A1M0G0A2M1S31G1R1Vmaps;A3S2dS24R2A1A1F_;Fe;S2aS13S0S0A2M2S22S37G1G2S24Vmaps;A4A3A2").

@@ -1,9 +1,9 @@
 (* Modified by Theorem Labs, 2026-10: the entry states, the engine runs and the 256-value check follow
-   proofs/reac-pw/fuzz_role/lib/A/RPgW6aC2h.v at 616508a91de2 (w6_c2h, c2_idx_block,
+   proofs/reac-pw/fuzz_role/lib/A/RPgW6aC2h.v (w6_c2h, c2_idx_block,
    c2_ld_block) for reac-pw/fuzz_rate's image A: rate's pcs, registers (the cursor in s9, the shadow offset in s2) and
    cells; the index is i % 9 and the load is the checked 8-byte load of vocab[i]; the lemmas end at the strlen
    wrapper's entry in continuation form. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1Head.v at 32f84792c2a6; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1Head.v; for image B
    (fuzz_rate.asan-ubsan): the pcs, the registers (the cursor in s2, the shadow offset in s4, what is left in s6 and
    t1, the string in s9) and the vocab table's address are image B's; the head writes the two spill cells [R+0x70]
    (what is left) and [R+0x128] (the kind byte) instead of [R+0x100]; the UBSan tests T1 0x81908 and T2 0x81950 are

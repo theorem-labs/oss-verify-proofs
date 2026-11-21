@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise; a system call's reads over the larger read-only backing). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.pem.lib.Common Require Import CfgStep CatSim ShapeAlg AsanAcct AsanAcctShape.
 From OSSVerify.Proofs.openssl.pem.lib.Lib Require Import Exec.
+From OSSVerify.Proofs.openssl.pem.lib.Common.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 
@@ -54,8 +56,13 @@ Proof.
   intros r Hr. rewrite (H r Hr). apply orb_true_r.
 Qed.
 
+(* The last conjunct is the far end's reader ([State.m_channel_reader]):
+   at the revision [writev_spec]'s channel arm raises SIGPIPE without it,
+   so [NodesA_wv.ast_writev] reads it here.  It is seeded at the launch
+   ([AsanPlanSound.co_rdr]) and no node writes it. *)
 Definition macct (segtop : Z) (A : list (Z * Z)) (mo : Model) : Prop :=
-  A_wf A /\ MInv A mo /\ m_halted mo = None /\ lazy_apart_b (m_vm_lazy mo) segtop = true /\ (segtop <= 2^47)%Z.
+  A_wf A /\ MInv A mo /\ m_halted mo = None /\ lazy_apart_b (m_vm_lazy mo) segtop = true /\ (segtop <= 2^47)%Z
+  /\ m_channel_reader mo = true.
 
 (* [comment removed for export] *)
 Definition HZ (A : list (Z * Z)) (c : config) : Prop :=
@@ -270,9 +277,10 @@ Qed.
 
 Lemma macct_same : forall segtop A mo mo', same_but_materialized mo mo' -> MInv A mo' -> macct segtop A mo -> macct segtop A mo'.
 Proof.
-  intros segtop A mo mo' Hs Hinv (H1 & _ & H3 & H4 & H5). pose proof (same_but_materialized_frame mo mo' Hs) as Fr.
-  destruct Fr as (_ & _ & Hlz & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hh & _). split; [exact H1|]. split; [exact Hinv|].
-  rewrite Hlz, Hh. auto.
+  intros segtop A mo mo' Hs Hinv (H1 & _ & H3 & H4 & H5 & H6). pose proof (same_but_materialized_frame mo mo' Hs) as Fr.
+  destruct Fr as (_ & _ & Hlz & _ & _ & Hpr & _ & _ & _ & _ & _ & _ & Hh & _). split; [exact H1|]. split; [exact Hinv|].
+  rewrite Hlz, Hh. split; [exact H3|]. split; [exact H4|]. split; [exact H5|].
+  unfold m_channel_reader in *. rewrite Hpr. exact H6.
 Qed.
 
 Section Bridges.
@@ -314,7 +322,7 @@ Qed.
 
 Lemma HID_off : forall A mo, macct segtop A mo -> H_off_segments segs (HID A mo).
 Proof.
-  intros A mo (_ & _ & _ & Hr & Ht). unfold segs_hull_b in Hsegs. apply andb_true_iff in Hsegs as [Hbelow Hfrom].
+  intros A mo (_ & _ & _ & Hr & Ht & _). unfold segs_hull_b in Hsegs. apply andb_true_iff in Hsegs as [Hbelow Hfrom].
   intros a Ha.
   assert (Hside : (bv_unsigned a < SEGLO \/ segtop <= bv_unsigned a)%Z).
   { unfold HID in Ha. apply orb_true_iff in Ha as [Ha|Ha].
@@ -436,15 +444,15 @@ Qed.
 (* [comment removed for export] *)
 Definition vm_same (mo mo' : Model) : Prop :=
   m_vmmaps mo' = m_vmmaps mo /\ m_vm_lazy mo' = m_vm_lazy mo /\ m_vm_materialized mo' = m_vm_materialized mo
-  /\ m_halted mo' = m_halted mo.
+  /\ m_halted mo' = m_halted mo /\ m_channel_reader mo' = m_channel_reader mo.
 
 Lemma eager_used_vm_same : forall mo mo', vm_same mo mo' -> eager_used mo' = eager_used mo.
 Proof. intros mo mo' (H1 & H2 & _). unfold eager_used. rewrite H1, H2. reflexivity. Qed.
 
 Lemma macct_vm_same : forall segtop A mo mo', vm_same mo mo' -> macct segtop A mo -> macct segtop A mo'.
 Proof.
-  intros segtop A mo mo' Hv (H1 & H2 & H3 & H4 & H5). pose proof Hv as (Hvm & Hlz & Hmt & Hh).
-  split; [exact H1|]. split; [|rewrite Hlz, Hh; auto].
+  intros segtop A mo mo' Hv (H1 & H2 & H3 & H4 & H5 & H6). pose proof Hv as (Hvm & Hlz & Hmt & Hh & Hrd).
+  split; [exact H1|]. split; [|rewrite Hlz, Hh, Hrd; auto].
   apply (MInv_transport A mo mo' H2 Hmt Hlz). rewrite (eager_used_vm_same mo mo' Hv), Hvm. apply H2.
 Qed.
 
@@ -552,7 +560,7 @@ Proof.
   assert (Hcov : forall i, lazy_cover H (m_vm_lazy (mdl i)) A).
   { intros i. destruct (Hvm i) as (_ & Hlz & _). rewrite Hlz. apply HID_cover. }
   assert (Hinv : forall i, MInv A (mdl i)) by (intros i; exact (proj1 (proj2 (macct_vm_same segtop A mo (mdl i) (Hvm i) Hmc)))).
-  assert (Hnh : forall i, m_halted (mdl i) = None) by (intros i; destruct (Hvm i) as (_ & _ & _ & ->); exact Hh).
+  assert (Hnh : forall i, m_halted (mdl i) = None) by (intros i; destruct (Hvm i) as (_ & _ & _ & -> & _); exact Hh).
   destruct (node_syscall_restricted_u segs H A ms mo x8 I eff mdl evs HAwf Hh Hsvc Hsound Hcompl Hnh Hcov Hinv Hav)
     as [Hpost Hnode].
   eexists. split; [exact Hnode|].
@@ -640,14 +648,15 @@ Theorem ast_nodeI : forall A Pm PM (I : Type) (i0 : I) (evs : I -> list event)
   (forall i, ranges_avoid (HID A mo) (syscall_effect_accesses (eff i))) ->
   (forall i, K i (nretA (restrict (HID A mo) ms) (eff i))) ->
   (forall i, KM i (mdl i)) ->
-  (forall i, mat_stable (KM i)) ->
+  (forall i, mat_stable (KM i)) ->  RomBase.sys_rob segs (mkCfg ms mo) ->
+
   (forall i c', AST segtop A (K i) (KM i) c' -> realizes segs c' (T i)) ->
   realizes segs (mkCfg ms mo) (t_alt (fun i => t_emit (evs i) (T i))).
 Proof.
-  intros A Pm PM I i0 evs K KM T ms mo x8 eff mdl Hc Hsvc Hnalloc Hsound Hcompl Hvm Hio Hav HK HKM Hms Hk.
+  intros A Pm PM I i0 evs K KM T ms mo x8 eff mdl Hc Hsvc Hnalloc Hsound Hcompl Hvm Hio Hav HK HKM Hms Hrob Hk.
   destruct (ast_node_core A Pm PM I evs K KM ms mo x8 eff mdl Hc Hsvc Hnalloc Hsound Hcompl Hvm Hio Hav HK HKM Hms)
     as (nx & Hnode & Hnx).
-  apply (rz_node segs _ I evs nx T i0 Hnode). intros i. exact (Hk i (nx i) (Hnx i)).
+  apply (rz_node segs _ I evs nx T i0 Hnode Hrob). intros i. exact (Hk i (nx i) (Hnx i)).
 Qed.
 
 End IONode.

@@ -1,8 +1,8 @@
 (* Cut invariants of reac-pw/fuzz_role LLVMFuzzerTestOneInput (plain, [0x12ea0, 0x141c0)): the role quantities of the
    ghost and one Inv_<cut> per cut between ENTRY and RET, each a CUTST of Prog/SlotFR.v (FR over the live harness
    blocks hb, at some FP state with rounding mode 0). Statement text: no function is proved here.
-   The form is reac-pw/fuzz_pin's Prog/SlotInv.v (libreac/fuzz_ctrl's released Prog/SlotInv.v, origin/ossv/recipes
-   25e3d17bdb50), with role's two live blocks:
+   The form is reac-pw/fuzz_pin's Prog/SlotInv.v (libreac/fuzz_ctrl's released Prog/SlotInv.v),
+   with role's two live blocks:
    - pp = malloc(19744) (0x12f10 `jal malloc`, a0 = s1 = 5 << 12 - 0x2e0), the struct pod_props that pod_build fills;
      pod = malloc(len ? len : 1) (0x13f48, a0 = len + (len = 0) from 0x13f40-0x13f44, len = pp->len); free(pod)
      (0x1415c) then free(pp) (0x14164). The new block is at the head of hb: [(pp, 19744)], then

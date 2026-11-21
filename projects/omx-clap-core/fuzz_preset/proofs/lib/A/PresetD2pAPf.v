@@ -9,16 +9,16 @@
    Section, is exactly these names, the kernel's primitives and the allowed axioms the discharges cite
    (functional_extensionality_dep, from the callee bridge). Nothing in this file is a proof of a function (rule 24:
    no function proved; this is the composition / driver layer of a port).
-   ON THE MEMNORM INTERFACE (lane MnTop, a Theorem Labs lane, 2026-10-29; interface a working branch 3a622dfaff87,
-   prefix and closed driver a working branch 8a59abdc84b7, A bridge a working branch
-   0c8e1ed21bd3):
+   ON THE MEMNORM INTERFACE (lane MnTop, a Theorem Labs lane, 2026-10-29; interface a working branch,
+   prefix and closed driver a working branch, A bridge a working branch):
+   
    - the driver walk is CwD1pA's tfib_drv_main_A_holds (lib/A/PresetD1pAPfC.v), now over MnPrefix's
      memnorm twins (lib/A/PresetD2runARd0mnPf.v) and the PROVED loop premise PresetD1rAmn.H_memnorm_drv_A_holds; its
      three named premises (YGcfNilInit.ARcf_nil_init's start-up premises, PresetD1pA.v section 4) are Section
      hypotheses here (the image rows are discharged inside it);
    - the memcpy / memset premises are in a Theorem Labs lane's KEEP form YGcallMxmn.aintrin_realizes_xm (the driver's AICPY and
      CwSites' printf results take it), H_aintrin_realizes_xm_cpy_A / _set_A in place of the plain aintrin_realizes_cf.
-   #102 (no-DW interface, PresetCfnA.v, first at commit 8259b94c42ee; on the kit's batch; driver relocation 2026-10-29):
+   #102 (no-DW interface, PresetCfnA.v, first; on the kit's batch; driver relocation 2026-10-29):
    the program part is the interface's ONE callee record preset_callee_contracts
    (PresetCfnA.v section 6), assembled here by field name at the A' instance (B := TfibB, L := A_prog_listing,
    PA := PI_prog_A, ci := CfImg_A, RL := prh_room_live_a8, ARx := iface_ARx = ARcf /\ xs_placed_cf): the kit's texts
@@ -36,6 +36,7 @@
    conjunct, YGcallStackUp.astack_up_x at each harness call's state, is PROVED by the driver walk from main's entry
    (lane StackDrv: the loop's invariant, carried by every prefix leaf, seeded at main by the start-up lane's
    stack_up_main_W1_A over the kit's argH0; lib/A/PresetD1pAPfC.v H_stackup_main_A_holds). No premise remains for it. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up certificate per CONFIG_RSEQ flag with states computed in the build). *)
 
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -50,7 +51,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfNames YG0ncf YG0dcf YG0d2cf YGcfRoomKeep YG0tcf.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YP0b YPsym YC4aP YGcallMxmn YGcfMallocComposeKeep.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcfInstReallocKKeep.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB1v AB01 AF0m AD2l ACeg AD1w AD1x AD1k.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB1v AB01r AF0m AD2l ACeg AD1w AD1x AD1k.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import Listing_prog PAImg_prog.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Img0.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import CfParamsPreset.
@@ -90,8 +91,8 @@ Open Scope Z_scope.
 (* 0. Discharged obligations, proved here from their owners' theorems. *)
 
 (* START-UP: the core's tfib_startup_T1 (lib/A/AB1n.v:53, a Theorem Labs lane's start-up at the hand-off table of record
-   HS_tfib, lib/A/AB01.v) is the statement tfib_startup_T1_A HS_tfib (lib/A/PresetD1qA.v) by conversion. *)
-Lemma tfib_startup_T1_A_at_HS : tfib_startup_T1_A HS_tfib.
+   HS_tfib_r, lib/A/AB01r.v) is the statement tfib_startup_T1_A HS_tfib_r (lib/A/PresetD1qA.v) by conversion. *)
+Lemma tfib_startup_T1_A_at_HS : tfib_startup_T1_A HS_tfib_r.
 Proof. exact AB1n.tfib_startup_T1. Qed.
 
 (* THE NON-PRIMARY ROOM: iface_room_np := room_live_cf at preset's parameters (a Theorem Labs lane, lib/Reusable/YGcfRoomLive.v,
@@ -149,7 +150,7 @@ Definition crc_bcmp_A (fx : YK11.FPState) (rc : YM05.RunCeil) : Prop :=
     (PAImg_prog.A_prog_sigma YPsym.AS___wrap_bcmp).
 
 (* THE INSTANCE UNIVERSE'S CLOSURE at the slot's context set (the no-DW slot pre's conjunct before the last,
-   state-free), at the instance: the batch kit's witness (lib/A/PRH_Witness.v prh_univ_closure_witness_A, the batch kit 8ba304fe2f93: a
+   state-free), at the instance: the batch kit's witness (lib/A/PRH_Witness.v prh_univ_closure_witness_A, the batch kit: a
    decision
    procedure proved sound once and run by vm_compute) at TfibB, whose code record and universe are the witness's by
    definition (AD2l.TfibB); preset_prh_img and iface_ctx0 = [[RA_LLVMF]] are the witness's image table and context

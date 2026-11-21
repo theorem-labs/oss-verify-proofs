@@ -9,10 +9,11 @@
    The premises are other lanes' statements, cited, none copied:
    - lane CwLoopA's loop body PresetD1rA.loop_L_cf_A (lib/A/PresetD1rA.v), arguments B xst NR sm iface_room_np, stated
      at CfParams_preset for every FP state with zero rounding mode (frm_zero); so this result is stated there;
-   - lane CwRunqm's RUNQM leaf type PresetD2eA.run_QM_tfa_cf (lib/A/PresetD2eA.v, a working branch
-     e8ef6ecc7a47), arguments B NP NR.
+   - lane CwRunqm's RUNQM leaf type PresetD2eA.run_QM_tfa_cf (lib/A/PresetD2eA.v, a working branch),
+     arguments B NP NR.
    sm is the program interface's model size map (lib/A/PresetCfnA.v Section Variable sm) and iface_room_np its
    non-primary room (Section Variable iface_room_np), both quantified here under those names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyKfC.v, with its module paths changed; 1 of its 341 lines of code is new or changed and 1 line of the source is left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The secondary-request counts of the harness's growing arrays, over the plain model's request traces, at a meter
    that charges 1 for a secondary request (a malloc or realloc to at least 64,513 bytes, Psec) and 0 for everything
    else.  rule 24: no function proved (kind: segment lemma).
@@ -18,12 +19,12 @@
    The meter is the Section variable MT with the two equations KF_MAL / KF_FREE.
 
    Sources:
-     lib/A/W_contract.v:944-950 tr_cost; :366-367 lp_cost; :786 sl_cap; :789-799 sl_cost_run / sl_cost;
+     lib/A/W_contract.v:945-951 tr_cost; :366-367 lp_cost; :786 sl_cap; :789-799 sl_cost_run / sl_cost;
        :1514-1516 ge_cap / ge_cost;
      lib/A/ReplyCnt.v:30 Psec; lib/A/ReplyLSCntL.v:74 is_sec_iff;
      lib/Prog/ListTr.v:50-52 list_push_tra; lib/Prog/drain_b_c.v:58 push_cap, :109-118 pushes_run;
      lib/Prog/send_line_b_c.v:27-38 sl_run, :42-47 send_line_tr / send_line_cap;
-     lib/A/W_LLVMFuzzerTestOneInput_cut.v:104 OPS_MAX, :181 CAPOUT_MAX;
+     lib/A/W_LLVMFuzzerTestOneInput_cut.v:105 OPS_MAX, :181 CAPOUT_MAX;
      lib/Reusable/YC5d.v:17-21 ameter_ops. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YC5d.

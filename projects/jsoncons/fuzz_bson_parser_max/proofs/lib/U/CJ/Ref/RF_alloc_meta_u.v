@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: the rauxv_ok destruct patterns follow its any-layout auxv form, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/CJ/Ref/RF_alloc_meta.v, lines 55-58. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -54,11 +55,10 @@ Proof. intros H AG HC H0 H1. eapply RA2.rwr_at_agree; [exact H|]. intros a Ha. a
 Lemma rauxv_ok_magree C m m' B :
   rauxv_ok m B -> magree C m m' -> (forall a, C a -> a < B /\ ~ (RAUXV_CELL <= a < RAUXV_CELL + 8)) -> rauxv_ok m' B.
 Proof.
-  intros (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & AC & AL & RN & H) AG HC.
-  exists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros (av & vs & rnd & AC & AL & RN & H & HL) AG HC.
+  exists av, vs, rnd. split; [|split; [|split; [|exact (conj H HL)]]].
   - eapply rrw_cells_magree; [exact AC| exact AG|]. cbn. intros a Ha X. destruct (HC a X) as [_ Y]. apply Y. exact Ha.
-  - eapply rbytes_at_magree; [exact AL| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
-    unfold auxv_list in Ha. rewrite u64s_length, map_length in Ha. cbn in Ha. lia.
+  - eapply rbytes_at_magree; [exact AL| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. lia.
   - eapply rbytes_at_magree; [exact RN| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. rewrite length_le8 in Ha. lia.
 Qed.
 

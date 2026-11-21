@@ -1,24 +1,24 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/StrncmpFmh.v at origin/ossv/recipes f26f9fbd8777; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses; in the comments, internal branch and lane names are replaced by neutral words. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/StrncmpFmh.v; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses; in the comments, internal branch and lane names are replaced by neutral words. *)
 (* libreac/fuzz_boxreg, build asan: the boxreg file that carries the same definitions as the fuzz_manifest port's FMH_Base.v, FMH_Rt.v
    and FMspec_str.v for the names the fuzz_manifest port's relocated strncmp proof (lib/A/FMstrncmp.v astrncmp_holds, and the FM*
-   files under it, from an unreleased branch at 445e498a469) uses. Those three fm files are NOT relocated: they
+   files under it, from an unreleased branch) uses. Those three fm files are NOT relocated: they
    Require fm's program model (lib/Prog/ManifestModel.v, lib/A/Prog/isalnum_c.v, lib/A/Spec/StrStr.v,
    lib/A/Bz/A/I_scasem.v); r-decbox's 03:33Z ruling re-points their Requires to boxreg files carrying the same
    definitions. Here:
-   - verbatim from FMH_Base.v at 445e498a469: ecall_pre_k (:156), cstr (:169), cstr_ok (:175), ecall_preU_k (:162),
+   - verbatim from FMH_Base.v: ecall_pre_k (:156), cstr (:169), cstr_ok (:175), ecall_preU_k (:162),
      bytes_at (:183), with FMH_Base's local abbreviation rdW (:138); verbatim from FMH_Rt.v: rt_post_ro (:89),
      rt_post_roU (:97), astrncmp_realizes (:124).
      Why ecall_pre_k / cstr_ok are not aliases of boxreg's frozen lib/A/Rt/StrncmpDef.v fm_ecall_pre_k /
      fm_cstr_ok: StrncmpDef writes fm's `alloc_ceiling` as `ASAN_CEIL`. The two are equal by definition
-     (YG0f.v:15 ASAN_CEIL := alloc_ceiling), but lia treats them as different atoms, so fm's unchanged proof does not
+     (YG0f.v:16 ASAN_CEIL := alloc_ceiling), but lia treats them as different atoms, so fm's unchanged proof does not
      close over StrncmpDef's text (FMrt_pre.v:310 stk_of_pre; diagnostic build
      boxreg-strncmp build-20261029T044600Z.log). lib/A/Rt/Strncmp.v proves StrncmpDef's
      astrncmp_realizes from astrncmp_holds by conversion (a lead ruling 04:46Z, option B).
    - the other fm names are aliases of StrncmpDef's identical bodies (no second definition): PC_strncmp ->
      STRNCMP_ENTRY (0x413f8), STK_RT_STR, rom_viewN, rom_viewO, strn_eq. StrncmpDef is Required, not Imported, and
      the aliases name it qualified, so no StrncmpDef name is shadowed here or in the files that import this one.
-   - FMupoison is -pa's shared, image-free lib/A/Rt/FMupoison.v (relocated whole from the fuzz_manifest port by one lane,
-     dc99a2ad20d), one text per module; it has no lib/B twin.
+   - FMupoison is -pa's shared, image-free lib/A/Rt/FMupoison.v (relocated whole from the fuzz_manifest port by one lane),
+     one text per module; it has no lib/B twin.
    - the five program-free helpers of FMspec_str.v FMstrncmp uses (nul_last, nul_last_cons, nul_last_tl,
      nth_error_map_nth, u8), verbatim with their proofs.
    No image numeral other than StrncmpDef's entry.

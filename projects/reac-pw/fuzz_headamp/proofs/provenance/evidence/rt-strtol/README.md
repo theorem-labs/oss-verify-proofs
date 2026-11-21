@@ -1,6 +1,6 @@
 # rt-strtol: text kept out of this directory
 
-The files below are kept verbatim in an internal record, commit d257b0747438. Each row cites the file as: commit, path
+The files below are kept verbatim in an internal record. Each row cites the file as: commit, path
 inside the record, sha256.
 
 ## Text before the scrub
@@ -12,4 +12,6 @@ kept in the internal record.
 
 | file | record (text before the scrub) |
 | --- | --- |
-| decisions.md | commit d257b0747438, path rt-strtol/decisions.md, sha256 84b94b8018c79648090d80e24ebc0d9e64b91a20e2018a0d06e0cc622405eb0e |
+| decisions.md |, path rt-strtol/decisions.md, sha256 84b94b8018c79648090d80e24ebc0d9e64b91a20e2018a0d06e0cc622405eb0e |
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

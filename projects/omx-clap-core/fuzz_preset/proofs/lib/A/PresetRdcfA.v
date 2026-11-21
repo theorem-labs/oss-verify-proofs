@@ -17,6 +17,7 @@
    write by YAkMemnormWb.memnorm_read_win, the close node and the hand steps keep the memory, and the read check /
    memcpy sites by the memnorm keep that ends their posts (lib/A/PresetD1preA.v).
    Nothing in this file is a proof of a function (rule 24: the driver layer of a port). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -129,17 +130,31 @@ destruct (wbytes mem (Z_to_bv 64 a) bs (Z_to_bv 64 x)); [cbn; discriminate | exf
 + destruct (wbytes mem (Z_to_bv 64 a) bs (Z_to_bv 64 x)); [cbn; discriminate | exact Hv0].
 Qed.
 Section f.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+(* the entry draw and the launch premises, as the core's AD25.v Section f (727298f3): AD25's Section-f exports take
+   rnd right after p *)
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
+Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 Let HWXi : wx_segs_nowrap tfibsegs := Hwx_tfa.
 (* AD25.v's AR-free Section f facts, at this section's variables (as AD23.v:121 cites them). *)
-#[local] Notation eagree := (AD25.eagree sp inp xw xd a0 p).
-#[local] Notation eagree_0 := (AD25.eagree_0 sp inp xw xd a0 p).
-#[local] Notation eagree_6 := (AD25.eagree_6 sp inp xw xd a0 p Hsp Hva Hve).
+#[local] Notation eagree := (AD25.eagree sp inp xw xd a0 p rnd).
+#[local] Notation eagree_0 := (AD25.eagree_0 sp inp xw xd a0 p rnd).
+(* AD25.v:201 eagree_6, restated over this Section's names *)
+Lemma eagree_6_cf : forall E, eagree E -> usp <= bv_unsigned (ew E 6).
+Proof.
+intros E [HE _]. rewrite HE by (unfold K_M1; lia).
+change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp))).
+assert (Hz : z_rand usp (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp) + 16 < 2 ^ 63)
+by (eapply (YP08.z_rand_end TSEGS TPH inp mbase Asan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau)).
+rewrite Hargv in Hz. pose proof (u64_range sp).
+unfold z_rand in *. rewrite u64_lit by lia. lia.
+Qed.
 #[local] Notation winP := (AD25.winP sp Hsp).
 
 (* AD25.v:204 *)
@@ -183,7 +198,7 @@ SRr tfibsegs W (mkCfg ms md)
 let mem1 := wbytes mem0 (Z_to_bv 64 RS_LO) bs in
 1 <= n <= want
 /\ AI tfibsegs (w_H W) (w_A W) md1 /\ ARcf tfibsegs B ly S [] W mem1 md1
-/\ m_fds md1 = APSG.fds3 (FdFile pth (Z_to_bv 64 (len + n))) /\ m_fs md1 = m_fs md
+/\ m_fds md1 = APSG.fds3 (FdFile pth (Z_to_bv 64 (len + n))) /\ m_fs md1 = m_fs md /\ m_channel_reader md1 = m_channel_reader md
 /\ (forall i, 0 <= i < n -> mem1 (Z_to_bv 64 (RS_LO + i)) = nth_error bs (Z.to_nat i))
 /\ (forall x : word, bv_unsigned x < RS_LO \/ RS_LO + n <= bv_unsigned x -> mem1 x = mem0 x)
 /\ frame_of E LH_mem (ms_mem ms) mem0
@@ -249,6 +264,7 @@ exists (ms_mem ms1), md2. cbv zeta.
 split; [exact Hn|]. split; [exact HAI2|]. split; [exact HAR2|].
 split. { rewrite Hfds2, with_fds_fds, wvb_fds', Hfds, Hnw, Hoff. unfold fd_insert, APSG.fds3. f_equal. }
 split. { rewrite Hfs2, with_fds_fs, wvb_fs'. reflexivity. }
+split. { exact (sbm_rdr_fw _ _ _ _ _ Hs). }
 split; [exact Hbytes'|]. split; [intros x Hx; apply Hfr'; lia|].
 split; [exact HF1|]. split; [exact HFr1|].
 split; [reflexivity|]. eexists. eexists. split; [reflexivity|]. split; [exact HS2|]. split; [exact HF | exact HFr].
@@ -265,7 +281,7 @@ SRr tfibsegs W (mkCfg ms md)
 (fun W' c' => W' = W /\ exists ms' md',
 c' = mkCfg ms' md' /\ st_ok tfibsegs E S_HDR (restrict (w_H W) ms')
 /\ AI tfibsegs (w_H W) (w_A W) md' /\ ARcf tfibsegs B ly S [] W (ms_mem ms') md'
-/\ m_fds md' = APSG.fds_std /\ m_fs md' = m_fs md
+/\ m_fds md' = APSG.fds_std /\ m_fs md' = m_fs md /\ m_channel_reader md' = m_channel_reader md
 /\ frame_of E LH_mem (ms_mem ms) (ms_mem ms')
 /\ frame_of E LH_mem (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms'))
 /\ YAkMemnorm.memnorm tfibsegs (ms_mem ms')).
@@ -342,6 +358,7 @@ split.
 rewrite E0'. intros a Ha. apply (apresent_some' (w_H W)). apply (winP E S_HDR _ W (or_introl HS4) E0'); [| exact Ha]. do 3 eexists; reflexivity. }
 split. { rewrite wvb_fds', with_fds_fds, wvb_fds', Hfds2, with_fds_fds, wvb_fds', Hfds. unfold fd_remove, fd_insert, APSG.fds3, APSG.fds_std. cbn -[Z_to_bv bv_add]. reflexivity. }
 split. { rewrite wvb_fs', with_fds_fs, wvb_fs', Hfs2, with_fds_fs, wvb_fs'. reflexivity. }
+split. { rewrite wvb_rdr', wf_rdr, wvb_rdr'. exact (sbm_rdr_fw _ _ _ _ _ Hs). }
 split; [| split; [| exact HMNB]].
 - apply (frame_of_trans E LH_mem (ss_mem S_RE) _ _ _ (eq_sym SK1) HF1).
 apply (frame_of_trans E (ss_mem S_RE) (ss_mem S_CL) _ _ _ ltac:(rewrite SK1, SK5; reflexivity) HF2). rewrite Emem2. exact HF.
@@ -358,7 +375,7 @@ SRr tfibsegs W (mkCfg ms md)
 (fun W' c' => W' = W /\ exists ms' md',
 c' = mkCfg ms' md' /\ st_ok tfibsegs E S_DIR (restrict (w_H W) ms')
 /\ AI tfibsegs (w_H W) (w_A W) md' /\ ARcf tfibsegs B ly S [] W (ms_mem ms') md'
-/\ m_fds md' = m_fds md /\ m_fs md' = m_fs md
+/\ m_fds md' = m_fds md /\ m_fs md' = m_fs md /\ m_channel_reader md' = m_channel_reader md
 /\ frame_of E LH_mem (ms_mem ms) (ms_mem ms')
 /\ frame_of E LH_mem (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms'))).
 Proof.
@@ -396,7 +413,7 @@ split; [exact HAI3|].
 split.
 { apply (AR_after_run_cf B HB ARL ly S [] W E (ss_mem S_RE) mem _ _ _ ltac:(rewrite Emm; exact HAR1) WOKre); [rewrite E0'; exact Ulo | rewrite E0'; exact HCT | exact HF |].
 rewrite E0'. intros a Ha. apply (apresent_some' (w_H W)). apply (winP E S_DIR _ W (or_introl HS2) E0'); [| exact Ha]. do 3 eexists; reflexivity. }
-split; [rewrite ?wvb_fds'; reflexivity|]. split; [rewrite ?wvb_fs'; reflexivity|].
+split; [rewrite ?wvb_fds'; reflexivity|]. split; [rewrite ?wvb_fs'; reflexivity|]. split; [rewrite ?wvb_rdr'; reflexivity|].
 split.
 - apply (frame_of_trans E LH_mem (ss_mem S_RE) _ _ _ (eq_sym SK1) HF1). rewrite <- Emm. exact HF.
 - apply (frame_of_trans E LH_mem (ss_mem S_RE) _ _ _ (eq_sym SK1) HFr1). rewrite <- Emm. exact HFr.
@@ -575,7 +592,7 @@ c' = mkCfg (mkst regs4 (Z_to_bv 64 RA_CP) mem4 (seg_rom tfibsegs)) md4
 /\ YAkMemnorm.memnorm tfibsegs mem4).
 Proof.
 intros E3 W ms md ly S pb n buf len cap data bs MCPY HE HS E46 E58 E78 HAR HTOP Hbl Hpb Hlen0 Hn Hle Hcap HBLK Hbs Hrs Hslice HMN.
-pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (eagree_0 E3 HE) as E0'. pose proof (eagree_6 E3 HE) as E6'.
+pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (eagree_0 E3 HE) as E0'. pose proof (eagree_6_cf E3 HE) as E6'.
 assert (Hin : In (buf, cap) (ablocks B ly S)) by (unfold ablocks; rewrite Hbl, <- Hpb; left; reflexivity).
 pose proof (alc_blocks _ _ ARL ly S [] W (ms_mem ms) md buf cap HAR Hin) as (Hbufm & Hb4096 & Hbce & Happ & Hbytes & _).
 assert (Hcapr : cap <= req_size cap) by (unfold req_size; destruct (Z.eqb_spec cap 0); lia).

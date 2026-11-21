@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* SEGMENT S6 of the ASan walk of libreac/fuzz_scene's LLVMFuzzerTestOneInput.  Proves
-   `seg_S6_stmt SEGS B ameter_triv WK scene_geom_asan` (lib/A/P_LLVMFuzzerTestOneInput_seg.v:615): from cut C6
+   `seg_S6_stmt SEGS B ameter_triv WK scene_geom_asan` (lib/A/P_LLVMFuzzerTestOneInput_seg.v:616): from cut C6
    (0x83020) to the `ret` (0x830c0), the walk realizes the entry contract's post, `sc_ret` (seg file :522).
 
    Image: fuzz_scene.asan, sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026.  The four runs
@@ -15,10 +16,10 @@
                              release magic at 0x83058, the `beqz s7` of 0x8305c -- DECIDED NOT TAKEN from the atom
                              fact 4096 <= F (the frame of the live fake stack), so the real-stack arm
                              0x83074-0x8307c (`__asan_set_shadow_00`) is dead and is not walked -- and
-                             `__asan_stack_free_8(F, 9408)` at 0x8306c through lib/Reusable/StackFreeJournal.v:165
+                             `__asan_stack_free_8(F, 9408)` at 0x8306c through lib/Reusable/StackFreeJournal.v:166
                              aj_stack_free_at with ASF8 (StackFreeDef's astack_free_realizes at class 8).
      run 4  0x83070-0x830c0  `a0 = 0`, `addi sp,s0,-0xe0`, the 13 epilogue loads of the caller's saved words and
-                             `ret`, closed with paj_ret_at (A/Prog/ScenePaLib.v:58).
+                             `ret`, closed with paj_ret_at (A/Prog/ScenePaLib.v:59).
    `beqz s7` 0x8305c is the ONLY conditional branch in the segment, and no `__asan_report_*` call site is in it
    (the range holds exactly three calls: two `__wrap_free` and `__asan_stack_free_8`).
 
@@ -31,7 +32,7 @@
 
    Owners of the hypotheses: a Theorem Labs lane (ML, TL, AIL), a Theorem Labs lane (AFREE, HTRACE), a Theorem Labs lane (ASF8), and the
    budget side conditions HEV / HSTK, which are LLVMF_EV <= EV_LIB and LLVMF_SPDROP + ASTACK <= LLVMF_STK of
-   lib/A/P_LLVMFuzzerTestOneInput.v:189, :191 at LLVMF_EV = 6 and LLVMF_SPDROP = 240.  AR_laws is the theorem
+   lib/A/P_LLVMFuzzerTestOneInput.v:190, :192 at LLVMF_EV = 6 and LLVMF_SPDROP = 240.  AR_laws is the theorem
    AR_laws_ok (Reusable/YG0q.v:803), not a hypothesis; the walk needs no frame_flag_lawP.
    Gate 6h: the sink head is the Section variable SK, passed explicitly to seg_S6_stmt (`@seg_S6_stmt fx rc SK`),
    never resolved by instance search. *)
@@ -93,7 +94,7 @@ destruct (Z.ltb_spec (spZ regs + 16) (ly_top ly)) as [Hlt | Hge].
   [exact H8 | exact H16 | exact Hra | exact Hceil | exact Hal | lia | exact Hsp'].
 - left. split; [right; left; lia | reflexivity].
 Qed.
-(* A Theorem Labs lane's P_check_step_S3.v:120 s3_kept_run *)
+(* A Theorem Labs lane's P_check_step_S3.v:121 s3_kept_run *)
 Lemma s6_kept_run : forall E rs (H : word -> bool) (mA mB : word -> option byte) a,
 frame_of E rs (mrestrict H mA) (mrestrict H mB) -> 0 <= a < 2 ^ 64 -> ~ in_wrange E rs a ->
 aview SEGS H mB a = aview SEGS H mA a.

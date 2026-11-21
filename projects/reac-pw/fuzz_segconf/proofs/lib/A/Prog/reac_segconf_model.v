@@ -6,7 +6,7 @@
    lib/B/Prog/arg_line_c.v, proved as stated, over its callee contract rec_canonical_c and the strlen wrapper, each
    taken at the walk's FP state (the statement states them at every FP state).
 
-   The B re-walk of the A walk lib/A/Prog/arg_line.v (a Theorem Labs lane a60bdbabd8f), on B's code as measured with capstone
+   The B re-walk of the A walk lib/A/Prog/arg_line.v (a Theorem Labs lane), on B's code as measured with capstone
    (symbol-keyed; B adds five UBSan trap branches and a fourth inline check, the store4 of c->nargs; the calls and the
    shadow-check pattern are A's). arg_line(c, line) (recorder.c:229-233): c in a0, line in a1; s1 = c, s0 = c + 4,
    s4 = the shadow byte address of c + 4, s3 = the shadow base (through the GOT word 0xa5f50 = A_OBJ 0 and the cell
@@ -42,10 +42,11 @@
    PROG_WRITABLE: the two stores into the slot). LAWS is AR_laws_ok; PALib's fields are CmdRecCells' cmd_cf_got,
    cmd_cf_cell and cmd_cf_env. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/arg_line.v, with its module paths, module names and numbers changed; 415 of its 490 lines of code are new or changed and 653 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk of reac_segconf_model on fuzz_segconf.asan (image A, 0x897e8 = BASE + AF_reac_segconf_model,
    27 instructions): reac_segconf_model_contract (reac_segconf_model_c.v) from its callee's contract
-   reac_segconf_find_contract (reac_segconf_find_c.v), in plugin-hostd/fuzz_command's lib/A/Prog form (arg_line.v
-   at origin/ossv/recipes 501c0d516c69: the symbolic executor over the listing, a program call through cl_callS,
+   reac_segconf_find_contract (reac_segconf_find_c.v), in plugin-hostd/fuzz_command's lib/A/Prog form (arg_line.v:
+   the symbolic executor over the listing, a program call through cl_callS,
    the symbolic state carried over the call by jafter_call_keep_pi, the inline check removed by a shadow entry).
 
    Shape (the plan: provenance/evidence/listing-plans/plan-reac_segconf_model.md): 0x897e8-0x897fc the 16-byte frame, the spills

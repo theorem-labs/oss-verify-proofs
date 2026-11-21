@@ -6,6 +6,7 @@
    libreac/fuzz_identity's ASan build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v, with its module paths, module names and numbers changed; 1266 of its 1332 lines of code are new or changed and 1014 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_dec_E.v; 829 of its 913 lines of code are new or changed and 1248 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* preset_base64_encode 0x84700 (preset_file.c:577-608) on fs.asan-ubsan (image B), the ENTRY of the walk of
    lib/B/FSH_Fn_writer.v's encode_spec: the prologue and the size, the fuzz_malloc call, the refused allocation (null arm),
    the len < 3 dispatch, and the set-up of round 0 at the loop head.
@@ -36,11 +37,11 @@
    here are plain engine runs (no shadow load: the .got word, the shadow-base cell and the .rodata word are regions).
 
    rule 24: proves function preset_base64_encode (part entry; reuse search: proof-index preset_base64_encode,
-   ported from a working branch 402eb5565fc + donor a working branch b96980d72d1)
-   Port-from: A's entry walk is not written at 402eb5565fc (lib/A/FSW_preset_base64_encode.v has no entry piece); the
-   form of the spine / null arm / call step is lib/A/FSW_dec_E.v on the base a9edd281227 (decE_spine 1087-1459, decE_null
+   ported from a working branch + donor a working branch)
+   Port-from: A's entry walk is not written (lib/A/FSW_preset_base64_encode.v has no entry piece); the
+   form of the spine / null arm / call step is lib/A/FSW_dec_E.v on the base (decE_spine 1087-1459, decE_null
    344-490, decE_cs_den / decE_chunks_of_frame 74-122) and lib/B/FSW_parse_string.v (pstr_call_post 949-1083, the
-   live-block keep through the journal); the image-B steps from the old-B donor a working branch b96980d72d1
+   live-block keep through the journal); the image-B steps from the old-B donor a working branch
    lib/B/Prog/preset_base64_encode_blocks.v:54-95 (enc_prologue: frame 48, six saves, the size), 105-148
    (enc_epilogue / enc_body_null), 1266-1285 (enc_body_B: the malloc test, the len < 3 and len = 0 dispatch, the
    round-0 set-up). *)

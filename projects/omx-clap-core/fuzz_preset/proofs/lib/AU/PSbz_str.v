@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (PresetStrlenB, c-libc-stdio lane): the IMAGE-B (fuzz_preset.asan-ubsan) twin of
    lib/A/PSbz_str.v: the shadow half of the bridge from cgif's call-site facts (`range_addressable` /
    `shadow_hull_vis` over `aview`) to the K kit's image-B shadow premise `chk_ok` (lib/K/A/I_qck.v, Module TwinB__).
    rule 24: no function proved. PORTED, not new.
 
-   DONOR: lib/A/PSbz_str.v at origin/cold/c-libc-stdio-presetstr 4c5f2e59209 (itself the port of fuzz_state's
-   FSbz_str.v, origin/cold/port-state-rt-str 17818dd9abc, and of port-fm's FMbz_str.v, origin/cold/port-fm-rtscan
-   cedf3d02589). Every lemma below is the donor's, same name, same order, same proof script.
+   DONOR: lib/A/PSbz_str.v (itself the port of fuzz_state's
+   FSbz_str.v, and of port-fm's FMbz_str.v).
+   Every lemma below is the donor's, same name, same order, same proof script.
 
    WHAT CHANGED (image names only; this file holds no address literal):
    - the segment lists: lib/A/AB1v.v `tfibsegs` and K/Lib/ImageA.v `asegs` (both Asan.M.loaded_segments) ->

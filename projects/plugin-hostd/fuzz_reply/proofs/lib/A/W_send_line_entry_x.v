@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the entry segment of fuzz_reply's send_line ASan walk (fuzz_reply.asan 0x82734),
    in the form of the cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v (a cut at a loop head) and
    lib/A/ACfj.v (segments joined at cut points). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The entry runs the prologue (13 saved registers into the 128-byte frame), the three early tests of relay.c:68-70
    (g_client < 0, len = 0, g_client_broken) and the setup of the loop's registers (fuzz_reply.c:282-290: sent = 0, the
    shadow base, the kept auipc registers and the two spilled ones at 8(sp) and 16(sp)).  A test that holds goes to the
@@ -11,8 +12,8 @@
    globals are read through their objects (PLdHi), and the only stores are into the frame. *)
 (* THE GENERIC WALK IN ROOM FORM (row A-SL_x of a Theorem Labs lane's FREE-PIECES, a Theorem Labs lane 2026-10-30): Section c proves
    sl_entry_x over any allocator relation ARx with its laws and HP0 and any room record RP, stated as
-   W_send_line_cx_x.v's sl_entry_stmt_x (room form, a0c781b35e6). Its text is W7's conversion of W_send_line_entry.v
-   (a working branch 7561b427559, f1b56b77fd4) merged with the C3 peak re-fit (76be6190eff); this file sits
+   W_send_line_cx_x.v's sl_entry_stmt_x (room form). Its text is W7's conversion of W_send_line_entry.v
+   (a working branch) merged with the C3 peak re-fit; this file sits
    BESIDE W_send_line_entry.v, which is not edited (its AR-free helpers are copied here, as in W7's file). The room:
    the entry makes no call, so the state at the loop head and at the epilogue is the entry's S; an early return keeps
    kr of the budget (RMM_of), the loop head gets the whole budget of its rounds (sl_cost at MT_rk is sl_cost_run on a
@@ -79,7 +80,7 @@ Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* instance facts: errno is tp - 164 (W_sites.v aerrno_realizes) and its shadow is zero *)
 Hypothesis HERRNO : as_errno B = as_tp B - 164.
-(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:189's form): the loop's errno
+(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:190's form): the loop's errno
    stores need range_addressable of errno at an ARx state (W_contract_x.azs_range_addressable_x) *)
 Hypothesis HERRZ : azs B (as_errno B) 4.
 (* placement: the objects send_line reads by PLdHi, and the kept auipc registers it stores and loads through *)
@@ -110,7 +111,7 @@ Hypothesis HRGD : zpairwise_disjoint
 (* W_send_line_cx_x.v's AREALLOC (at RP); the entry makes no call *)
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, ACk0.v:45, holds [0x82844]); send_line hands the rule a cut chain (ch = []), so the trace is the
-   return address alone (W7's ccd62d4c6f6 form). *)
+   return address alone (W7's form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x110] CTX_R.   (* realloc returns to 0x82844 *)
@@ -638,7 +639,7 @@ Hypothesis AREALLOC_R : arealloc_cf_rule_c_xR SEGS B PST ARx MT MMAX RP RO HA CT
 Let RUNG := paj_run_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let RUNTOG := paj_run_to_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let BRR := paj_branch_xR (PI := PI) (R := R).
-(* W_send_line_entry_x.v:383 sl_off_exit_x at R *)
+(* W_send_line_entry_x.v:384 sl_off_exit_x at R *)
 Lemma sl_off_exit_xR : forall W ly S Hp regs mem md ch c O mx no cap out Bl regsX memX mdX kr,
 afn_pre_x SEGS B ARx SL_STK ly S Hp W regs mem md ch ->
 aout_at B RG ly S W mem c O mx no cap out -> rp_RM RP S kr ->
@@ -674,7 +675,7 @@ assert (Hctl : sl_ctl c (Z.of_nat (length Bl)) = c)
   by (destruct c as [cl br dd ei ev]; unfold sl_ctl; cbn [ct_cl ct_br ct_dd ct_ei ct_ev] in *; rewrite Hoff; reflexivity).
 rewrite Hctl. split; [exact (aout_moved_x ly S Hp W mem md mem' c O mx no cap out HAR HOUT KL' GR') | intros _; reflexivity].
 Qed.
-(* W_send_line_entry_x.v:420 sl_to_loop_x at R *)
+(* W_send_line_entry_x.v:421 sl_to_loop_x at R *)
 Lemma sl_to_loop_xR : @sl_loop_stmt_xR fx rc SK PI B PST ARx MT RP MMAX RG R ->
 forall W ly S Hp regs mem md ch c O mx no cap out line Bl regsL memL mdL kr,
 afn_pre_x SEGS B ARx SL_STK ly S Hp W regs mem md ch ->
@@ -738,7 +739,7 @@ split; [intros Hd; unfold sl_cost in HRM; rewrite (Hlive Hd) in HRM; rewrite Z.a
 split; [intros _; exact (RMM_of RP S kr _ (Nat.le_add_l _ _) HRM)|].
 exact HCNT.
 Qed.
-(* W_send_line_entry_x.v:485 sl_entry_x at R *)
+(* W_send_line_entry_x.v:486 sl_entry_x at R *)
 Theorem sl_entry_xR : @sl_entry_stmt_xR fx rc SK PI B PST ARx MT RP MMAX RG R.
 Proof.
 intros LOOP W ly S Hp regs mem md ch c O mx no cap out line Bl HPRE H10 H11 HOUT HROM HBL Hl0 Hl63 HLOK HLG HCAP HLIVE

@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v; 31 of its 74 lines of code are new or changed and 2713 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* cstr_ok of a heap string from the facts a crt boundary invariant carries: the string's bytes and NUL (zbytes_at),
    no NUL inside it, and the live block it lies in. Shared by every crt lane (check_round_trip, build A). Moved
-   VERBATIM from a Theorem Labs lane's lib/A/FSH_crt_a23cstr.v at a working branch c2f01f092c5 (written by its subagent
+   VERBATIM from a Theorem Labs lane's lib/A/FSH_crt_a23cstr.v at a working branch (written by its subagent
    a Theorem Labs lane), renamed: a23_enc_nz -> crt_enc_nz, a23_cstr_blk -> crt_cstr_of_block, a23_cstr -> crt_cstr_of_rblock.
    Owner: a Theorem Labs lane (lane CRT).
      crt_enc_nz         : the base64 encoding of a byte list holds no NUL (WriterSpecFacts.b64_enc_chars).
@@ -14,7 +15,7 @@
                           block_word_tail_vis / aview_unpoison_vis).
      crt_cstr_of_rblock : the same for a string that fills its block exactly, at (p - HEAD, n + HEAD).
    rule 24: proves no function (kind: segment-lemma helper of check_round_trip's walk, PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd2.v - sd2_enc_nz :52 and
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd2.v - sd2_enc_nz :52 and
    the cstr_ok premises of sd2_tail :494). The function-level reuse search is crt-lane-head.md lines 6-21. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

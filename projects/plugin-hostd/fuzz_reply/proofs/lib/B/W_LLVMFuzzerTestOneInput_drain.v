@@ -4,7 +4,7 @@
    fuzz_reply's LLVMFuzzerTestOneInput - the jump table's arm 2 (op_drain, fuzz_reply.c:596-609), from the arm's
    entry 0x8489c (BASE + AF_arm_drain 0x2558) to the latch 0x84804 (BASE + AF_LLVM_latch).  THE CLOSING FILE:
    it declares, by name, everything the arm takes, and composes the two stage walks into the cut's ARM_drain
-   (lib/B/W_LLVMFuzzerTestOneInput_cut.v:954), which it discharges by `exact lf_arm_drain`.
+   (lib/B/W_LLVMFuzzerTestOneInput_cut.v:955), which it discharges by `exact lf_arm_drain`.
    Proves no function (kind: segment walk - a segment of the entry function; its callees are named contracts).
 
    Image: the pinned asan-ubsan objdump of fuzz_reply (fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) beside the pinned ELF),
@@ -21,7 +21,7 @@
                                                    (lock, drain, unlock, check_no_loss_read, check_no_loss,
                                                    check_shape_done).
    The B code of the arm, and how B differs from image A's twin (lib/A/W_LLVMFuzzerTestOneInput_drain.v at
-   a working branch a86c2788a94, every lemma Qed), are listed in _drain_defs.v's header.
+   a working branch, every lemma Qed), are listed in _drain_defs.v's header.
 
    ------------------------------------------------------------------ the trap table (the cut header's
    ARM_drain rows; every branch is to the one UBSan landing pad `unimp` at 0x850fc)
@@ -59,7 +59,7 @@
      HZS       azs B g_s (4 * ASRC)         TRUE at the pin: _G.v's measurement (Tfib_zero_shadow holds
                                            (0x5d8e60, 384)).
      HAP       g_s apart from A_OBJ 0 / 30  TRUE: _G.v c_HAP (vm_compute at PB_fr).
-   No hypothesis of this arm is a missing premise.  Two premises of the kit's cnl_spec (lib/B/W_contract.v:2054)
+   No hypothesis of this arm is a missing premise.  Two premises of the kit's cnl_spec (lib/B/W_contract.v:2055)
    are proved at the call in _drain_calls.v rather than taken: its memmove bound `AREC * capb (hs_held h)
    (hs_expected h) < 2 ^ 32` (:2018, dcE_capb: the held vector is empty or an allocator block below MALLOC_MAX =
    2 ^ 28, and the count bound LS_cnl_pre gives covers the other term), and its last premise, the caller's stack
@@ -68,6 +68,7 @@
    call by the journal's view clause above its window, and no stack byte is a G_fr byte).
    The model rules (RI_ and LS_ families) and the callee contracts (RSRC, DRAIN, ALOCK, AUNLOCK, CNLR, CNL,
    CSD) are their owners'; each is stated below in its owner's text. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -150,17 +151,17 @@ Hypothesis RSRC : forall W ly S (regs : bvmap 5 word) mem md ch T es fd,
          ((forall e, In e es -> re_fd e <> fd) /\ a0 = w64 0))).
 (* the allocator instance (lib/B/W_kit.v PALib), a Theorem Labs lane's working branch *)
 Hypothesis TL : PALib (PI := PB_fr) B.
-(* drain: the kit's dr_spec (lib/B/W_contract.v:1027), W7's text at image B *)
+(* drain: the kit's dr_spec (lib/B/W_contract.v:1028), W7's text at image B *)
 Hypothesis DRAIN : dr_spec (PI := PB_fr) B MT MMAX fr_RG (BASE + AF_fr_drain).
-(* the two mutex entries: the kit's forms (lib/B/W_sites.v:90 / :105), R5's proofs *)
+(* the two mutex entries: the kit's forms (lib/B/W_sites.v:91 / :106), R5's proofs *)
 Hypothesis ALOCK : alock_realizes (PI := PB_fr) B (SIGMA WS_pthread_mutex_lock).
 Hypothesis AUNLOCK : aunlock_realizes (PI := PB_fr) B (SIGMA WS_pthread_mutex_unlock).
-(* check_no_loss_read: the kit's cnlr_spec (lib/B/W_contract.v:484); the B walk pb_check_no_loss_read is in
-   bint (a Theorem Labs lane, a working branch 7df4d90b544), so the B top discharges this *)
+(* check_no_loss_read: the kit's cnlr_spec (lib/B/W_contract.v:485); the B walk pb_check_no_loss_read is in
+   bint (a Theorem Labs lane, a working branch), so the B top discharges this *)
 Hypothesis CNLR : cnlr_spec (PI := PB_fr) B (BASE + AF_fr_check_no_loss_read).
-(* check_shape_done: the kit's csd_spec (lib/B/W_contract.v:157) *)
+(* check_shape_done: the kit's csd_spec (lib/B/W_contract.v:158) *)
 Hypothesis CSD : csd_spec (PI := PB_fr) B (BASE + AF_fr_check_shape_done).
-(* check_no_loss: the kit's cnl_spec (lib/B/W_contract.v:2054, cnl_post :1967, CNL_STK :1966, Section w3n), at the
+(* check_no_loss: the kit's cnl_spec (lib/B/W_contract.v:2055, cnl_post :1967, CNL_STK :1966, Section w3n), at the
    G its proof takes (pb_check_no_loss's G-dependent hypotheses are gx_ok, gx_rt and, through its callees,
    rom_out); the call takes it at the slot's own list headers [(HA + 64, 32)] *)
 Hypothesis CNL : forall G, gx_ok segs B G -> gx_rt (PI := PB_fr) B G -> rom_out segs B G ->
@@ -213,9 +214,9 @@ Hypothesis RI_gone : forall cx t m,
 
 (* ---- the allocator-state facts the two allocating calls take, read off LS ---- *)
 (* the peak form (a Theorem Labs lane's ROOM-ROUND row #19; dr_spec's byte premise is the drain trace's byte PEAK, C3), image A's
-   text (W8's drain arm b5892edd1cb lib/A/W_LLVMFuzzerTestOneInput_drain.v): conjunct 5 is s5-r1d's
+   text (W8's drain arm lib/A/W_LLVMFuzzerTestOneInput_drain.v): conjunct 5 is s5-r1d's
    fr_LS_drain_pre_c5p (lib/A/ReplyTrPeak.v:942 on image A), and the three premises after re_eof are the ones its
-   rows take (fr_LS3_drain_pre_c4 lib/A/ReplyLS3Arms.v:790, fr_LS_drain_pre_c5p): dc_regs' Ht, aentry_ok's |re_U|
+   rows take (fr_LS3_drain_pre_c4 lib/A/ReplyLS3Arms.v:791, fr_LS_drain_pre_c5p): dc_regs' Ht, aentry_ok's |re_U|
    bound and the drained blocks' sizes (dc_stB's HXP).  The sum form (tr_alloc) was FALSE at reachable states. *)
 Hypothesis LS_drain_pre : forall cx t m ly S si h j,
   LS cx t m ly S -> RINV cx t m -> dr_at_op cx m -> dr_pick cx m si h ->
@@ -290,7 +291,7 @@ Proof.
              LS RINV MMAX dr_EV cx t m j si h fpos ly3 S3 k W1 c1 HB HD).
 Qed.
 
-(* the cut's ARM_drain (lib/B/W_LLVMFuzzerTestOneInput_cut.v:954), copied, discharged by the theorem above *)
+(* the cut's ARM_drain (lib/B/W_LLVMFuzzerTestOneInput_cut.v:955), copied, discharged by the theorem above *)
 Definition ARM_drain_text : Prop :=
   forall cx t W c, lf_base B MT XM_LIB RLO RHI fr_live_pre G_fr cx ->
   INV_A B G_fr fr_FP LS RINV 2 cx t W c -> SRr segs W c (INV_K B G_fr fr_FP LS RINV cx t).

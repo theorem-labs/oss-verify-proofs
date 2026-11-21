@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): THE CUT TABLE
    of the walk of parse_noting (B' 0x81ed0, 120 bytes, 30 instructions, frame 48; the B' twin of row N10-PNA). STATEMENTS
@@ -9,10 +10,10 @@
    address, 0 related, 0 released lemma(s), 0 by file name, delivery 0; 3 UNRELEASED cold/* files in the lemma index and 48
    UNRELEASED hits on live heads. Rule-24 parse_noting second-agent check 03:25Z: CONFIRM (record, the internal file RULE24-CHECK-PARSE_NOTING.md
    of the check's writer): no released or externally delivered parse_noting walk at B' exists. This file: the cut table of
-   the walk, RE-FIT to the batch kit (lib/A/PRH_FnCheck.v blob c40cf3fdcd2a, unchanged in the kit's cut and in its pre-landing commit
-   a346765610a6) from the f97c walk (a working branch f4db9931d4e5).
+   the walk, RE-FIT to the batch kit (lib/A/PRH_FnCheck.v blob c40cf3fdcd2a, unchanged in the kit's cut and in its pre-landing)
+   from the f97c walk (a working branch).
    LAYOUT: line for line the image-A' walk's cut table, a Theorem Labs lane's working branch
-   lib/A/Prog/PN102Cuts.v (b61e1ad112aa), with the B' listing for the A' listing.
+   lib/A/Prog/PN102Cuts.v, with the B' listing for the A' listing.
 
    SOURCES (record keys).
    - Program text: the merged #102 source fuzz_preset.c :498-507 (src-102/new of the preset-F rewalk)
@@ -34,7 +35,7 @@
      to +0x58 on both. THE B' BODY HAS NO UBSan CHECK (30 words on each image, no unimp, no __ubsan call), so no UBSan
      not-taken lemma is owed. Its only memory accesses are the ten of its own frame. Section 6 checks every call slot,
      the branch slot and the ret slot on the B' listing by vm_compute.
-   - The batch kit's TEXTS (a working branch 03fcabb582d0): the statement lib/A/PRH_FnCheck.v (blob
+   - The batch kit's TEXTS (a working branch): the statement lib/A/PRH_FnCheck.v (blob
      c40cf3fdcd2a) tparse_noting_specX :596-730; the callees lib/A/PRH_FnAlloc.v (4d8aeba047e5) tfuzz_alloc_live_specX
      (S1, owner a Theorem Labs lane) and tfuzz_alloc_ran_out_specX (S3, owner a Theorem Labs lane); lib/A/PRH_FnPj.v (3aa72eee2204;
      5aca5cbe2cfb in the kit's cut, tpj_parse_specX's text unchanged)
@@ -303,8 +304,8 @@ Definition pn_cw (X : pnx) : list (list Z) :=
   map (fun r => prh_trace (pc_free_ra0 (as_code B)) r [px_text X + pn_len X]) (prh_free_sites F_parse_items) ++
   map (fun r => prh_trace (pc_free_ra0 (as_code B)) r [pn_slotw X]) (prh_free_sites F_parse_string).
 
-(* pn_cw X meets prh_cw_pj at pj_parse's entry, from the slot word's equation: the kit's REPAIRED form (cwpj-fix
-   f29626eb1667, PRH_Base.v blob ae260e28900e :1521-1527: one arm per cursor function, the code-word disjunct gone),
+(* pn_cw X meets prh_cw_pj at pj_parse's entry, from the slot word's equation: the kit's REPAIRED form (cwpj-fix,
+   PRH_Base.v blob ae260e28900e :1521-1527: one arm per cursor function, the code-word disjunct gone),
    destructed by name - parse_items' arm (the cursor end), parse_string's arm (the slot word) *)
 Lemma pn_cw_pj : forall X (W' : world segs) mem' (regs' : bvmap 5 word),
   spZ regs' - pi_frame F_pj_parse = spZ (px_regs X) - pi_frame F_parse_noting - pi_frame F_pj_parse ->

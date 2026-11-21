@@ -1,27 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE disposition left free, the rseq-dependent auxv, the launch input's kernel build; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)): changed SINV, argH, argH_high and 14 more; added BRK_RANGE, E0I, Gap and 30 more; removed Wsb, hb_res, hbi_argH; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/HandoffBridgeK.v, 83 lines within its lines 7-698. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import
-  PropExec AgentLib AsanAcct BackingAlgebra AsanPlacement AxSymExec3K AxSymExec3SoundK AxSymRun3K
+  PropExec CatExec AgentLib AsanAcct BackingAlgebra AsanPlacement AxSymExec3K AxSymExec3SoundK AxSymRun3K
   AsanPlanCoreK AsanPlanK AsanPlanSoundK AsanInitK.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AxSymExec3K.AX2K AxSymExec3SoundK.AX2SK AsanPlanK.APK AsanPlanSoundK.APSK.
 Open Scope Z_scope.
 
-(* [comment removed for export] *)
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
 Definition VZ (E : env) (n : nat) : Z := bv_unsigned (ev E n).
-(* [comment removed for export] *)
+
 Definition LZ (E : env) (e : expr) : Z := lden E (lin_of e).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Section Generic.
 Variable SEGS : list Segment.
 Variable A : atable.
@@ -31,20 +26,16 @@ Variable argH : env -> word -> bool.
 Variable FS0 : Fs.Fs.
 Hypothesis SEGS_in_hull : forall a : word, in_hull A (bv_unsigned a) = false -> find_segment SEGS (bv_unsigned a) 1 = None.
 Hypothesis HULL_ok : hull_ok A.
-Hypothesis argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ uE E e_sp0 <= bv_unsigned a.   (* [comment removed for export] *)
+Hypothesis argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ uE E e_sp0 <= bv_unsigned a.
 
 #[local] Notation CSOK := (cs_ok SEGS A LIMIT SINV argH FS0).
 #[local] Notation MR := (Mr A argH).
 #[local] Notation HID := (hid A argH).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Lemma hb_kn : forall E cs R FULL model K,
   CSOK E cs R FULL model -> In K (kn cs) -> kentry_ok SEGS E (MR E cs model FULL) K.
 Proof. intros E cs R FULL model K HC Hin. exact (proj1 (Forall_forall _ _) (co_know _ _ _ _ _ _ _ _ _ _ _ HC) K Hin). Qed.
 
-(* [comment removed for export] *)
 Lemma hb_knb_In : forall K k, existsb (kentry_eqb K) k = true -> In K k.
 Proof.
   intros K k H. apply existsb_exists in H as (K' & Hin & Heq). apply kentry_eqb_eq in Heq. subst K'. exact Hin.
@@ -54,9 +45,6 @@ Lemma hb_knb : forall E cs R FULL model K,
   CSOK E cs R FULL model -> existsb (kentry_eqb K) (kn cs) = true -> kentry_ok SEGS E (MR E cs model FULL) K.
 Proof. intros E cs R FULL model K HC H. exact (hb_kn E cs R FULL model K HC (hb_knb_In K _ H)). Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Lemma hb_mr_some : forall E cs model FULL (a : word) b,
   MR E cs model FULL a = Some b -> FULL a = Some b.
 Proof. intros E cs model FULL a b H. unfold Mr, mrestrict in H. destruct (HID E cs model a); [discriminate| exact H]. Qed.
@@ -81,15 +69,10 @@ Proof.
   exact (store_ok_restrict SEGS _ (H_off_segments_cs SEGS A SEGS_in_hull HULL_ok argH argH_high E cs model) n FULL a H).
 Qed.
 
-(* [comment removed for export] *)
 Lemma hb_mr_hull : forall E cs model FULL (a : word),
   in_hull A (bv_unsigned a) = true -> MR E cs model FULL a = FULL a.
 Proof. intros E cs model FULL a H. unfold Mr, mrestrict. rewrite (hid_hull A HULL_ok argH argH_high E cs model a H). reflexivity. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Lemma hb_lin : forall E cs R FULL model e,
   CSOK E cs R FULL model -> lin_nowrapR (kn cs) e = true -> bv_unsigned (edenot E e) = LZ E e.
 Proof. intros E cs R FULL model e HC H. exact (lin_nowrapR_sound SEGS E _ (kn cs) e (co_know _ _ _ _ _ _ _ _ _ _ _ HC) H). Qed.
@@ -102,7 +85,6 @@ Lemma hb_xhi : forall E cs R FULL model e hi,
   CSOK E cs R FULL model -> xhi (kn cs) e = Some hi -> bv_unsigned (edenot E e) <= hi.
 Proof. intros E cs R FULL model e hi HC H. exact (xhi_sound SEGS E _ (kn cs) e hi (co_know _ _ _ _ _ _ _ _ _ _ _ HC) H). Qed.
 
-(* [comment removed for export] *)
 Lemma hb_bounds_e : forall E cs R FULL model e lo hi,
   CSOK E cs R FULL model -> xlo (kn cs) e = Some lo -> xhi (kn cs) e = Some hi ->
   lo <= bv_unsigned (edenot E e) <= hi.
@@ -117,10 +99,6 @@ Proof.
   rewrite Z_to_bv_unsigned. unfold bv_wrap, bv_modulus. rewrite Z.mod_small; [reflexivity|]. cbn. lia.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Lemma hb_word : forall E cs R FULL model a w v,
   CSOK E cs R FULL model -> In (KWord a w v) (kn cs) ->
   (w <= 8)%nat /\ flat E a (Z.of_nat w)
@@ -131,7 +109,6 @@ Proof.
   destruct (hb_mr_rdn E cs model FULL _ _ _ Hr) as [H1 H2]. auto.
 Qed.
 
-(* [comment removed for export] *)
 Lemma hb_rdn_bytes : forall FULL n (a0 : word) bs,
   rdn SEGS FULL a0 n = Some bs ->
   (forall j, (j < n)%nat -> in_hull A (bv_unsigned a0 + Z.of_nat j) = false) ->
@@ -149,12 +126,11 @@ Proof.
       replace (bv_unsigned a0 + Z.of_nat (Datatypes.S j)) with (bv_unsigned (a0 + 1)%bv + Z.of_nat j) by lia.
       apply (IH (a0 + 1)%bv rest Hr2); [| lia | lia].
       intros j' Hj'. rewrite Hu1. replace (bv_unsigned a0 + 1 + Z.of_nat j') with (bv_unsigned a0 + Z.of_nat (Datatypes.S j')) by lia. apply Hh. lia.
-  - (* [comment removed for export] *)
+  -
     exfalso. pose proof (Hh 0%nat ltac:(lia)) as H0. rewrite Z.add_0_r in H0.
     unfold seg_rom, memory_read in Hrd. cbn [Z.of_N] in Hrd. rewrite (SEGS_in_hull a0 H0) in Hrd. discriminate.
 Qed.
 
-(* [comment removed for export] *)
 Lemma hb_word_bytes : forall E cs R FULL model a w v,
   CSOK E cs R FULL model -> In (KWord a w v) (kn cs) ->
   (forall j, (j < w)%nat -> in_hull A (estart E a + Z.of_nat j) = false) ->
@@ -168,7 +144,6 @@ Proof.
   destruct Hf as (?&?&?&?). rewrite Hu. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma hb_zero_k : forall E cs R FULL model a n,
   CSOK E cs R FULL model -> In (KZero a n) (kn cs) ->
   flat E a (elenZ E n) /\ forall i, 0 <= i < elenZ E n -> FULL (Z_to_bv 64 (estart E a + i)) = Some (Z_to_bv 8 0).
@@ -177,7 +152,6 @@ Proof.
   split; [exact Hf|]. intros i Hi. exact (hb_mr_some E cs model FULL _ _ (Hz i Hi)).
 Qed.
 
-(* [comment removed for export] *)
 Lemma hb_fill : forall E cs R FULL model a n c,
   CSOK E cs R FULL model -> In (KFill a n c) (kn cs) ->
   flat E a (elenZ E n) /\ forall i, 0 <= i < elenZ E n -> FULL (Z_to_bv 64 (estart E a + i)) = Some (Z_to_bv 8 c).
@@ -186,7 +160,6 @@ Proof.
   split; [exact Hf|]. intros i Hi. exact (hb_mr_some E cs model FULL _ _ (Hz i Hi)).
 Qed.
 
-(* [comment removed for export] *)
 Lemma hb_unk : forall E cs R FULL model a n,
   CSOK E cs R FULL model -> In (KUnk a n) (kn cs) ->
   flat E a (elenZ E n) /\ forall i, 0 <= i < elenZ E n -> FULL (Z_to_bv 64 (estart E a + i)) <> None.
@@ -195,7 +168,6 @@ Proof.
   split; [exact Hf|]. intros i Hi Hn. apply (Hz i Hi). unfold Mr, mrestrict. rewrite Hn. destruct (HID E cs model _); reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma hb_img : forall E cs R FULL model lo hi,
   CSOK E cs R FULL model -> In (KImg lo hi) (kn cs) ->
   forall i, lo <= i < hi -> in_hull A i = true -> FULL (Z_to_bv 64 i) = None.
@@ -205,7 +177,6 @@ Proof.
   rewrite Z_to_bv_unsigned. unfold bv_wrap, bv_modulus. rewrite Z.mod_small; [exact Hh| cbn; lia].
 Qed.
 
-(* [comment removed for export] *)
 Lemma hb_wr : forall E cs R FULL model a n,
   CSOK E cs R FULL model -> In (KWr a n) (kn cs) ->
   flat E a (elenZ E n)
@@ -217,7 +188,6 @@ Proof.
   split; [exact Hf|]. intros d m Hd Hm. exact (hb_mr_store_ok E cs model FULL _ _ (Hs d m Hd Hm)).
 Qed.
 
-(* [comment removed for export] *)
 Lemma hb_range : forall E cs R FULL model e lo hi,
   CSOK E cs R FULL model -> In (KRange e lo hi) (kn cs) -> lo <= bv_unsigned (edenot E e) <= hi.
 Proof. intros E cs R FULL model e lo hi HC Hin. destruct (hb_kn E cs R FULL model _ HC Hin) as [H1 H2]. lia. Qed.
@@ -231,9 +201,6 @@ Lemma hb_align : forall E cs R FULL model e m,
   CSOK E cs R FULL model -> In (KAlign e m) (kn cs) -> 0 < m /\ bv_unsigned (edenot E e) mod m = 0.
 Proof. intros E cs R FULL model e m HC Hin. exact (hb_kn E cs R FULL model _ HC Hin). Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Lemma hb_reg : forall E cs R FULL model (r : bv 5),
   CSOK E cs R FULL model -> getr R r = edenot E (sr_get (s_regs (a_ss cs)) r).
 Proof. intros E cs R FULL model r HC. exact (co_regs _ _ _ _ _ _ _ _ _ _ _ HC r). Qed.
@@ -243,10 +210,6 @@ Lemma hb_regZ : forall E cs R FULL model (r : bv 5),
   bv_unsigned (getr R r) = LZ E (sr_get (s_regs (a_ss cs)) r).
 Proof. intros E cs R FULL model r HC H. rewrite (hb_reg E cs R FULL model r HC). exact (hb_lin E cs R FULL model _ HC H). Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Lemma hb_maps : forall E cs R FULL model,
   CSOK E cs R FULL model -> no_fog (a_maps cs) = true ->
   vm_maps (m_vmmaps model) = map (amap_den E) (a_maps cs).
@@ -256,7 +219,6 @@ Proof.
                (co_maps _ _ _ _ _ _ _ _ _ _ _ HC)).
 Qed.
 
-(* [comment removed for export] *)
 Definition amapZ (E : env) (m : amap) : Z * Z := (LZ E (am_base m), LZ E (am_base m) + LZ E (am_len m)).
 Definition amaps_lin (k : list kentry) (ms : list amap) : bool :=
   forallb (fun m => lin_nowrapR k (am_base m) && lin_nowrapR k (am_len m)) ms.
@@ -271,8 +233,14 @@ Proof.
   rewrite (hb_lin E cs R FULL model _ HC H1), (hb_lin E cs R FULL model _ HC H2). reflexivity.
 Qed.
 
-Lemma hb_res : forall E cs R FULL model, CSOK E cs R FULL model -> vm_reserved (m_vmmaps model) = segments_reserved SEGS.
-Proof. intros E cs R FULL model HC. exact (co_res _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
+(* [hb_res] REMOVED.  It stated
+     vm_reserved (m_vmmaps model) = segments_reserved SEGS
+   which is the false half of the old [co_res]: the ledger also carries the
+   launch's vDSO/vvar pair.  It had no consumer anywhere in this cone (the only
+   occurrences of the name were its own statement and proof), so there is
+   nothing to migrate; a caller that needs the ledger now projects [co_res]
+   directly and gets the existential.
+   Model donor [75d69e00:theories/Common/AsanPlanSound.v:346-350]. *)
 
 Lemma hb_limit : forall E cs R FULL model, CSOK E cs R FULL model -> vm_limit (m_vmmaps model) = LIMIT.
 Proof. intros E cs R FULL model HC. exact (co_limit _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
@@ -288,7 +256,6 @@ Lemma hb_sbrk : forall E cs R FULL model,
   CSOK E cs R FULL model -> bv_unsigned (vm_start_brk (m_vmmaps model)) <= bv_unsigned (vm_brk (m_vmmaps model)).
 Proof. intros E cs R FULL model HC. exact (co_sbrk _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 
-(* [comment removed for export] *)
 Lemma hb_isp : forall E cs R FULL model,
   CSOK E cs R FULL model ->
   bv_unsigned (vm_init_sp (m_vmmaps model)) = uE E e_sp0 /\ sp_window_lo <= uE E e_sp0 <= sp_window_hi
@@ -306,7 +273,7 @@ Lemma hb_bounds : forall E cs R FULL model,
   Forall (fun iv => 0 < bv_unsigned (snd iv) /\ bv_unsigned (fst iv) mod 4096 = 0 /\ bv_unsigned (snd iv) mod 4096 = 0
                     /\ (bv_unsigned (fst iv) + bv_unsigned (snd iv) <= img_lo A \/ img_hi A <= bv_unsigned (fst iv))
                     /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= utop E)
-         (vm_maps (m_vmmaps model)).   (* [comment removed for export] *)
+         (vm_maps (m_vmmaps model)).
 Proof. intros E cs R FULL model HC. exact (co_bounds _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 
 Lemma hb_lazyb : forall E cs R FULL model,
@@ -323,21 +290,17 @@ Lemma hb_totsz : forall E cs R FULL model,
   CSOK E cs R FULL model -> sum_sizes (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) <= a_totsz cs.
 Proof. intros E cs R FULL model HC. exact (co_totsz _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 
-(* [comment removed for export] *)
 Lemma hb_none : forall E cs R FULL model m,
   CSOK E cs R FULL model -> In m (a_maps cs) -> am_kind m = KNONE \/ am_kind m = KNONELAZY ->
   In (amap_den E m) (vm_noaccess (m_vmmaps model)).
 Proof. intros E cs R FULL model m HC Hm Hk. exact (proj1 (Forall_forall _ _) (co_none _ _ _ _ _ _ _ _ _ _ _ HC) m Hm Hk). Qed.
 
-(* [comment removed for export] *)
 Lemma hb_lazykind : forall E cs R FULL model m (a : word),
   CSOK E cs R FULL model -> In m (a_maps cs) -> am_kind m = KRWLAZY ->
   bv_unsigned (edenot E (am_base m)) <= bv_unsigned a < bv_unsigned (edenot E (am_base m)) + bv_unsigned (edenot E (am_len m)) ->
   in_ivs (bv_unsigned a) (vm_noaccess (m_vmmaps model)) = false /\ page_in_ranges (page_base a) (m_vm_lazy model) = true.
 Proof. intros E cs R FULL model m a HC Hm Hk Ha. exact (proj1 (Forall_forall _ _) (co_kinds _ _ _ _ _ _ _ _ _ _ _ HC) m Hm Hk a Ha). Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Lemma hb_noacc : forall E cs R FULL model, CSOK E cs R FULL model -> vm_noaccess (m_vmmaps model) = hreplay E (a_hna cs).
 Proof. intros E cs R FULL model HC. exact (co_hna _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 
@@ -348,7 +311,6 @@ Lemma hb_tid : forall E cs R FULL model, CSOK E cs R FULL model -> a_tidset cs =
   exists t, m_tid model = Some t /\ 0 < bv_unsigned t < PID_MAX.
 Proof. intros E cs R FULL model HC Ht. exact (co_tidv _ _ _ _ _ _ _ _ _ _ _ HC Ht). Qed.
 
-(* [comment removed for export] *)
 Lemma hb_tid_range : forall E cs R FULL model, CSOK E cs R FULL model -> a_tidset cs = true ->
   forall t, m_tid model = Some t -> 0 < bv_unsigned t < 4194304.
 Proof.
@@ -356,16 +318,12 @@ Proof.
   rewrite Hm in Hm'. injection Hm' as ->. unfold PID_MAX in Hr. exact Hr.
 Qed.
 
-(* [comment removed for export] *)
 Lemma hreplay_nil : forall E, hreplay E [] = []. Proof. reflexivity. Qed.
 Lemma hreplay_cons : forall E b n h, hreplay E (HCons b n :: h) = (edenot E b, edenot E n) :: hreplay E h. Proof. reflexivity. Qed.
 Lemma hreplay_sub : forall E b n h,
   hreplay E (HSub b n :: h) = maps_subtract (hreplay E h) (bv_unsigned (edenot E b)) (bv_unsigned (edenot E b) + bv_unsigned (edenot E n)).
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Lemma hb_eager : forall E cs R FULL model, CSOK E cs R FULL model -> eager_used model <= a_eager cs.
 Proof. intros E cs R FULL model HC. exact (co_eager _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 
@@ -378,7 +336,6 @@ Proof. intros E cs R FULL model HC. exact (co_minv _ _ _ _ _ _ _ _ _ _ _ HC). Qe
 Lemma hb_allowA_wf : forall E cs, A_wf (allowA A E cs).
 Proof. intros E cs. exact (A_wf_allowA A (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) 0%nat E cs). Qed.
 
-(* [comment removed for export] *)
 Definition allow1Z (E : env) (p : expr * expr) : list (Z * Z) :=
   let b := LZ E (fst p) in let n := LZ E (snd p) in
   [(pagedown b, pageup (b + n)); (pagedown (shadow_off A + b / 8), pageup (shadow_off A + (b + n) / 8))].
@@ -397,9 +354,6 @@ Proof.
   unfold allow1, allow1Z, sh_lo, sh_hi, APSK.uE. rewrite (hb_lin E cs R FULL model _ HC H1), (hb_lin E cs R FULL model _ HC H2). reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Lemma hb_halt : forall E cs R FULL model, CSOK E cs R FULL model -> m_halted model = None.
 Proof. intros E cs R FULL model HC. exact (co_halt _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 
@@ -409,14 +363,9 @@ Proof. intros E cs R FULL model HC Hfd. pose proof (co_fds _ _ _ _ _ _ _ _ _ _ _
 Lemma hb_fs : forall E cs R FULL model, CSOK E cs R FULL model -> m_fs model = FS0.
 Proof. intros E cs R FULL model HC. exact (co_fs _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 
-(* [comment removed for export] *)
 Lemma hb_tid_none : forall E cs R FULL model, CSOK E cs R FULL model -> a_tidset cs = false -> m_tid model = None.
 Proof. intros E cs R FULL model HC. exact (co_tid _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Lemma hb_zero : forall E cs R FULL model (a : word),
   CSOK E cs R FULL model ->
   HID E cs model a = true ->
@@ -427,7 +376,6 @@ Lemma hb_zero : forall E cs R FULL model (a : word),
   FULL a = Some (Z_to_bv 8 0).
 Proof. intros E cs R FULL model a HC. exact (co_zero _ _ _ _ _ _ _ _ _ _ _ HC a). Qed.
 
-(* [comment removed for export] *)
 Lemma hb_hid_unfold : forall E cs model (a : word),
   HID E cs model a = (argH E a || negb (vis A E cs model a))%bool.
 Proof. reflexivity. Qed.
@@ -435,11 +383,6 @@ Proof. reflexivity. Qed.
 Lemma hb_sinv : forall E cs R FULL model, CSOK E cs R FULL model -> SINV E FULL.
 Proof. intros E cs R FULL model HC. exact (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition kfind_word (k : list kentry) (b : expr) (off : Z) (w : nat) : option expr :=
   match List.find (fun K => match K with
                             | KWord a w' _ => (expr_eqb (a_base a) b && Z.eqb (a_off a) off && Nat.eqb w' w)%bool
@@ -464,7 +407,6 @@ Lemma hb_word_at : forall E cs R FULL model b off w v,
   /\ range_avoids (HID E cs model) (adenot E (SA b off)) w.
 Proof. intros E cs R FULL model b off w v HC H. exact (hb_word E cs R FULL model _ w v HC (kfind_word_In _ _ _ _ _ H)). Qed.
 
-(* [comment removed for export] *)
 Definition kfind_zero (k : list kentry) (b : expr) (off : Z) : option expr :=
   match List.find (fun K => match K with
                             | KZero a _ => (expr_eqb (a_base a) b && Z.eqb (a_off a) off)%bool
@@ -528,7 +470,6 @@ Lemma hb_wr_at : forall E cs R FULL model b off n,
        /\ range_avoids (HID E cs model) (Z_to_bv 64 (estart E (SA b off) + d)) m.
 Proof. intros E cs R FULL model b off n HC H. exact (hb_wr E cs R FULL model _ n HC (kfind_wr_In _ _ _ _ H)). Qed.
 
-(* [comment removed for export] *)
 Definition kfind_img (k : list kentry) (z : Z) : option (Z * Z) :=
   match List.find (fun K => match K with KImg lo hi => (Z.leb lo z && Z.ltb z hi)%bool | _ => false end) k with
   | Some (KImg lo hi) => Some (lo, hi)
@@ -546,7 +487,6 @@ Lemma hb_img_at : forall E cs R FULL model z lo hi,
   forall i, lo <= i < hi -> in_hull A i = true -> FULL (Z_to_bv 64 i) = None.
 Proof. intros E cs R FULL model z lo hi HC H. destruct (kfind_img_In _ _ _ _ H) as [Hin _]. exact (hb_img E cs R FULL model lo hi HC Hin). Qed.
 
-(* [comment removed for export] *)
 Definition kfind_at (k : list kentry) (b : expr) (off : Z) : list kentry :=
   List.filter (fun K => match K with
                         | KWord a _ _ | KZero a _ | KBlob a _ _ | KWr a _ | KFill a _ _ | KUnk a _ => (expr_eqb (a_base a) b && Z.eqb (a_off a) off)%bool
@@ -554,7 +494,6 @@ Definition kfind_at (k : list kentry) (b : expr) (off : Z) : list kentry :=
 Lemma kfind_at_In : forall k b off K, In K (kfind_at k b off) -> In K k.
 Proof. intros k b off K H. unfold kfind_at in H. apply filter_In in H as [H _]. exact H. Qed.
 
-(* [comment removed for export] *)
 Definition kfind_ranges (k : list kentry) (e : expr) : list (Z * Z) :=
   flat_map (fun K => match K with KRange e' lo hi => if expr_eqb e' e then [(lo, hi)] else [] | _ => [] end) k.
 Lemma hb_ranges_of : forall E cs R FULL model e,
@@ -567,7 +506,6 @@ Proof.
 Qed.
 End Generic.
 
-(* [comment removed for export] *)
 Ltac hb_linZ :=
   unfold LZ;
   repeat (match goal with |- context [lin_of ?e] => let l := eval vm_compute in (lin_of e) in change (lin_of e) with l end);
@@ -575,12 +513,8 @@ Ltac hb_linZ :=
   repeat (match goal with |- context [bv_unsigned (ev ?E ?n)] => change (bv_unsigned (ev E n)) with (VZ E n) end);
   rewrite ?Z.add_0_r.
 
-(* [comment removed for export] *)
 Ltac hb_in := apply hb_knb_In; vm_compute; reflexivity.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Section Image.
 Variable SEGS : list Segment.
 Variable A : atable.
@@ -588,32 +522,50 @@ Variable ph : PhdrInfo.
 Hypothesis IMG : img_facts SEGS A ph.
 Hypothesis SEGS_in_hull : forall a : word, in_hull A (bv_unsigned a) = false -> find_segment SEGS (bv_unsigned a) 1 = None.
 Hypothesis HULL_ok : hull_ok A.
-(* [comment removed for export] *)
+
 Variable HSf : nat -> option acs.
 Variable HSc : nat -> acs.
 Hypothesis HSf_some : forall h, (h < 2)%nat -> HSf h = Some (HSc h).
 Hypothesis HSf_none : forall h, (2 <= h)%nat -> HSf h = None.
-(* [comment removed for export] *)
+
 Hypothesis NOFOG : forall h, (h < 2)%nat -> no_fog (a_maps (HSc h)) = true.
 Hypothesis MAPSLIN : forall h, (h < 2)%nat -> amaps_lin (kn (HSc h)) (a_maps (HSc h)) = true.
 Hypothesis VISLIN : forall h, (h < 2)%nat -> vis_lin (kn (HSc h)) (a_vis (HSc h) ++ a_ghost (HSc h)) = true.
 Hypothesis BRKLIN : forall h, (h < 2)%nat -> lin_nowrapR (kn (HSc h)) (a_brk (HSc h)) = true.
 Hypothesis FDSTD : forall h, (h < 2)%nat -> a_fd (HSc h) = FdStd.
-(* [comment removed for export] *)
-Variables (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs).   (* [comment removed for export] *)
+
+(* The launch's whole input, as [AsanInitK]'s Section takes it (the revision's
+   twenty-place [State.mkProcInput_full]).  [ifs] is the image filesystem the
+   input carries; [fs] is the plan's [FS0], [fs_seed_tmp ifs tmp0]. *)
+Variables (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)).
+Variables (ifs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue).
+Variables (nofile sigmask : word) (abrt : bool) (urnd : InputStream) (tmp0 : Fs.Fs).
+Variables (kb : KernelBuild) (execfn : list byte) (sdf : bool) (apc : N) (fs : Fs.Fs).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hbrk : valid_brk SEGS brk0.
+Hypothesis Hmb : valid_mmap_base mbase.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
 Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Huid : valid_id uid.
+Hypothesis Hhw : valid_hwcap hw.
+Hypothesis Hapc : Z.of_N apc = a_entry A.
 
-#[local] Notation SINV := (SINV0 ph sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 ph sp rdraw argv envp uid hw).
+#[local] Notation INP := (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
+Hypothesis Hlaunch : valid_launch INP.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+
+#[local] Notation SINV := (SINV0 ph sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc).
+#[local] Notation argH := (argH0 sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
+(* ARITY, old beside new: [E0 sp rdraw brk0 argv ..] -> [E0 sp rdraw brk0 mbase argv ..].  AsanInitK's
+   [vals0] gains slots 12-14 (vdso_text_base (in_kernel inp) mbase; gid; at_execfn_ptr top execfn,
+   an earlier port's key-claim change, NX0 = 15), so the initial env now reads [mbase]. *)
+#[local] Notation E0I := (E0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
 #[local] Notation CSOK := (cs_ok SEGS A AsanInitK.LIMIT SINV argH fs).
 
-Let argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ uE E e_sp0 <= bv_unsigned a := argH0_high ph sp rdraw argv envp uid hw Hsp Hva.
+Let argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ uE E e_sp0 <= bv_unsigned a :=
+  argH0_high sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc Hsp Hva.
 
-(* [comment removed for export] *)
 Lemma hbi_ch : forall h ch, HSf h = Some ch -> ch = HSc h /\ (h < 2)%nat.
 Proof.
   intros h ch H. destruct (Nat.lt_ge_cases h 2) as [Hl|Hl].
@@ -621,7 +573,6 @@ Proof.
   - rewrite (HSf_none h Hl) in H. discriminate.
 Qed.
 
-(* [comment removed for export] *)
 Definition MAPS (h : nat) (E : env) : list (word * word) := map (amap_den E) (a_maps (HSc h)).
 
 Lemma hbi_maps : forall h E R FULL model, (h < 2)%nat -> CSOK E (HSc h) R FULL model ->
@@ -647,46 +598,75 @@ Proof. intros h E R FULL model Hh HC. exact (hb_allowA_Z SEGS A _ _ _ _ E _ R FU
 Lemma hbi_fds : forall h E R FULL model, (h < 2)%nat -> CSOK E (HSc h) R FULL model -> m_fds model = fds_std.
 Proof. intros h E R FULL model Hh HC. exact (hb_fds_std SEGS A _ _ _ _ E _ R FULL model HC (FDSTD h Hh)). Qed.
 
-(* [comment removed for export] *)
 Lemma hbi_E0 : forall E cs R FULL model, CSOK E cs R FULL model ->
-  forall n, (n < NX0)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n.
+  forall n, (n < NX0)%nat -> ev E n = ev E0I n.
 Proof. intros E cs R FULL model HC. exact (proj1 (hb_sinv SEGS A _ _ _ _ E cs R FULL model HC)). Qed.
 
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation argc := (Z.of_nat (length argv)).
 #[local] Notation envc := (Z.of_nat (length envp)).
-(* [comment removed for export] *)
-Definition Wsb : Z := (Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rdraw)) - 16 - (8 * argc + 8 * envc + 184)) / 8.   (* [comment removed for export] *)
+#[local] Notation rseq := (kb_rseq (in_kernel INP)).
+#[local] Notation utop := (bv_unsigned (ed_top rdraw)).
 
+(* STATEMENT CHANGED, old beside new:
+     OLD  Definition Wsb := (|build_stack_bytes ..| - 16 - (8*argc + 8*envc + 184)) / 8
+          -- a COUNT of string words, the strings sitting just above the auxv.
+     NEW  Definition Wpad := block_pad_len rseq sp top argv envp execfn
+          -- [arch_align_stack]'s pad, in BYTES, which is what plan variable 4
+          ([V_W]) denotes at 75d69e00 ([AsanInitK]'s [W], [vals0] slot 4).
+   The old quantity is not stale but FALSE as a description of slot 4: the
+   strings now sit at the TOP of the stack VMA, above AT_RANDOM and the pad
+   ([StackLayout.build_stack_bytes], Linux v6.18.46 [create_elf_tables]). *)
+Definition Wpad : Z := Z.of_nat (block_pad_len rseq sp (ed_top rdraw) argv envp execfn).
+(* [StackLayout.block_items mod 2], plan variable 11 ([V_G]); new at 75d69e00 *)
+Definition Gap : Z := Z.of_nat (block_items argv envp mod 2).
+(* DELETED: [STR0b := usp + Z.of_nat (cat_string_off ..)], argv[0]'s first byte.  Its only
+   use was [hbi_argH], deleted below. *)
+
+(* [AsanInitK]'s valuation facts at this Section's launch.  Their argument lists are
+   the Section variables and hypotheses each one's proof uses, so they are applied
+   by [eapply] and closed from this Section's hypotheses. *)
+Lemma UE0 : uE E0I (EVar V_S1) = usp / 32768 /\ uE E0I (EVar V_S2) = (usp mod 4096) / 16
+    /\ uE E0I (EVar V_ARGC) = argc /\ uE E0I (EVar V_ENVC) = envc /\ uE E0I (EVar V_L0) = Z.of_nat (length (nth 0 argv []))
+    /\ uE E0I (EVar V_W) = Wpad /\ uE E0I (EVar V_BRK) = bv_unsigned brk0 / 4096.
+Proof. eapply uE0; eassumption. Qed.
+Lemma UE0_s2a : uE E0I (EVar V_S2A) = (usp mod 32768) / 4096.
+Proof. eapply uE0_s2a; eassumption. Qed.
+Lemma UE0_L1 : uE E0I (EVar V_L1) = Z.of_nat (length (nth 1 argv [])).
+Proof. eapply uE0_L1; eassumption. Qed.
+Lemma UE0_G : uE E0I (EVar V_G) = Gap.
+Proof. eapply uE0_G; eassumption. Qed.
+Lemma BRK_RANGE : img_hi A <= bv_unsigned brk0 <= img_hi A + BRK_ASLR /\ bv_unsigned brk0 mod 4096 = 0.
+Proof. eapply brk_range; eassumption. Qed.
+
+(* STATEMENT CHANGED: slot 4 is [Wpad] (was [Wsb]) and slot 11 ([Gap]) is new. *)
 Lemma hbi_vals : forall E cs R FULL model, CSOK E cs R FULL model ->
-  VZ E 0 (* [comment removed for export] *) = usp / 32768 /\ VZ E 6 (* [comment removed for export] *) = (usp mod 4096) / 16
-  /\ VZ E 1 (* [comment removed for export] *) = argc /\ VZ E 2 (* [comment removed for export] *) = envc
-  /\ VZ E 3 (* [comment removed for export] *) = Z.of_nat (length (nth 0 argv [])) /\ VZ E 7 (* [comment removed for export] *) = Z.of_nat (length (nth 1 argv []))
-  /\ VZ E 4 (* [comment removed for export] *) = Wsb /\ VZ E 5 (* [comment removed for export] *) = bv_unsigned brk0 / 4096 /\ ev E 8 (* [comment removed for export] *) = uid
-  /\ ev E 9 (* [comment removed for export] *) = hw /\ VZ E 10 (* [comment removed for export] *) = (usp mod 32768) / 4096.   (* [comment removed for export] *)
+  VZ E 0   = usp / 32768 /\ VZ E 6   = (usp mod 4096) / 16
+  /\ VZ E 1   = argc /\ VZ E 2   = envc
+  /\ VZ E 3   = Z.of_nat (length (nth 0 argv [])) /\ VZ E 7   = Z.of_nat (length (nth 1 argv []))
+  /\ VZ E 4   = Wpad /\ VZ E 5   = bv_unsigned brk0 / 4096 /\ ev E 8   = uid
+  /\ ev E 9   = hw /\ VZ E 10   = (usp mod 32768) / 4096 /\ VZ E 11 = Gap.
 Proof.
   intros E cs R FULL model HC. pose proof (hbi_E0 E cs R FULL model HC) as HE.
-  pose proof (uE0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (U1 & U2 & U3 & U4 & U5 & U6 & U7).
-  pose proof (uE0_L1 ph sp rdraw brk0 argv envp uid hw Hva) as U8.
-  pose proof (uE0_s2a ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U9.
-  unfold APSK.uE in *. cbn [edenot] in U1, U2, U3, U4, U5, U6, U7, U8, U9.
-  unfold V_S1, V_S2, V_S2A, V_ARGC, V_ENVC, V_L0, V_L1, V_W, V_BRK, V_UID, V_HW in *. unfold VZ. rewrite !HE by (unfold NX0; lia).
+  pose proof UE0 as (U1 & U2 & U3 & U4 & U5 & U6 & U7).
+  pose proof UE0_L1 as U8. pose proof UE0_s2a as U9. pose proof UE0_G as U10.
+  unfold APSK.uE in *. cbn [edenot] in U1, U2, U3, U4, U5, U6, U7, U8, U9, U10.
+  unfold V_S1, V_S2, V_S2A, V_ARGC, V_ENVC, V_L0, V_L1, V_W, V_BRK, V_UID, V_HW, V_G in *.
+  unfold VZ. rewrite !HE by (unfold NX0; lia).
   repeat split; try assumption; try reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma hbi_sp0 : forall E cs R FULL model, CSOK E cs R FULL model -> 32768 * VZ E 0 + 16 * VZ E 6 + 4096 * VZ E 10 = usp.
 Proof.
-  intros E cs R FULL model HC. destruct (hbi_vals E cs R FULL model HC) as (U1 & U2 & _ & _ & _ & _ & _ & _ & _ & _ & U3). rewrite U1, U2, U3.
+  intros E cs R FULL model HC. destruct (hbi_vals E cs R FULL model HC) as (U1 & U2 & _ & _ & _ & _ & _ & _ & _ & _ & U3 & _). rewrite U1, U2, U3.
   pose proof Hsp as (_ & _ & Hal). pose proof (u64_range sp).
   Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
 Qed.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
-(* [comment removed for export] *)
 Lemma hbi_sppg : forall E cs R FULL model, CSOK E cs R FULL model -> 32768 * VZ E 0 + 4096 * VZ E 10 = usp / 4096 * 4096.
 Proof.
-  intros E cs R FULL model HC. destruct (hbi_vals E cs R FULL model HC) as (U1 & _ & _ & _ & _ & _ & _ & _ & _ & _ & U3). rewrite U1, U3.
+  intros E cs R FULL model HC. destruct (hbi_vals E cs R FULL model HC) as (U1 & _ & _ & _ & _ & _ & _ & _ & _ & _ & U3 & _). rewrite U1, U3.
   pose proof Hsp as (_ & _ & Hal). pose proof (u64_range sp).
   Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
 Qed.
@@ -695,7 +675,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Lemma hbi_brk0 : forall E cs R FULL model, CSOK E cs R FULL model -> 4096 * VZ E 5 = bv_unsigned brk0.
 Proof.
   intros E cs R FULL model HC. destruct (hbi_vals E cs R FULL model HC) as (_ & _ & _ & _ & _ & _ & _ & U & _). rewrite U.
-  pose proof (brk_range SEGS A ph sp rdraw brk0 argv envp uid hw IMG Hbrk) as [_ Hm].
+  pose proof BRK_RANGE as [_ Hm].
   Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
 Qed.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
@@ -703,17 +683,19 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Lemma hbi_sp_range : sp_window_lo <= usp <= sp_window_hi /\ usp mod 16 = 0.
 Proof. pose proof Hsp as (H1 & H2 & H3). auto. Qed.
 
-(* [comment removed for export] *)
+(* STATEMENT CHANGED: the memory the argument block reads is the revision's
+   [wrap_mem inp mbase ph entry sp draw] (was [wrap_mem ph sp argv envp uid hw rdraw]). *)
 Lemma hbi_argblock : forall E cs R FULL model, CSOK E cs R FULL model ->
-  forall a : word, argH E a = true -> FULL a = wrap_mem ph sp argv envp uid hw rdraw a.
+  forall a : word, argH E a = true -> FULL a = wrap_mem INP mbase ph (Z_to_bv 64 (Z.of_N apc)) sp rdraw a.
 Proof. intros E cs R FULL model HC. exact (proj2 (hb_sinv SEGS A _ _ _ _ E cs R FULL model HC)). Qed.
 
-Lemma hbi_argH : forall E (a : word),
-  argH E a = ((uE E e_sp0 <=? bv_unsigned a) &&
-              (((usp + 24 <=? bv_unsigned a) && (bv_unsigned a <? usp + 8 * argc + 8 * envc + 24))
-              || ((usp + 8 * argc + 8 * envc + 184 <=? bv_unsigned a) && (bv_unsigned a <? usp + 8 * argc + 8 * envc + 184 + 8 * Wsb))
-              || ((usp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rdraw)) <=? bv_unsigned a)
-                  && (bv_unsigned a <? usp + Z.of_nat (length (entry_stack_image ph sp argv envp uid hw rdraw))))))%bool.   (* [comment removed for export] *)
-Proof. reflexivity. Qed.
+(* DELETED, old beside new: [hbi_argH], a [reflexivity] restatement of [AsanInitK.argH0]'s
+   body for consumers that navigated its [orb]s by position:
+     hbi_argH : forall E a, argH E a = ((uE E e_sp0 <=? a) &&
+                  (([usp+24, usp+8argc+8envc+24)) || ([STR0b, utop))))
+   argH0 now has five regions (Main's option 2: the auxv holes, the gap, the pad), and
+   AsanInitK exports one navigation lemma per region ([argH0_argblock] .. [argH0_strings]),
+   so no consumer restates the body.  Its consumers were Pm4/Pm5DrvEntryK.ent_argH_str and
+   ent_stack_defined, which now use those lemmas. *)
 End Image.
 

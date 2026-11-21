@@ -1,4 +1,4 @@
-(* CARRIED from commit ae2fa80b0325f09472155bcfce1c36e649d6ff60,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG02cf.v, sha256 a8afe9c87fd2bce0878fc34c2a578178183f604e4df1419f99ebe09d5e1c23e9 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,8 +6,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: wfc_fields / wfc_easy carry WfP_cf's new field wfc_qsize. *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), cgif's YG02.v restated over
    the cf invariant WfP_cf (YG01cf.v). cgif's YG02.v is NOT edited: its state-only lemmas (the field
    accessors of set_regions / set_cache / set_nev, prim_user_mapped_set_region, fold_mapped_ge_nth,

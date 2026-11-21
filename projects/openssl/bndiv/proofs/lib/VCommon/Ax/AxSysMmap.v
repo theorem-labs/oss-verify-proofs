@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (imports Placement; the mmap check lemmas take the place_declined_b premise of mmap and Linux's placement linux_place_is; check_mmap is unfolded with its MAP_FIXED 64-bit overflow arm, check_mmap_fixed_overflow). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith Lia Bool List.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad 
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From OSSVerify.Proofs.openssl.bndiv.lib.VCommon.Ax Require Import AxAcct.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 Import ListNotations.
 
 Local Open Scope Z_scope.
@@ -44,7 +46,12 @@ Lemma chk_mmap_null_rw (eff : SyscallEffect) (m m' : Model) (evs : list event) :
                \/ exists a, null_ok m nZ a /\ mmap_noreserve_backed_ok flags m nZ = true
                             /\ eff = mkEffect a [] [(a, n)] /\ m' = null_rw_model flags a n m).
 Proof.
-  intros Hmod H. unfold check_mmap in H. rewrite Hoff, Hanon, Hlen, Hmod in H. cbn [negb] in H. cbv beta iota zeta in H.
+  intros Hmod H. unfold check_mmap, check_mmap_fixed_overflow in H. rewrite Hoff, Hanon, Hlen, Hmod in H. cbn [negb] in H. cbv beta iota zeta in H.
+  (* LPS 727298f3 (#144, #146): [check_mmap] declines a hinted anonymous
+     placement whose range ends in the band Linux may refuse, ahead of the
+     [match] on the effect.  A [CheckOk] therefore says the call was NOT
+     declined; discharge the declined arm and carry on. *)
+  destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr nZ) eqn:Epd; [discriminate H|].
   destruct eff as [r ws zs us cs ci]. destruct ws; [|discriminate H]. destruct us; [|discriminate H].
   destruct cs; [|discriminate H]. destruct ci; [|discriminate H].
   destruct (errno_ret_in mmap_errnos r) eqn:Ee.
@@ -52,9 +59,10 @@ Proof.
     rewrite (errno_in_enomem r Ee). split; reflexivity.
   - match type of H with (if ?c then _ else _) = _ => destruct c eqn:Ec; [|discriminate H] end.
     injection H as <- <-. split; [reflexivity|]. right. exists r.
-    apply andb_prop in Ec as [Ec E6]. apply andb_prop in Ec as [Ec E5]. apply andb_prop in Ec as [Ec E4].
-    apply andb_prop in Ec as [Ec E3]. apply andb_prop in Ec as [E1 E2].
-    apply Z.eqb_eq in E1. apply Z.ltb_lt in E2. apply Z.leb_le in E3. apply listNN_eqb_eq in E6. subst zs.
+    apply andb_prop in Ec as [Ec E6]. apply andb_prop in Ec as [Ep E5].
+    destruct (mmap_grant_len_ok len Hlen) as [Hp1 Hp2].
+    destruct (linux_place_is_admissible _ _ _ _ _ Hp1 Hp2 Ep) as (E1 & E2 & E3 & E4).
+    apply listNN_eqb_eq in E6. subst zs.
     split; [repeat split; assumption|]. split; [exact E5|]. split; reflexivity.
 Qed.
 
@@ -64,7 +72,8 @@ Lemma chk_mmap_null_na (eff : SyscallEffect) (m m' : Model) (evs : list event) :
   evs = [] /\ ((eff = mkEffect (errno_ret ENOMEM) [] [] /\ m' = m)
                \/ exists a, null_ok m nZ a /\ eff = mkEffectU a [] [] [(a, n)] [] [] /\ m' = null_na_model flags a n m).
 Proof.
-  intros Hmod Hna H. unfold check_mmap in H. rewrite Hoff, Hanon, Hlen, Hmod, Hna in H. cbn [negb] in H. cbv beta iota zeta in H.
+  intros Hmod Hna H. unfold check_mmap, check_mmap_fixed_overflow in H. rewrite Hoff, Hanon, Hlen, Hmod, Hna in H. cbn [negb] in H. cbv beta iota zeta in H.
+  destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr nZ) eqn:Epd; [discriminate H|].
   destruct eff as [r ws zs us cs ci]. destruct ws; [|discriminate H]. destruct zs; [|discriminate H].
   destruct cs; [|discriminate H]. destruct ci; [|discriminate H].
   destruct (errno_ret_in mmap_errnos r) eqn:Ee.
@@ -72,9 +81,10 @@ Proof.
     rewrite (errno_in_enomem r Ee). split; reflexivity.
   - match type of H with (if ?c then _ else _) = _ => destruct c eqn:Ec; [|discriminate H] end.
     injection H as <- <-. split; [reflexivity|]. right. exists r.
-    apply andb_prop in Ec as [Ec E5]. apply andb_prop in Ec as [Ec E4].
-    apply andb_prop in Ec as [Ec E3]. apply andb_prop in Ec as [E1 E2].
-    apply Z.eqb_eq in E1. apply Z.ltb_lt in E2. apply Z.leb_le in E3. apply listNN_eqb_eq in E5. subst us.
+    apply andb_prop in Ec as [Ep E5].
+    destruct (mmap_grant_len_ok len Hlen) as [Hp1 Hp2].
+    destruct (linux_place_is_admissible _ _ _ _ _ Hp1 Hp2 Ep) as (E1 & E2 & E3 & E4).
+    apply listNN_eqb_eq in E5. subst us.
     split; [repeat split; assumption|]. split; reflexivity.
 Qed.
 
@@ -85,23 +95,31 @@ Proof.
   pose proof (alloc_top_room (m_vmmaps m)) as R. unfold stack_max_size in R. lia.
 Qed.
 
+(* [Hpd] is new at LPS 727298f3: [check_mmap] answers [CheckUnmodeled] for a
+   hinted placement the model declines (#144, #146), so a lemma that PRODUCES
+   a [CheckOk] must say the call was not declined.  Its callers discharge it
+   by computation, the hint being NULL. *)
 Lemma chk_mmap_grant_rw (m : Model) (a : word) :
   mmap_modeled_b prot flags off = true -> 0 <= nZ -> null_ok m nZ a -> mmap_noreserve_backed_ok flags m nZ = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr nZ = false ->
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ a = true ->
   check_mmap addr len prot flags fd off (mkEffect a [] [(a, n)]) m = CheckOk (null_rw_model flags a n m) [].
 Proof.
-  intros Hmod Hn Hok Hb. unfold check_mmap. rewrite Hoff, Hanon, Hlen, Hmod. cbn [negb]. cbv beta iota zeta.
-  rewrite (null_ok_not_errno m a Hn Hok). destruct Hok as (H1 & H2 & H3 & H4).
-  rewrite (proj2 (Z.eqb_eq _ _) H1), (proj2 (Z.ltb_lt _ _) H2), (proj2 (Z.leb_le _ _) H3), H4, Hb.
+  intros Hmod Hn Hok Hb Hpd Hp. unfold check_mmap, check_mmap_fixed_overflow. rewrite Hoff, Hanon, Hlen, Hmod. cbn [negb]. cbv beta iota zeta.
+  rewrite Hpd. cbv iota.
+  rewrite (null_ok_not_errno m a Hn Hok), Hp, Hb.
   rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
 Qed.
 
 Lemma chk_mmap_grant_na (m : Model) (a : word) :
   mmap_modeled_b prot flags off = false -> mmap_noaccess_b prot flags off = true -> 0 <= nZ -> null_ok m nZ a ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr nZ = false ->
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ a = true ->
   check_mmap addr len prot flags fd off (mkEffectU a [] [] [(a, n)] [] []) m = CheckOk (null_na_model flags a n m) [].
 Proof.
-  intros Hmod Hna Hn Hok. unfold check_mmap. rewrite Hoff, Hanon, Hlen, Hmod, Hna. cbn [negb]. cbv beta iota zeta.
-  rewrite (null_ok_not_errno m a Hn Hok). destruct Hok as (H1 & H2 & H3 & H4).
-  rewrite (proj2 (Z.eqb_eq _ _) H1), (proj2 (Z.ltb_lt _ _) H2), (proj2 (Z.leb_le _ _) H3), H4.
+  intros Hmod Hna Hn Hok Hpd Hp. unfold check_mmap, check_mmap_fixed_overflow. rewrite Hoff, Hanon, Hlen, Hmod, Hna. cbn [negb]. cbv beta iota zeta.
+  rewrite Hpd. cbv iota.
+  rewrite (null_ok_not_errno m a Hn Hok), Hp.
   rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
 Qed.
 
@@ -111,15 +129,16 @@ End Null.
 Lemma chk_mmap_null_modeled (addr len prot flags fd off : word) (eff : SyscallEffect) (m : Model) :
   mmap_off_aligned_b off = true -> mmap_anon_b flags = true -> w_is0 len = false ->
   mmap_modeled_b prot flags off = true \/ (mmap_modeled_b prot flags off = false /\ mmap_noaccess_b prot flags off = true) ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
   check_mmap addr len prot flags fd off eff m <> CheckUnmodeled.
 Proof.
-  intros Hoff Hanon Hlen Hsh. unfold check_mmap. rewrite Hoff, Hanon, Hlen. cbn [negb]. cbv beta iota zeta.
+  intros Hoff Hanon Hlen Hsh Hpd. unfold check_mmap, check_mmap_fixed_overflow. rewrite Hoff, Hanon, Hlen. cbn [negb]. cbv beta iota zeta.
   destruct Hsh as [Hmod|[Hmod Hna]].
-  - rewrite Hmod. destruct eff as [r ws zs us cs ci]. destruct ws; [|discriminate]. destruct us; [|discriminate].
+  - rewrite Hmod, Hpd. cbv iota. destruct eff as [r ws zs us cs ci]. destruct ws; [|discriminate]. destruct us; [|discriminate].
     destruct cs; [|discriminate]. destruct ci; [|discriminate].
     destruct (errno_ret_in mmap_errnos r); [destruct zs; discriminate|].
     match goal with |- (if ?c then _ else _) <> _ => destruct c; discriminate end.
-  - rewrite Hmod, Hna. destruct eff as [r ws zs us cs ci]. destruct ws; [|discriminate]. destruct zs; [|discriminate].
+  - rewrite Hmod, Hna, Hpd. cbv iota. destruct eff as [r ws zs us cs ci]. destruct ws; [|discriminate]. destruct zs; [|discriminate].
     destruct cs; [|discriminate]. destruct ci; [|discriminate].
     destruct (errno_ret_in mmap_errnos r); [destruct us; discriminate|].
     match goal with |- (if ?c then _ else _) <> _ => destruct c; discriminate end.

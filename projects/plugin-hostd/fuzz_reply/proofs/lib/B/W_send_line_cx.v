@@ -7,10 +7,10 @@
    send_line*.v (another image) and does not cover lib/B; git grep over origin/cold/* finds two donors and no lib/B
    W_send_line* or pb_send_line (checker line `R24BSendLine: CONFIRM`).  Ported here, STRUCTURE only (no theorem
    crosses either framework):
-   - image A, new framework: a working branch 9367674296a lib/A/W_send_line_cx.v / _entry.v / _loop.v /
+   - image A, new framework: a working branch lib/A/W_send_line_cx.v / _entry.v / _loop.v /
      _datab_cx.v / _grow_cx.v / W_send_line.v (pb_send_line_g, sl_grow_stmt its one premise) and the copy half
-     a working branch 99ad96efcc6 lib/A/W_send_line_datab.v (sl_copy);
-   - image B, old framework: a working branch 37280b674f71 lib/B/Prog/send_line_*.v (send_line_b.v:2283
+     a working branch lib/A/W_send_line_datab.v (sl_copy);
+   - image B, old framework: a working branch lib/B/Prog/send_line_*.v (send_line_b.v:2283
      send_line_holds; its cuts, its trap handling and its data arm send_line_seg.v asl_grow_call / asl_copy_call).
    send_line (line, len) at 0x82854 (relay.c:66-86, fuzz_send inlined from fuzz_reply.c:278-313), 168 instructions,
    frame 144 (13 saved registers at 40(sp) .. 136(sp); the auipc values of g_client_broken, g_send_max, g_capout,
@@ -33,6 +33,7 @@
    - placement (the pinned PB_fr / fr_globals_b decide each by vm_compute): HV9 .. HV12 (the objects read by PLdHi)
      and HH18, HH20 .. HH25 (the kept and spilled auipc values the walk stores and loads through), HRGD (the cells
      pairwise apart). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

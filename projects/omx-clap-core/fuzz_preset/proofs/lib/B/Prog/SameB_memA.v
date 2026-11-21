@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B' (asan-ubsan #102 pin d663f82d7f48, twin c90d4fa54d43), the walk of same:
    memory facts, part A. A tree the tsame_specX gives at the entry (prhex_tree: the representation, a home, the
    root's 56 bytes addressable) stays the same tree at every later point of the walk, read from the journal ajournal_x
    that runs from the entry to that point: the bytes of its footprint are kept (smb_foot_keep), so the representation
    holds over the current memory (smb_node_now), and the root's shadow is still addressable (smb_ra_now). The read-only
    image bytes keep their view (smb_ro_now): that arodata_okP is what the strcmp row's read-only-premise form asks for
-   (YGcallMxmn.v aj_strcmp_at_xrom). Ported from the image-A walk's lib/A/Prog/Wsame_memA.v
-   (origin/cold/h-hpreset-7-walk-s9-got-rob 9a0674f0b5f2), renamed s9_ -> smb_; the #102 kit's changes: the ledger
+   (YGcallMxmn.v aj_strcmp_at_xrom). Ported from the image-A walk's lib/A/Prog/Wsame_memA.v,
+   renamed s9_ -> smb_; the #102 kit's changes: the ledger
    carries most / own, and prh_pst lists SEVEN statics (PRH_Base.v :438, + g_most, g_own_ran_out), each kept by the
    ledger. No image constant, no address. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

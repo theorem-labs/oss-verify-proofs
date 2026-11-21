@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sysret clears the reservation; the NULL-hint mmap node takes place_declined_b and Linux's placed address from a gap at or above task_unmapped_base; munmap uses the maps_subtract lemmas). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -94,7 +95,7 @@ Definition ECALLW : bv 32 := Z_to_bv 32 0x73.
 Lemma is_ecall_ECALLW : is_ecall ECALLW = true. Proof. reflexivity. Qed.
 
 Lemma sysret_MSsvc : forall R F pc x8 fc rv m ro r M,
-  sysret (MSsvc R F pc x8 fc rv m ro) r M = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc rv M ro.
+  sysret (MSsvc R F pc x8 fc rv m ro) r M = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None M ro.
 Proof. reflexivity. Qed.
 
 Section CjNodes.
@@ -129,9 +130,14 @@ Section CjNodes.
     let h := m_vmmaps mo in
     x11 <> Z_to_bv 64 0 ->
     x12 = Z_to_bv 64 (kprot na) -> x13 = Z_to_bv 64 (kflags nr) -> x14 = Z_to_bv 64 (-1) -> x15 = Z_to_bv 64 0 ->
+    (* 727298f3 (#144/#146): the hint is NULL, so [place_declined_b] declines nothing
+       (its first conjunct is [negb (hint_address hint =? 0)]). *)
+    x10 = Z_to_bv 64 0 ->
     entries_nowrap (vm_maps h) ->
     (na = false -> nr = false -> eager_used mo + pages_total S * page_size + nZ <= vm_limit h) ->
-    (exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g /\ bv_unsigned g + nZ <= alloc_top h
+    (* a free range in Linux's bottom-up window [task_unmapped_base, alloc_top), which is
+       what [Placement.linux_place_exists] needs for the placement rule to have an answer *)
+    (exists g : word, bv_unsigned g mod page_size = 0 /\ task_unmapped_base <= bv_unsigned g /\ bv_unsigned g + nZ <= alloc_top h
                       /\ region_free (vm_reserved h ++ vm_maps h) g n = true) ->
     (nr = true -> forall a : word, region_free (vm_reserved h) a n = true -> bv_unsigned a + nZ <= alloc_top h -> lazy_range_okb asegs (a, n) = true) ->
     (forall (a : word) (msF' : machine_state),
@@ -140,20 +146,42 @@ Section CjNodes.
        let mo' := grant_model (Z_to_bv 64 (kflags nr)) a n na mo in
        lzok asegs ((if nr then [(a, n)] else []) ++ L) S ((if nr && negb na then [(a, n)] else []) ++ Zr) (mkCfg msF' mo') ->
        restrict ((if nr then [(a, n)] else []) ++ L) S msF'
-         = MS (Ra a) F (Z_to_bv 64 (pc + 4)) fc rv (if na || nr then unfill a n m else zfill a n m) (seg_rom asegs) ->
+         = MS (Ra a) F (Z_to_bv 64 (pc + 4)) fc None (if na || nr then unfill a n m else zfill a n m) (seg_rom asegs) ->
        hid_same L S msF msF' ->
        eager_used mo' <= eager_used mo + (if na || nr then 0 else nZ) ->
        sreach asegs Q (mkCfg msF' mo')) ->
     sreach asegs Q (mkCfg msF mo).
   Proof.
-    intros na nr msF mo Q OK VIS H17. cbv zeta. intros LEN H12 H13 H14 H15 NW BUD GAP ROK K.
+    intros na nr msF mo Q OK VIS H17. cbv zeta. intros LEN H12 H13 H14 H15 H10 NW BUD GAP ROK K.
+    assert (DECL : place_declined_b (m_kernel mo) (m_vmmaps mo) x10 (page_round_up_Z (bv_unsigned x11)) = false).
+    { rewrite H10. unfold place_declined_b.
+      assert (Hz : hint_address (Z_to_bv 64 0) = 0%Z) by (vm_compute; reflexivity).
+      rewrite Hz. reflexivity. }
+    assert (PLACED : exists g : word, Placement.linux_place_is (m_vmmaps mo) (kb_thp (m_kernel mo)) x10
+                                        (page_round_up_Z (bv_unsigned x11)) g = true).
+    { destruct GAP as (g & G1 & G2 & G3 & G4).
+      assert (Hal : page_round_up_Z (bv_unsigned x11) mod page_size = 0) by apply PlacementSearch.page_round_up_Z_aligned.
+      assert (Hn : 0 < page_round_up_Z (bv_unsigned x11)).
+      { pose proof (PlacementSearch.page_round_up_Z_ge (bv_unsigned x11)) as Hge.
+        pose proof (bv_unsigned_in_range _ x11) as Hr.
+        assert (bv_unsigned x11 <> 0).
+        { intros E. apply LEN. apply bv_eq. rewrite E. reflexivity. }
+        lia. }
+      destruct (Placement.linux_place_exists (m_vmmaps mo) (kb_thp (m_kernel mo)) x10 _ Hn Hal) as (a' & Ha').
+      { exists (bv_unsigned g). right. unfold gap_fits. rewrite Z_to_bv_bv_unsigned. repeat split; assumption. }
+      destruct (Placement.linux_place_admissible _ _ _ _ _ Hn Hal Ha') as (_ & Hp & Ht & _).
+      pose proof (bv_unsigned_in_range _ (vm_init_sp (m_vmmaps mo))) as Hsp.
+      unfold alloc_top, stack_max_size in Ht. unfold bv_modulus in Hsp.
+      exists (Z_to_bv 64 a'). apply (proj2 (Placement.linux_place_is_iff _ _ _ _ _ Hn Hal)).
+      rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus; lia). exact Ha'. }
     eapply (sreach_mmap_kernel_lazy asegs na nr L S Zr msF _ mo x17 Q OK VIS eq_refl); [ rewrite H17; reflexivity | ..];
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 2) with x12;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 3) with x13;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 4) with x14;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 5) with x15;
-      [ exact LEN | exact H12 | exact H13 | exact H14 | exact H15 | exact NW | exact BUD | exact GAP | exact ROK | ].
+      [ exact LEN | exact H12 | exact H13 | exact H14 | exact H15 | exact NW | exact BUD | exact DECL | exact PLACED | exact ROK | ].
     intros a msF'.
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11.
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10.
@@ -186,7 +214,7 @@ Section CjNodes.
        let L' := (if nr then [(addr, n)] else []) ++ maps_subtract L (bv_unsigned addr) (bv_unsigned addr + nZ) in
        lzok asegs L' S Zr (mkCfg msF' mo') ->
        restrict L' S msF'
-         = MS (Ra addr) F (Z_to_bv 64 (pc + 4)) fc rv
+         = MS (Ra addr) F (Z_to_bv 64 (pc + 4)) fc None
               (if nr then (fun x => if zin_rangeb (bv_unsigned x) (addr, n) && in_rangesb x S then Some (Z_to_bv 8 0) else m x)
                else zfill addr n m) (seg_rom asegs) ->
        hid_same L' S msF msF' ->
@@ -229,7 +257,7 @@ Section CjNodes.
        let mo' := munmap_model a n mo in
        lzok asegs (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S Zr (mkCfg msF' mo') ->
        restrict (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S msF'
-         = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc rv (unfill a n m) (seg_rom asegs) ->
+         = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc None (unfill a n m) (seg_rom asegs) ->
        hid_same L S msF msF' ->
        (forall x, hiddenb (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S x = hiddenb L S x) ->
        eager_used mo' + rem (a, n) (cuts mo) <= eager_used mo ->
@@ -372,8 +400,8 @@ Proof.
 Qed.
 Lemma nonvm_same_munmap : forall a n mo, nonvm_same mo (munmap_model a n mo).
 Proof.
-  intros. rewrite munmap_model_eqL. pose proof (munmap_modelL_nonvm a n mo) as (?&?&?&?&?&?). unfold nonvm_same.
-  rewrite munmap_modelL_vmmaps. repeat split; try assumption.
+  intros. rewrite munmap_model_eqD. pose proof (munmap_modelD_nonvm a n mo) as (?&?&?&?&?&?). unfold nonvm_same.
+  rewrite munmap_modelD_vmmaps. repeat split; try assumption.
 Qed.
 (* [comment removed for export] *)
 Lemma nonvm_same_atop : forall mo mo', nonvm_same mo mo' -> alloc_top (m_vmmaps mo') = alloc_top (m_vmmaps mo).

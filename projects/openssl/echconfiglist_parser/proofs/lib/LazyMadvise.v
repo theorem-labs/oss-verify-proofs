@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sreach_node takes the RomBase.sys_rob_memfree robustness premise). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -14,6 +15,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
   Scfg SimInv ExitSim PropExec CatSim MmapSim AllocSim RelSpec
   ShapeAlg Nodes AgentNodes Gap04 RefNodes SReach AllocNodes
   LazyRestrict LazyRestrictRun LazyRestrictAlg LazyLedger LazySR LazyNodes.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
@@ -269,7 +271,8 @@ Proof.
     - intros o Ho. exists tt. exact Ho.
     - intros []. exact (lzok_halted Hok').
     - intros []. reflexivity. }
-  apply (sreach_node segs _ unit _ tt _ Hnode). intros [].
+  apply (sreach_node segs _ unit _ tt _ Hnode
+           (RomBase.sys_rob_memfree segs msF mo x8 Hsvc ltac:(rewrite Hno; exact RomBase.memfree_233))). intros [].
   apply (Hk _ Hok' Hvis Hhs). apply madvise_dontneed_next_sbm.
 Qed.
 

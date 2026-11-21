@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFf4.v at 25e3d17bdb50, with its module paths changed, names TfibSyms -> GrantSyms and its addresses moved to libreac/fuzz_grant's ASan build; the case split over Tfib_zero_shadow takes its 15 ranges for fuzz_grant.asan (5 for cgif_file_fuzzer.asan). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFf4.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed, names TfibSyms -> GrantSyms and its addresses moved to libreac/fuzz_grant's ASan build; the case split over Tfib_zero_shadow takes its 15 ranges for fuzz_grant.asan (5 for cgif_file_fuzzer.asan). *)
 (* Modified by Theorem Labs: EV_MAX raised to 11776 in lib/Reusable/YG00.v, as in omx-clap-core/fuzz_manifest's copy of this file; the primary chunk bound of cfacts is unfolded (kFreeArrayOffset instead of 2 ^ 31). *)
 (* Modified by Theorem Labs, 2026-10: grant A's file relocated to image B (fuzz_grant.asan-ubsan fde52226dc48) by port_core 53ec3af2afc9, A -> B; the numbers below were then image B's unless a comment said image A. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/B/YFf4.v at 4f87de75d67 (donor image sha256 fde52226dc48), with its module paths changed, names GrantSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build; the statement HIGH and the proof steps of fuzz_knock's depot model (case splits on st_depot, the NB / SB extents as KnBlockExt.nb_ext / sb_ext, depot_ok_mapped and the depot_same step of lib/Reusable/YG0n.v), taken from proofs/libreac/fuzz_knock/lib/AU/YFf4.v at 88154566652a; the start-up zero-shadow case checks every range of Tfib_zero_shadow by one computed forallb instead of a case split over its ranges. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/B/YFf4.v (donor image sha256 fde52226dc48), with its module paths changed, names GrantSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build; the statement HIGH and the proof steps of fuzz_knock's depot model (case splits on st_depot, the NB / SB extents as KnBlockExt.nb_ext / sb_ext, depot_ok_mapped and the depot_same step of lib/Reusable/YG0n.v), taken from proofs/libreac/fuzz_knock/lib/AU/YFf4.v; the start-up zero-shadow case checks every range of Tfib_zero_shadow by one computed forallb instead of a case split over its ranges. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase.
 From Stdlib Require Import ZArith List Lia Bool.
@@ -252,7 +253,7 @@ exact (pairwise_ij_f _ _ i0 (8 - i0) _ _ HD ltac:(unfold static_extents; rewrite
 ltac:(unfold static_extents; rewrite nth_error_app2 by (cbn; lia); replace (i0 + Datatypes.S (8 - i0) - length (owned_extents ly))%nat with 1%nat by (cbn; lia); reflexivity)). }
 pose proof (Z3 1%nat _ _ eq_refl ltac:(unfold kPtrArrayResv; lia)) as ZQ. pose proof (Z3 2%nat _ _ eq_refl ltac:(unfold kThreadObjSize; lia)) as ZT.
 pose proof (Z3 3%nat _ _ eq_refl ltac:(unfold kFakeStackSize; lia)) as ZF.
-(* positions 4 / 5 hold the NB / SB extents, (4096, 0) until the first StackDepot Put maps them (YG0f.v:382-383; KnBlockExt). *)
+(* positions 4 / 5 hold the NB / SB extents, (4096, 0) until the first StackDepot Put maps them (YG0f.v:383-384; KnBlockExt). *)
 pose proof (Z3 4%nat (fst (nb_ext ly)) (snd (nb_ext ly)) ltac:(rewrite nb_ext_pair; exact (nb_ext_nth ly)) (proj1 (nb_ext_len ly))) as ZNB.
 pose proof (Z3 5%nat (fst (sb_ext ly)) (snd (sb_ext ly)) ltac:(rewrite sb_ext_pair; exact (sb_ext_nth ly)) (proj1 (sb_ext_len ly))) as ZSB.
 pose proof (Z3 6%nat _ _ eq_refl ltac:(lia)) as ZC. clear Z3 HA HD.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's validity hypotheses; the process input's new fields; the SIGPIPE disposition). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -1003,18 +1004,32 @@ Section Close.
   Variable uid : word.
   Variable hw : word.   (* [comment removed for export] *)
   Hypothesis Hfit : entry_stack_fits sp0 argv envp.
+  Variable apc : N.
+  Variable mbase : word.
+  Variable fs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variable ur : InputStream.
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
+  Variable nofile : word.
+  Variable sigmask : word.
+  Variables abt sdf : bool.
   Variable SINV : env -> (word -> option byte) -> Prop.
-  Hypothesis SINV_0 : forall E M, SINV E M -> SINV0 APH sp0 rdraw brk0 argv envp uid hw E M.
-  Hypothesis SINV_frame : forall E M M', (forall a, argH0 APH sp0 rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+  Hypothesis SINV_0 : forall E M, SINV E M -> SINV0 APH apc sp0 rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf E M.
+  Hypothesis SINV_frame : forall E M M', (forall a, argH0 sp0 rdraw argv envp kern execfn E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
   Hypothesis SINV_agree : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M.
+  (* LPS 727298f3: [SINV0] takes apc .. abt, so [SINV] and its hypotheses follow their declarations. *)
 
-  #[local] Notation argH := (argH0 APH sp0 rdraw argv envp uid hw).
+  #[local] Notation argH := (argH0 sp0 rdraw argv envp kern execfn).
   #[local] Notation LIM := AsanInit.LIMIT.
   #[local] Notation CSOK := (cs_ok SEGS ASAN LIM SINV argH LINV_A FS0).
   #[local] Notation L := LIBTAB_ASAN.
 
-  Let argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a := argH0_high APH sp0 rdraw argv envp uid hw Hsp Hva.
-  Let argH_agree : forall E E' (a : word), env_agree NX0 E E' -> argH E a = argH E' a := argH0_agree APH sp0 rdraw argv envp uid hw.
+  Let argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a := argH0_high apc sp0 rdraw argv envp kern execfn Hsp Hva.
+  Let argH_agree : forall E E' (a : word), env_agree NX0 E E' -> argH E a = argH E' a := argH0_agree sp0 rdraw argv envp kern execfn.
   Let nx0_ge : APS.nx0_ok NX0 := Nat.le_refl NX0.   (* [comment removed for export] *)
   Let LINV_frame := proj2 LINV_A_stmt.
 
@@ -1166,6 +1181,6 @@ End Close.
 
 Theorem xlib_sound : lib_stmt_A -> XLIB_STMT LINV_A.
 Proof.
-  intros HLIB sp0 rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV S0 SF SA.
+  intros HLIB sp0 rdraw brk0 argv envp FS0 apc mbase fs stdin gid groups net ur kern execfn nofile sigmask abt sdf Hsp Hva Hve uid hw Hfit Hkernel Hlau SINV S0 SF SA.
   apply (summary_lib_sound HLIB); assumption.
 Qed.

@@ -1,4 +1,4 @@
-# the 21 core files the unit tops cite (grant release 4f87de75d67: lib/A/GrantTop.v, AGrantT.v, AsanTop.v, GrantTFIB.v Require lists), present in wire lib/A
+# the 21 core files the unit tops cite (grant release: lib/A/GrantTop.v, AGrantT.v, AsanTop.v, GrantTFIB.v Require lists), present in wire lib/A
 A/AB1h.v
 A/AB1v.v
 A/ACeg.v

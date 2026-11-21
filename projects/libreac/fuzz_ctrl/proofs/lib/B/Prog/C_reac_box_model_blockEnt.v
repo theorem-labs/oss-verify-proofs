@@ -126,7 +126,7 @@ Variable GLOBS : list (Z * Z).
 (* core: the bundle law (the plan's CtrlTSyms B) and the world's laws *)
 Hypothesis TS : lib.Reusable.YF0m.CtrlTSyms B.
 Hypothesis LAWS : lib.Reusable.YG0d.AR_laws SEGS B.
-(* B ProgWorld statements, PROVED on image B and cited (L3 rule, two Theorem Labs lanes 13:12Z; a Theorem Labs lane's db8a86df2da) *)
+(* B ProgWorld statements, PROVED on image B and cited (L3 rule, two Theorem Labs lanes 13:12Z; a Theorem Labs lane) *)
 Let ctl_fp_of_AR : B.ProgWorld.ctl_fp_of_AR_stmt B := lib.B.ProgWorld_Fs.ctl_fp_of_AR B.
 Let fp_tls_owned : B.ProgWorld.fp_tls_owned_stmt B := lib.B.ProgWorldTlsOwned.fp_tls_owned B.
 

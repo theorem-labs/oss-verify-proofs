@@ -2,17 +2,18 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YF06.v, with its module paths changed; 224 of its 270 lines of code are new or changed and 135 lines of the source are left out. *)
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/SecGrantP.v, sha256 62a2d26424576df10a0488466d5c543229b936315bc2a0c603266b2f79f44ff8.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/SecGrantP.v at 58849afb919 (cold/c-asan-realloc-primary), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/SecGrantP.v (cold/c-asan-realloc-primary), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair and its reserved region; the reserved-region ledger). *)
 (* Omitted for preset: the YFia import, sec_grant_exists_AR_regression_stmt with its Check, and sec_grant_exists_AR_regression (cgif lines 132-137, 348-359). They state cgif's image (tfibsegs, through YF0x, top 0x5fb000), which is false for preset's image (segment 003 ends at 0x600000). *)
 (* The LPS placement lemma of a secondary mmap, with the object bound and the live-count limit as parameters.
 
    On the LPS a fresh mmap may land at ANY free address, or the kernel answers ENOMEM (Sys/Mm/Mmap.v:959-966 of
    checker image cc9ae43a). Under forced_only the run refuses the grant only when no address satisfies the
-   guard. The lemmas here give a guard witness (grant_ok_na_pin) on the live ledger, so the run never refuses a
+   guard. The lemmas here give a guard witness (grant_ok_na_pin_b) on the live ledger, so the run never refuses a
    secondary mmap.
 
    The proof is YF06.sec_grant_exists (YF06.v:144-183) with its two literals made parameters:
@@ -21,10 +22,12 @@
    The side conditions on (nob, lim) are the ones the counting argument uses:
      536870912 <= nob          each relevant lazy zone is at most 257 pieces of size nob (YF06.v:124-125);
      nob mod 4096 = 0          the candidates bottomup_floor + j * (2 * nob) are page aligned;
-     0x2aaaaaaab000 + (257 * 25 + lim) * (2 * nob) + nob <= 0x7fff7f800000
-                               the window: at most 257 * 25 + lim obstacles, each blocks one candidate, and the
-                               lowest ceiling of any RunCeil is 0x7fff7f800000 (YG0f.v:15).
-   The largest lim is 80,953 at nob = 2 ^ 29 and 37,264 at nob = 2 ^ 30.
+     0x2aaaaaaab000 + (257 * 25 + lim + 2) * (2 * nob) + nob <= 0x7fff7f800000
+                               the window: at most 257 * 25 + lim + 2 obstacles, each blocks one candidate, and the
+                               lowest ceiling of any RunCeil is 0x7fff7f800000 (YG0f.v:15).  The 2 are the entries of
+                               the reservation tail past the image's own (at 727298f3 the vDSO/vvar pair,
+                               YG0n.res_tail_ok), as in YF06.sec_grant_exists.
+   The largest lim is 80,951 at nob = 2 ^ 29 and 37,262 at nob = 2 ^ 30.
 
    [sec_grant_exists_cover_P]  the core: the ledger facts (ledger_cover) over a list zs of mapped extents
                                besides the lazy zones, at most lim of them, each of size at most nob.
@@ -36,8 +39,8 @@
                                sec_dealloc). No premise on st_nev, EV_MAX or sec_arr_small.
    [sec_grant_exists_AR_P]     YFia.sec_grant_exists_AR (YFia.v:48), parametric in the realizes record AR, its
                                state invariant Wf, the ledger LG and its extra extents xs.
-   [sec_grant_exists_regression] and [sec_grant_exists_AR_regression] are the released statements
-   YF06.sec_grant_exists and YFia.sec_grant_exists_AR, unchanged, proved from the parametric forms. *)
+   [sec_grant_exists_regression] and [sec_grant_exists_AR_regression] are the statements of
+   YF06.sec_grant_exists and YFia.sec_grant_exists_AR, proved from the parametric forms. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -51,11 +54,12 @@ Open Scope Z_scope.
 Section P. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* The four ledger facts the counting argument uses (ALedger's al_img, al_reserved, al_top and al_cover, the
-   cover taken over the lazy zones and a list zs). *)
+   cover taken over the lazy zones and a list zs).  At 727298f3 the reservations are the image's followed by a
+   tail of at most two entries (YG0n.res_tail_ok), as ALedger's al_reserved states them. *)
 Definition ledger_cover (segs : list Segment) (ly : alayout) (md : Model) (zs : list (Z * Z)) : Prop :=
 (forall sg, In sg segs -> fst (ly_img ly) <= Z.of_N (seg_base sg) /\
 Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= fst (ly_img ly) + snd (ly_img ly)) /\
-vm_reserved (m_vmmaps md) = segments_reserved segs /\
+(exists rx, vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx /\ res_tail_ok ly rx) /\
 YM05.ceil_of_top (alloc_top (m_vmmaps md)) /\
 (forall e, In e (vm_maps (m_vmmaps md)) ->
 Exists (fun z => fst z <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= fst z + snd z)
@@ -74,31 +78,31 @@ List.NoDup (map ck_beg (st_chunks S)) /\ Forall (ck_sec_ok mmax) (st_chunks S) /
 Definition sec_grant_exists_cover_P_stmt : Prop :=
 forall (nob lim : Z) (segs : list Segment) (ly : alayout) (md : Model) (zs : list (Z * Z)) (nZ : Z),
 536870912 <= nob -> nob mod 4096 = 0 ->
-0x2aaaaaaab000 + (257 * 25 + lim) * (2 * nob) + nob <= 0x7fff7f800000 ->
+0x2aaaaaaab000 + (257 * 25 + lim + 2) * (2 * nob) + nob <= 0x7fff7f800000 ->
 layout_ok ly -> ledger_cover segs ly md zs ->
 (forall e, In e (vm_maps (m_vmmaps md)) -> 0 < bv_unsigned (snd e)) ->
 Z.of_nat (length zs) <= lim ->
 Forall (fun e => 0 <= snd e <= nob) zs ->
 0 < nZ <= nob ->
-exists a, grant_ok_na_pin md a nZ = true.
+exists a, grant_ok_na_pin_b md a nZ = true.
 
 (* (1), YF06.sec_grant_exists with nob and lim as parameters. *)
 Definition sec_grant_exists_P_stmt : Prop :=
 forall (nob lim : Z) (segs : list Segment) (ly : alayout) (S : astate) (md : Model) (nZ : Z),
 536870912 <= nob -> nob mod 4096 = 0 ->
-0x2aaaaaaab000 + (257 * 25 + lim) * (2 * nob) + nob <= 0x7fff7f800000 ->
+0x2aaaaaaab000 + (257 * 25 + lim + 2) * (2 * nob) + nob <= 0x7fff7f800000 ->
 layout_ok ly -> ALedger segs ly S md ->
 (forall e, In e (vm_maps (m_vmmaps md)) -> 0 < bv_unsigned (snd e)) ->
 Z.of_nat (length (sec_extents ly S)) <= lim ->
 Forall (fun e => 0 <= snd e <= nob) (sec_extents ly S) ->
 0 < nZ <= nob ->
-exists a, grant_ok_na_pin md a nZ = true.
+exists a, grant_ok_na_pin_b md a nZ = true.
 
 (* (1), the live-count form. *)
 Definition sec_grant_exists_live_P_stmt : Prop :=
 forall (nob lim mmax : Z) (segs : list Segment) (ly : alayout) (S : astate) (md : Model) (xs : list (Z * Z)) (nZ : Z),
 536870912 <= nob -> nob mod 4096 = 0 ->
-0x2aaaaaaab000 + (257 * 25 + lim) * (2 * nob) + nob <= 0x7fff7f800000 ->
+0x2aaaaaaab000 + (257 * 25 + lim + 2) * (2 * nob) + nob <= 0x7fff7f800000 ->
 (forall n, 0 <= n < mmax -> sec_map_size n <= nob) ->
 layout_ok ly -> ledger_cover segs ly md (sec_extents ly S ++ xs) ->
 (forall e, In e (vm_maps (m_vmmaps md)) -> 0 < bv_unsigned (snd e)) ->
@@ -106,17 +110,18 @@ sec_chunks_ok mmax S ->
 Z.of_nat (length (st_sec_arr S)) + Z.of_nat (length xs) <= lim ->
 Forall (fun e => 0 <= snd e <= nob) xs ->
 0 < nZ <= nob ->
-exists a, grant_ok_na_pin md a nZ = true.
+exists a, grant_ok_na_pin_b md a nZ = true.
 
-(* (2): the released statement YF06.sec_grant_exists, unchanged. *)
+(* (2): the statement of YF06.sec_grant_exists.  At 727298f3 it states the grant in the placement rule's form
+   (a NULL hint, a page-aligned request); its proof is the core in that form, sec_grant_exists_cover_pin_P. *)
 Definition sec_grant_exists_regression_stmt : Prop :=
 forall segs ly S md nZ,
 layout_ok ly -> ALedger segs ly S md ->
 (forall e, In e (vm_maps (m_vmmaps md)) -> 0 < bv_unsigned (snd e)) ->
 Z.of_nat (length (sec_extents ly S)) <= SEC_LIVE_N ->
 Forall (fun e => 0 <= snd e <= NOB) (sec_extents ly S) ->
-0 < nZ <= NOB ->
-exists a, grant_ok_na_pin md a nZ = true.
+0 < nZ <= NOB -> nZ mod page_size = 0 ->
+exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Check (sec_grant_exists : sec_grant_exists_regression_stmt).
 
 (* (3): the AR form. A harness passes its realizes record applied to its other arguments as AR (for example
@@ -126,7 +131,7 @@ Definition sec_grant_exists_AR_P_stmt : Prop :=
 forall (nob lim mmax : Z) (segs : list Segment) (Wf : astate -> Prop) (AR : alayout -> astate -> Prop)
 (LG : alayout -> astate -> Model -> Prop) (xs : alayout -> astate -> list (Z * Z)),
 536870912 <= nob -> nob mod 4096 = 0 ->
-0x2aaaaaaab000 + (257 * 25 + lim) * (2 * nob) + nob <= 0x7fff7f800000 ->
+0x2aaaaaaab000 + (257 * 25 + lim + 2) * (2 * nob) + nob <= 0x7fff7f800000 ->
 (forall n, 0 <= n < mmax -> sec_map_size n <= nob) ->
 (forall ly S, AR ly S -> layout_ok ly) ->
 (forall ly S, AR ly S -> Wf S) ->
@@ -137,7 +142,7 @@ AR ly S -> LG ly S md -> amwf md ->
 Z.of_nat (length (st_sec_arr S)) + Z.of_nat (length (xs ly S)) <= lim ->
 Forall (fun e => 0 <= snd e <= nob) (xs ly S) ->
 0 < nZ <= nob ->
-exists a, grant_ok_na_pin md a nZ = true.
+exists a, grant_ok_na_pin_b md a nZ = true.
 
 
 
@@ -190,26 +195,60 @@ intros N ly HN LY. apply Forall_impl with (2 := lazy_zones_relevant ly LY).
 intros z Hz R. specialize (Hz R). unfold NOB in Hz. lia.
 Qed.
 
+(* The reservation tail's entries as obstacles: each widened by a byte, so a zero-length entry still blocks its
+   own start (YF06.sec_grant_exists at 727298f3). *)
+Definition rx_zones (rx : list (word * word)) : list (Z * Z) :=
+map (fun iv => (bv_unsigned (fst iv), bv_unsigned (snd iv) + 1)) rx.
+Lemma rx_zones_len : forall nob rx, 536870912 <= nob ->
+Forall (fun iv => kHighMemBeg <= bv_unsigned (fst iv) /\ bv_unsigned (snd iv) <= 20 * 4096) rx ->
+Z.of_nat (length (obstaclesP nob (rx_zones rx))) <= Z.of_nat (length rx).
+Proof.
+intros nob rx HN RXB.
+assert (RZ : Forall (fun z => relevantb z = true -> 0 <= snd z <= 1 * nob) (rx_zones rx)).
+{ unfold rx_zones. apply Forall_map. apply Forall_impl with (2 := RXB). intros iv [_ Hs] _. cbn [fst snd].
+pose proof (bv_unsigned_in_range _ (snd iv)). lia. }
+pose proof (obstaclesP_len nob (rx_zones rx) 1 ltac:(lia) ltac:(lia) RZ) as D.
+assert (LR : length (rx_zones rx) = length rx) by (unfold rx_zones; apply length_map). lia.
+Qed.
+(* Every entry of the tail misses a candidate that misses every obstacle. *)
+Lemma rx_zones_free : forall nob zs rx a nZ, 536870912 <= nob ->
+0 < nZ -> bottomup_floor <= a -> a + nZ <= ASAN_CEIL ->
+(forall o, In o (obstaclesP nob (zs ++ rx_zones rx)) -> ~ oconf a nZ o) ->
+region_free rx (w64 a) (w64 nZ) = true.
+Proof.
+intros nob zs rx a nZ HN HnZ Ha Hce Hfree. pose proof bottomup_floor_val as Hfv.
+apply YG0h.region_free_intro. intros e He. unfold YG0h.uw, w64. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in *; lia).
+assert (EX : Exists (fun z => fst z <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + (bv_unsigned (snd e) + 1) <= fst z + snd z)
+(zs ++ rx_zones rx)).
+{ apply Exists_app. right. apply Exists_exists. exists (bv_unsigned (fst e), bv_unsigned (snd e) + 1). split.
+- unfold rx_zones. apply in_map_iff. exists e. split; [reflexivity | exact He].
+- cbn [fst snd]. lia. }
+pose proof (bv_unsigned_in_range _ (snd e)) as Ue.
+destruct (obstaclesP_free nob (zs ++ rx_zones rx) a nZ (bv_unsigned (fst e)) (bv_unsigned (snd e) + 1)
+ltac:(lia) ltac:(lia) ltac:(lia) Ha Hce Hfree EX) as [D|D]; [left | right]; lia.
+Qed.
+
 (* (1), the core *)
 Theorem sec_grant_exists_cover_P : sec_grant_exists_cover_P_stmt.
 Proof.
-intros nob lim segs ly md zs nZ HN HNal HW LY (IMG & RES & TOP & COV) NZ ZSN ZSS HnZ.
+intros nob lim segs ly md zs nZ HN HNal HW LY (IMG & (rx & Hrx & RXL & RXB & _) & TOP & COV) NZ ZSN ZSS HnZ.
 pose proof (YM05.ceil_le_top _ TOP) as Htop. pose proof bottomup_floor_val as Hfv.
-set (obs := obstaclesP nob (lazy_zones ly ++ zs)).
-assert (LEN : Z.of_nat (length obs) <= 257 * 25 + lim).
-{ subst obs. rewrite obstaclesP_app, length_app, Nat2Z.inj_add.
+set (obs := obstaclesP nob ((lazy_zones ly ++ zs) ++ rx_zones rx)).
+assert (LEN : Z.of_nat (length obs) <= 257 * 25 + lim + 2).
+{ subst obs. rewrite !obstaclesP_app, !length_app, !Nat2Z.inj_add.
 pose proof (obstaclesP_len nob (lazy_zones ly) 257 ltac:(lia) ltac:(lia) (lazy_zones_relevantP nob ly HN LY)) as A.
 pose proof (lazy_zones_len ly LY) as B.
-pose proof (obstaclesP_len nob zs 1 ltac:(lia) ltac:(lia) ltac:(apply Forall_impl with (2 := ZSS); intros e He _; lia)) as C. lia. }
+pose proof (obstaclesP_len nob zs 1 ltac:(lia) ltac:(lia) ltac:(apply Forall_impl with (2 := ZSS); intros e He _; lia)) as C.
+pose proof (rx_zones_len nob rx HN RXB) as D. lia. }
 destruct (pick_candidateZ nob nZ obs (seq 0 (Datatypes.S (length obs))) ltac:(lia) (obstaclesP_size _ _) (List.seq_NoDup _ _) ltac:(rewrite length_seq; lia))
 as (j & Hj & Hfree).
 apply in_seq in Hj.
 set (a := cand nob j).
-assert (Ha : bottomup_floor <= a <= bottomup_floor + (257 * 25 + lim) * (2 * nob)).
+assert (Ha : bottomup_floor <= a <= bottomup_floor + (257 * 25 + lim + 2) * (2 * nob)).
 { subst a. unfold cand. split; [nia|]. apply Z.add_le_mono_l. apply Z.mul_le_mono_nonneg_r; [lia|]. lia. }
 assert (Hce : a + nZ <= ASAN_CEIL) by (ceil; unfold ASAN_CEIL in *; rewrite Hfv in Ha; lia).
 exists (Z_to_bv 64 a).
-unfold grant_ok_na_pin. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in Hce; lia).
+unfold grant_ok_na_pin_b. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in Hce; lia).
 assert (E1 : a mod page_size = 0).
 { subst a. unfold cand. rewrite Hfv. unfold page_size.
 pose proof (Z.div_mod nob 4096 ltac:(lia)) as E. rewrite HNal, Z.add_0_r in E.
@@ -219,15 +258,71 @@ rewrite Z.add_mod by lia. rewrite Z_mod_mult. reflexivity. }
 rewrite (proj2 (Z.eqb_eq _ _) E1), (proj2 (Z.ltb_lt 0 _)) by lia.
 rewrite (proj2 (Z.leb_le _ _)) by (unfold ASAN_CEIL in Hce; lia).
 rewrite YK13.region_free_app.
-rewrite RES.
+rewrite Hrx, YK13.region_free_app.
 replace (Z_to_bv 64 a) with (w64 a) by reflexivity. replace (Z_to_bv 64 nZ) with (w64 nZ) by reflexivity.
 assert (IMGb : forall sg, In sg segs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd).
 { intros sg Hsg. pose proof (IMG sg Hsg) as [I1 I2]. pose proof (lo_img ly LY) as (J0 & J1 & J2 & J3). rewrite J0 in I1, I2. unfold kImgLo in *. lia. }
 rewrite (YG0h.region_free_reserved segs a nZ IMGb) by (ceil; unfold kImgEnd, ASAN_CEIL in *; lia).
-rewrite (YG0h.region_free_intro); [reflexivity|].
+rewrite (rx_zones_free nob (lazy_zones ly ++ zs) rx a nZ HN ltac:(lia) ltac:(lia) Hce Hfree).
+rewrite (YG0h.region_free_intro (vm_maps (m_vmmaps md)) (w64 a) (w64 nZ)); [reflexivity|].
 intros e He. unfold YG0h.uw, w64. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in *; lia).
-apply (obstaclesP_free nob (lazy_zones ly ++ zs) a nZ);
-[lia | lia | exact (NZ e He) | lia | exact Hce | exact Hfree | exact (COV e He)].
+apply (obstaclesP_free nob ((lazy_zones ly ++ zs) ++ rx_zones rx) a nZ);
+[lia | lia | exact (NZ e He) | lia | exact Hce | exact Hfree |].
+apply Exists_app. left. exact (COV e He).
+Qed.
+
+(* (1), the core in the placement rule's form (YF06.sec_grant_exists at 727298f3): the hint is NULL and the
+   request page aligned, and the free page-aligned candidate the counting argument finds is above
+   task_unmapped_base, so YK13.grant_ok_na_pin_of_gap gives the rule's own address. *)
+Definition sec_grant_exists_cover_pin_P_stmt : Prop :=
+forall (nob lim : Z) (segs : list Segment) (ly : alayout) (md : Model) (zs : list (Z * Z)) (nZ : Z),
+536870912 <= nob -> nob mod 4096 = 0 ->
+0x2aaaaaaab000 + (257 * 25 + lim + 2) * (2 * nob) + nob <= 0x7fff7f800000 ->
+layout_ok ly -> ledger_cover segs ly md zs ->
+(forall e, In e (vm_maps (m_vmmaps md)) -> 0 < bv_unsigned (snd e)) ->
+Z.of_nat (length zs) <= lim ->
+Forall (fun e => 0 <= snd e <= nob) zs ->
+0 < nZ <= nob -> nZ mod page_size = 0 ->
+exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
+Theorem sec_grant_exists_cover_pin_P : sec_grant_exists_cover_pin_P_stmt.
+Proof.
+intros nob lim segs ly md zs nZ HN HNal HW LY (IMG & (rx & Hrx & RXL & RXB & _) & TOP & COV) NZ ZSN ZSS HnZ HnZal.
+pose proof (YM05.ceil_le_top _ TOP) as Htop. pose proof bottomup_floor_val as Hfv.
+set (obs := obstaclesP nob ((lazy_zones ly ++ zs) ++ rx_zones rx)).
+assert (LEN : Z.of_nat (length obs) <= 257 * 25 + lim + 2).
+{ subst obs. rewrite !obstaclesP_app, !length_app, !Nat2Z.inj_add.
+pose proof (obstaclesP_len nob (lazy_zones ly) 257 ltac:(lia) ltac:(lia) (lazy_zones_relevantP nob ly HN LY)) as A.
+pose proof (lazy_zones_len ly LY) as B.
+pose proof (obstaclesP_len nob zs 1 ltac:(lia) ltac:(lia) ltac:(apply Forall_impl with (2 := ZSS); intros e He _; lia)) as C.
+pose proof (rx_zones_len nob rx HN RXB) as D. lia. }
+destruct (pick_candidateZ nob nZ obs (seq 0 (Datatypes.S (length obs))) ltac:(lia) (obstaclesP_size _ _) (List.seq_NoDup _ _) ltac:(rewrite length_seq; lia))
+as (j & Hj & Hfree).
+apply in_seq in Hj.
+set (a := cand nob j).
+assert (Ha : bottomup_floor <= a <= bottomup_floor + (257 * 25 + lim + 2) * (2 * nob)).
+{ subst a. unfold cand. split; [nia|]. apply Z.add_le_mono_l. apply Z.mul_le_mono_nonneg_r; [lia|]. lia. }
+assert (Hce : a + nZ <= ASAN_CEIL) by (ceil; unfold ASAN_CEIL in *; rewrite Hfv in Ha; lia).
+assert (E1 : a mod page_size = 0).
+{ subst a. unfold cand. rewrite Hfv. unfold page_size.
+pose proof (Z.div_mod nob 4096 ltac:(lia)) as E. rewrite HNal, Z.add_0_r in E.
+set (q := nob / 4096) in E. rewrite E.
+replace (Z.of_nat j * (2 * (4096 * q))) with ((Z.of_nat j * 2 * q) * 4096) by ring.
+rewrite Z.add_mod by lia. rewrite Z_mod_mult. reflexivity. }
+apply (YK13.grant_ok_na_pin_of_gap (Z_to_bv 64 0) md a nZ ltac:(lia) HnZal E1).
+- unfold task_unmapped_base. lia.
+- unfold ASAN_CEIL in Hce; lia.
+- rewrite YK13.region_free_app.
+rewrite Hrx, YK13.region_free_app.
+replace (Z_to_bv 64 a) with (w64 a) by reflexivity. replace (Z_to_bv 64 nZ) with (w64 nZ) by reflexivity.
+assert (IMGb : forall sg, In sg segs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd).
+{ intros sg Hsg. pose proof (IMG sg Hsg) as [I1 I2]. pose proof (lo_img ly LY) as (J0 & J1 & J2 & J3). rewrite J0 in I1, I2. unfold kImgLo in *. lia. }
+rewrite (YG0h.region_free_reserved segs a nZ IMGb) by (ceil; unfold kImgEnd, ASAN_CEIL in *; lia).
+rewrite (rx_zones_free nob (lazy_zones ly ++ zs) rx a nZ HN ltac:(lia) ltac:(lia) Hce Hfree).
+rewrite (YG0h.region_free_intro (vm_maps (m_vmmaps md)) (w64 a) (w64 nZ)); [reflexivity|].
+intros e He. unfold YG0h.uw, w64. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in *; lia).
+apply (obstaclesP_free nob ((lazy_zones ly ++ zs) ++ rx_zones rx) a nZ);
+[lia | lia | exact (NZ e He) | lia | exact Hce | exact Hfree |].
+apply Exists_app. left. exact (COV e He).
 Qed.
 
 Lemma ledger_cover_of_ALedger : forall segs ly S md, ALedger segs ly S md -> ledger_cover segs ly md (sec_extents ly S).
@@ -247,9 +342,9 @@ Qed.
 (* (2) *)
 Theorem sec_grant_exists_regression : sec_grant_exists_regression_stmt.
 Proof.
-intros segs ly S md nZ LY L NZ SECN SECS HnZ.
-exact (sec_grant_exists_P NOB SEC_LIVE_N segs ly S md nZ ltac:(unfold NOB; lia) ltac:(reflexivity)
-ltac:(unfold NOB, SEC_LIVE_N; lia) LY L NZ SECN SECS HnZ).
+intros segs ly S md nZ LY L NZ SECN SECS HnZ HnZal.
+exact (sec_grant_exists_cover_pin_P NOB SEC_LIVE_N segs ly md (sec_extents ly S) nZ ltac:(unfold NOB; lia) ltac:(reflexivity)
+ltac:(unfold NOB, SEC_LIVE_N; lia) LY (ledger_cover_of_ALedger segs ly S md L) NZ SECN SECS HnZ HnZal).
 Qed.
 
 (* ---- The live-count form. ---- *)
@@ -316,6 +411,33 @@ apply (sec_grant_exists_cover_P nob lim segs ly md (sec_extents ly S ++ xs) nZ H
 pose proof (sec_extents_count_arr ly S ND PK ARR). rewrite length_app, Nat2Z.inj_add. lia.
 - apply Forall_app. split; [exact (sec_extents_sizes_P nob mmax ly S HSZ CK) | exact XS].
 - exact HnZ.
+Qed.
+
+(* (1), the live-count form in the placement rule's form (a NULL hint, a page-aligned request), from the core
+   sec_grant_exists_cover_pin_P as sec_grant_exists_live_P is from sec_grant_exists_cover_P: the witness an
+   anonymous mmap's grant at 727298f3 needs (YK13.grant_na_pin_not_grant_refusable). *)
+Definition sec_grant_exists_live_pin_P_stmt : Prop :=
+forall (nob lim mmax : Z) (segs : list Segment) (ly : alayout) (S : astate) (md : Model) (xs : list (Z * Z)) (nZ : Z),
+536870912 <= nob -> nob mod 4096 = 0 ->
+0x2aaaaaaab000 + (257 * 25 + lim + 2) * (2 * nob) + nob <= 0x7fff7f800000 ->
+(forall n, 0 <= n < mmax -> sec_map_size n <= nob) ->
+layout_ok ly -> ledger_cover segs ly md (sec_extents ly S ++ xs) ->
+(forall e, In e (vm_maps (m_vmmaps md)) -> 0 < bv_unsigned (snd e)) ->
+sec_chunks_ok mmax S ->
+Z.of_nat (length (st_sec_arr S)) + Z.of_nat (length xs) <= lim ->
+Forall (fun e => 0 <= snd e <= nob) xs ->
+0 < nZ <= nob -> nZ mod page_size = 0 ->
+exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
+Theorem sec_grant_exists_live_pin_P : sec_grant_exists_live_pin_P_stmt.
+Proof.
+intros nob lim mmax segs ly S md xs nZ HN HNal HW HSZ LY LC NZ (ND & CK & ARR) LIVE XS HnZ HnZal.
+apply (sec_grant_exists_cover_pin_P nob lim segs ly md (sec_extents ly S ++ xs) nZ HN HNal HW LY LC NZ).
+- assert (PK : Forall (fun k => forall r o, ck_beg k = PSec r o -> o = kPage) (st_chunks S)).
+{ apply Forall_impl with (2 := CK). intros k [_ H]. exact H. }
+pose proof (sec_extents_count_arr ly S ND PK ARR). rewrite length_app, Nat2Z.inj_add. lia.
+- apply Forall_app. split; [exact (sec_extents_sizes_P nob mmax ly S HSZ CK) | exact XS].
+- exact HnZ.
+- exact HnZal.
 Qed.
 
 (* (3) *)

@@ -8,12 +8,13 @@
    (0x8c790) on a Theorem Labs lane's CmdSnText helpers; the symbolic entry state with its seed; the words and bytes a region of
    the symbolic state records; the frame chain at a call whose s0 is the frame pointer (achain_push); the recorder's
    state across writes outside it; the model step.
-   TAKEN FROM: the ASan walk of answer_code (lib/A/Prog/answer_code.v, a working branch 2ba4488ce71, lines
+   TAKEN FROM: the ASan walk of answer_code (lib/A/Prog/answer_code.v, a working branch, lines
    28-527: the region helpers, rec_repA_kept and its parts, the entry seed with the realigned sp as an atom) and the
-   ASan walk of arg_i (lib/A/Prog/arg_i_s0.v, a working branch 12dc52bfe84: the "%d" facts). B inlines arg_i
+   ASan walk of arg_i (lib/A/Prog/arg_i_s0.v, a working branch: the "%d" facts). B inlines arg_i
    into sup_after_reply; the frame code (0x8c758-0x8c854, 0x8c8a0-0x8c934) is arg_i's (A 0x8a238-0x8a32c,
    0x8a3b0-0x8a444) with the registers renamed. The literal's shadow comes from the allocator record (lib/B/YF0m.v),
-   as in lib/B/Prog/sup_lv2_worker_set_aux.v (a working branch 5c04ebe0308). *)
+   as in lib/B/Prog/sup_lv2_worker_set_aux.v (a working branch). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -181,7 +182,7 @@ Lemma sar_cs_3ee : In (z1 (ANum 0x7fffc3ee) 0xf9) Tfib_const_shadow.
 Proof. apply sar_cell_in. vm_compute. reflexivity. Qed.
 Lemma sar_cs_3ef : In (z1 (ANum 0x7fffc3ef) 0xf9) Tfib_const_shadow.
 Proof. apply sar_cell_in. vm_compute. reflexivity. Qed.
-(* the end of "%d" (0x21f42) is one of CmdRo's literal ends (CmdRo.v cmd_ro_ends, regenerated at a Theorem Labs lane 917ca7ac6b1) *)
+(* the end of "%d" (0x21f42) is one of CmdRo's literal ends (CmdRo.v cmd_ro_ends, regenerated at a Theorem Labs lane) *)
 Lemma sar_end_21f42 : In 0x21f42 cmd_ro_ends.
 Proof.
 assert (H : existsb (Z.eqb 0x21f42) cmd_ro_ends = true) by (vm_compute; reflexivity).

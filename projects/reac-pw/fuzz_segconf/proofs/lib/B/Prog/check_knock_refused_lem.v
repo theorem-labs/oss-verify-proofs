@@ -1,4 +1,4 @@
-(* The image-B port of lib/A/Prog/check_knock_refused_lem.v (commit 38b2a0dc4f6b), the model
+(* The image-B port of lib/A/Prog/check_knock_refused_lem.v, the model
    lemmas of the walk lib/B/Prog/check_knock_refused.v on fuzz_segconf.asan-ubsan: SegModel's strstr_found gives an
    occurrence of the needle, and SegABase's list-Z string forms convert to the list-byte forms the wrapper contracts
    state. Image-independent: only the module paths differ from the A file (image B's kit and SegABase copies). *)

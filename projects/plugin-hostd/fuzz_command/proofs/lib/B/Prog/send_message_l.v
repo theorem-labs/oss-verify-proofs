@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/send_message_l.v (the ASan walk,
-   a working branch 4f5a539710b) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B): B's event
+   a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B): B's event
    counts (EV_ARG_S, EV_XMALLOC and EV_RECORD in place of A's EV_ARG_I and EV_XSTRDUP). *)
 (* Modified by Theorem Labs, 2026-10: lemmas of send_message's own walk on plugin-hostd/fuzz_command's ASan+UBSan
-   image, ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v and A/ACk5.v at c8557374ad2e (cgif_close's
+   image, ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v and A/ACk5.v (cgif_close's
    frame-chain step and ng_chain): verbs_receive's allocator-event count is a count, and the frame chain at the
    realigned stack pointer. The call rule for a callee that writes a program static and the transport lemmas its
    callers need (cl_callS_pg, ajournal_fp_widen, rec_repA_kept, aval_mem_kept_r ...) are the kit's,
    lib/B/Prog/PaCallPg.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMrt_pre.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMrt_pre.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's runtime contracts in the donor's form, the pre side (a Theorem Labs lane): from the premises of a contract of
    lib/A/FMH_Rt.v (ecall_pre_k, store_clean, cstr_ok / bytes_at, AR) to the premises of a Bz body walk
    (lib/A/Bz: Mem.bytes_at, Frame.stk, I_qck.chk_ok, mem_inv, the runtime's fixed cells), and what a Bz post

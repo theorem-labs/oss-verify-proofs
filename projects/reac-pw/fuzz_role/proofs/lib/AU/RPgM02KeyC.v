@@ -1,17 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyBase.v, RPgM02KeyI.v and RPgM02KeyV.v
-   at 595d8c5dd1b5 (the value language of the value entry's address and of a `lw`, the expect_value cases, the
+   (the value language of the value entry's address and of a `lw`, the expect_value cases, the
    shadow entry over the value entry, the value dispatch, the Int arm and the value tail),
-   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v at 7e8cf15c304a (the Float arm: the size test, the `flw` and
-   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v at 22306b8175e6 (the pairs of the scan across a
+   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v (the Float arm: the size test, the `flw` and
+   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v (the pairs of the scan across a
    key) for reac-pw/fuzz_rate image A: role's pcs become rate's, the shadow base is rate's s2 (atom 18), role's Role
    answers become Rate.expect_value / Rate.rate_of_pairs, role's value tail (a bound test and check_role) becomes
    rate's check_rate on the hz cell, the out cell is R+0x158, the `flw` is stepped by YA0n.SRr_step, and the key
    compare (the spills, the strcmp wrapper, the mismatch exit to O) is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v at 48d3cf0d8e40 (the key compare:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v (the key compare:
    the helpers m2kc_* and the lemmas m2kc_key_str, m2kc_tail, m2k_key) for image B (fuzz_rate.asan-ubsan). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02KeyCB.v at f07713e8e823 for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02KeyCB.v for
    reac-pw/fuzz_role image B (fuzz_role.asan-ubsan): image B's pcs (KM 0x82370, the call 0x82398 of the strcmp wrapper
    0x41b68, the tail 0x8239c, O 0x82278, KV 0x823d8) and key literal (.str.3 0x20f20, "reac.cfg.role"); the cuts are
    lib/AU/RPgSeg.v's (rsb_ -> rs_) and the interfaces lib/AU/RPgM02KeyBase.v's (m2kb_ -> m2k_); the cut's
@@ -21,6 +21,7 @@
    write zone m2k_wz) and loads the code into s9 from R+0x158 (0x823cc; fuzz_rate loads it at KV); the tail's two trap
    branches 0x823c8 and 0x823d0 are decided by the engine from closed atom bounds on s5 (atom 21), s7 (atom 23) and
    s6 (atom 22); &ent[v] is `add a0,s10,s7`; the model is role's (Role.ROLE_KEY). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role, image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, the same loaded bytes). Proves no function

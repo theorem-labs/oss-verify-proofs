@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFjz.v at 25e3d17bdb50 into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; the image bounds cited from lib/Reusable/YImgTop.v; its proofs changed for fuzz_knock's depot model, whose StackDepot blocks are mapped at the first Put: the NB / SB extents as KnBlockExt.nb_ext / sb_ext, the layout relation layout_grow, the StackDepot Put stated through AD3j, DPOST over the layout, world and model after the Put and the depot zone as KnBlockExt.DZONE_at. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFjz.v at 88154566652a (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build; the tactics zlia, numconst, off_by, addr_tac and ladder_arith, and the image-bound proof steps, which do not unfold YImgTop.IMG_LO / IMG_TOP, taken from proofs/libreac/fuzz_grant/lib/A/AFjz.v at 25e3d17bdb50. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFjz.v at theorem-labs/oss-verify-proofs@6b32741d849a into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; the image bounds cited from lib/Reusable/YImgTop.v; its proofs changed for fuzz_knock's depot model, whose StackDepot blocks are mapped at the first Put: the NB / SB extents as KnBlockExt.nb_ext / sb_ext, the layout relation layout_grow, the StackDepot Put stated through AD3j, DPOST over the layout, world and model after the Put and the depot zone as KnBlockExt.DZONE_at. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFjz.v (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build; the tactics zlia, numconst, off_by, addr_tac and ladder_arith, and the image-bound proof steps, which do not unfold YImgTop.IMG_LO / IMG_TOP, taken from proofs/libreac/fuzz_grant/lib/A/AFjz.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -1077,7 +1078,7 @@ split; [| split; [| exact (proj2 MP)]].
 2:{ rewrite fR10. cbn [fst]. unfold ck_user. cbn [YG00.ck_beg KSc AFib.KS padd sptr_addr sptr_exp aeval].
 change (YG00.ck_rz (AFib.KS S n)) with (ck_rz KSc). rewrite KR, LSEC, lyF_sec. unfold Uv, YG0d.w64, w64, kPage. f_equal; zlia. }
 split; [exact AR'|].
-(* acall_post's layout clause (YG0d.v:247-248): l := ly' (LG), then layout_le of set_ly_sec. *)
+(* acall_post's layout clause (YG0d.v:248-249): l := ly' (LG), then layout_le of set_ly_sec. *)
 split; [exists ly'; split; [exact LG | unfold AFjy.lyF_at; exact (set_ly_sec_le _ _ _)]|].
 split; [exact LEz|].
 split. { intros r Hr. apply fRCS. unfold acallee_saved in Hr.

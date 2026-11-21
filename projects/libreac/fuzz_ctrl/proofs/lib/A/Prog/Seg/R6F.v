@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 1684 of its 1797 lines of code are new or changed and 898 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R6.v; 180 of its 324 lines of code are new or changed and 1653 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/R6.v 46f7b58814c2 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/R6.v 46f7b58814c2 (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: r6_evt_of_F re-derives R6.r6_evt at ExecF.RNG_all; r6_evt_of_F_verbatim checks by constr_eq that its
    type is the type of R6.r6_evt after R6.r6_evt's own first premise (the plain callee contract).
    Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
@@ -21,7 +22,7 @@
    quantified footprint RNG. The segment's own accesses are the four 8-byte spill loads, so it carries four plain
    rng premises; every other region is the callee's and is passed through its footprint contract
    reac_ctrl_build_as_contract_F (lib/A/Prog/reac_ctrl_build_as_c.v:135) in the SAME position where R6.r6_evt takes
-   the plain reac_ctrl_build_as_contract (the signed form of that contract, a Theorem Labs lane e25b8b0aa71, auditor
+   the plain reac_ctrl_build_as_contract (the signed form of that contract, a Theorem Labs lane, auditor
    a Theorem Labs lane). One of its footprint premises is a forall-memory form (rng_bytes RNG) and one is the thread-cell
    premise over THIS run's memory m, quantified over DT TS C T DB kk: both are
    passed through UNCHANGED, as the spec's callee rule says. R6.v itself is unchanged apart from comment text. *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the link of fuzz_identity's ASan+UBSan (image B) entry function to the B closer. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The B twin of lib/A/Prog/IdentEntryLink.v. The B closer is
    lib/B/IdentTopB.v, the B twin of lib/A/IdentTop.v; where fuzz_grant's AGrantT.v:40 assumes LIBX_ALL, it has the lemma
      identb_lib_all : forall rc, @tfib_lib_contract_x_all rc identity_shape <B record> ameter_triv XL0 XL0 RLO RHI
@@ -13,11 +14,11 @@
    restates), as in the A link. IdentTopB.v:261 (Let LIBX) converts the copy into the B core's YCfn.v:70.
 
    The sink head is PASSED, never inferred: `ident_asan_ubsan_sink_head` has sk_ofl_head = 0x5f8948, the `ofl_head`
-   of fuzz_identity.asan-ubsan (pyelftools; the B core's lib/ReusableB/YE2k.v:32 A_ofl_head). IdentBSkGuard.v
+   of fuzz_identity.asan-ubsan (pyelftools; the B core's lib/ReusableB/YE2k.v:33 A_ofl_head). IdentBSkGuard.v
    (required below, after the library shape that loads YI5b) removes the plain head 0x50640 from resolution, and
    every use below names the head with `@`.
 
-   Instantiation (lib/B/Prog/LLVMFuzzerTestOneInput.v:90-127): A_LLVMF 0x80774, RA_LLVMF 0x80670, A_EMPTY 0x5d7920,
+   Instantiation (lib/B/Prog/LLVMFuzzerTestOneInput.v:91-128): A_LLVMF 0x80774, RA_LLVMF 0x80670, A_EMPTY 0x5d7920,
    LLVMF_STK 32768, EV_LIB 2000, LIVE_LIB 2^33, MT := ameter_triv, XM_LIB = XN_LIB := XL0.
 
    What this file discharges at the instantiation: HLIBK, HRO, HSTK, HEV, HLIVE, HXM, HXN, HMT0, MTL, MTF, RO
@@ -295,7 +296,7 @@ exact (@reac_box_name.pb_reac_box_name fx rc SKB PI IdentB G TL LAWS ML ASM3 SMP
 AMEMSET AMEMCPY ABCMP ASTRLEN ASSF5 GM IV PSIG HSC_ok HSB_ok).
 Qed.
 
-(* ---- the entry contract's image facts (LLVMFuzzerTestOneInput.llvmf_img, LLVMFuzzerTestOneInput.v:244-298) --- *)
+(* ---- the entry contract's image facts (LLVMFuzzerTestOneInput.llvmf_img, LLVMFuzzerTestOneInput.v:245-299) --- *)
 (* Every byte llvmf_img reads is read-only data of fuzz_identity.asan-ubsan: .rodata (segment 0x10000, r--) or
    .data.rel.ro inside [pa_relro_lo, pa_relro_hi) = [0x9b080, 0x9d388). arodata_okP gives such a byte as seg_rom
    when it is not the runtime's own and not errno, and each seg_rom byte is then decided by vm_compute of a closed
@@ -618,7 +619,7 @@ split; [reflexivity|]. exact (himgb_str W mem _ _ HR imgb_nmout_b).
 Qed.
 Lemma imgb_cat_al : VAL (A_OBJ 28) mod 8 = 0.
 Proof. change (VAL (A_OBJ 28)) with 0x9b520. reflexivity. Qed.
-(* The catalogue-row clause (LLVMFuzzerTestOneInput.v:289-298), at the given state; the row's four values are
+(* The catalogue-row clause (LLVMFuzzerTestOneInput.v:290-299), at the given state; the row's four values are
    read from the image bytes (himgb_cat_P/I/O/S). *)
 Lemma imgb_cat : forall (W : world SEGS) mem, himgb_ro W mem ->
 forall r, 0 <= r < reac_box_catalogue.BOX_COUNT ->
@@ -664,7 +665,7 @@ split; [exact (proj1 imgb_hw_rng)|]. split; [exact (proj2 imgb_hw_rng)|].
 split; [exact (imgb_hw17 W mem HR)|].
 split; [exact imgb_sw_al|].
 split; [exact (imgb_sw W mem HR)|].
-(* object 8: garr8 form (frozen 66237756353) or rbn_imgstr form, whichever the contract states *)
+(* object 8: garr8 form (frozen) or rbn_imgstr form, whichever the contract states *)
 split; [first [exact (imgb_reac W mem HR) | exact (imgb_reac_str W mem HR)]|].
 split; [exact (imgb_paren W mem HR)|].
 split; [exact (imgb_in W mem HR)|].

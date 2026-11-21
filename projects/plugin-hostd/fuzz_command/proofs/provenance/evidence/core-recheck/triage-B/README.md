@@ -15,7 +15,7 @@ Rule 24: no function proved. Read-only: no .v file was edited, nothing was built
 
 Images (role, sha256 first 12): fuzz_command.asan-ubsan (image B) bbe55d24d096, symbols from its twin 658cefbe806b;
 fuzz_command.asan (image A) c0661b96b5bd, twin 68db792d5fa7; cgif_file_fuzzer.asan-ubsan 1c29845fe605, twin
-ce511d541cda. Ours at plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record), cgif at c8557374ad2e.
+ce511d541cda. Ours at plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record), cgif.
 
 ## What was run
 

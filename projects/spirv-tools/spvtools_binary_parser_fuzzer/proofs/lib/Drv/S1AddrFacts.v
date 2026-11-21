@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writable stack is the launch's 6144513 bytes below sp0). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -80,7 +81,7 @@ Section Stack.
     apply Hdef; [lia | exact W].
   Qed.
 
-  Lemma stack_defined : forall M a, stack_writableZ M sp0 -> sp0 - 8388608 <= a < sp0 -> M (Z_to_bv 64 a) <> None.
+  Lemma stack_defined : forall M a, stack_writableZ M sp0 -> sp0 - 6144513 <= a < sp0 -> M (Z_to_bv 64 a) <> None.
   Proof.
     intros M a T8 Ha.
     pose proof (store_ok_all RSEGS M 1 (Z_to_bv 64 (sp0 - 8388608 + (a - (sp0 - 8388608)))) ltac:(rewrite u64_of by lia; cbn; lia)

@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the entry segment of the image-A walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput, with proof steps adapted from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlStampHeadamp.v (pb_reac_ctrl_stamp_headamp's prologue and its class-0 stack malloc, origin/cold/pg-prog), proofs/libreac/fuzz_grant/lib/A/Prog/GrantACja.v (land_m32, denot_and_m32, sp1_facts), proofs/libreac/fuzz_grant/lib/A/Prog/GrantFrame.v (val_mem_of_rd32, rdword_of_val_mem, val_mem_moved), lib/Reusable/YCbq.v (call_effect_journal) and lib/A/Prog/YC85.v (aj_stack_malloc_atS); module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/A/Prog/CanKit.v, with its module paths and module names changed; 1161 of its 1364 lines of code are new or changed and 321 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_meter_cgW: wire_check_meter_cg (wire_sigma WS_check_meter) at image B (fuzz_wire.asan-ubsan, check_meter at
    0x8016c) from the callee contracts the statement names, proving the frozen statement lib/B/Prog/check_meter_cg.v
    wire_check_meter_holds_stmt. No released ASan walk of this function exists, so the walk is written new: in the walk
-   style of reac-repacer/fuzz_uci's lib/B/Prog/check_value_cgW.v (recipes commit 0295462466b2; footprint runs carried
+   style of reac-repacer/fuzz_uci's lib/B/Prog/check_value_cgW.v (recipes; footprint runs carried
    into SRr, an inner journal over the call's stack window, each call cut by its callee contract), with the fake frame
    of reac-repacer/fuzz_uci's lib/B/Prog/check_clamp_cgW.v (the class-0 stack malloc composed into the journal, as
    that unit's lib/B/Prog/UciCcKit.v ucc_stack_malloc_at, and the frame given back through the statement's
@@ -267,7 +268,7 @@ Qed.
 
 (* ======================================================================== *)
 (* The class-0 stack malloc in the caller's journal (fuzz_uci UciCcKit.v ucc_sm_path, ucc_sm_effect_journal,     *)
-(* ucc_stack_malloc_at, recipes commit 0295462466b2), at this unit's segments and core                          *)
+(* ucc_stack_malloc_at, recipes), at this unit's segments and core                          *)
 (* ======================================================================== *)
 
 Lemma cm_sm_path : forall cid s pos s',

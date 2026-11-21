@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/R_strchr.v, with its module paths and module names changed; 28 of its 47 lines of code are new or changed and 416 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/Prog/strchr_wrap_c.v: ported from a working branch affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/B/Prog/strchr_wrap_c.v, which equals the A->B relocation (Theorem Labs tools) of lib/A/Prog/strchr_wrap_c.v at a working branch 5d8d8a15571 modulo module paths; module paths for this tree. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/Prog/strchr_wrap_c.v: ported from a working branch proofs/omx-clap-core/fuzz_manifest/lib/B/Prog/strchr_wrap_c.v, which equals the A->B relocation (Theorem Labs tools) of lib/A/Prog/strchr_wrap_c.v at a working branch modulo module paths; module paths for this tree. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Lib Require Import PropExec MState Mem Exec Frame Step Cells Arr Bytes.

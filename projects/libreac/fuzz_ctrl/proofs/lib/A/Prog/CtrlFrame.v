@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC44.v for libreac/fuzz_grant's program walk: the listing's names are gsym; uar_got_regionP is the side-stack flag's GOT slot, object 0; PALibF holds fuzz_grant.asan's side-stack entries for frame classes 0, 1, 2 and 4 and the separation of its two GOT slots (objects 1 and 0), the shadow-base cell (object 32) and the side-stack flag cell; palf_got_uar and palf_uar_img are lemmas from PALib (flag cell object 33, image end 0x5fa000) in place of fields; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantFrame.v of a working branch ca2ec2ecd18 for libreac/fuzz_ctrl: module paths and names re-keyed to fuzz_ctrl; PALibF holds fuzz_ctrl.asan's side-stack entries for frame classes 0, 1, 2 and 6 (fuzz_ctrl calls __asan_stack_malloc_6, not _4), the shadow-base cell is object 30 and the side-stack flag cell object 31, and the image ends at 0x5fe000. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantFrame.v of a working branch for libreac/fuzz_ctrl: module paths and names re-keyed to fuzz_ctrl; PALibF holds fuzz_ctrl.asan's side-stack entries for frame classes 0, 1, 2 and 6 (fuzz_ctrl calls __asan_stack_malloc_6, not _4), the shadow-base cell is object 30 and the side-stack flag cell object 31, and the image ends at 0x5fe000. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.

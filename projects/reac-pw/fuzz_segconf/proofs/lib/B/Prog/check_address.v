@@ -5,11 +5,12 @@
    386-392, 532-535, for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_family_stem.v, with its module paths and module names changed; 95 of its 123 lines of code are new or changed and 244 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/fuzz_catalogue_rowA.v, with its module paths and module names changed; 335 of its 377 lines of code are new or changed and 81 lines of the source are left out. *)
-(* the image-B port of lib/A/Prog/check_address.v (commit 254b4716bf4f, walk text of
-   9ba251f91a3c): the walk of check_address on fuzz_segconf.asan-ubsan (image B, entry BASE + AF_check_address =
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* the image-B port of lib/A/Prog/check_address.v (walk text):
+   the walk of check_address on fuzz_segconf.asan-ubsan (image B, entry BASE + AF_check_address =
    0x84dc0 + 0x26ac = 0x8746c, 84 bytes, 21 instructions, a 32-byte frame, no instrumented check, no side-stack frame),
    against lib/B/Prog/check_address_c.v's check_address_contract (image B's copy of lib/A/Prog/check_address_c.v,
-   FINAL 6f783602b5e3).
+   FINAL).
    RELOCATION: image B's code is image A's 20 instructions word for word except the four pc-relative `jal` words
    (wrapper_strlen 0x43a98 at 0x87488, wrapper_strncmp 0x43aa4 at 0x87498, the no-return hook 0x5df0c at 0x874b4,
    abort 0x910c4 at 0x874b8), which the listing states as the slots PCall SS_<callee>; UBSan adds one word, the trap

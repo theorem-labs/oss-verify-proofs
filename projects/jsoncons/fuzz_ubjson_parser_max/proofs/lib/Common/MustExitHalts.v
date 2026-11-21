@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: srealizes_top is stated over run_segments and takes the launch facts valid_launch, entry_launch_ok_va, in_channel_reader and valid_input_either, which halts_of_srealizes_top proves from valid_input through the model's named accessors; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Corpus/CorpusHalts.v, lines 26-30, 40-51. *)
 From Stdlib Require Import ZArith NArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run RiscvSemantics MemImageType StackLayout.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -13,9 +14,12 @@ Definition srealizes_top (segs : list Segment) (cfgF : SpuriousCfg) (pc : N) (ph
 forall sp brk mbase (rdraw : EntryDraw) (inp : ProcInput),
 valid_sp sp -> valid_brk segs brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp -> in_channel_reader inp = true ->
 valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> valid_creds inp ->
 valid_hwcap (in_hwcap inp) -> in_va_size inp = Sv48 ->
-srealizes segs cfgF (init_config segs pc ph sp brk mbase rdraw LIM inp) (T inp).
+valid_input_either inp ->
+srealizes (run_segments segs inp sp mbase) cfgF
+  (init_config (run_segments segs inp sp mbase) pc ph sp brk mbase rdraw LIM inp) (T inp).
 Theorem halts_of_srealizes_top : forall segs cfgF pc ph LIM (S : list word) (T : ProcInput -> TSet),
 ShippedBudgets.lim_source <= LIM ->
 (forall inp, exits_in S (T inp)) ->
@@ -23,13 +27,20 @@ srealizes_top segs cfgF pc ph LIM T ->
 halts_allowed_T_scfg_budgets forced_only_cfg ShippedBudgets.lim_source S (mkImage segs pc ph).
 Proof.
 intros segs cfgF pc ph LIM S T Hle HX TOP [sp brk mbase rdraw] inp Hen Hvalid Hwb.
-pose proof Hvalid as Hvalid'.
-destruct Hvalid as (Hargv & Henvp & Hfs & Hrel & Hcreds & Hnofile & Hsigmask & Hhw & Habrt & Hsv48 & _).
-rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
+pose proof (valid_input_argv _ Hvalid) as Hargv.
+pose proof (valid_input_envp _ Hvalid) as Henvp.
+pose proof (valid_input_fs _ Hvalid) as Hfs.
+pose proof (valid_input_creds _ Hvalid) as Hcreds.
+pose proof (valid_input_hwcap _ Hvalid) as Hhw.
+pose proof (valid_input_va_size _ Hvalid) as Hsv48.
+pose proof (valid_input_launch _ Hvalid) as Hvl.
+pose proof (valid_input_channel_reader _ Hvalid) as Hrd.
+pose proof (valid_input_either_of_valid_input _ Hvalid) as Hvi.
+rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
 assert (M2 : must_exit_in_scfg cfgF S (mkImage segs pc ph) LIM (mkEntry sp brk mbase rdraw) inp).
 { cbn [must_exit_in_scfg].
-apply (srealizes_must_exit_init segs cfgF S pc ph sp brk mbase rdraw LIM inp (T inp)).
-- exact (TOP sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds Hhw Hsv48).
+apply (srealizes_must_exit_init (run_segments segs inp sp mbase) cfgF S pc ph sp brk mbase rdraw LIM inp (T inp)).
+- exact (TOP sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hvl Hlau Hrd Hargv Henvp Hfs Hcreds Hhw Hsv48 Hvi).
 - exact (HX inp). }
 apply (must_exit_in_scfg_budget_transfer forced_only_cfg S (mkImage segs pc ph) ShippedBudgets.lim_source LIM
 (mkEntry sp brk mbase rdraw) inp Hle).

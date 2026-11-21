@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/FSRealloc_S1_u.v (337e6a94485, blob 90d8b9f8c4b8) for realloc(NULL, n) (segment S5, RGtop's seg_npre) at the cf instance: the seed pins a0 = 0 (SS0's register 10 is SLit 0, fh_Hp10 : a0 = 0) and drops p's facts (FFN's facts 10 and aIM, fh_Hp, IMv), and the thread stats words (jr1 / jr2, REG0's T + 2856 region, WIN's third window), since asan_realloc's NULL arm does not enter Reallocate. *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1_u.v (hub ddc081c1a03, blob df3bd6c76d91) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), every image numeral moved by symbol + offset; the request size's range (FFN fact 11, fh_Hn) widened from [1, MALLOC_MAX) to [1, 2 ^ 30), the cf instance's request bound cf_malloc_max < 2 ^ 30; record, the internal file A5.md. *)
+(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/FSRealloc_S1_u.v (blob 90d8b9f8c4b8) for realloc(NULL, n) (segment S5, RGtop's seg_npre) at the cf instance: the seed pins a0 = 0 (SS0's register 10 is SLit 0, fh_Hp10 : a0 = 0) and drops p's facts (FFN's facts 10 and aIM, fh_Hp, IMv), and the thread stats words (jr1 / jr2, REG0's T + 2856 region, WIN's third window), since asan_realloc's NULL arm does not enter Reallocate. *)
+(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1_u.v (blob df3bd6c76d91) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), every image numeral moved by symbol + offset; the request size's range (FFN fact 11, fh_Hn) widened from [1, MALLOC_MAX) to [1, 2 ^ 30), the cf instance's request bound cf_malloc_max < 2 ^ 30; record, the internal file A5.md. *)
 (* fuzz_state image A, realloc segment S1 (RtS1, 2026-10-29).
    The walk's definitions: free_hyps (realloc form), E0, REG0, SS0, WIN, MEQI.
-   Port of cgif_rgb_fuzzer lib/YF6u.v (released donor of the realloc prefix; hub checkout 102d6008296,
+   Port of cgif_rgb_fuzzer lib/YF6u.v (released donor of the realloc prefix; hub checkout theorem-labs/oss-verify-proofs@6b32741d849a,
    byte-equal to h-state-a5/realloc-thin/donor/), translated by h-state-a5/realloc-thin/s1/translate_rgb_to_fs.py:
    module names mapped to fs's (the map checked on cgif_rgb YF2w / YF2i / YF1y against fs's A/AFh1 / AFgn / AFg3),
    img_* tactics to plain ones, (addr + D_xxx) to fs.asan addresses (the internal file fs-addr-map.tsv; 0x53b7c = return pc
    of 0x53b78 `jal 0xb440` (-> 0x5efb8), disassembled). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

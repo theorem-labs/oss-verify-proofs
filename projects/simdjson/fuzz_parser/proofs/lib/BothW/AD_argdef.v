@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: handoff_argdef is proved over the new block layout (argc and argv's two pointer words from the start state's layout facts; argv[2..], envp and the strings at the block's top from the launch's initial memory by the new bmem0_def; the head from the auxv to argv[0] by main_head_def); the old-layout lemmas wrap_def and image_top are removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -29,27 +30,25 @@ Lemma mro8_def : forall V m a v x, mfact_ok bsegs V m (MRo a 8 v) -> zv V a <= x
   exists b, m (wa x) = Some b.
 Proof. intros V m a v x H Hx Hlo. cbn [mfact_ok] in H. eapply bytes_at_def; [exact H| rewrite length_N_to_le_bytes; lia| exact Hlo]. Qed.
 
-(* [comment removed for export] *)
-Lemma wrap_def : forall ph sp argv envp uid hw draw x, bv_unsigned sp <= x < bv_unsigned sp + Z.of_nat (length (entry_stack_image ph sp argv envp uid hw draw)) ->
-  x < 2^64 -> exists b, wrap_mem ph sp argv envp uid hw draw (wa x) = Some b.
+(* LPS 727298f3: the launch's initial memory is defined over the whole block, from sp up to the
+   stack VMA's end (InitMem's [init_at_block], the block's length from the launch) *)
+Lemma bmem0_def : forall sp brk mb dr inp x,
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb dr) inp ->
+  bv_unsigned sp <= x < bv_unsigned (ed_top dr) ->
+  exists b, bmem0 (mkEntry sp brk mb dr) inp (wa x) = Some b.
 Proof.
-  intros ph sp argv envp uid hw draw x Hx H64. rewrite init_at. rewrite wa_unsigned by (pose proof (bv_unsigned_in_range 64 sp); lia).
-  replace (Z.leb (bv_unsigned sp) x) with true by (symmetry; apply Z.leb_le; lia).
-  replace (Z.ltb (x - bv_unsigned sp) (Z.of_nat (length (entry_stack_image ph sp argv envp uid hw draw)))) with true by (symmetry; apply Z.ltb_lt; lia).
-  destruct (nth_error _ _) as [b|] eqn:E; [exists b; reflexivity|]. apply nth_error_None in E. lia.
+  intros sp brk mb dr inp x Hlau Hx. unfold bmem0. cbn [en_sp en_draw en_mmap_base].
+  pose proof (length_entry_stack_image_launch Sv48 inp mb b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) sp brk dr Hlau) as L.
+  pose proof (top_of_launch inp sp brk mb dr Hlau) as TOPHI. unfold sp_window_hi in TOPHI.
+  pose proof (bv_unsigned_in_range 64 sp) as RS.
+  assert (Ux : bv_unsigned (wa x) = x) by (apply wa_unsigned; unfold bv_modulus in *; lia).
+  rewrite (init_at_block inp mb b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) sp dr (wa x)) by (rewrite Ux; lia).
+  destruct (nth_error _ _) as [b|] eqn:E; [exists b; reflexivity|]. apply nth_error_None in E. rewrite Ux in E. lia.
 Qed.
 
-(* [comment removed for export] *)
-Lemma image_top : forall ph sp argv envp uid hw draw,
-  bv_unsigned sp + Z.of_nat (length (entry_stack_image ph sp argv envp uid hw draw))
-  = page_round_up_Z (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw draw))).
-Proof.
-  intros. unfold entry_stack_image. cbv zeta. rewrite length_app, length_entry_slack. unfold entry_slack_len, entry_page_top, entry_block_top.
-  set (t := bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw draw))).
-  assert (t <= page_round_up_Z t) by (unfold page_round_up_Z, page_size; Z.div_mod_to_equations; lia).
-  rewrite Nat2Z.inj_add, Z2Nat.id by lia. unfold t. lia.
-Qed.
-
+(* LPS 727298f3: every byte from sp up to sp's page end is defined at main's entry: argc and argv's
+   two pointer words (the facts), argv[2..] and envp (the launch's image), the head from the auxv to
+   argv[0] ([main_head_def]), the strings at the block's top (the launch's image). *)
 Theorem handoff_argdef : forall en inp w V m ms mo,
   valid_entry (mkImage bsegs b_init_pc b_phdrs) en inp -> valid_input_either inp ->
   main_open en inp w V m ms mo ->
@@ -57,74 +56,37 @@ Theorem handoff_argdef : forall en inp w V m ms mo,
   exists b, m (wa x) = Some b.
 Proof.
   intros en inp w V m ms mo HV HI HM x Hx.
-  destruct en as [sp brk0 mbase rdraw]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ HI) in HV. destruct HV as (Hsp & _ & _ & Hfit).
-  pose proof HI as (Hva & Hve & _).
-  pose proof HM as (_ & VR & PIN & HMF & _ & _ & _ & HID & _). apply Forall_app in HMF as [HMF _].
-  destruct PIN as (P0 & P6 & P10 & PSP & P1 & P2 & P3 & P7 & P4 & _).
+  pose proof (main_hidden en inp w V m ms mo HM) as HIDm.
+  pose proof (main_head_def en inp w V m ms mo HM) as HEAD.
+  pose proof HM as (_ & VR & PIN & HMF & _).
+  destruct PIN as (P0 & P6 & P10 & PSP & P1 & P2 & P3 & P7 & P4 & P5 & P8 & P9 & P11 & P12).
+  apply Forall_app in HMF as [HMF0 HMF]. apply Forall_app in HMF as [_ HL].
+  unfold both_mem_facts_l in HL. apply Forall_cons_iff in HL as [H0 HL]. apply Forall_cons_iff in HL as [H1 _].
+  cbn [mfact_ok] in H0, H1. rewrite !zv_mkaddr in H0, H1.
+  assert (ZS : zv V sp0_z = bv_unsigned (en_sp en)).
+  { let ev := eval vm_compute in sp0_z in change sp0_z with ev. cbn [zv]. lia. }
+  rewrite ZS in H0, H1.
+  destruct en as [sp brk0 mbase rdraw].
+  rewrite (valid_entry_either _ _ _ _ _ _ _ _ HI) in HV. destruct HV as (Hsp & _ & _ & _ & Hlau).
   cbn [en_sp en_draw en_brk en_mmap_base] in *.
-  set (argv := in_argv inp) in *. set (envp := in_envp inp) in *.
-  set (usp := bv_unsigned sp) in *.
-  pose proof (AsanInit.bsb_ge b_phdrs sp rdraw argv envp (in_uid inp) (in_hwcap inp)) as [G GM].
-  pose proof (AsanInit.len_av b_phdrs sp rdraw argv envp (in_uid inp) (in_hwcap inp) Hva) as LAV. pose proof (AsanInit.len_ev b_phdrs sp rdraw argv envp (in_uid inp) (in_hwcap inp) Hve) as LEV.
-  pose proof (AsanInit.usp_fit b_phdrs sp rdraw argv envp (in_uid inp) (in_hwcap inp) Hfit) as UF.
-  pose proof (image_top b_phdrs sp argv envp (in_uid inp) (in_hwcap inp) rdraw) as IT.
-  set (LB := Z.of_nat (length (build_stack_bytes b_phdrs sp argv envp (in_uid inp) (in_hwcap inp) rdraw))) in *.
-  assert (HW : 8 * Wblk (mkEntry sp brk0 mbase rdraw) inp = LB - 16 - (8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184)).
-  { unfold Wblk. cbn [en_sp en_draw]. fold argv envp. fold LB. Z.div_mod_to_equations. lia. }
-  assert (USPLO : 0x7fff80000000 <= usp) by (destruct Hsp as [Hlo _]; unfold sp_window_lo in Hlo; lia).
-  assert (PT : usp - usp mod 4096 + 4096 <= page_round_up_Z (usp + LB)) by (unfold page_round_up_Z, page_size; Z.div_mod_to_equations; lia).
-  assert (XH : x < 2^47) by (unfold page_round_up_Z, page_size in *; Z.div_mod_to_equations; lia).
-  (* [comment removed for export] *)
-  assert (HIDDEF : hidden_arg (mkEntry sp brk0 mbase rdraw) inp x -> exists b, m (wa x) = Some b).
-  { intros Hh. rewrite (HID x Hh). apply wrap_def; [| lia]. rewrite IT. fold LB.
-    unfold hidden_arg in Hh. cbn [en_sp] in Hh. fold argv envp usp in Hh. rewrite HW in Hh. unfold page_round_up_Z, page_size in *. Z.div_mod_to_equations. lia. }
-  assert (V0E : 32768 * V 0%nat + (16 * V 6%nat + 4096 * V 10%nat) = usp) by lia.
-  destruct (Z.lt_ge_cases x (usp + 24)) as [C1|C1].
-  { destruct (Z.lt_ge_cases x (usp + 8)) as [D1|D1]; [| destruct (Z.lt_ge_cases x (usp + 16)) as [D2|D2]].
-    - mf V m HMF (MRo (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) 8 (ZV 1)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 184))) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 16)) 8 (ZMul (ZLtu (ZLit 1) (ZV 1)) (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 3) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 185)))) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia]. }
-  destruct (Z.lt_ge_cases x (usp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 24)) as [C2|C2].
-  { apply HIDDEF. unfold hidden_arg. cbn [en_sp]. fold argv envp usp. left. lia. }
-  destruct (Z.lt_ge_cases x (usp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184)) as [C3|C3].
-  { set (j := (x - (usp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 24)) / 8).
-    assert (J : 0 <= j < 20) by (unfold j; Z.div_mod_to_equations; lia).
-    assert (JX : usp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 24 + 8 * j <= x
-                 < usp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 24 + 8 * j + 8) by (unfold j; Z.div_mod_to_equations; lia).
-    clearbody j.
-    assert (JC : j = 0 \/ j = 1 \/ j = 2 \/ j = 3 \/ j = 4 \/ j = 5 \/ j = 6 \/ j = 7 \/ j = 8 \/ j = 9 \/ j = 10 \/ j = 11 \/ j = 12 \/ j = 13
-                 \/ j = 14 \/ j = 15 \/ j = 16 \/ j = 17 \/ j = 18 \/ j = 19) by lia.
-    destruct JC as [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | ->]]]]]]]]]]]]]]]]]]].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 24)) 8 (ZLit 3)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 32)) 8 (ZLit 65600)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 40)) 8 (ZLit 4)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 48)) 8 (ZLit 56)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 56)) 8 (ZLit 5)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 64)) 8 (ZLit 11)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 72)) 8 (ZLit 16)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 80)) 8 (ZV 9)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 88)) 8 (ZLit 6)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 96)) 8 (ZLit 4096)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 104)) 8 (ZLit 11)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 112)) 8 (ZV 8)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 120)) 8 (ZLit 12)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 128)) 8 (ZV 8)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 136)) 8 (ZLit 23)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 144)) 8 (ZLit 0)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 152)) 8 (ZLit 25)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 160)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 8) (ZV 4)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 184))) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 168)) 8 (ZLit 0)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia].
-    - mf V m HMF (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 176)) 8 (ZLit 0)) HJ. eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia]. }
-  destruct (Z.lt_ge_cases x (usp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184 + 8 * Wblk (mkEntry sp brk0 mbase rdraw) inp)) as [C4|C4].
-  { apply HIDDEF. unfold hidden_arg. cbn [en_sp]. fold argv envp usp. right; left. lia. }
-  destruct (Z.lt_ge_cases x (usp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 200 + 8 * Wblk (mkEntry sp brk0 mbase rdraw) inp)) as [C5|C5].
-  { mf V m HMF (MBlobD (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 8) (ZV 4)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 184)) 16) HJ. cbn [zv] in HJ.
-    destruct (HJ (x - (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (8 * V 4%nat + (16 * V 6%nat + 4096 * V 10%nat)))) + 184)) ltac:(lia)) as [b Hb].
-    exists b. replace x with (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (8 * V 4%nat + (16 * V 6%nat + 4096 * V 10%nat)))) + 184
-                               + (x - (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (8 * V 4%nat + (16 * V 6%nat + 4096 * V 10%nat)))) + 184))) by lia.
-    exact Hb. }
-  apply HIDDEF. unfold hidden_arg. cbn [en_sp]. fold argv envp usp. right; right. split; [lia|].
-  rewrite HW. replace (usp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 200 + (LB - 16 - (8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184)))
-    with (usp + LB) by lia. lia.
+  pose proof (geom_of_launch Sv48 inp sp brk0 mbase rdraw Hlau) as GEOM. unfold geom_ok, head_len, lsb in GEOM.
+  assert (TOPP : bv_unsigned (ed_top rdraw) mod 4096 = 0)
+    by (destruct Hlau as ((T1 & _) & _); unfold page_size in T1; Z.div_mod_to_equations; lia).
+  assert (USPLO : 0x7fff80000000 <= bv_unsigned sp) by (destruct Hsp as [Hlo _]; unfold sp_window_lo in Hlo; lia).
+  assert (XT : x < bv_unsigned (ed_top rdraw)) by (Z.div_mod_to_equations; lia).
+  assert (IMGD : bv_unsigned sp <= x -> exists b, bmem0 (mkEntry sp brk0 mbase rdraw) inp (wa x) = Some b)
+    by (intros XL; apply (bmem0_def sp brk0 mbase rdraw inp x Hlau); lia).
+  destruct (Z.lt_ge_cases x (bv_unsigned sp + 8)) as [C0|C0].
+  { mf V m HMF0 (MRo (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) 8 (ZV 1)) HJ.
+    eapply bytes_at_def; [exact HJ| rewrite length_N_to_le_bytes; lia| lia]. }
+  destruct (Z.lt_ge_cases x (bv_unsigned sp + 16)) as [C1|C1].
+  { eapply bytes_at_def; [exact H0| rewrite length_N_to_le_bytes; lia| lia]. }
+  destruct (Z.lt_ge_cases x (bv_unsigned sp + 24)) as [C2|C2].
+  { eapply bytes_at_def; [exact H1| rewrite length_N_to_le_bytes; lia| lia]. }
+  destruct (Z.lt_ge_cases x (bv_unsigned sp + 8 * Z.of_nat (length (in_argv inp)) + 8 * Z.of_nat (length (in_envp inp)) + 24)) as [C3|C3].
+  { rewrite (HIDm x) by (unfold hidden_arg; cbn [en_sp]; left; lia). apply IMGD. lia. }
+  destruct (Z.lt_ge_cases x (str0_of (mkEntry sp brk0 mbase rdraw) inp)) as [C4|C4].
+  { apply HEAD. cbn [en_sp]. lia. }
+  rewrite (HIDm x) by (unfold hidden_arg; cbn [en_sp en_draw]; right; lia). apply IMGD. lia.
 Qed.
 End CANSEC1.

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgSeg.v at 884d339334e (its cut-state
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgSeg.v (its cut-state
    machinery, the cut states of the build segment M01 and their continuations, and its 21 piece statements) for the
    image-B builder; the hs_ prefix renamed to hsu_, the image record and the builder's own pcs made parameters
    (Section variables, the record hsu_bld) in place of image A's module, every register, real-frame cell and frame

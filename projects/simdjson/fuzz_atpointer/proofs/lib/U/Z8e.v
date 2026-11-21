@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's stack window and the run_ok premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -104,7 +105,7 @@ Definition rtarget_run_stmt : Prop :=
 Definition rmain_stmt : Prop :=
   forall (sp0 : word) (argv envp : list (list byte)) (uid : word) (ms : machine_state),
     valid_sp sp0 -> ceil_ok sp0 -> valid_argv argv -> valid_envp envp ->
-    entry_stack_fits sp0 argv envp ->
+    entry_stack_fits sp0 argv envp -> run_ok sp0 argv envp ->
     at_main sp0 argv envp uid ms ->
     implM usegs (main_model io raw_malloc raw_free ustage alloc_init run alloc_count (argv_Z argv))
           (ps_init (reservedZ usegs))

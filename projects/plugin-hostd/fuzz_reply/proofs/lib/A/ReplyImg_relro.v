@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, for a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply; row img-relro-A of
    REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), CF-UNIT-HYPS.md:158 (sha256 77b3f94c95d2; internal record) "RELRO byte 0x9edd0 = 1 at cgif").
    rule 24: no function proved (kind: image row; a closed computation over reply's image A, fuzz_reply.asan, pin
    42c58610e125).  Reuse search: proof-index silent_rom silent_img C_SILENT rif_silent __sanitizer_silent_reports
-   (2026-10-30 04:5xZ): no lemma at any unit; C_SILENT is only the cf report walk's Definition (RepIFcf.v:70, cgif).
+   (2026-10-30 04:5xZ): no lemma at any unit; C_SILENT is only the cf report walk's Definition (RepIFcf.v:71, cgif).
 
    The fact.  cgif's 0x9edd0 (asan-ubsan image) is the .got word that __sanitizer::ReportFile::Write and
    CatastrophicErrorWrite load and test (`ld; beqz; ret`): the address of the absolute symbol
    __sanitizer_silent_reports, which this toolchain links as 1, so both return at once and no report is written.  The
-   cf report walk names it C_SILENT (RepIFcf.v:70) and takes it as the field
-   `rif_silent : val_mem tfibsegs (mrestrict (w_H W) mem) C_SILENT 8 1` of rep_img_facts (RepIFcf.v:170).
+   cf report walk names it C_SILENT (RepIFcf.v:71) and takes it as the field
+   `rif_silent : val_mem tfibsegs (mrestrict (w_H W) mem) C_SILENT 8 1` of rep_img_facts (RepIFcf.v:171).
    At reply A (fuzz_reply.asan, read from the pin and its unstripped twin): __sanitizer_silent_reports = 1 (SHN_ABS);
    the .got word 0x9e598 holds it ([0x9d970, 0x9e6c8) is .got, inside PT_GNU_RELRO [0x9d438, 0x9f000)).  Readers, by a
    linear decode of .text (every auipc + ld resolving to the word): TWO, CatastrophicErrorWrite+0x8 0x6209c
@@ -30,7 +31,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YP09 Y
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AB1v AB13.
 Open Scope Z_scope.
 
-(* The cf report walk's C_SILENT (RepIFcf.v:70) at reply image A. *)
+(* The cf report walk's C_SILENT (RepIFcf.v:71) at reply image A. *)
 Definition C_SILENT_A : Z := 0x9e598.
 
 (* The word's 8 bytes lie in the numeric RELRO range [0x9d438, 0x9f000) that A/W_img.v:52 fr_relro_img states. *)

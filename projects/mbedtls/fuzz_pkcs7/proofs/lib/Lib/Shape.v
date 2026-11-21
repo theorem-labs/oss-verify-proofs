@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_ok's third conjunct, sys_rob, so a walk over the binary's segments lifts to the run's segment list, with the proofs that destruct or build a node updated; shape_error_free_equiv's realizes premises restated over run_segments; RomBase imported). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common Require Import SimInv ExitSim.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common.Cfg Require Import RomBase.
 
 (* [comment removed for export] *)
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -127,10 +129,15 @@ Section WithSegs.
 Variable segs : list Segment.
 
 (* [comment removed for export] *)
+(* LPS revision (run_segments): a node also carries [RomBase.sys_rob] — its system call, if any,
+   answers the same for every larger read-only backing — so that a walk over the binary's own
+   segments lifts to the run's segment list ([RomStableP.run_init]).  Third conjunct (the form
+   the leptonica trees use), so no constructor or wrapper statement changes. *)
 Definition node_ok (c : config) (I : Type)
     (evs : I -> list event) (nx : I -> config) : Prop :=
   (forall i, sstep segs c (evs i) (SNext (nx i)))
-  /\ (forall e st, sstep segs c e st -> exists i, e = evs i /\ st = SNext (nx i)).
+  /\ (forall e st, sstep segs c e st -> exists i, e = evs i /\ st = SNext (nx i))
+  /\ sys_rob segs c.
 
 (* [comment removed for export] *)
 Definition halted_ok (c : config) : Prop :=
@@ -186,7 +193,7 @@ Proof.
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
-    + destruct Hnode as [_ Hsound].
+    + destruct Hnode as [_ [Hsound _]].
       destruct (Hsound e (SNext c2) Hss) as (i & -> & Heq2).
       inversion Heq2; subst c2.
       exists i. right. exists tr2. split; [reflexivity | eapply IH; exact Hstar2].
@@ -233,7 +240,7 @@ Proof.
   intros c T e c' H; revert e c';
   induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
     intros e c' Hss.
-  - destruct Hnode as [_ Hsound].
+  - destruct Hnode as [_ [Hsound _]].
     destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
     inversion Heq2; subst c'. exists (T i). apply Hcont.
   - exfalso. apply (halted_ok_not_none c Hh). eapply sstep_halted_none; exact Hss.
@@ -246,7 +253,7 @@ Proof.
   intros c T e H; revert e;
   induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
     intros e Hss.
-  - destruct Hnode as [_ Hsound].
+  - destruct Hnode as [_ [Hsound _]].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
   - apply (halted_ok_not_none c Hh). eapply sstep_halted_none; exact Hss.
   - eapply IH; exact Hss.
@@ -333,13 +340,14 @@ Qed.
   RiscvSemantics.step segs ms = MachineOk ms' ->
   node_ok (mkCfg ms model) unit (fun _ => []) (fun _ => mkCfg ms' model).
 Proof.
-  intros ms model ms' Hh Hlazy Hsvc Hstep. split.
+  intros ms model ms' Hh Hlazy Hsvc Hstep. split; [|split].
   - intros []. apply (sstep_instr segs ms model ms' model);
       [assumption | assumption |].
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
   - intros e st Hss.
     destruct (sstep_instr_inv segs ms model ms' e st Hlazy Hsvc Hstep Hss) as [-> ->].
     exists tt. split; reflexivity.
+  - apply sys_rob_instr. exact Hsvc.
 Qed.
 
 #[using="Type"] Lemma rz_step : forall ms model ms' T,
@@ -395,10 +403,10 @@ Theorem shape_error_free_equiv :
   forall source_segs rpc rph rsp rbrk rmb (rrnd : EntryDraw)
          target_segs apc aph asp abrk amb (arnd : EntryDraw)
          (T : TSet) (inp : ProcInput),
-  realizes source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit inp) T ->
-  realizes target_segs
-    (init_config target_segs apc aph asp abrk amb arnd target_alloc_limit inp) T ->
+  realizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd source_alloc_limit inp) T ->
+  realizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd target_alloc_limit inp) T ->
   Equivalence.strong_equiv_error_free (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
      (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
@@ -409,7 +417,7 @@ Proof.
   - eapply realizes_no_error; exact Hsource.
   - eapply realizes_no_error; exact Htarget.
   - intro tr. cbn.
-    rewrite (realizes_obs_iff source_segs _ T Hsource tr).
-    rewrite (realizes_obs_iff target_segs _ T Htarget tr).
+    rewrite (realizes_obs_iff (run_segments source_segs inp rsp rmb) _ T Hsource tr).
+    rewrite (realizes_obs_iff (run_segments target_segs inp asp amb) _ T Htarget tr).
     reflexivity.
 Qed.

@@ -24,11 +24,12 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 414 of its 496 lines of code are new or changed and 4971 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B2.v; 387 of its 493 lines of code are new or changed and 390 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the join piece of
    segment B10b of reac_segconf_parse_file's walk, pb10_j_ok : PB10_J B (lib/B/Prog/pf_seg_B10b_k.v:
    HA_TAIL n -> H_JOIN n). The B10b segment lane of the image-B G3 walk owner, 2026-10-30. proves no function (kind: segment lemma of
    reac_segconf_parse_file's walk, piece PB10_J of segment B10b).
-   ADAPTED from a working branch's lib/A/Prog/pf_a10b_j.v (a B10b sub-lane, b0c590d766e1), re-derived on
+   ADAPTED from a working branch's lib/A/Prog/pf_a10b_j.v (a B10b sub-lane), re-derived on
    image B's code: B's join stores through s5 (A: s11) and does not reload s3 (A: `ld s3,0x98(s1)`); B's frame
    is 352 bytes (s1 in [sp0 - 368, sp0 - 352]; A: 320), STK 12832 (A: 12800); B's PF_SL has 23 slots at
    s1 + 0x00 .. 0xd8 (A: 0x20 .. 0xb8); B's pf_fi carries c's slot 0xc8 and s4 = SHADOW_OFF (A: s6), B's pf_st

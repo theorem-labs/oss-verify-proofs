@@ -5,11 +5,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2422 of its 2466 lines of code are new or changed and 984 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names and addresses changed; 898 of its 975 lines of code are new or changed and 2389 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW5.v; 156 of its 192 lines of code are new or changed and 939 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlTopFacts.v -- two walk-shell obligations of fuzz_ctrl image A's (ASan) cgif-form walk of
    LLVMFuzzerTestOneInput (libreac v1.9.0), PROVED: CTLRT_ENTRY and CHAIN_OF_CUT of lib/A/ACtl.v's Section Ctl
    (section 4).  CTLRT_ENTRY is in route (C)'s narrowed form (ctl_rt_C at the entry state).  Image B's twins are
-   lib/B/ACtlTopFacts.v's ctlrt_entry (a working branch 7882aff59d2) and chain_of_cut
-   (:164-261; written on a working branch c5887dd2836).  Written by a Theorem Labs lane (ctlrt_C_entry: a Theorem Labs lane;
+   lib/B/ACtlTopFacts.v's ctlrt_entry (a working branch) and chain_of_cut
+   (:164-261; written on a working branch).  Written by a Theorem Labs lane (ctlrt_C_entry: a Theorem Labs lane;
    chain_of_cut: a Theorem Labs lane, brief chain-of-cut.md (a working note, not in this delivery)).  rule 24:
    proves no function of the image; these are bridge lemmas of the walk shell.
 
@@ -23,8 +24,8 @@
      entry state (Reusable.YCbq.afn_pre), and the entry view's arodata_okS (its 11th conjunct).
      A.ProgWorld.arodata_okP_of_S turns the latter into arodata_okP at the same span, and a Theorem Labs lane's proved
      A.ProgWorldCtlRtC.ctl_rt_C_of_AR (CtrlTSyms + AR_laws only) gives ctl_rt_C at the entry.
-   - chain_of_cut: image B's proof (the donor's route, cgif A/ACf5.v rt_chain :170-185 and rt_trace_in :155-163,
-     origin/ossv/recipes c8557374ad2e), over A's names, A's window 416 and A's four return addresses.  The entry
+   - chain_of_cut: image B's proof (the donor's route, cgif A/ACf5.v rt_chain :170-185 and rt_trace_in :155-163),
+     over A's names, A's window 416 and A's four return addresses.  The entry
      chain is afn_pre's achain at the entry (`achain ly (aview ..) sp s0 []`).  The saved-register bytes give the
      caller frame record at fp = S (the entry sp): [S - 8] = RA_LLVMF and [S - 16] = the entry s0, read through the
      core's view by tf_rdword_le8 (the bytes lie in the journal's stack window, where the journal keeps every byte
@@ -70,7 +71,7 @@ Local Open Scope Z_scope.
 Local Notation segs := A.AB1v.tfibsegs.
 
 (* ---------------------------------------------------------------------------------------------------------
-   1. Byte-level bridge (image B's lib/B/ACtlTopFacts.v:64-130 at c5887dd2836, module paths only): an 8-byte
+   1. Byte-level bridge (image B's lib/B/ACtlTopFacts.v:64-130, module paths only): an 8-byte
    little-endian word stored at present bytes reads back through the core's view; chain_pre reads the layout
    only through its top. *)
 

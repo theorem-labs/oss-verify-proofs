@@ -1,6 +1,6 @@
 (* Threads U through the donor allocator walks in lib/A: AF0w.v / AFij-AFk2 (malloc), AFfs.v / AFeq-AFhl (free), and the shared AFhn.v, AFi3.v, AFk5.v, AFkb-AFkz.v, AFl1.v (refill). This file: the transfer kit, the shared any-U statements and twins, the region lemmas. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocR.v at c78cdbc32e3: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx), every statement is over B's tfibsegs (lib/B/YB1v.v); offU_low / offU_high rest on the segs-generic low_off_ush / high_off_ush of lib/A/FSupoisonARXm.v (section 1, moved there from lib/A/FSupoisonARX.v), not on lib/A/FSupoisonIntrinR.v, whose two lemmas are stated over A's segments. *)
+(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocR.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx), every statement is over B's tfibsegs (lib/B/YB1v.v); offU_low / offU_high rest on the segs-generic low_off_ush / high_off_ush of lib/A/FSupoisonARXm.v (section 1, moved there from lib/A/FSupoisonARX.v), not on lib/A/FSupoisonIntrinR.v, whose two lemmas are stated over A's segments. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

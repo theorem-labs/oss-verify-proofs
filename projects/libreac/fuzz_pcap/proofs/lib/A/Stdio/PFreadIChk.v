@@ -1,14 +1,15 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane), for libreac/fuzz_pcap's v1.9.0 ASan build.
 
    THE ACCESS_MEMORY_RANGE CHECK of ___interceptor_fread 0x43500, from the check's entry 0x43568 to the
    join 0x435c0: the overflow test, the fast shadow test for k <= 64 (nine granule cases), and the two
    slow paths for k > 64 through __asan_region_is_poisoned 0x54400 (low memory and high memory).
 
-   PORTED from proofs/cgif/cgif_file_fuzzer/lib/A/AE2b.v `fwr_check_srr` (origin/ossv/recipes
-   c8557374ad2e), through a Theorem Labs lane's relocation of that file to pcap's OWN fwrite interceptor
+   PORTED from proofs/cgif/cgif_file_fuzzer/lib/A/AE2b.v `fwr_check_srr`,
+   through a Theorem Labs lane's relocation of that file to pcap's OWN fwrite interceptor
    (lib/A/AE2b.v on a working branch, RC_ENTRY 0x437dc). FIVE addresses differ from
    cgif's, each RE-DERIVED on pcap's image, not taken from a donor label. Four of them also differ
    from pcap's own fwrite check; the fifth, mem_is_zero's return address (cgif 0x542cc -> pcap
@@ -52,10 +53,10 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    interceptor is exactly the hole in `tbl_icpt`). AE2y's `icpt_memisz`, `icpt_rodata` and the
    arithmetic helpers are reused unchanged: none of them names a code table.
 
-   RULE 24. SEND BACK: hit is an archived Theorem Labs lane input, not a released proof at ossv/recipes 25e3d17bdb50 (2026-10-29); walk kept (route
+   RULE 24. SEND BACK: hit is an archived Theorem Labs lane input, not a released proof (2026-10-29); walk kept (route
    ruling 19:27Z). The lookup and both passes are recorded in
    pcapreadi-fread-icpt.txt (sha256 82d195c482ff; internal record). The hit is
-   a working branch f2159272960 (I_freadw.v (sha256 e2b8ec5651ce; internal record), fread_wrap.v (sha256 c77a1af38f33; internal record)
+   a working branch (I_freadw.v (sha256 e2b8ec5651ce; internal record), fread_wrap.v (sha256 c77a1af38f33; internal record)
    `fread_wrap_holds`), which walks the same path on the same image but states
    `fread_wrap_contract` in a Theorem Labs lane's SR / a_call_post / AsanAllocAPI vocabulary over a
    different Reusable tree, parameterised over five opaque predicates, and is unbuilt at v1.9.0. It

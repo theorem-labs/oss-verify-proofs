@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's next_line, a NEW
    walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)), after lib/A/W_next_line.v
-   (a working branch c6a04e28b36), in the form of lib/B/W_check_bounded.v (a working branch 7e062bb9b9c). *)
+   (a working branch), in the form of lib/B/W_check_bounded.v (a working branch). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Reuse search, three clauses (the lookup runner run.sh (sha256 a7c4b196531a; internal record), as `run.sh next_line`): entry A 0x85d4c, entry B 0x8622c (static t symbol: no trampoline, no real_f slot of its own);
    0 released lemmas at either address; by name, the released proofs are the plain and ubsan builds only (lib/Prog/next_line.v, next_line_c.v; lib/U/Prog/next_line.v, next_line_c.v); the callee memchr (image B): trampoline 0x42208, musl memchr 0x96950, REAL(memchr) slot 0x9fca8, 0 released lemmas each.
    An image-B proof of next_line exists over the STOPPED bespoke route: lib/B/Prog/next_line.v `Theorem next_line_holds :
-   memchr_wrap_contract -> next_line_contract AA` (a working branch 33184c69df60 :393).
+   memchr_wrap_contract -> next_line_contract AA` (a working branch :393).
    It is not reusable here: it is stated over lib/Lib PropExec / Exec and lib/B Img0 / AsanRT (next_line_contract with
    a_call_pre), while this route states nl_spec over lib/Reusable YK11 and W_journal's ajournal_gx, and no lemma relates
    the two stacks.  It was the reference for which trap branches the pre refutes. *)
@@ -21,8 +22,8 @@
      0x862b0 beqz (snez; seqz; xor)    W_traps.v trap_null_xor: OUT <> 0 and A + OUT <> 0;
      0x862cc bnez (andi a1,s2,7)       decided by the runner: atom 11 (line = PL), PL mod 8 = 0;
      0x862e8 bnez (andi a1,s1,7)       decided by the runner: atom 12 (len = PN), PN mod 8 = 0.
-   W_traps.v is the published image-B trap kit, a working branch 357e6ced2b2 (s2's 73bb5b07501 and the kit head
-   c9884225985), merged into this branch, which began on the kit head 6ec848a057c.
+   W_traps.v is the published image-B trap kit, a working branch (s2's and the kit head),
+   merged into this branch, which began on the kit head.
    The shadow checks of the three cells are decided inside paj_run_tok from nl_SH; the `nul == NULL` abort arm
    (0x862c4) is refuted from the functional half (a NUL lies in the stream from A on).  Section hypotheses: LAWS, TL
    (W_kit.v PALib), NLAP (the four image objects the walk reads are apart), AMEMCHR (the shared memchr text,
@@ -59,7 +60,7 @@ Local Set Warnings "-abstract-large-number".
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Open Scope bv_scope.
 Open Scope Z_scope.
-(* LOCAL until the B kit carries it: copy of lib/A/W_drain_cx_x.v 71-72, 74-97, 586 and 591-608 at 2db8d2d25d5
+(* LOCAL until the B kit carries it: copy of lib/A/W_drain_cx_x.v 71-72, 74-97, 586 and 591-608
    (DrainCxX's kitx; Section r's amemchr_realizesM_x and Section brr's bridges amemchr_realizesM_x_AR /
    amemchr_realizesM_x_of_AR0), token-identical: image-independent, no image-B numeral.  When the B kit carries
    them, delete this block and cite the kit's. *)
@@ -71,7 +72,7 @@ Variable segs : list Segment.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 (* YG0d.v:330 aintrin_realizes: its twin aintrin_realizes_x (and its bridges) is W_sites_x.v's, moved there. *)
-(* Rt/MemchrDef.v:39 amemchr_realizesM *)
+(* Rt/MemchrDef.v:40 amemchr_realizesM *)
 Definition amemchr_realizesM_x (lo hi pc : Z) : Prop :=
 forall ly S Hp W regs mem md x c n,
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->
@@ -127,7 +128,7 @@ let g := VAL (A_OBJ 0) in let c := VAL (A_OBJ 30) in let no := VAL A_g_nout in l
 (no + 8 <= ou \/ ou + 8 <= no) /\ (no + 8 <= g \/ g + 8 <= no) /\ (no + 8 <= c \/ c + 8 <= no) /\
 (ou + 8 <= g \/ g + 8 <= ou) /\ (ou + 8 <= c \/ c + 8 <= ou).
 
-(* ---- THE GENERIC WALK (route (b), step 3, on the check_bounded template, a working branch 663b15a129c):
+(* ---- THE GENERIC WALK (route (b), step 3, on the check_bounded template, a working branch):
    next_line over any allocator relation ARx with its laws, stated as W_contract_x.nl_spec_x.  AMEMCHR is the memchr
    text's twin amemchr_realizesM_x (the LOCAL copy above); the call goes through W_sites_x.aj_gx_entry_at_x.  HP0 is the
    template's (this walk reads no heap block, so the closed theorem does not take it). ---- *)
@@ -820,7 +821,7 @@ End c.
    now a corollary of pb_next_line_x at ARx := ARi0 (cgif's AR with the head set empty), PST := []. Its Section keeps
    the AR walk's hypotheses exactly, LAWS : AR_laws included (a Theorem Labs lane 03:30Z: a plain name keeps its B-old
    statement); LX0, the laws at ARi0, is derived from LAWS inside the proof by lib/B/YLX0.v lx_AR_laws_x_ARi0_of
-   (a Theorem Labs lane, a working branch 08cd6a236f3). The bridges are W_contract_x nl_spec_x_AR0 and
+   (a Theorem Labs lane, a working branch). The bridges are W_contract_x nl_spec_x_AR0 and
    amemchr_realizesM_x_of_AR0 (the LOCAL copy above). ---- *)
 Section cAR.
 Variable B : asyms.
@@ -829,7 +830,7 @@ Hypothesis TL : PALib B.
 Hypothesis NLAP : nl_objs_apart.
 Hypothesis AMEMCHR : amemchr_realizesM SEGS B 0x10350 0x10370 (SIGMA WS_memchr).
 Hypothesis HCROM : forall a, 0x10350 <= a < 0x10370 -> in_rom SEGS a.
-(* the AR memchr call step, as on b-w1rr 65a19fcf7eb9 (W_next_line.v:140, verbatim): lib/B/W_drain_join.v:461 cites it
+(* the AR memchr call step, as on b-w1rr (W_next_line.v:141, verbatim): lib/B/W_drain_join.v:462 cites it
    (W_next_line.aentry_of_memchrM B ..); the walk above uses its ARx twin aentry_of_memchrM_x *)
 Lemma aentry_of_memchrM : forall lo hi pc stk ly S W regs mem md x c n k,
 amemchr_realizesM SEGS B lo hi pc -> ESTACK <= stk ->

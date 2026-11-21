@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) copy of lib/A/Prog/FSW_pj_set_num.v (a working branch
-   e45b7c0a2da, taken there from a working branch 2b1c9c8141f), same lemma names and bodies; imports point
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) copy of lib/A/Prog/FSW_pj_set_num.v (a working branch,
+   taken there from a working branch), same lemma names and bodies; imports point
    at lib/B's FSH_Base / FSH_Rt / FSPstat / FSH_Fn_reader (B's rd_ev / rd_live / grow_tr / grow_res); no image value. *)
 (* pj_set's event and live-byte accounting (lemma file, rule 24: no function proved; pure arithmetic over fixed
    definitions, no machine state, no walk). Serves FSW_pj_set_holds.v (pj_set_holds against FSH_Fn_reader.pj_set_spec).

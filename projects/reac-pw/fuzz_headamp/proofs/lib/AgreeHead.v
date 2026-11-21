@@ -19,8 +19,8 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (* reac-pw/fuzz_headamp's ubsan_agrees by the frame's AgreeFrame.ubsan_agrees_of_slots at the agreement shape
-   ag_shape checksum_shape (no output, cap CAP_AG). Model: reac-pw/fuzz_role's AgreeRole.v (itself reac-pw/fuzz_pin's AgreePin.v and libreac/fuzz_ctrl's released CtrlAgree.v, origin/ossv/recipes
-   25e3d17bdb50): the plain slot in its halts (realizes) form at the agreement shape (Prog/HeadSlotAG.slot_of_lemmas_ag
+   ag_shape checksum_shape (no output, cap CAP_AG). Model: reac-pw/fuzz_role's AgreeRole.v (itself reac-pw/fuzz_pin's AgreePin.v and libreac/fuzz_ctrl's released CtrlAgree.v):
+   the plain slot in its halts (realizes) form at the agreement shape (Prog/HeadSlotAG.slot_of_lemmas_ag
    over the plain segment lemmas, Prog/HeadEnd.segs_holds with the six seg_*_holds, taken at the halts shape
    checksum_shape, and the n >= 2^26 run's Prog/headamp_early.headamp_early_holds), and the ubsan slot in cut-free form
    (U/Prog/SegCF/SlotTopCF over the cut-free copy of the UBSan walk), each from its frame facts at the zlib instance.

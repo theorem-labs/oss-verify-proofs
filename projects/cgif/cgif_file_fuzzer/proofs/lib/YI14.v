@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed env_addr; added skl_path_lo, skl_path_hi. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -118,12 +119,39 @@ Definition env_addr (a : Z) : Prop :=
 (sk_path_addr <= a < sk_path_addr + 13) \/ (sk_mode_addr <= a < sk_mode_addr + 3) \/
 (sk_trailer_addr <= a < sk_trailer_addr + 2) \/
 (sk_rwa_addr <= a < sk_rwa_addr + 8) \/ (sk_highs_addr <= a < sk_highs_addr + 8) \/ (sk_ones_addr <= a < sk_ones_addr + 8).
+(* 75d69e00 gave [FileSim.read_cstr_of_rdn] a TASK_SIZE premise
+   (75d69e00:theories/Common/FileSim.v:434-437; at f1006fe8:415-418 it had three premises and
+   no bound), because [State.read_cstr_aux] now tests [access_okb a 1] at every byte it steps.
+   [YI19.read_cstr_of_garr8] and [YI19.stdio_env_path] pass that up to their callers as
+   [0 <= sk_path_addr] and [sk_path_addr + 13 <= TASK_SIZE].  Nothing already in this record
+   bounds an [env_addr] address from above: [skl_env] yields [in_img B a], which is membership
+   in the segment table (YO0d.v:67) and admits any [a] below [2 ^ 64].  Hence a third law.
+   It is phrased with the literal [2 ^ 47] rather than [TASK_SIZE] because the two instance
+   files (UI5c.v, YI5c.v) do not import [State]; [TASK_SIZE = 2 ^ 47] by [reflexivity] is this
+   unit's idiom (YI19.v:51).  Both instances already prove the range outright, so each
+   discharges the new field in one line: UI5c.v:28 [env_addr a -> 0x10000 <= a < 0x52000],
+   YI5c.v:28 the same with [0x51000]. *)
 Class sink_laws : Prop := mkSinkLaws {
 skl_env : forall a, env_addr a ->
 in_img B a /\ ~ static_owned B a /\ ~ (ms_ctx B <= a < ms_ctx B + CTX_SIZE) /\ ~ (errno_addr B <= a < errno_addr B + 4);
 skl_errno : forall a, errno_addr B <= a < errno_addr B + 4 ->
-in_img B a /\ ~ static_owned B a /\ ~ (ms_ctx B <= a < ms_ctx B + CTX_SIZE)
+in_img B a /\ ~ static_owned B a /\ ~ (ms_ctx B <= a < ms_ctx B + CTX_SIZE);
+skl_env_lt : forall a, env_addr a -> 0 <= a < 2 ^ 47
 }.
+(* The two bounds [YI19.stdio_env_path] now demands, read off [skl_env_lt] at the first and
+   last of the 13 bytes [env_addr]'s fourth disjunct (line 118 above) reserves for the path. *)
+Lemma skl_path_lo : forall {SL : sink_laws}, 0 <= sk_path_addr.
+Proof.
+intros SL.
+destruct (skl_env_lt sk_path_addr ltac:(unfold env_addr; right; right; right; left; lia)) as [H _].
+exact H.
+Qed.
+Lemma skl_path_hi : forall {SL : sink_laws}, sk_path_addr + 13 <= TASK_SIZE.
+Proof.
+intros SL. assert (HT : TASK_SIZE = 2 ^ 47) by reflexivity.
+destruct (skl_env_lt (sk_path_addr + 12) ltac:(unfold env_addr; right; right; right; left; lia)) as [_ H].
+lia.
+Qed.
 Lemma val_mem_frame : forall (mem mem' : word -> option byte) a n v,
 (forall x, a <= x < a + Z.of_nat n -> mbyte segs mem' x = mbyte segs mem x) ->
 val_mem segs mem a n v -> val_mem segs mem' a n v.

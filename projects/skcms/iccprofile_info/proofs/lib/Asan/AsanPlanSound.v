@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, cs_ok carries the launch's reserved ledger (the image's intervals, the launch's extra ones and the vDSO text and vvar pages: co_res, co_mres, co_vdso) and the channel reader (co_rdr). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -173,6 +174,18 @@ Variable FS0 : Fs.Fs.
 (* [comment removed for export] *)
 Variable KC : nat.
 
+(** THE LAUNCH'S EXTRA RESERVED INTERVALS (the vDSO text and the vvar pages,
+    [State.init_reserved] / [State.vdso_reserved]): [vm_reserved] is the image's
+    reservations followed by a list [rx] the launch adds, of which the nodes need
+    the geometry, the count and the total size (LPS 08b1429 [AsanPlanSound.resx_entry_ok]). *)
+Definition resx_entry_ok (iv : word * word) : Prop :=
+  0 < bv_unsigned (snd iv)
+  /\ bv_unsigned (fst iv) mod 4096 = 0
+  /\ bv_unsigned (snd iv) mod 4096 = 0
+  /\ img_hi A <= bv_unsigned (fst iv)
+  /\ KHI + 4096 <= bv_unsigned (fst iv)
+  /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
+
 #[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT XN XE XB HS KC).
 
 #[local] Notation cfg := (cfg_of SEGS).
@@ -310,7 +323,19 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+  (* the reserved ledger: the image's intervals plus the launch's extra ones; every tracked
+     mapping apart from the whole ledger; the launch's vDSO/vvar pair inside the ledger
+     (the model's [co_res] / [co_mres] / [co_vdso], packed into one field so that the record
+     keeps its arity; [co_mres] and [co_vdso] below project the second and third parts). *)
+  co_res   : (exists rx : list (word * word),
+                vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+                /\ Forall resx_entry_ok rx
+                /\ (length rx <= n_resx A)%nat
+                /\ sum_sizes rx <= resx_bytes A)
+             /\ Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                       (vm_maps (m_vmmaps model))
+             /\ incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                     (vm_reserved (m_vmmaps model));
   co_limit : vm_limit (m_vmmaps model) = LIMIT;
   (* [comment removed for export] *)
   co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -346,8 +371,19 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
                page_in_ranges (page_base a) (m_vm_lazy model) = true ->
                in_ghost E cs (bv_unsigned a) = false ->
                FULL a = Some (Z_to_bv 8 0);
-  co_sinv  : SINV E FULL
+  co_sinv  : SINV E FULL;
+  (* the launch's reader of the standard channels: seeded by [init_model] from the input and
+     written by no step, so every node re-establishes it by conversion *)
+  co_rdr   : m_channel_reader model = true
 }.
+
+Lemma co_mres : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model))) (vm_maps (m_vmmaps model)).
+Proof. intros E cs R FULL model HC. exact (proj1 (proj2 (co_res _ _ _ _ _ HC))). Qed.
+
+Lemma co_vdso : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (vm_reserved (m_vmmaps model)).
+Proof. intros E cs R FULL model HC. exact (proj2 (proj2 (co_res _ _ _ _ _ HC))). Qed.
 
 (* [comment removed for export] *)
 Lemma alloc_top_bound : forall E cs R FULL model, cs_ok E cs R FULL model ->
@@ -507,8 +543,9 @@ Proof.
   pose proof (same_but_materialized_frame _ _ Hs) as Hfr.
   assert (Evm : m_vmmaps model' = m_vmmaps model) by apply Hfr.
   assert (Elz : m_vm_lazy model' = m_vm_lazy model) by apply Hfr.
+  assert (Ekn : m_kernel model' = m_kernel model) by (rewrite Hs; reflexivity).
   destruct HC. constructor; cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset kn];
-    rewrite ?Evm, ?Elz; try assumption.
+    rewrite ?Evm, ?Elz, ?Ekn; try assumption.
   - unfold Mr. rewrite (hid_same _ _ _ _ Hs). exact HK.
   - replace (m_halted model') with (m_halted model) by (symmetry; apply Hfr). assumption.
   - unfold fds_ok in *. replace (m_fds model') with (m_fds model) by (symmetry; apply Hfr).
@@ -519,6 +556,7 @@ Proof.
   - replace (eager_used model') with (eager_used model) by (symmetry; apply Hfr). assumption.
   - intros a Hh. rewrite (hid_same _ _ _ _ Hs) in Hh. rewrite (Hhid a Hh). auto.
   - eapply SINV_frame; [|eassumption]. intros a Ha. apply Hhid. unfold hid. rewrite Ha. reflexivity.
+  - rewrite Hs. assumption.
 Qed.
 
 (* [comment removed for export] *)

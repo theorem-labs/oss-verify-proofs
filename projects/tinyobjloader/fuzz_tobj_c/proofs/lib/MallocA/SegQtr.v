@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap arm states the model's exact cut: maps_subtract equals map_remove). *)
 
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
@@ -91,6 +92,9 @@ Record trk (Q : assn) : Type := mkTRK {
          bv_unsigned a mod page_size = 0
          /\ bv_unsigned a + nlit <= TASK_SIZE
          /\ map_has (vm_maps (m_vmmaps md)) a (Z_to_bv 64 nlit) = true
+         (* LPS 08b1429 (in 727298f3): the exact munmap arm's cut (Fw3A/MunmapSymA.v). *)
+         /\ maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned a) (bv_unsigned a + bv_unsigned (Z_to_bv 64 nlit))
+            = map_remove (vm_maps (m_vmmaps md)) a
          /\ (forall s, In (a, s) (vm_maps (m_vmmaps md)) -> s = Z_to_bv 64 nlit)
          /\ region_free (map_remove (vm_maps (m_vmmaps md)) a) a (Z_to_bv 64 nlit) = true
          /\ (forall o, In o (ss_objs (ax_S A)) -> ranges_disjoint (obj_range rho o) (bv_unsigned a, bv_unsigned a + nlit))

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the stack window is 6144513 bytes, was 8388608. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -60,7 +61,7 @@ Section PrintfK.
     let MV := mrestrict (ahid A model) M in
     usp - 4096 <= S -> S + 32 <= usp -> S mod 16 = 0 -> 0 <= canz < 2 ^ 64 ->
     getr R 1%bv = Z_to_bv 64 581244 -> getr R 2%bv = Z_to_bv 64 S -> getr R 10%bv = Z_to_bv 64 85107 -> getr R 11%bv = Z_to_bv 64 (S + 24) ->
-    (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
+    (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
     (forall i, 65536 <= i < 880640 -> MV (Z_to_bv 64 i) = None) ->
     rdn ASEGS MV (Z_to_bv 64 6491464) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 canz)) ->
     rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)) ->
@@ -146,7 +147,7 @@ Section PrintfK.
     let MV := mrestrict (ahid A model) M in
     usp - 4096 <= S -> S + 32 <= usp -> S mod 16 = 0 -> 0 <= canz < 2 ^ 64 ->
     getr R 1%bv = Z_to_bv 64 581244 -> getr R 2%bv = Z_to_bv 64 S -> getr R 10%bv = Z_to_bv 64 85107 -> getr R 11%bv = Z_to_bv 64 (S + 24) ->
-    (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
+    (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
     (forall i, 65536 <= i < 880640 -> MV (Z_to_bv 64 i) = None) ->
     rdn ASEGS MV (Z_to_bv 64 6491464) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 canz)) ->
     rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)) ->
@@ -232,7 +233,7 @@ Section PrintfK.
     let MV := mrestrict (ahid A model) M in
     usp - 4096 <= S -> S + 32 <= usp -> S mod 16 = 0 -> 0 <= canz < 2 ^ 64 ->
     getr R 1%bv = Z_to_bv 64 581244 -> getr R 2%bv = Z_to_bv 64 S -> getr R 10%bv = Z_to_bv 64 85107 -> getr R 11%bv = Z_to_bv 64 (S + 24) ->
-    (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
+    (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
     (forall i, 65536 <= i < 880640 -> MV (Z_to_bv 64 i) = None) ->
     rdn ASEGS MV (Z_to_bv 64 6491464) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 canz)) ->
     rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)) ->

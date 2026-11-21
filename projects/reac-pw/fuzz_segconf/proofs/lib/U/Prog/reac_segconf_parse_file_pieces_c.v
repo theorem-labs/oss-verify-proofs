@@ -45,9 +45,9 @@ Open Scope Z_scope.
     The pieces (instructions / conditional branches [trap branches] / calls), their callee
     contracts, call sites and trap sites (each trap falls through by the premise named).
     Callee contracts: snprintf 0x19a14; strchr
-    0x1f478 and strncasecmp 0x1f65c (commit d8911fcbf9ff); strlen 0x1f5cc, memcpy 0x1eec8,
+    0x1f478 and strncasecmp 0x1f65c; strlen 0x1f5cc, memcpy 0x1eec8,
     memset 0x1f2cc, bcmp 0x1edc8 (lib/U/Prog strlen_c.v, memcpy_c.v, memset_c.v, bcmp_c.v); strspn 0x1f968 and strcmp
-    0x1f594 (commit 06702a5f1f22); strcasecmp 0x1f3c4;
+    0x1f594; strcasecmp 0x1f3c4;
     trim 0x15db4 and refuse 0x15c80 (lib/U/Prog trim_c.v, refuse_c.v, family F2); reac_box_catalogue_by_token 0x167a0
     and reac_box_catalogue 0x1677c (lib/U/Prog). Every string argument in buf (sp + 0x1a8 .. 0x3a7), cur_name, known or
     low lies in the frame, above the callee's sp and apart from c; every refuse call has rc_refused rc + 1 < 2^32 by
@@ -105,8 +105,8 @@ Open Scope Z_scope.
       cur_name = sp + 0x3a8, val or key); PROV, PROVM, CNAME -> TAIL through 0x15b78 snprintf(field, 96, "%s",
       c->reading from sp + 0x50) or snprintf(cur_name, 16, "%s", name). No trap.
 
-    Notes on the statement: as the plain twin's header says (the counters' bound, fixed at
-    commit 3e75bf1c5aa6; cur_name = seg[i].name not a cut fact; the line start carried by
+    Notes on the statement: as the plain twin's header says (the counters' bound, fixed;
+    cur_name = seg[i].name not a cut fact; the line start carried by
     pf_lctx; O2's spn_len bridge a comment). In this build DONE asks for the slot sp + 0x58 only (set at 0x152f8, before
     the entry test), and CLR does not fix the cur slot (on the bound refusal it still holds c->n from the search). *)
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed injected_arm_215, injected_arm_64, no_error_run_corun and 2 more; added refusal_b_munmap, refusal_b_write. *)
 (* [comment removed for export] *)
 Set Warnings "-require-in-module".
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require BvWfKernel. From Stdlib Require List Lia. From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun. From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence OmniEquivalence.
@@ -75,7 +76,8 @@ Qed.
 Lemma no_error_run_corun :
   forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
          (lim : Z) (inp : ProcInput),
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   omni_corun (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp never_errors.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp H. cbn [omni_corun].
@@ -88,11 +90,13 @@ Qed.
 Lemma no_error_run_modeled :
   forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
          (lim : Z) (inp : ProcInput),
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   Equivalence.modeled (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp H.
-  apply modeled_iff. cbn [img_segments].
+  apply modeled_iff.
+  cbn [image_run_segments img_segments en_sp en_mmap_base].
   eapply coexec_conseq; [apply no_error_run_corun, H | apply never_errors_covered].
 Qed.
 
@@ -130,12 +134,29 @@ Proof. reflexivity. Qed.
 Lemma injected_arm_29 : injected_arm 29 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_57 : injected_arm 57 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_63 : injected_arm 63 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_64 : injected_arm 64 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
+Lemma injected_arm_64 : injected_arm 64 = Some (mkInjectedArm 64 FamFs [ENOMEM]). Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_66 : injected_arm 66 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_93 : injected_arm 93 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_94 : injected_arm 94 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
 Lemma injected_arm_96 : injected_arm 96 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_215 : injected_arm 215 = None. Proof. reflexivity. Qed.  (* [comment removed for export] *)
+Lemma injected_arm_215 : injected_arm 215 = Some (mkInjectedArm 215 FamAlloc [ENOMEM]). Proof. reflexivity. Qed.
+
+(* The revision's [injected_table] registers write and munmap, so an answer is
+   a refusal exactly when it is -ENOMEM.  [refusal_b] reads the arm's errno
+   list, and both arms list [ENOMEM] alone. *)
+Lemma refusal_b_write : forall i m r,
+  bv_unsigned (in_sysno i) = 64%Z -> refusal_b i m r = bv_eqb r (errno_ret ENOMEM).
+Proof.
+  intros i m r H. unfold refusal_b. rewrite H.
+  exact (Bool.orb_false_r (bv_eqb r (errno_ret ENOMEM))).
+Qed.
+
+Lemma refusal_b_munmap : forall i m r,
+  bv_unsigned (in_sysno i) = 215%Z -> refusal_b i m r = bv_eqb r (errno_ret ENOMEM).
+Proof.
+  intros i m r H. unfold refusal_b. rewrite H.
+  exact (Bool.orb_false_r (bv_eqb r (errno_ret ENOMEM))).
+Qed.
 
 Lemma ret_in_errnos_1 : forall e r, ret_in_errnos [e] r = bv_eqb r (errno_ret e).
 Proof. intros e r. unfold ret_in_errnos. cbn [existsb]. apply orb_false_r. Qed.
@@ -325,6 +346,9 @@ Proof.
     [ eapply sstep_cfg_instr; eassumption
     | eapply sstep_cfg_instr_fault; eassumption
     | eapply sstep_cfg_instr_unmodeled; eassumption
+    | eapply sstep_cfg_vdso_call; eassumption
+    | eapply sstep_cfg_vdso_materialization_fault; eassumption
+    | eapply sstep_cfg_vdso_unmodeled; eassumption
     | eapply sstep_cfg_syscall; try eassumption; apply not_spurious_on; apply Hon; assumption
     | eapply sstep_cfg_syscall_materialization_fault; try eassumption;
         apply not_spurious_on; apply Hon; assumption

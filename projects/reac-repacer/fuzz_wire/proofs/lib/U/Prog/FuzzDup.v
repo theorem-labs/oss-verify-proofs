@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
-(* Restated from proofs/reac-repacer/fuzz_uci/lib/Prog/FuzzDup.v, commit 3aa2cd1c44d, blob a4a47c7ea68, at fuzz_wire's
+(* Restated from proofs/reac-repacer/fuzz_uci/lib/Prog/FuzzDup.v, blob a4a47c7ea68, at fuzz_wire's
    UBSan (lib/U) library names. Rocq text identical to the source; only the module paths of the Require lines
    differ; comments stripped of names / dates (lint). *)
 (* New for reac-repacer. SHARED TEXT of the project: the fuzz.h idiom

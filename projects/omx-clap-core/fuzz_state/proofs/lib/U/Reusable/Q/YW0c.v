@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's EINVAL arm, discharged as the ENOMEM failure). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -89,8 +90,10 @@ SR src0segs (mkCfg (mkst (regupd regs2 10 RET) (v_addi (Z_to_bv 64 MREMAP_ECALL)
 (realloc_leaf src0_msyms (MRx src0_msyms) L A regs mem md (pp am fr) (fr_n fr) n (Some (p_ok A am fr n), A_ok A g am fr n)).
 Definition OBL_fb_at (gd err : Z) (regs2 : bvmap 5 word) (mem2 : word -> option byte) : Prop :=
 at_S2 gd err regs2 mem2 ->
+(* LPS 727298f3: the refusal's errno, ENOMEM (12) or EINVAL (22) for a new length past TASK_SIZE *)
+forall e, In e [12; 22]%Z ->
 mreal src0segs
-(mkCfg (mkst (regupd regs2 10 (Z_to_bv 64 (2 ^ 64 - 12))) (v_addi (Z_to_bv 64 MREMAP_ECALL) 4) mem2 (seg_rom src0segs)) md)
+(mkCfg (mkst (regupd regs2 10 (Z_to_bv 64 (2 ^ 64 - e))) (v_addi (Z_to_bv 64 MREMAP_ECALL) 4) mem2 (seg_rom src0segs)) md)
 (realloc_move (pp am fr) n A)
 (realloc_leaf src0_msyms (MRx src0_msyms) L A regs mem md (pp am fr) (fr_n fr) n).
 End c.
@@ -191,7 +194,7 @@ assert (AT2 : at_S2 L regs mem g am fr n a rg gd err regs3 mem3).
 eapply frame_of_trans; [exact (skel_S1 rcr) | exact HF1 | exact HF2]. }
 apply SR_ret.
 eapply (knode_mremap_cases src0segs regs3 (Z_to_bv 64 MREMAP_ECALL) mem3 (seg_rom src0segs) md A (rid am) (old_len am) (needed fr n));
-[exact Hh | | | |].
+[exact Hh | | | | |].
 -
 constructor; rewrite ?E10, ?E11, ?E12, ?E13, ?E17; rewrite ?lit64_small by lia; try lia.
 + reflexivity.
@@ -200,18 +203,24 @@ constructor; rewrite ?E10, ?E11, ?E12, ?E13, ?E17; rewrite ?lit64_small by lia; 
 + exact NR2.
 +
 pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ (mc_ledger _ _ _ _ _ M))). rewrite EMEM, ELEN. lia.
-+   rewrite (lg_reserved _ _ _ _ (mc_ledger _ _ _ _ _ M)).
-apply (region_free_of_img src0_msyms); [exact src0_segs_ne | exact src0_segs_pos | lia | lia | lia |].
-rewrite EMEM, ELEN. exact Pimg.
++   (* LPS 727298f3: the reserved list holds the vDSO pair beside the image's segments; the ledger
+       frees each live region of all of it ([lg_rfree]). *)
+    rewrite EMEM, ELEN. exact (lg_rfree _ _ _ _ (mc_ledger _ _ _ _ _ M) r rg Hr Hlv ltac:(rewrite Hk; discriminate)).
 +   apply map_has_In. rewrite EMEM, ELEN. exact (lg_maps _ _ _ _ (mc_ledger _ _ _ _ _ M) r rg Hr Hlv ltac:(rewrite Hk; discriminate)).
 +   apply region_free_of_disjoint; [lia | lia | lia |].
 intros e He. destruct (lx_noacc _ _ _ (MRx_ledger_x _ _ _ _ _ MX) e He) as (E0 & HE0 & Hlo0 & Hhi0 & Hd).
 specialize (Hd r rg Hr Hlv Hk ltac:(lia)). rewrite EMEM, ELEN. unfold ranges_disjoint in *. cbn [fst snd] in *. lia.
 + exact Hlz.
 -
+(* LPS 08b1429: a new length past TASK_SIZE is refused with EINVAL before any VMA is looked up,
+   and the bit is 0; the fallback obligation is stated for both errnos ([OBL_fb_at]). *)
+intros _. cbn [Z.eqb negb].
+replace (errno_ret EINVAL) with (Z_to_bv 64 (2 ^ 64 - 22)) by (apply bv_eq; reflexivity).
+exact (OFB regs3 mem3 AT2 22 ltac:(right; left; reflexivity)).
+-
 intros e [<-|[]]. cbn [Z.eqb negb].
 replace (errno_ret ENOMEM) with (Z_to_bv 64 (2 ^ 64 - 12)) by (apply bv_eq; reflexivity).
-exact (OFB regs3 mem3 AT2).
+exact (OFB regs3 mem3 AT2 12 ltac:(left; reflexivity)).
 -
 intros mem' HPM Hce Hrf. cbn [Z.eqb negb]. apply mreal_leaf.
 rewrite E10, E11, E12 in *. rewrite !lit64_small in HPM by lia. rewrite !lit64_small in Hce by lia.
@@ -221,7 +230,23 @@ apply (OOK regs3 mem3 (Z_to_bv 64 (ptr_addr L (am_mem am))) mem' AT2 Hne).
 split; [
 apply (YM05.grant_below_ceil _ _ (lg_ceil _ _ _ _ (mc_ledger _ _ _ _ _ M))); [| exact Hce];
 rewrite EMEM, Z.add_mod, Pal, NR2 by lia; reflexivity |].
-destruct Hrf as [Hrf|Hrf]; [left; exact Hrf | right; rewrite !lit64_small in Hrf by lia; exact Hrf].
+destruct Hrf as [Hrf|Hrf]; [left | right; rewrite !lit64_small in Hrf by lia; exact Hrf].
+(* LPS 727298f3: the in-place room is stated over [maps_subtract] of the source range (the model's
+   [mremap_inplace_room_b]); the ledger's one entry at MEM is exactly that range, so it is [map_remove]. *)
+assert (Hold : In (Z_to_bv 64 (ptr_addr L (am_mem am)), Z_to_bv 64 (old_len am)) (vm_maps (m_vmmaps md))).
+{ rewrite EMEM, ELEN. exact (lg_maps _ _ _ _ (mc_ledger _ _ _ _ _ M) r rg Hr Hlv ltac:(rewrite Hk; discriminate)). }
+pose proof (MRx_ledger_x _ _ _ _ _ MX) as LX.
+rewrite (maps_subtract_exact (vm_maps (m_vmmaps md)) (Z_to_bv 64 (ptr_addr L (am_mem am))) (Z_to_bv 64 (old_len am))) in Hrf.
+* exact Hrf.
+* rewrite lit64_small by lia. lia.
+* intros b s Hb. exact (proj1 (lx_maps _ _ _ LX _ Hb)).
+* intros b s Hb Hb0. subst b. destruct (lx_disj _ _ _ LX _ _ Hb Hold) as [E|D].
+  ++ exact (f_equal snd E).
+  ++ pose proof (proj1 (lx_maps _ _ _ LX _ Hb)). pose proof (proj1 (lx_maps _ _ _ LX _ Hold)).
+    unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in *. exfalso; lia.
+* intros b s Hb Hne0. destruct (lx_disj _ _ _ LX _ _ Hb Hold) as [E|D].
+  ++ exfalso. apply Hne0. exact (f_equal fst E).
+  ++ exact D.
 -
 intros dst mem' Hlt Hfresh HPM. cbn [Z.eqb negb]. apply mreal_leaf.
 rewrite E10, E11, E12 in *. rewrite !lit64_small in HPM by lia. rewrite !lit64_small in Hlt by lia.

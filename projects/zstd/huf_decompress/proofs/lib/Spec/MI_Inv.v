@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (slot_start'_sstart)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
@@ -23,8 +24,7 @@ Definition sstart (r : meta) (i : Z) : Z := snd (gbase r) + UNIT + get_stride r 
 Definition gend (r : meta) : Z := sstart r (cnt_of r).
 
 Lemma slot_start'_sstart r i : slot_start' r i = (fst (gbase r), sstart r i).
-Proof.
-ltac2:(KReplay.run1 (kr_t_MI_Inv ()) [] "p'0h04__x1h14__x2h24__x3h34__x4h41ih51rh67__arithh74__ffh88__varmaph95__with:1ai001ah;1ni011nh<1oi021oh=1zi031zi041pp;1p;2p;4p;5p;3p;7p;8p-1R0g0000R1p4p710p8P0P1p4p7210p8P0p1000Kp5p710p8g000gR0p4p70R2p1001\p4p710p8P2p10023R3p4p710R4p8P2p1002Op4p710R5p8P2g002mR6p4p7210p8P2g003JR7p4p710R8p8P2p1003gR9p4p710R:p8P2P9p4p7210R9p8P2p1004@p4p710p8P2p1004]R;p4p710p8P2p1005:R<p4p710R=p8P2P<p4p741110R<p8P2p1005SR>p4p710p8P2p1005kR?p4p710p8P2p1006BR@p4p710RAp8P2P@p4p7210R@p8P2p1006Vp4p73110p8P2p1006hRBp4p710RCp8P2PBp4p7210RDp8P2PBp4p73110RBp8P2p1007<p4p710R2p8g007XREp4p70RFP4p8PFP7p4p7210p8PFP;p4p7210p8PFP;p4p73110p8PFP<p8PFP>p4p741110p8PFP?p4p741110p8PFp1008Mp4p710p8PFPDp8PFPBp8P5P:p8P5P9p8p1008`p4p70R9P3p4p7210p8P9P8p8P9P=p8P9PAp8P9P@p8P9PCp8P9P2p8p1009Up4p710R9PAp8P9P@p8P9P2p8g009jj1XTg00:`R2j2WTg00;@j1HTg00;\j49j3VTP1j5:Tg00<<j13Tg00=7j24Tg00=Tj20Tg00>1j32Tg00>Kj2@Tg00>mj2;Tg00?Gj1TTg00?gj1PTg00@Gj2?Tg00@ej1OTg00ACj4>Tg00Aaj1MTg00B?j1LTg00Bjj28Tg00CMj1=Tg00D2j1GTg00DWj3FTg00E:j37Tg00E]j4ITg00FHj7ETg00Flj2JTg00GNj2KTg00H:j3DTg00HYj4CTP6j8NTg00IKj1BTg00Imj2QTg00Jij1ATg00K_j2RTP7j3STg00LVj3UTg00M3R7g00MQR6f0R13Sp=5AU761p=6P7P6f2R9f1R@/01C9p=1P7P6P@P1C9p=<g00MoRA%X@PEg00NfP01W76REPE%HERCP7P6g00OHR=g00OfR8C9R3P1D:R5#5R:%65R5g00PDRBf3RF#3/49RD'031105B=1:D520P1P2P7P6PEPEPCP31@01D:R2#5RD%62R2f5#3f4R:'4R5,0B31102B=1D5520P1P6P0AV76@R5P5f8RD#3f7'4R2,0BR?,01101B/02P0\6/;5g00Q9R5#T%P5P6P61?6:P9%O6C>P@1?6FC>%M6%L6R:g00Qeg00RDR5P5g00RdR5P6g00SDR>,86R<%=>R;,86R4%G>,86%=;,865F6R;576576g00SiA76<4=76;CIg00TPFE1J:5P1P9g00U0R5g00UPR:';1K19=25:dAD68@CCb7b8b9X06X16X26X36149FRF,0@,01101@/0F526^06^16^26^36P1PDf9#3PBP@O4b6GNPEPEPCP31<@1,@0D:RD#5RF%6DRD;1?10DB=1F2520eX=6X;7P@P1O2n2001104000121101103X:0P1O1P7P6P=108B%39/4@R9'0C9,;0PEPEPCP3%B0D:R3#5RC%63R310B931103B=1C9520en10110200021110000b<1Q@1%A@#51R@1'<520eX46X5AP@P1O2X46W5o"). Qed.
+Proof. unfold slot_start', sstart, gbase, aadd. destruct (m_mem r) as [[? ?]|]; cbn; f_equal; lia. Qed.
 
 (* [comment removed for export] *)
 Definition hosts (st : mstate) (b m : aptr) : Prop :=

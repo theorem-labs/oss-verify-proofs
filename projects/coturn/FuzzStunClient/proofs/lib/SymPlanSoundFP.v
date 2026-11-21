@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, one proof step more gives the write node's channel-reader fact (co_rdr). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -441,6 +442,7 @@ Proof.
   - eapply slots_ok_ext; [exact Hag | |].
     + apply slots_vars_lt_carry. unfold remove_slot. apply slots_vars_lt_filter. exact Hslv.
     + rewrite <- HM1. eapply slots_carry_sound; [exact HK1 | exact LF | apply slots_ok_filter; exact HSLc].
+  - match goal with H : m_channel_reader _ = true |- _ => exact H end.   (* LPS 08b1429: [co_rdr] *)
 Qed.
 
 #[using="nx0_pos"] Theorem call_freepro_ok : freepro_sound_stmt nx0.

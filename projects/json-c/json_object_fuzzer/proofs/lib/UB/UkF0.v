@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main_entry over the launch's ProcInput and entry point; the channel-reader premise from the launch, passed to the open branches; the stack top's TASK_SIZE bound for S4_heap, from UTWd's usp0_le_task). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -76,15 +77,21 @@ Hypothesis Hva : valid_argv [a0s; path].
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 [a0s; path] envv tid regs0 mem0.
+(* LPS 727298f3: [main_entry] takes the launch's input, the mmap base and the entry point. *)
+Variable inp : ProcInput.
+Variable entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv tid regs0 mem0.
 Hypothesis Hbrk : valid_brk RSEGS brk.
 Hypothesis Hpne : path <> [].
 Hypothesis Hplen : (length path <= 4095)%nat.
 Hypothesis FRM0 : QCcH.frm0 fC.
 Hypothesis ASP : a_sp = sp0.
 Hypothesis Hfit : entry_stack_fits sp0 [a0s; path] envv.
+(* LPS 727298f3: the far end of the standard channels has a reader; the launch seeds
+   [State.m_channel_reader] from [in_channel_reader], which [Run.valid_input] pins to true *)
+Hypothesis Hrdr : a_channel_reader = true.
 Notation usp0 := (bv_unsigned sp0).
-Notation pp := (bv_unsigned (p1 sp0 a0s path envv)).
+Notation pp := (bv_unsigned (p1 a0s path envv inp)).
 Notation model0 := (U1zM.model0 sp0 a0s path envv tid brk mbase fs0 stdin0).
 
 #[using="ASP"] Lemma usp0_ceil : alloc_ceiling = usp0 - 8388608.
@@ -92,8 +99,9 @@ Proof. change (@alloc_ceiling amb_rc) with (bv_unsigned a_sp - 8388608)%Z. rewri
 #[using="path Hplen ASP"] Lemma usp0_above : alloc_ceiling < usp0.
 Proof. rewrite usp0_ceil. lia. Qed.
 
-Let HKA := open_err_branch_cannot_open sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp ME Hfit.
-Let HIx : heap_iface S4L := S4_heap usp0 usp0_above.
+Let HKA := open_err_branch_cannot_open sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid inp entry ME Hfit Hrdr.
+(* LPS 727298f3: heap_iface's [hi_top_task], the bound [trun_ok]'s [HIx] takes, from the launch's sp *)
+Let HIx : heap_iface S4L := S4_heap usp0 usp0_above (usp0_le_task usp0 usp0_ceil).
 
 Hypothesis TGT : target_stmt S4L HIx 0x21024 hglob_P.
 
@@ -102,36 +110,36 @@ Proof. reflexivity. Qed.
 #[using="Type"] Lemma fds0_2 : fd_lookup U1zM.fds0 (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
 Proof. reflexivity. Qed.
 
-#[using="Hva Hve Hvsp Htid ME Hbrk Hpne Hplen FRM0 ASP Hfit HKA HIx TGT"] Theorem drv_main_file : forall data,
+#[using="Hva Hve Hvsp Htid ME Hbrk Hpne Hplen FRM0 ASP Hfit Hrdr HKA HIx TGT"] Theorem drv_main_file : forall data,
 path <> QBxa.Mq5.dot_path -> fs_lookup fs0 path = Some data ->
 realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x20b84) mem0 (seg_rom RSEGS)) model0)
 (t_alt2 (t_die (msg_cannot_open path) fs0) (t_opened data fs0)).
 Proof.
 intros data NDOT FS.
-apply (open_seg sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hpne Hplen HKA);
+apply (open_seg sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid inp entry ME Hpne Hplen HKA);
 [| intros E; exfalso; exact (NDOT E)| intros _; exists data; exact FS].
 intros _ fdata FS'.
-apply (conv_open_ok sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hbrk Hplen FRM0 ASP).
+apply (conv_open_ok sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid inp entry ME Hbrk Hplen FRM0 ASP Hrdr).
 unfold U1zM.fds1g.
-apply (read_entry_ok usp0 (bv_unsigned tid) (p1 sp0 a0s path envv) path data fs0 U1zM.fds0 fds0_2
+apply (read_entry_ok usp0 (bv_unsigned tid) (p1 a0s path envv inp) path data fs0 U1zM.fds0 fds0_2
 (leaf_oom usp0 pp (bv_unsigned tid) path) (leaf_refused usp0 pp (bv_unsigned tid) path) FS).
-apply (hdr_ok usp0 (bv_unsigned tid) (p1 sp0 a0s path envv) path data fs0 U1zM.fds0 fds0_2).
-- exact (trun_ok usp0 (bv_unsigned tid) (p1 sp0 a0s path envv) path data fs0 U1zM.fds0 fds0_1 usp0_above usp0_ceil TGT (printf1_ok usp0) (printfk_ok usp0)).
-- exact (hdr_leaf_ok usp0 (bv_unsigned tid) (p1 sp0 a0s path envv) path).
+apply (hdr_ok usp0 (bv_unsigned tid) (p1 a0s path envv inp) path data fs0 U1zM.fds0 fds0_2).
+- exact (trun_ok usp0 (bv_unsigned tid) (p1 a0s path envv inp) path data fs0 U1zM.fds0 fds0_1 usp0_above usp0_ceil TGT (printf1_ok usp0) (printfk_ok usp0)).
+- exact (hdr_leaf_ok usp0 (bv_unsigned tid) (p1 a0s path envv inp) path).
 Qed.
 
-#[using="Hva Hve Hvsp Htid ME Hbrk Hpne Hplen FRM0 ASP Hfit HKA"] Theorem drv_main_dir :
+#[using="Hva Hve Hvsp Htid ME Hbrk Hpne Hplen FRM0 ASP Hfit Hrdr HKA"] Theorem drv_main_dir :
 path = QBxa.Mq5.dot_path ->
 realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x20b84) mem0 (seg_rom RSEGS)) model0)
 (t_alt2 (t_die (msg_cannot_open path) fs0) (t_opened_dir path fs0)).
 Proof.
 intros DOT.
-apply (open_seg sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hpne Hplen HKA);
+apply (open_seg sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid inp entry ME Hpne Hplen HKA);
 [intros N; exfalso; exact (N DOT)| | intros N; exfalso; exact (N DOT)].
 intros _.
-apply (conv_open_ok sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hbrk Hplen FRM0 ASP).
+apply (conv_open_ok sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid inp entry ME Hbrk Hplen FRM0 ASP Hrdr).
 unfold U1zM.fds1g.
-apply (read_entry_dir usp0 (bv_unsigned tid) (p1 sp0 a0s path envv) path fs0 U1zM.fds0 fds0_2 DOT
+apply (read_entry_dir usp0 (bv_unsigned tid) (p1 a0s path envv inp) path fs0 U1zM.fds0 fds0_2 DOT
 (leaf_oom usp0 pp (bv_unsigned tid) path) (leaf_readerr usp0 pp (bv_unsigned tid) path)).
 Qed.
 End Main.

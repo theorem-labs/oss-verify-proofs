@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes: srz_silent and js_nclosed take it, and silent_closed_srealizes gets it from RomBase.sys_rob_instr). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QQIi QdTb QHWH Q1lV.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mq0.
@@ -19,13 +21,14 @@ Variable segs : list Segment.
 
 Lemma srz_silent : forall c (I : Type) (nx : I -> config) (i0 : I) T,
 node_ok segs c I (fun _ => []) nx ->
+RomBase.sys_rob segs c ->
 (forall i, srealizes segs (nx i) T) ->
 srealizes segs c T.
 Proof.
-intros c I nx i0 T Hnode Hc.
+intros c I nx i0 T Hnode Hrob Hc.
 assert (HT0 : T []) by (eapply srealizes_nonempty; apply (Hc i0)).
 apply (srz_conseq segs c (t_alt (fun i : I => t_emit [] T))).
-- apply (srz_node segs c I (fun _ => []) nx (fun _ => T) i0 Hnode Hc).
+- apply (srz_node segs c I (fun _ => []) nx (fun _ => T) i0 Hnode Hrob Hc).
 - intros tr. split.
 + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
 + intros H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
@@ -34,8 +37,8 @@ Qed.
 Definition JS (T : TSet) : config -> Prop := fun c => srealizes segs c T.
 
 Lemma js_nclosed : forall T c (I : Type) (nx : I -> config) (i0 : I),
-node_ok segs c I (fun _ => []) nx -> (forall i, JS T (nx i)) -> JS T c.
-Proof. intros T c I nx i0 Hn Hc. exact (srz_silent c I nx i0 T Hn Hc). Qed.
+node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c -> (forall i, JS T (nx i)) -> JS T c.
+Proof. intros T c I nx i0 Hn Hrob Hc. exact (srz_silent c I nx i0 T Hn Hrob Hc). Qed.
 
 End SrzCps.
 End Mq0.
@@ -89,8 +92,8 @@ Qed.
 
 Lemma silent_closed_srealizes : forall T, silent_closed L segs (fun c => srealizes segs c T).
 Proof.
-intros T ms mo ms' mo' Hnode _ _ _ _ Hr.
-exact (srz_silent1 segs (mkCfg ms mo) (mkCfg ms' mo') T Hnode Hr).
+intros T ms mo ms' mo' Hnode Hsvc _ _ _ _ Hr.
+exact (srz_silent1 segs (mkCfg ms mo) (mkCfg ms' mo') T Hnode (RomBase.sys_rob_instr segs (mkCfg ms mo) Hsvc) Hr).
 Qed.
 
 End ViewCps.

@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of rec_shape_of (plugin-hostd/fuzz_command, image
    fuzz_command.asan-ubsan, 0x896d4, 69 instructions), ported from the ASan walk lib/A/Prog/rec_shape_of.v
-   (a working branch 6648665b722), itself in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (the
+   (a working branch), itself in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (the
    entry state with the GOT word and the shadow cell) and A/ACh5.v (the composition of the segments into the
    contract): the prologue up to the loop head (0x896d4 .. 0x8973c), then the loop of lib/B/Prog/rec_shape_of_s.v for
    the 28 rows, from the image's read-only table g_shapes and the literals it points to (lib/B/Prog/CmdRo.v). The
@@ -10,6 +10,7 @@
    are lib/B/Prog/CmdRecFacts.v's lemmas (cmd_aread_ok_chk, cmd_tail_vis, cmd_ro_in_img, cif_ro_unowned, RRO,
    cmd_cf_got, cmd_cf_cell, cmd_rom_view_on); the replies' checks are computations over CmdChk.v and CmdRo.v's
    cmd_ro_ends. The walk's hypotheses are those lemmas' premises, under the ruling's names (a Theorem Labs lane's RULING-STMT.md). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

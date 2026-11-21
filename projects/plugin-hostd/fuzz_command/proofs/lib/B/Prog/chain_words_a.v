@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the assembly of the walk of chain_words (0x8da84) on the ASan+UBSan build of
-   plugin-hostd/fuzz_command, the B twin of lib/A/Prog/chain_words_a.v (A walk a working branch
-   5e2cdad423e): the six segments of lib/B/Prog/chain_words_d.v and the induction over the passes of the member
+   plugin-hostd/fuzz_command, the B twin of lib/A/Prog/chain_words_a.v (A walk a working branch):
+   the six segments of lib/B/Prog/chain_words_d.v and the induction over the passes of the member
    loop (head 0x8dcfc) take every entry state with cw_pre to cw_post (cw_run); chain_words.v turns that into the
    statement.
 
@@ -11,6 +11,7 @@
    makes no call, so it is taken here in its FP-generic form `forall fx0, cw_S6P (fx := fx0) B MT` and
    instantiated at the state each call returned at. Both refusal cuts of B (KR1 before the loop, where F is still
    in s3 and s6, and KR2 inside it, where F is in the frame slots) come from S5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

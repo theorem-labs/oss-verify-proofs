@@ -1,6 +1,6 @@
 (* Cut invariants of reac-pw/fuzz_pin LLVMFuzzerTestOneInput (plain, [0x12cac, 0x12e4c)): ghost values, the frame
    FR, CUTST, Post, Hcut, and one Inv_<cut> per cut. Statement text: no function is proved here.
-   Taken from libreac/fuzz_ctrl's released Prog/SlotInv.v (origin/ossv/recipes 25e3d17bdb50, lines 98-194 and
+   Taken from libreac/fuzz_ctrl's released Prog/SlotInv.v (lines 98-194 and
    318-393; ctrl's frame interface files are byte-identical to knock's, which pin's frame copies), with pin's numbers:
    - Frame (0x12cac `addi sp,sp,-0x40`): SLOT_FRAME 64; the prologue saves ra, s0-s4 at S-8 .. S-48 (SLOT_SAVE 48;
      ctrl saved 13 registers at S - 104). s5-s11 are never written by the harness and every callee keeps them, so

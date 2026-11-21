@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's ledger cut; a system call's reads over the larger read-only backing). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -11,8 +12,11 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (* [comment removed for export] *)
+(* At the revision munmap (215) is in the injected allocation family
+   ([Run.injected_arm 215], munmap_errnos), so its node carries the refusal
+   filter like brk, mmap and mprotect. *)
 Definition node_alloc (n : node) : bool :=
-  match n with NBrk _ | NMmap _ _ _ _ | NMprotect _ _ _ => true | _ => false end.
+  match n with NBrk _ | NMmap _ _ _ _ | NMunmap _ _ | NMprotect _ _ _ => true | _ => false end.
 
 Definition node_refusal_b (n : node) (mo : Model) (r : word) : bool :=
   if node_alloc n then match node_input n with Some i => refusal_b i mo r | None => false end else false.
@@ -86,7 +90,6 @@ Proof.
   - destruct Hat as [[H|H] _].
     + exact (kit_pending_on_sysno segs ms mo _ 93 H ltac:(apply unsigned_lit; lia) eq_refl).
     + exact (kit_pending_on_sysno segs ms mo _ 94 H ltac:(apply unsigned_lit; lia) eq_refl).
-  - destruct Hat as [H _]. exact (kit_pending_on_sysno segs ms mo _ 215 H ltac:(apply unsigned_lit; lia) eq_refl).
 Qed.
 
 (* [comment removed for export] *)
@@ -103,6 +106,8 @@ Proof.
     unfold refusal_b. rewrite in_sysno_si. cbn [pure_input in_sysno]. reflexivity.
   - destruct Hat as [H _]. rewrite H in Hsvc. injection Hsvc as <-.
     unfold refusal_b. rewrite in_sysno_si. cbn [pure_input in_sysno]. reflexivity.
+  - destruct Hat as [H _]. rewrite H in Hsvc. injection Hsvc as <-.
+    unfold refusal_b. rewrite in_sysno_si. cbn [pure_input in_sysno]. reflexivity.
 Qed.
 
 Lemma at_node_pending_off : forall n ms mo, node_alloc n = true -> at_node segs n ms -> pending_off segs kit_cfg (mkCfg ms mo).
@@ -112,6 +117,7 @@ Proof.
     destruct Hat as [H _].
   - exact (kit_pending_off_sysno segs ms mo _ 214 H ltac:(apply unsigned_lit; lia) eq_refl).
   - exact (kit_pending_off_sysno segs ms mo _ 222 H ltac:(apply unsigned_lit; lia) eq_refl).
+  - exact (kit_pending_off_sysno segs ms mo _ 215 H ltac:(apply unsigned_lit; lia) eq_refl).
   - exact (kit_pending_off_sysno segs ms mo _ 226 H ltac:(apply unsigned_lit; lia) eq_refl).
 Qed.
 
@@ -206,6 +212,7 @@ Proof.
     destruct (Hdec eq_refl) as [(eff2 & mo2 & evs2 & Hn2 & Hr2)|Hall].
     + exists eff2, mo2, evs2. exact (nstep_c_of_grant n mo eff2 mo2 evs2 Hn2 Hr2).
     + exists rsp, mo', evs. split; [exact Hn|]. intros _. exact Hall.
+  - intros n ms mo Hat Hminv [Hsafe _]. exact (at_node_rob segs n ms mo Hat Hminv Hsafe).
 Qed.
 
 End WithSegs.

@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the journal-bound part of
-   proofs/cgif/cgif_file_fuzzer/lib/YC1f.v (origin/ossv/recipes c8557374ad2e :45-48 paj_run / paj_run_to, :431-476
+   proofs/cgif/cgif_file_fuzzer/lib/YC1f.v (theorem-labs/oss-verify-proofs@6b32741d849a :45-48 paj_run / paj_run_to, :431-476
    Ltac paj_run_tok / paj_run_to_tok) over YC80x.v's runner (journal ajournal_x of YCbqG.v, allocator invariant a
    parameter ARx, program statics PST). Every journal-free lemma and tactic is YC1fP.v's, imported, not copied.
    Generic over YC4aP's listing / image classes: no address, no image instance, no ledger.
@@ -24,6 +24,7 @@
    the journal at R (YCbqG.v ajournal_xR) and the conclusion SRrG pa_segs R. The tactics paj_run_tok_xR /
    paj_run_to_tok_xR / paj_run_tok_x_invR / paj_run_to_tok_x_invR are therefore the plain tactics: they apply RUN to
    those binders by position and introduce the post's binders, which are the same. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -149,7 +150,7 @@ end.
    binders and the post are the plain runner's, so the tactic is the plain one. *)
 Ltac paj_run_tok_xR RUN HS HJ SHOK Bspan := paj_run_tok_x RUN HS HJ SHOK Bspan.
 Ltac paj_run_to_tok_xR RUNTO HS HJ SHOK Bspan stop := paj_run_to_tok_x RUNTO HS HJ SHOK Bspan stop.
-(* YC1fP.v:450 paj_after_run_tok, introducing the post's P premise (after HJ) as HPM. *)
+(* YC1fP.v:451 paj_after_run_tok, introducing the post's P premise (after HJ) as HPM. *)
 Ltac paj_after_run_tok_inv HS HJ SHOK HPM :=
 let ws := fresh "ws" in let ms' := fresh "ms" in let mat' := fresh "mat" in
 let Hlen := fresh "Hlen" in let HF := fresh "HF" in let HFr := fresh "HFr" in let HG := fresh "HG" in let HEI := fresh "HEI" in

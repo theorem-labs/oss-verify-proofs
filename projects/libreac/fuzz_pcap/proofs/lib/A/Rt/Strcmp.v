@@ -1,7 +1,8 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/Strcmp.v (a working branch 97c611eec86), with its module paths changed, GrantSyms renamed PcapSyms, its theorems grant_strcmp_icpt / grant_strcmp_tramp renamed pcap_strcmp_icpt / pcap_strcmp_tramp, and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/Strcmp.v (a working branch), with its module paths changed, GrantSyms renamed PcapSyms, its theorems grant_strcmp_icpt / grant_strcmp_tramp renamed pcap_strcmp_icpt / pcap_strcmp_tramp, and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10, for libreac/fuzz_pcap's v1.9.0 ASan build (image A): the shared-core contract of the
    ASan strcmp interceptor, Reusable/AStrcmpDef.v's astrcmp_realizes, for ___interceptor_strcmp (0x41b28) and for the
    one-instruction trampoline __interceptor_trampoline_strcmp = __wrap_strcmp (0x41564, `j 0x41b28`). The walk is the

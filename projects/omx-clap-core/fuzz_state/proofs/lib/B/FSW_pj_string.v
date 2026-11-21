@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 1542 of its 1603 lines of code are new or changed and 390 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_string 0x83e58 (pf.c:406-411), 49 instructions of fs.asan-ubsan (image B, sha256 5ac5ce0954f8...): the ASan walk
    of the READER lane's B statement pj_string_spec (lib/B/FSH_Fn_reader.v:722, success form, statement unchanged), a
    symbolic walk of B's OWN code (decode table lib/B/FSW_pj_string_tbl.v over B's text 0x83e58 .. 0x83f1c).
 
-   Rule 24: the function's released plain / ubsan proofs exist (c8557374ad2e lib/Prog/pj_string.v, lib/U/Prog); no
+   Rule 24: the function's released plain / ubsan proofs exist (lib/Prog/pj_string.v, lib/U/Prog); no
    ASan-image proof of pj_string exists. Reuse search (a Theorem Labs lane, outputs under (internal path)):
    `proof-index pj_get pj_free pj_string` (r24-pj_get-free.txt) and `proof-index pj_object pj_get_str
    pj_string` (r24-B3.txt): plain lib/Prog and ubsan lib/U hits only, no ASan address; B's address 0x83e58 (.symtab,
@@ -15,7 +16,7 @@
    TEMPLATE, not bridgeable), S0's statement and this lane's own A walk. Second-agent check a Theorem Labs lane:
    "pj_string B: CONFIRM" (chk-B4-summary.txt).
 
-   Form: this lane's image-A walk (a working branch 32e0eda0d83 lib/A/FSW_pj_string.v), RE-WALKED over B's own
+   Form: this lane's image-A walk (a working branch lib/A/FSW_pj_string.v), RE-WALKED over B's own
    code with the lib/B kit (FSW_K / FSW_ret / FSW_K3 / FSW_rd). B is not A's code: UBSan adds two inline checks of v
    before the first store. Route (same C control flow as the plain proof, pf.c:406-411):
    - run 1 (FSW_K fsw_aj_run_toU): prologue, s2 := the shadow base (GOT 0x9fc10 -> cell 0xa8438), memset arguments, to
@@ -53,8 +54,8 @@
    - fs_memset_realizesU : aintrin_realizesU tfibsegs B OSet PC_memset   (RUNTIME / POISON-U, lib/A/FSupoisonU.v
                                                               form, at B's PC_memset 0x5222c; lib/B/FSH_Rt.v fr_memset)
    - fs_fuzz_strdup : fuzz_strdup_spec                      (ALLOC a Theorem Labs lane, lib/B/FSH_Fn_alloc.v)
-   Built over a working branch 2e266b38dbb (S0 + image B's relocated core + C5) with the lib/B walk kit
-   a working branch 65632947036 and the CTX-free statements of a working branch adfa7850046.
+   Built over a working branch (S0 + image B's relocated core + C5) with the lib/B walk kit
+   a working branch and the CTX-free statements of a working branch.
    No lib/A image-content file is loaded: lib.A's FSupoison / FSupoisonU / FSH_YC20 / FSH_Gen only. The struct pj
    field lemmas fsw_val_pj_u64 / fsw_val_pj_u32 / fsw_pj_part_okW are lib/B/FSW_pj.v's (the B kit twin of
    lib/A/FSW_pj.v). *)

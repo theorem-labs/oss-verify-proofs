@@ -1,5 +1,5 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamBase.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamBase.table); names: record RT_IImgA -> . *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamBase.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamBase.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamBase.table); names: record RT_IImgA -> . *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamBase.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* Step 1 of the evt -> SRr seam at musl vfprintf: the PRIMITIVE BRIDGES between the harness's
    view of memory and the CJ tree's.
 
@@ -12,7 +12,7 @@
    This file holds only what both halves of the seam need: the reader identity, bytes, words,
    writability, mem_inv, and the return-address and configuration shapes.  The ASan shadow lives in
    FMgxaSeamShadow.v and the contract translation in FMgxaSeam*.v. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMgxaSeamBase.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMgxaSeamBase.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMgxaSeamBase.v keeps its donor's comment text) is kept as lib/A/FMgxaSeamBase.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMgxaSeamBase.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMgxaSeamBase.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMgxaSeamBase.v keeps its donor's comment text) is kept as lib/A/FMgxaSeamBase.v writes it. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -30,7 +30,7 @@ Local Open Scope Z_scope.
 Definition cjstore (H : word -> bool) (mem : word -> option byte) : word -> option byte :=
   mrestrict H mem.
 
-(* RtScan's premise (cold/port-fm-rtscan 445e498a469 lib/A/FMbz_str.v:288), restated here because
+(* RtScan's premise (lib/A/FMbz_str.v:289), restated here because
    port-fm dropped it from asnprintf_realizes (design/SNPRINTF-SHARED.md section 3): the mutable
    store holds no byte at a read-only address and none above the user address limit.  The CJ engine
    asks for it under the name mem_inv at every walk. *)

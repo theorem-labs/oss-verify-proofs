@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the mapped stack below sp is the 6144512 bytes the launch gives. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -168,7 +169,7 @@ Context {Clg : Ceiling}.
     (first [ pose proof (stack_shadow_iv_facts) as dR_20; dand4 dR_20 as SF1 SF2 SF3 SF4 | pose proof stack_shadow_iv_facts as (SF1 & SF2 & SF3 & SF4) ]).
     ALogic2.kun.
     split; [| split; [| split]].
-    - apply mapped_NH; [lia| right; lia| lia| | exact M1]. intros x Hx. apply (hole_free_app (p_sp0 (a_pl A) - 8388608) 8388608 x); [right; kung_all; lia| kung_all; lia| exact Hx].
+    - apply mapped_NH; [lia| right; lia| lia| | exact M1]. intros x Hx. apply (hole_free_app (p_sp0 (a_pl A) - 6144512) 6144512 x); [right; kung_all; lia| kung_all; lia| exact Hx].
     - apply mapped_NH; [lia| right; lia| lia| | exact M2]. intros x Hx. apply (hole_free_app (p_sb (a_pl A) + 137438953472) 4096 x); [right; kung_all; lia| kung_all; lia| exact Hx].
     - apply mapped_NH; [lia| right; lia| lia| | exact M3]. intros x Hx.
       (* [comment removed for export] *)

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: image-B walk segment; lines 192-198 follow the shape of cgif_file_fuzzer lib/A/ACgb.v:547 (licscan run). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/B/Prog/LLVMFEntryRawRd0.v, with its module names changed; 169 of its 214 lines of code are new or changed and 154 lines of the source are left out. *)
-(* Ported from lib/A/Prog/GrantEntryRawBs3.v of a working branch 7c8c67da870 (blob e4ffe00a8d3). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from lib/A/Prog/GrantEntryRawBs3.v of a working branch (blob e4ffe00a8d3). *)
 (* The hand-built allocation phase of LLVMFuzzerTestOneInput on image B, segment Bs3: the
    slots 0x81934 .. 0x81940 (GR_bs3 .. GR_free of LLVMFEntryRawDefs.v).
 

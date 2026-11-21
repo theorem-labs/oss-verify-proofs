@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the statement carries the launch premise [entry_launch_ok_va]; the output channel's reader comes from the launch; the process input has its new fields and [main_entry] takes the input, the mmap base and the entry point). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import ModelAmb.
@@ -28,6 +29,7 @@ Definition tail_stmt (KT : list byte -> Fs -> TSet) : Prop :=
   forall (sp0 tid : word) (stdin0 : AmbIn) (fs0 : Fs) (can : word) (k buf : Z) (fdata : list byte) (V' : VmMaps)
          (R' : bvmap 5 word) (M' : word -> option byte),
     valid_sp sp0 -> (0 < bv_unsigned tid < 2 ^ 22)%Z ->
+    ia_channel_reader stdin0 = true ->     (* LPS 08b1429: from the launch's valid_input_channel_reader *)
     tgt_entry_full sp0 k buf can fdata V' R' M' ->
     realizes RSEGS (mkCfg (mkst R' (Z_to_bv 64 0xdd3a4) M' (seg_rom RSEGS)) (model_post V' stdin0 fs0 tid)) (KT fdata fs0).
 
@@ -37,6 +39,8 @@ Definition h0_full_stmt (KT : list byte -> Fs -> TSet) : Prop :=
   forall sp brk mbase rnd (inp : ProcInput),
     valid_sp sp -> valid_brk RSEGS brk -> valid_mmap_base mbase ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+    (* LPS 75d69e00: carried, see HTHgTop.h0_acc_stmt. *)
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
     valid_input inp ->
     realizes RSEGS (init_config RSEGS rpc rph sp brk mbase rnd lim inp) (spec_g KT (in_argv inp) (in_fs inp)).
 
@@ -60,18 +64,20 @@ Qed.
 
 Theorem h0_full : forall KT, tail_stmt KT -> h0_full_stmt KT.
 Proof.
-  intros KT HT lim lim_ge sp brk mbase rnd inp Hsp Hbrk Hmb Hfits Hvi.
+  intros KT HT lim lim_ge sp brk mbase rnd inp Hsp Hbrk Hmb Hfits Hlau Hvi.
+  pose proof (valid_input_launch _ Hvi) as Hvl.
   destruct (drv_verdict (in_argv inp) (in_fs inp)) eqn:Hverdict.
-  { rewrite (spec_g_acc KT _ _ Hverdict). exact (h0_acc lim lim_ge sp brk mbase rnd inp Hsp Hbrk Hmb Hfits Hvi Hverdict). }
-  destruct inp as [argv envp ifs sin uid gid groups net nofile sigmask hwcap abt vasz urnd tmp].
+  { rewrite (spec_g_acc KT _ _ Hverdict). exact (h0_acc lim lim_ge sp brk mbase rnd inp Hsp Hbrk Hmb Hfits Hlau Hvi Hverdict). }
+  destruct inp as [argv envp ifs sin uid gid groups net nofile sigmask hwcap abt vasz urnd tmp kern exf crd sgd sgt].
   cbn [in_argv in_envp in_uid in_hwcap] in *.
+  pose proof (valid_input_channel_reader _ Hvi) as Hrdr.   (* by name, never by position *)
   destruct Hvi as (Hva & Hve & Hfs & _).
   (* [comment removed for export] *)
-  set (stdin0 := mkAmbIn sin uid gid groups net nofile sigmask hwcap abt vasz urnd).
-  set (inp0 := mkProcInput_full argv envp ifs sin uid gid groups net nofile sigmask hwcap abt vasz urnd tmp) in *.
+  set (stdin0 := mkAmbIn sin uid gid groups net nofile sigmask hwcap abt vasz urnd kern exf crd sgd sgt (ed_vdso rnd)).
+  set (inp0 := mkProcInput_full argv envp ifs sin uid gid groups net nofile sigmask hwcap abt vasz urnd tmp kern exf crd sgd sgt) in *.
   set (fs0 := in_fs inp0) in *.
   apply ref_startup; try assumption.
-  intros tid regs mem Htid ME. change (main_entry sp argv envp uid hwcap rnd tid regs mem) in ME.
+  intros tid regs mem Htid ME. change (main_entry inp0 mbase (0xdcf48 : word) sp argv envp uid hwcap rnd tid regs mem) in ME.
   rewrite (init_model_A_of _ _ _ _ _ inp0).
   change (mkProcInputA (in_argv inp0) (in_envp inp0) (in_fs inp0) (amb_of inp0)) with (mkProcInputA argv envp fs0 stdin0).
   change (valid_argv argv) in Hva. change (valid_envp envp) in Hve. change (valid_fs fs0) in Hfs.
@@ -96,11 +102,11 @@ Proof.
   eapply rz_conseq; [| apply t_alt2_congr_r; apply (Kdd0a8_body_g KT data fs0)].
   apply (rz_of_gg RSEGS (fun _ => True)).
   replace (0xdd09c : word) with (Z_to_bv 64 0xdd09c) by (apply bv_eq; reflexivity).
-  apply (ref_file_exists sp a0s path envp uid hwcap rnd tid regs mem brk mbase fs0 stdin0 data lim lim_ge
-           Hva Hve Hsp Htid ME Hfits Hbrk Hlk Hne Hns Hnd ltac:(lia) true (fun _ => True)
+  apply (ref_file_exists sp a0s path envp uid hwcap rnd _ _ tid regs mem brk mbase fs0 stdin0 data lim lim_ge
+           Hva Hve Hsp Htid ME Hfits Hbrk Hmb Hlk Hne Hns Hnd ltac:(lia) Hrdr true (fun _ => True)
            (t_die (msg_cannot_open path) fs0) (KT data fs0)).
-  - intros _. apply (open_err_branch_cannot_open sp a0s path envp uid hwcap rnd tid regs mem brk mbase fs0 stdin0 lim Hva Hve Hsp Hfits ME).
+  - intros _. eapply (open_err_branch_cannot_open sp a0s path envp uid hwcap rnd _ _ tid regs mem brk mbase fs0 stdin0 lim); try eassumption.
   - intros Hm. discriminate Hm.
   - intros can k buf V' R' M' TEF. apply gg_of_rz.
-    exact (HT sp tid stdin0 fs0 can k buf data V' R' M' Hsp Htid TEF).
+    exact (HT sp tid stdin0 fs0 can k buf data V' R' M' Hsp Htid Hrdr TEF).
 Qed.

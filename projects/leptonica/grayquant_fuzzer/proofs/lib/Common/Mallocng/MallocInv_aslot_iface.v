@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag of the mmap placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -104,14 +105,14 @@ Record aslot_vm (A : astate) (sc : Z) (s s' : mstate) : Prop := {
 
 (* [comment removed for export] *)
 Definition refusal (h : VmMaps) : Prop :=
-  exists len, 0 < len <= 2^21 /\ forall a, mmap_grant_ok MMrw h a len = false.
+  exists len, 0 < len <= 2^21 /\ exists thp, forall a, mmap_grant_ok MMrw thp h a len = false.
 
 (* [comment removed for export] *)
 Definition aslot_noroom (sp0 : word) (argv envp : list (list byte)) (cb : list byte) (A : astate) (s : mstate) : Prop :=
   (4 <= spare A -> refusal (ms_vm s)) /\
   (a_areas A = [] ->
      ~ (vm_backed_bytes (ms_vm s) + 4096 <= vm_limit (ms_vm s) /\
-        (0 < a_ctx A KAac \/ exists a, grant_ok_na_vm (ms_vm s) a 8192 = true))
+        (0 < a_ctx A KAac \/ forall thp, exists a, grant_ok_na_vm thp (Z_to_bv 64 0) (ms_vm s) a 8192 = true))
      \/ exists h2, am_delta (ms_vm s) h2 /\ refusal h2).
 
 (* [comment removed for export] *)

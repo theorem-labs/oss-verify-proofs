@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGja.v (a working branch 84ee52cd012, file sha256 af26d7ea9822) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 6 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); 2 hand maps (the internal file agreloc-resolve-A.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file at d1f93c50c87) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc 0474699fc83547e0 (a working branch 83209f9d9cd8), --assume-source, --resolve the internal file resolve-102.txt (1 line name this file); 6 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGja.v (a working branch, file sha256 af26d7ea9822) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 6 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); 2 hand maps (the internal file agreloc-resolve-A.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc 0474699fc83547e0 (a working branch), --assume-source, --resolve the internal file resolve-102.txt (1 line name this file); 6 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The seed of the k-path (n <= 48) MISS arm of the frame-generic Allocate walk: the walk's environment
    E0 = AGj6.E0 (the virtual register file regs0 of AGhy, the cached-chunk atoms at the dummies of the miss)
    satisfies AGi4.MK_1 at Allocate's entry, where the machine registers [regsU] are REGS_G over regs0.  Ported from
    the released YFja.SEEDM_ok (the miss seed at malloc's entry) and TkIface's AGj0.SEED_ok (the generic seed form);
    no allocator model: the cells are read from the miss view's facts (mv_*, the fields of
-   AGif0n.mview, lib/Reusable/AGif0n.v:148-158), stated here as separate premises; the move to AGif0n is done (the AIfaceM field if_mview, AGif0n.v:276, gives the record). *)
+   AGif0n.mview, lib/Reusable/AGif0n.v:149-159), stated here as separate premises; the move to AGif0n is done (the AIfaceM field if_mview, AGif0n.v:277, gives the record). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -105,7 +106,7 @@ Hypothesis Hi11 : getr regs0 11 = w64 inst.
 (* AGif0cgif.inst_ok inst, unfolded (AGif0cgif is not a dependency of this file). *)
 Hypothesis HIO : 0xa3e98 <= inst /\ inst + 0xe60 <= 0xa86e0 /\ inst mod 8 = 0.
 Let m0 := mrestrict (w_H W) mem0.
-(* The miss view (AGif0n.mview's fields, lib/Reusable/AGif0n.v:148-158; mv_ly / mv_img are LY / IMG above). *)
+(* The miss view (AGif0n.mview's fields, lib/Reusable/AGif0n.v:149-159; mv_ly / mv_img are LY / IMG above). *)
 Hypothesis mv_tsd : ly_tsd ly = TFIB_TSD.
 Hypothesis mv_const : Forall (cell_holds B ly (aview tfibsegs (w_H W) mem0)) (as_const B ly).
 Hypothesis mv_inst : val_mem tfibsegs m0 (inst + 0x20) 8 (ly_space ly) /\

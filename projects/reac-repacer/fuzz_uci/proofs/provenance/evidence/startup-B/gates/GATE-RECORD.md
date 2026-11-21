@@ -5,10 +5,10 @@ Written by scripts/mk_evidence.py gate_record() from the gate runs' own output (
 ## FINAL: full run on the 19 committed files, port_addr_check e165063a0081 included (G0-G12)
 
 ```
-RESULT G1 kimg acfd CONTROL cgif YB01/YB03 rc=0
-25e3d17bdb50:proofs/cgif/cgif_file_fuzzer/lib/YB01.v  overlapping write bytes 0  contradicting bytes 0
-    states: 50, aliases 0, duplicate states 0
-25e3d17bdb50:proofs/cgif/cgif_file_fuzzer/lib/YB03.v  overlapping write bytes 0  contradicting bytes 0
+RESULT G1 kimg acfd CONTROL cgif YB01/YB03 rc=0:
+proofs/cgif/cgif_file_fuzzer/lib/YB01.v  overlapping write bytes 0  contradicting bytes 0
+    states: 50, aliases 0, duplicate states 0:
+proofs/cgif/cgif_file_fuzzer/lib/YB03.v  overlapping write bytes 0  contradicting bytes 0
     states: 0, aliases 0, duplicate states 0
 RESULT G1 kimg acfd CONTROL cgif counterparts rc=0
 FILE:cgif/YB01.v  overlapping write bytes 0  contradicting bytes 0
@@ -88,11 +88,11 @@ FILE:gen/YE3i.v  overlapping write bytes 0  contradicting bytes 0
     states: 0, aliases 0, duplicate states 0
 FILE:gen/YF0m.v  overlapping write bytes 0  contradicting bytes 0
     states: 0, aliases 0, duplicate states 0
-RESULT G1b kimg 5db3 CONTROL rc=0
-25e3d17bdb50:proofs/cgif/cgif_file_fuzzer/lib/YB01.v  overlapping write bytes 0  contradicting bytes 0
+RESULT G1b kimg 5db3 CONTROL rc=0:
+proofs/cgif/cgif_file_fuzzer/lib/YB01.v  overlapping write bytes 0  contradicting bytes 0
     states: 50, aliases 0, duplicate states 0
-    KImg ranges: 140, findings 0
-25e3d17bdb50:proofs/cgif/cgif_file_fuzzer/lib/YB03.v  overlapping write bytes 0  contradicting bytes 0
+    KImg ranges: 140, findings 0:
+proofs/cgif/cgif_file_fuzzer/lib/YB03.v  overlapping write bytes 0  contradicting bytes 0
     states: 0, aliases 0, duplicate states 0
     KImg ranges: 67, findings 0
 RESULT G1b kimg 5db3 uciB rc=0
@@ -732,11 +732,11 @@ RESULT G11b XW2 uciB rc=0
   logs/run_restB.gen2.log:65:control YD1k BYTE-EQUAL rc=0
   logs/run_restB.gen2.log:75:control BYTE-EQUAL to cgif's YE3i.v rc=0
   logs/run_restB.gen2.log:79:IMG_RO [0x10000, 0x2ebf0) = RO PT_LOAD file range [0x10000, 0x2ebf0); 13 chunks; recomputed region minus owned: EQUAL
-  logs/run_restB.gen2.log:83:nsB YB12.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YB12.v at 4f87de75d67 (2 modules)
-  logs/run_restB.gen2.log:86:nsB YD2i.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD2i.v at 4f87de75d67 (29 modules)
-  logs/run_restB.gen2.log:89:nsB YD2j.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD2j.v at 4f87de75d67 (3 modules)
-  logs/run_restB.gen2.log:92:nsB YD1k.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD1k.v at 4f87de75d67 (55 modules)
-  logs/run_restB.gen2.log:95:nsB YE3i.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YE3i.v at 4f87de75d67 (22 modules)
+  logs/run_restB.gen2.log:83:nsB YB12.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YB12.v (2 modules)
+  logs/run_restB.gen2.log:86:nsB YD2i.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD2i.v (29 modules)
+  logs/run_restB.gen2.log:89:nsB YD2j.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD2j.v (3 modules)
+  logs/run_restB.gen2.log:92:nsB YD1k.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD1k.v (55 modules)
+  logs/run_restB.gen2.log:95:nsB YE3i.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YE3i.v (22 modules)
   logs/af0m/run_af0mB.gen2.log:4:CONTROL cgif B (--names none): BYTE-EQUAL
   logs/af0m/run_af0mB.gen2.log:6:CONTROL cgif B (cgif nm, TFIB_TR0 / TFIB_HASH derived): BYTE-EQUAL
   logs/af0m/run_af0mB.gen2.log:31:redzone-tail self-check: PASS (1 read-only tails, 24 bytes, each covered at its full descriptor length: (0x20ca8, 0x18))
@@ -752,7 +752,7 @@ RESULT G11b XW2 uciB rc=0
   logs/af0m/run_af0mB.gen2.log:63:PASS YF0m.v depot-trace rows (present iff the image registers a descriptor): 2 rows, exactly the set fuzz_uci.asan-ubsan asan_globals (1 descriptors at 0x9b9d0) defines
 ```
 
-## FINAL: G7 re-run after the harness fix of its pins --pair input (G0 reads image A's AF0m from core f47e2a8927b9)
+## FINAL: G7 re-run after the harness fix of its pins --pair input (G0 reads image A's AF0m from core)
 
 ```
 RESULT G7a pins check rc=0
@@ -983,28 +983,28 @@ TRIAGE symname uci B rc=0
 
 ```
 TOOL $LT/gs10v/tools/global_settings/439f8e3bd463/global_settings.py sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AB14-41193e1fb22.v sha256=9fb76682e17c315e7b9f01fef3a7d6237fb57537d0c21722ba36024b6b688ac1 blob=0253327ea5dcd66d6ba46c503d53ecc6fb73a879 (6223 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/F20F-d91a1b23270.v sha256=9bcdcabace9bcabf37944fa3079a5e36e15bdb8dd001e0d53b2758bd2a282cb0 blob=c7c3dec9d577d5b3728a9585e1763834733a8abe (13916 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/LiaTwx2-41193e1fb22.v sha256=2b4ecada9deed64da11c4ce29731dfabd3fef9938453f3487ec77cfc40f8d68c blob=391b43bc25a10bd8ed391a13b5d2a36cf8be454f (7639 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AndN-41193e1fb22.v sha256=578ab3dd1a07993bb1cdea62258a7d8e41b55c135d6d246b50fc4fc93fa8ff43 blob=442450988b77b33098abea06be23f845c704be54 (89929 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/YA09-77b2702c17c.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene-b069d3e1516/lib/Reusable/YA09.v sha256=a999bbac6d984363581203f55320ba6cebcea8ea1b534f1266148b84b08629a1 blob=500d346c88105f92e728f885cbe16001c654d249 (260586 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene-b069d3e1516/lib/Reusable/YA0e.v sha256=8b1ad2de9b1615ff403d852be5abe66a3ff8cf407de146b03420578c64bdb61b blob=339b9e6baa5a8622e52a03f940da2ac5662e554e (304559 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg-f7e88c4793c/lib/Reusable/YA09.v sha256=09a43a08e62c26754dc11b781c5279c953846204bfaa4e2a10cc2b4d894b5bf8 blob=1181f23ca61ba0712068a0df2eaa16a9c7847d8b (260558 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg-f7e88c4793c/lib/Reusable/YA0e.v sha256=574ac09f8c1a3cc38b5e7f1c912c2c9c0cfea6094d179be888905a5faef7bfca blob=9dc53efe8cd9e9c7ff13f5758f3b02388e81d5dd (304529 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AB14.v sha256=9fb76682e17c315e7b9f01fef3a7d6237fb57537d0c21722ba36024b6b688ac1 blob=0253327ea5dcd66d6ba46c503d53ecc6fb73a879 (6223 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/F20F.v sha256=9bcdcabace9bcabf37944fa3079a5e36e15bdb8dd001e0d53b2758bd2a282cb0 blob=c7c3dec9d577d5b3728a9585e1763834733a8abe (13916 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/LiaTwx2.v sha256=2b4ecada9deed64da11c4ce29731dfabd3fef9938453f3487ec77cfc40f8d68c blob=391b43bc25a10bd8ed391a13b5d2a36cf8be454f (7639 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AndN.v sha256=578ab3dd1a07993bb1cdea62258a7d8e41b55c135d6d246b50fc4fc93fa8ff43 blob=442450988b77b33098abea06be23f845c704be54 (89929 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/YA09.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene/lib/Reusable/YA09.v sha256=a999bbac6d984363581203f55320ba6cebcea8ea1b534f1266148b84b08629a1 blob=500d346c88105f92e728f885cbe16001c654d249 (260586 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene/lib/Reusable/YA0e.v sha256=8b1ad2de9b1615ff403d852be5abe66a3ff8cf407de146b03420578c64bdb61b blob=339b9e6baa5a8622e52a03f940da2ac5662e554e (304559 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg/lib/Reusable/YA09.v sha256=09a43a08e62c26754dc11b781c5279c953846204bfaa4e2a10cc2b4d894b5bf8 blob=1181f23ca61ba0712068a0df2eaa16a9c7847d8b (260558 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg/lib/Reusable/YA0e.v sha256=574ac09f8c1a3cc38b5e7f1c912c2c9c0cfea6094d179be888905a5faef7bfca blob=9dc53efe8cd9e9c7ff13f5758f3b02388e81d5dd (304529 bytes)
 INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/<build VM>/lib/Reusable/YA09.v sha256=11e36a764ec393936f9a5ffdcac5426a20567e0810bb5873695d0f2d56caa163 blob=e4eaa44dfa6088f50c20cd7c4cafc0c8a7a85e6f (260552 bytes)
 INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/<build VM>/lib/Reusable/YA0e.v sha256=a807d6454c249c0fdee8465e7449cacefb05d959d5eeeeb83a607fc51147a46e blob=bef72ff5928383cfe7e1d5203ef52f830fb6469f (304525 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB-9198a8522ec/lib/Reusable/YA09.v sha256=8feacbe9b1c4c12d021a706766c83e3f329cddc1b44d8a899ce5404a51794141 blob=f7abf1cf2e5e1ebd57bcd5d2b3a831838e40852f (260552 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB-9198a8522ec/lib/Reusable/YA0e.v sha256=97c65150e276eac2582ef90c419d414584bdc688101aceb89bb581ff7eb03051 blob=0520553bff0041ae6a9d32fa14d9eda9e5eaa3d0 (304525 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl-77b2702c17c/lib/Reusable/YA09.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl-77b2702c17c/lib/Reusable/YA0e.v sha256=1c4d1a321f4af2005bc4265bcf4e42069d75edd523d642728b07f7205272dfbd blob=d92a2a5fa9b6dddc6e52c75b905fde875bcaece0 (304521 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YM03.v sha256=f3c9133ecc2b6f69d05bc384a98f340c0b03d2c573c8cd4f4c9b54ef30019930 blob=3ca2843b708f5fa41bc2a111f9285db04367cc45 (8703 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YM05.v sha256=0ca34185e42a685a4a8746625e7d2427fc11a125fb77491c9adb6c4bdd284749 blob=95df478a2491c332ff7776d04195b70e95e557f4 (6737 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YK0c.v sha256=7d15f2b51d7098d1e7a75f3da4a55a1d8d577f4b408712a1001a2569b2a737b9 blob=717b295f756cdd8bc990776e6acf45e859e7be65 (105997 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YQ04.v sha256=b57f45c448c025bd3cd4dc4455fa7cdacdcbdd603e943461459bcaea007d6ca6 blob=e0c140305007687d72b43fda817c0d7255e3d67d (15505 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/pwglue-ea39002e512/lib/A/Prog/PaSym.v sha256=a6e7d5b754c5bf077f03a90efaae57779ac8052ba9ff0dc3cab0123a4425623b blob=701a71a74db49177a908f93811f891fb498b33dd (7177 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB/lib/Reusable/YA09.v sha256=8feacbe9b1c4c12d021a706766c83e3f329cddc1b44d8a899ce5404a51794141 blob=f7abf1cf2e5e1ebd57bcd5d2b3a831838e40852f (260552 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB/lib/Reusable/YA0e.v sha256=97c65150e276eac2582ef90c419d414584bdc688101aceb89bb581ff7eb03051 blob=0520553bff0041ae6a9d32fa14d9eda9e5eaa3d0 (304525 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl/lib/Reusable/YA09.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl/lib/Reusable/YA0e.v sha256=1c4d1a321f4af2005bc4265bcf4e42069d75edd523d642728b07f7205272dfbd blob=d92a2a5fa9b6dddc6e52c75b905fde875bcaece0 (304521 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YM03.v sha256=f3c9133ecc2b6f69d05bc384a98f340c0b03d2c573c8cd4f4c9b54ef30019930 blob=3ca2843b708f5fa41bc2a111f9285db04367cc45 (8703 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YM05.v sha256=0ca34185e42a685a4a8746625e7d2427fc11a125fb77491c9adb6c4bdd284749 blob=95df478a2491c332ff7776d04195b70e95e557f4 (6737 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YK0c.v sha256=7d15f2b51d7098d1e7a75f3da4a55a1d8d577f4b408712a1001a2569b2a737b9 blob=717b295f756cdd8bc990776e6acf45e859e7be65 (105997 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YQ04.v sha256=b57f45c448c025bd3cd4dc4455fa7cdacdcbdd603e943461459bcaea007d6ca6 blob=e0c140305007687d72b43fda817c0d7255e3d67d (15505 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/pwglue/lib/A/Prog/PaSym.v sha256=a6e7d5b754c5bf077f03a90efaae57779ac8052ba9ff0dc3cab0123a4425623b blob=701a71a74db49177a908f93811f891fb498b33dd (7177 bytes)
 selftest: 45 synthetic setting cases and 11 synthetic hint cases (each text starts its case on line 4; v8: 16 bullet / brace must-FLAG cases, 2 of them on line 5), v9: 32 level cases, 66 kernel-level cases (8 forms x plain / Local / Global / Export / #[local] / #[global] / bullet / brace / after a `}` / in a proof, plus 4 must-not incl. v10's 2 coq-prog-args strings), 11 whole-run cases (9 kernel 
-control: 20 real-file known answers (copies in $LT/gs10v/tools/global_settings/439f8e3bd463, sha256 pinned): AB14-41193e1fb22.v :12 PLAIN, :12 PLAIN, :14 ESCAPES, :139 ESCAPES [levels ESCAPES TACTIC x2, PLAIN TACTIC x2]; F20F-d91a1b23270.v :37 ESCAPES [levels ESCAPES TACTIC x1]; LiaTwx2-41193e1fb22.v contains :18 ESCAPES [levels ESCAPES OPTION x1, ESCAPES TACTIC x6]; AndN-41193e1fb22.v :4 PLAIN, :
+control: 20 real-file known answers (copies in $LT/gs10v/tools/global_settings/439f8e3bd463, sha256 pinned): AB14.v :12 PLAIN, :12 PLAIN, :14 ESCAPES, :139 ESCAPES [levels ESCAPES TACTIC x2, PLAIN TACTIC x2]; F20F.v :37 ESCAPES [levels ESCAPES TACTIC x1]; LiaTwx2.v contains :18 ESCAPES [levels ESCAPES OPTION x1, ESCAPES TACTIC x6]; AndN.v :4 PLAIN, :
 INPUT wt $TR (a directory; 19 FILE arguments, each read relative to it)
 INPUT file target $TLIB/B/YB01.v sha256=6fdf86aa459ae2e15ad7a3fb9fe685398b9033902b67fbc1289be770cff7b843 blob=a376229964c881d8c9be76c3e963fa1628d67f9c (393530 bytes)
 read proofs/reac-repacer/fuzz_uci/lib/B/YB01.v: 2 reported
@@ -1081,32 +1081,32 @@ read proofs/reac-repacer/fuzz_uci/lib/B/YF0m.v: 2 reported
 SUMMARY: 19 files read of 19 given; ESCAPES 0; PLAIN 34; UNMEASURED 0; KERNEL 0; levels TACTIC 34, OPTION 0; HINTS 0 (report only, tactic-level)
 ```
 
-## FINAL: global_settings v10 over the core's lib/Reusable YA0e.v + YA09.v (09ea58a92a88)
+## FINAL: global_settings v10 over the core's lib/Reusable YA0e.v + YA09.v
 
 ```
 TOOL $LT/gs10v/tools/global_settings/439f8e3bd463/global_settings.py sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AB14-41193e1fb22.v sha256=9fb76682e17c315e7b9f01fef3a7d6237fb57537d0c21722ba36024b6b688ac1 blob=0253327ea5dcd66d6ba46c503d53ecc6fb73a879 (6223 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/F20F-d91a1b23270.v sha256=9bcdcabace9bcabf37944fa3079a5e36e15bdb8dd001e0d53b2758bd2a282cb0 blob=c7c3dec9d577d5b3728a9585e1763834733a8abe (13916 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/LiaTwx2-41193e1fb22.v sha256=2b4ecada9deed64da11c4ce29731dfabd3fef9938453f3487ec77cfc40f8d68c blob=391b43bc25a10bd8ed391a13b5d2a36cf8be454f (7639 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AndN-41193e1fb22.v sha256=578ab3dd1a07993bb1cdea62258a7d8e41b55c135d6d246b50fc4fc93fa8ff43 blob=442450988b77b33098abea06be23f845c704be54 (89929 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/YA09-77b2702c17c.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene-b069d3e1516/lib/Reusable/YA09.v sha256=a999bbac6d984363581203f55320ba6cebcea8ea1b534f1266148b84b08629a1 blob=500d346c88105f92e728f885cbe16001c654d249 (260586 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene-b069d3e1516/lib/Reusable/YA0e.v sha256=8b1ad2de9b1615ff403d852be5abe66a3ff8cf407de146b03420578c64bdb61b blob=339b9e6baa5a8622e52a03f940da2ac5662e554e (304559 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg-f7e88c4793c/lib/Reusable/YA09.v sha256=09a43a08e62c26754dc11b781c5279c953846204bfaa4e2a10cc2b4d894b5bf8 blob=1181f23ca61ba0712068a0df2eaa16a9c7847d8b (260558 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg-f7e88c4793c/lib/Reusable/YA0e.v sha256=574ac09f8c1a3cc38b5e7f1c912c2c9c0cfea6094d179be888905a5faef7bfca blob=9dc53efe8cd9e9c7ff13f5758f3b02388e81d5dd (304529 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AB14.v sha256=9fb76682e17c315e7b9f01fef3a7d6237fb57537d0c21722ba36024b6b688ac1 blob=0253327ea5dcd66d6ba46c503d53ecc6fb73a879 (6223 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/F20F.v sha256=9bcdcabace9bcabf37944fa3079a5e36e15bdb8dd001e0d53b2758bd2a282cb0 blob=c7c3dec9d577d5b3728a9585e1763834733a8abe (13916 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/LiaTwx2.v sha256=2b4ecada9deed64da11c4ce29731dfabd3fef9938453f3487ec77cfc40f8d68c blob=391b43bc25a10bd8ed391a13b5d2a36cf8be454f (7639 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AndN.v sha256=578ab3dd1a07993bb1cdea62258a7d8e41b55c135d6d246b50fc4fc93fa8ff43 blob=442450988b77b33098abea06be23f845c704be54 (89929 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/YA09.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene/lib/Reusable/YA09.v sha256=a999bbac6d984363581203f55320ba6cebcea8ea1b534f1266148b84b08629a1 blob=500d346c88105f92e728f885cbe16001c654d249 (260586 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene/lib/Reusable/YA0e.v sha256=8b1ad2de9b1615ff403d852be5abe66a3ff8cf407de146b03420578c64bdb61b blob=339b9e6baa5a8622e52a03f940da2ac5662e554e (304559 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg/lib/Reusable/YA09.v sha256=09a43a08e62c26754dc11b781c5279c953846204bfaa4e2a10cc2b4d894b5bf8 blob=1181f23ca61ba0712068a0df2eaa16a9c7847d8b (260558 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg/lib/Reusable/YA0e.v sha256=574ac09f8c1a3cc38b5e7f1c912c2c9c0cfea6094d179be888905a5faef7bfca blob=9dc53efe8cd9e9c7ff13f5758f3b02388e81d5dd (304529 bytes)
 INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/<build VM>/lib/Reusable/YA09.v sha256=11e36a764ec393936f9a5ffdcac5426a20567e0810bb5873695d0f2d56caa163 blob=e4eaa44dfa6088f50c20cd7c4cafc0c8a7a85e6f (260552 bytes)
 INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/<build VM>/lib/Reusable/YA0e.v sha256=a807d6454c249c0fdee8465e7449cacefb05d959d5eeeeb83a607fc51147a46e blob=bef72ff5928383cfe7e1d5203ef52f830fb6469f (304525 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB-9198a8522ec/lib/Reusable/YA09.v sha256=8feacbe9b1c4c12d021a706766c83e3f329cddc1b44d8a899ce5404a51794141 blob=f7abf1cf2e5e1ebd57bcd5d2b3a831838e40852f (260552 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB-9198a8522ec/lib/Reusable/YA0e.v sha256=97c65150e276eac2582ef90c419d414584bdc688101aceb89bb581ff7eb03051 blob=0520553bff0041ae6a9d32fa14d9eda9e5eaa3d0 (304525 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl-77b2702c17c/lib/Reusable/YA09.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl-77b2702c17c/lib/Reusable/YA0e.v sha256=1c4d1a321f4af2005bc4265bcf4e42069d75edd523d642728b07f7205272dfbd blob=d92a2a5fa9b6dddc6e52c75b905fde875bcaece0 (304521 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YM03.v sha256=f3c9133ecc2b6f69d05bc384a98f340c0b03d2c573c8cd4f4c9b54ef30019930 blob=3ca2843b708f5fa41bc2a111f9285db04367cc45 (8703 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YM05.v sha256=0ca34185e42a685a4a8746625e7d2427fc11a125fb77491c9adb6c4bdd284749 blob=95df478a2491c332ff7776d04195b70e95e557f4 (6737 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YK0c.v sha256=7d15f2b51d7098d1e7a75f3da4a55a1d8d577f4b408712a1001a2569b2a737b9 blob=717b295f756cdd8bc990776e6acf45e859e7be65 (105997 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YQ04.v sha256=b57f45c448c025bd3cd4dc4455fa7cdacdcbdd603e943461459bcaea007d6ca6 blob=e0c140305007687d72b43fda817c0d7255e3d67d (15505 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/pwglue-ea39002e512/lib/A/Prog/PaSym.v sha256=a6e7d5b754c5bf077f03a90efaae57779ac8052ba9ff0dc3cab0123a4425623b blob=701a71a74db49177a908f93811f891fb498b33dd (7177 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB/lib/Reusable/YA09.v sha256=8feacbe9b1c4c12d021a706766c83e3f329cddc1b44d8a899ce5404a51794141 blob=f7abf1cf2e5e1ebd57bcd5d2b3a831838e40852f (260552 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB/lib/Reusable/YA0e.v sha256=97c65150e276eac2582ef90c419d414584bdc688101aceb89bb581ff7eb03051 blob=0520553bff0041ae6a9d32fa14d9eda9e5eaa3d0 (304525 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl/lib/Reusable/YA09.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl/lib/Reusable/YA0e.v sha256=1c4d1a321f4af2005bc4265bcf4e42069d75edd523d642728b07f7205272dfbd blob=d92a2a5fa9b6dddc6e52c75b905fde875bcaece0 (304521 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YM03.v sha256=f3c9133ecc2b6f69d05bc384a98f340c0b03d2c573c8cd4f4c9b54ef30019930 blob=3ca2843b708f5fa41bc2a111f9285db04367cc45 (8703 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YM05.v sha256=0ca34185e42a685a4a8746625e7d2427fc11a125fb77491c9adb6c4bdd284749 blob=95df478a2491c332ff7776d04195b70e95e557f4 (6737 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YK0c.v sha256=7d15f2b51d7098d1e7a75f3da4a55a1d8d577f4b408712a1001a2569b2a737b9 blob=717b295f756cdd8bc990776e6acf45e859e7be65 (105997 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YQ04.v sha256=b57f45c448c025bd3cd4dc4455fa7cdacdcbdd603e943461459bcaea007d6ca6 blob=e0c140305007687d72b43fda817c0d7255e3d67d (15505 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/pwglue/lib/A/Prog/PaSym.v sha256=a6e7d5b754c5bf077f03a90efaae57779ac8052ba9ff0dc3cab0123a4425623b blob=701a71a74db49177a908f93811f891fb498b33dd (7177 bytes)
 selftest: 45 synthetic setting cases and 11 synthetic hint cases (each text starts its case on line 4; v8: 16 bullet / brace must-FLAG cases, 2 of them on line 5), v9: 32 level cases, 66 kernel-level cases (8 forms x plain / Local / Global / Export / #[local] / #[global] / bullet / brace / after a `}` / in a proof, plus 4 must-not incl. v10's 2 coq-prog-args strings), 11 whole-run cases (9 kernel 
-control: 20 real-file known answers (copies in $LT/gs10v/tools/global_settings/439f8e3bd463, sha256 pinned): AB14-41193e1fb22.v :12 PLAIN, :12 PLAIN, :14 ESCAPES, :139 ESCAPES [levels ESCAPES TACTIC x2, PLAIN TACTIC x2]; F20F-d91a1b23270.v :37 ESCAPES [levels ESCAPES TACTIC x1]; LiaTwx2-41193e1fb22.v contains :18 ESCAPES [levels ESCAPES OPTION x1, ESCAPES TACTIC x6]; AndN-41193e1fb22.v :4 PLAIN, :
+control: 20 real-file known answers (copies in $LT/gs10v/tools/global_settings/439f8e3bd463, sha256 pinned): AB14.v :12 PLAIN, :12 PLAIN, :14 ESCAPES, :139 ESCAPES [levels ESCAPES TACTIC x2, PLAIN TACTIC x2]; F20F.v :37 ESCAPES [levels ESCAPES TACTIC x1]; LiaTwx2.v contains :18 ESCAPES [levels ESCAPES OPTION x1, ESCAPES TACTIC x6]; AndN.v :4 PLAIN, :
 INPUT wt $LT/bcore09ea (a directory; 2 FILE arguments, each read relative to it)
 INPUT file target $UCIB_BCORE_LIB/Reusable/YA0e.v sha256=6301785c80f0b271ed6fe718a105fbfa8210df9c3912c72ed9b781c89af608f1 blob=4d7fcb99e799a6c8c1af2a3dae3c48d75fa702b0 (305098 bytes)
 read proofs/reac-repacer/fuzz_uci/lib/Reusable/YA0e.v: 2 reported
@@ -1119,32 +1119,32 @@ read proofs/reac-repacer/fuzz_uci/lib/Reusable/YA09.v: 2 reported
 SUMMARY: 2 files read of 2 given; ESCAPES 0; PLAIN 4; UNMEASURED 0; KERNEL 0; levels TACTIC 4, OPTION 0; HINTS 0 (report only, tactic-level)
 ```
 
-## FINAL: global_settings v10 control, grant's released lib/Reusable YA0e.v + YA09.v (4f87de75d67)
+## FINAL: global_settings v10 control, grant's released lib/Reusable YA0e.v + YA09.v
 
 ```
 TOOL $LT/gs10v/tools/global_settings/439f8e3bd463/global_settings.py sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AB14-41193e1fb22.v sha256=9fb76682e17c315e7b9f01fef3a7d6237fb57537d0c21722ba36024b6b688ac1 blob=0253327ea5dcd66d6ba46c503d53ecc6fb73a879 (6223 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/F20F-d91a1b23270.v sha256=9bcdcabace9bcabf37944fa3079a5e36e15bdb8dd001e0d53b2758bd2a282cb0 blob=c7c3dec9d577d5b3728a9585e1763834733a8abe (13916 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/LiaTwx2-41193e1fb22.v sha256=2b4ecada9deed64da11c4ce29731dfabd3fef9938453f3487ec77cfc40f8d68c blob=391b43bc25a10bd8ed391a13b5d2a36cf8be454f (7639 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AndN-41193e1fb22.v sha256=578ab3dd1a07993bb1cdea62258a7d8e41b55c135d6d246b50fc4fc93fa8ff43 blob=442450988b77b33098abea06be23f845c704be54 (89929 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/YA09-77b2702c17c.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene-b069d3e1516/lib/Reusable/YA09.v sha256=a999bbac6d984363581203f55320ba6cebcea8ea1b534f1266148b84b08629a1 blob=500d346c88105f92e728f885cbe16001c654d249 (260586 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene-b069d3e1516/lib/Reusable/YA0e.v sha256=8b1ad2de9b1615ff403d852be5abe66a3ff8cf407de146b03420578c64bdb61b blob=339b9e6baa5a8622e52a03f940da2ac5662e554e (304559 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg-f7e88c4793c/lib/Reusable/YA09.v sha256=09a43a08e62c26754dc11b781c5279c953846204bfaa4e2a10cc2b4d894b5bf8 blob=1181f23ca61ba0712068a0df2eaa16a9c7847d8b (260558 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg-f7e88c4793c/lib/Reusable/YA0e.v sha256=574ac09f8c1a3cc38b5e7f1c912c2c9c0cfea6094d179be888905a5faef7bfca blob=9dc53efe8cd9e9c7ff13f5758f3b02388e81d5dd (304529 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AB14.v sha256=9fb76682e17c315e7b9f01fef3a7d6237fb57537d0c21722ba36024b6b688ac1 blob=0253327ea5dcd66d6ba46c503d53ecc6fb73a879 (6223 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/F20F.v sha256=9bcdcabace9bcabf37944fa3079a5e36e15bdb8dd001e0d53b2758bd2a282cb0 blob=c7c3dec9d577d5b3728a9585e1763834733a8abe (13916 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/LiaTwx2.v sha256=2b4ecada9deed64da11c4ce29731dfabd3fef9938453f3487ec77cfc40f8d68c blob=391b43bc25a10bd8ed391a13b5d2a36cf8be454f (7639 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/AndN.v sha256=578ab3dd1a07993bb1cdea62258a7d8e41b55c135d6d246b50fc4fc93fa8ff43 blob=442450988b77b33098abea06be23f845c704be54 (89929 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/YA09.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene/lib/Reusable/YA09.v sha256=a999bbac6d984363581203f55320ba6cebcea8ea1b534f1266148b84b08629a1 blob=500d346c88105f92e728f885cbe16001c654d249 (260586 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/scene/lib/Reusable/YA0e.v sha256=8b1ad2de9b1615ff403d852be5abe66a3ff8cf407de146b03420578c64bdb61b blob=339b9e6baa5a8622e52a03f940da2ac5662e554e (304559 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg/lib/Reusable/YA09.v sha256=09a43a08e62c26754dc11b781c5279c953846204bfaa4e2a10cc2b4d894b5bf8 blob=1181f23ca61ba0712068a0df2eaa16a9c7847d8b (260558 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/boxreg/lib/Reusable/YA0e.v sha256=574ac09f8c1a3cc38b5e7f1c912c2c9c0cfea6094d179be888905a5faef7bfca blob=9dc53efe8cd9e9c7ff13f5758f3b02388e81d5dd (304529 bytes)
 INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/<build VM>/lib/Reusable/YA09.v sha256=11e36a764ec393936f9a5ffdcac5426a20567e0810bb5873695d0f2d56caa163 blob=e4eaa44dfa6088f50c20cd7c4cafc0c8a7a85e6f (260552 bytes)
 INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/<build VM>/lib/Reusable/YA0e.v sha256=a807d6454c249c0fdee8465e7449cacefb05d959d5eeeeb83a607fc51147a46e blob=bef72ff5928383cfe7e1d5203ef52f830fb6469f (304525 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB-9198a8522ec/lib/Reusable/YA09.v sha256=8feacbe9b1c4c12d021a706766c83e3f329cddc1b44d8a899ce5404a51794141 blob=f7abf1cf2e5e1ebd57bcd5d2b3a831838e40852f (260552 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB-9198a8522ec/lib/Reusable/YA0e.v sha256=97c65150e276eac2582ef90c419d414584bdc688101aceb89bb581ff7eb03051 blob=0520553bff0041ae6a9d32fa14d9eda9e5eaa3d0 (304525 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl-77b2702c17c/lib/Reusable/YA09.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl-77b2702c17c/lib/Reusable/YA0e.v sha256=1c4d1a321f4af2005bc4265bcf4e42069d75edd523d642728b07f7205272dfbd blob=d92a2a5fa9b6dddc6e52c75b905fde875bcaece0 (304521 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YM03.v sha256=f3c9133ecc2b6f69d05bc384a98f340c0b03d2c573c8cd4f4c9b54ef30019930 blob=3ca2843b708f5fa41bc2a111f9285db04367cc45 (8703 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YM05.v sha256=0ca34185e42a685a4a8746625e7d2427fc11a125fb77491c9adb6c4bdd284749 blob=95df478a2491c332ff7776d04195b70e95e557f4 (6737 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YK0c.v sha256=7d15f2b51d7098d1e7a75f3da4a55a1d8d577f4b408712a1001a2569b2a737b9 blob=717b295f756cdd8bc990776e6acf45e859e7be65 (105997 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock-0a89620d3fa/lib/Reusable/YQ04.v sha256=b57f45c448c025bd3cd4dc4455fa7cdacdcbdd603e943461459bcaea007d6ca6 blob=e0c140305007687d72b43fda817c0d7255e3d67d (15505 bytes)
-INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/pwglue-ea39002e512/lib/A/Prog/PaSym.v sha256=a6e7d5b754c5bf077f03a90efaae57779ac8052ba9ff0dc3cab0123a4425623b blob=701a71a74db49177a908f93811f891fb498b33dd (7177 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB/lib/Reusable/YA09.v sha256=8feacbe9b1c4c12d021a706766c83e3f329cddc1b44d8a899ce5404a51794141 blob=f7abf1cf2e5e1ebd57bcd5d2b3a831838e40852f (260552 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/grantB/lib/Reusable/YA0e.v sha256=97c65150e276eac2582ef90c419d414584bdc688101aceb89bb581ff7eb03051 blob=0520553bff0041ae6a9d32fa14d9eda9e5eaa3d0 (304525 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl/lib/Reusable/YA09.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/ctrl/lib/Reusable/YA0e.v sha256=1c4d1a321f4af2005bc4265bcf4e42069d75edd523d642728b07f7205272dfbd blob=d92a2a5fa9b6dddc6e52c75b905fde875bcaece0 (304521 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YM03.v sha256=f3c9133ecc2b6f69d05bc384a98f340c0b03d2c573c8cd4f4c9b54ef30019930 blob=3ca2843b708f5fa41bc2a111f9285db04367cc45 (8703 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YM05.v sha256=0ca34185e42a685a4a8746625e7d2427fc11a125fb77491c9adb6c4bdd284749 blob=95df478a2491c332ff7776d04195b70e95e557f4 (6737 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YK0c.v sha256=7d15f2b51d7098d1e7a75f3da4a55a1d8d577f4b408712a1001a2569b2a737b9 blob=717b295f756cdd8bc990776e6acf45e859e7be65 (105997 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/knock/lib/Reusable/YQ04.v sha256=b57f45c448c025bd3cd4dc4455fa7cdacdcbdd603e943461459bcaea007d6ca6 blob=e0c140305007687d72b43fda817c0d7255e3d67d (15505 bytes)
+INPUT file control $LT/gs10v/tools/global_settings/439f8e3bd463/ctl/pwglue/lib/A/Prog/PaSym.v sha256=a6e7d5b754c5bf077f03a90efaae57779ac8052ba9ff0dc3cab0123a4425623b blob=701a71a74db49177a908f93811f891fb498b33dd (7177 bytes)
 selftest: 45 synthetic setting cases and 11 synthetic hint cases (each text starts its case on line 4; v8: 16 bullet / brace must-FLAG cases, 2 of them on line 5), v9: 32 level cases, 66 kernel-level cases (8 forms x plain / Local / Global / Export / #[local] / #[global] / bullet / brace / after a `}` / in a proof, plus 4 must-not incl. v10's 2 coq-prog-args strings), 11 whole-run cases (9 kernel 
-control: 20 real-file known answers (copies in $LT/gs10v/tools/global_settings/439f8e3bd463, sha256 pinned): AB14-41193e1fb22.v :12 PLAIN, :12 PLAIN, :14 ESCAPES, :139 ESCAPES [levels ESCAPES TACTIC x2, PLAIN TACTIC x2]; F20F-d91a1b23270.v :37 ESCAPES [levels ESCAPES TACTIC x1]; LiaTwx2-41193e1fb22.v contains :18 ESCAPES [levels ESCAPES OPTION x1, ESCAPES TACTIC x6]; AndN-41193e1fb22.v :4 PLAIN, :
+control: 20 real-file known answers (copies in $LT/gs10v/tools/global_settings/439f8e3bd463, sha256 pinned): AB14.v :12 PLAIN, :12 PLAIN, :14 ESCAPES, :139 ESCAPES [levels ESCAPES TACTIC x2, PLAIN TACTIC x2]; F20F.v :37 ESCAPES [levels ESCAPES TACTIC x1]; LiaTwx2.v contains :18 ESCAPES [levels ESCAPES OPTION x1, ESCAPES TACTIC x6]; AndN.v :4 PLAIN, :
 INPUT wt $LT/gsgrant (a directory; 2 FILE arguments, each read relative to it)
 INPUT file target $LT/gsgrant/proofs/libreac/fuzz_grant/lib/Reusable/YA0e.v sha256=97c65150e276eac2582ef90c419d414584bdc688101aceb89bb581ff7eb03051 blob=0520553bff0041ae6a9d32fa14d9eda9e5eaa3d0 (304525 bytes)
 read proofs/libreac/fuzz_grant/lib/Reusable/YA0e.v: 74 reported
@@ -1286,13 +1286,13 @@ SUMMARY: 2 files read of 2 given; ESCAPES 125; PLAIN 4; UNMEASURED 0; KERNEL 0; 
 
 ```
 TOOL $LT/gs10/tools/global_settings/7897f5fb9f8f/global_settings.py sha256=7897f5fb9f8fc36cb3feff5fd86ce12551c99ec48d799898742decd5376bea4f
-INPUT file control $LT/gs10/tools/global_settings/7897f5fb9f8f/AB14-41193e1fb22.v sha256=9fb76682e17c315e7b9f01fef3a7d6237fb57537d0c21722ba36024b6b688ac1 blob=0253327ea5dcd66d6ba46c503d53ecc6fb73a879 (6223 bytes)
-INPUT file control $LT/gs10/tools/global_settings/7897f5fb9f8f/F20F-d91a1b23270.v sha256=9bcdcabace9bcabf37944fa3079a5e36e15bdb8dd001e0d53b2758bd2a282cb0 blob=c7c3dec9d577d5b3728a9585e1763834733a8abe (13916 bytes)
-INPUT file control $LT/gs10/tools/global_settings/7897f5fb9f8f/LiaTwx2-41193e1fb22.v sha256=2b4ecada9deed64da11c4ce29731dfabd3fef9938453f3487ec77cfc40f8d68c blob=391b43bc25a10bd8ed391a13b5d2a36cf8be454f (7639 bytes)
-INPUT file control $LT/gs10/tools/global_settings/7897f5fb9f8f/AndN-41193e1fb22.v sha256=578ab3dd1a07993bb1cdea62258a7d8e41b55c135d6d246b50fc4fc93fa8ff43 blob=442450988b77b33098abea06be23f845c704be54 (89929 bytes)
-INPUT file control $LT/gs10/tools/global_settings/7897f5fb9f8f/YA09-77b2702c17c.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
+INPUT file control $LT/gs10/tools/global_settings/7897f5fb9f8f/AB14.v sha256=9fb76682e17c315e7b9f01fef3a7d6237fb57537d0c21722ba36024b6b688ac1 blob=0253327ea5dcd66d6ba46c503d53ecc6fb73a879 (6223 bytes)
+INPUT file control $LT/gs10/tools/global_settings/7897f5fb9f8f/F20F.v sha256=9bcdcabace9bcabf37944fa3079a5e36e15bdb8dd001e0d53b2758bd2a282cb0 blob=c7c3dec9d577d5b3728a9585e1763834733a8abe (13916 bytes)
+INPUT file control $LT/gs10/tools/global_settings/7897f5fb9f8f/LiaTwx2.v sha256=2b4ecada9deed64da11c4ce29731dfabd3fef9938453f3487ec77cfc40f8d68c blob=391b43bc25a10bd8ed391a13b5d2a36cf8be454f (7639 bytes)
+INPUT file control $LT/gs10/tools/global_settings/7897f5fb9f8f/AndN.v sha256=578ab3dd1a07993bb1cdea62258a7d8e41b55c135d6d246b50fc4fc93fa8ff43 blob=442450988b77b33098abea06be23f845c704be54 (89929 bytes)
+INPUT file control $LT/gs10/tools/global_settings/7897f5fb9f8f/YA09.v sha256=41d98b977cd45b5b4e426bfd1c4c017ec59b4f568e6f745902926e44fcea7895 blob=187adbdd694af088b9f08ecb3482b3e5a518c438 (260546 bytes)
 selftest: 45 synthetic setting cases and 11 synthetic hint cases (each text starts its case on line 4; v8: 16 bullet / brace must-FLAG cases, 2 of them on line 5), 6 partial-parse cases, 8 input cases (non-UTF-8, unreadable, partly parsed, absolute FILE, FILE leaving WT, FILE a directory, no FILE, no argument), 5 count cases (1 file, 3 files, a duplicate, a non-directory WT, an absent file); moved
-control: 5 real-file known answers (copies in $LT/gs10/tools/global_settings/7897f5fb9f8f, sha256 pinned): AB14-41193e1fb22.v :12 PLAIN, :12 PLAIN, :14 ESCAPES, :139 ESCAPES; F20F-d91a1b23270.v :37 ESCAPES; LiaTwx2-41193e1fb22.v contains :18 ESCAPES; AndN-41193e1fb22.v :4 PLAIN, :4 PLAIN, :4 PLAIN, :5 PLAIN, :132 PLAIN; YA09-77b2702c17c.v :20 PLAIN, :20 PLAIN, :24 ESCAPES, :268 ESCAPES, :271 ESCAP
+control: 5 real-file known answers (copies in $LT/gs10/tools/global_settings/7897f5fb9f8f, sha256 pinned): AB14.v :12 PLAIN, :12 PLAIN, :14 ESCAPES, :139 ESCAPES; F20F.v :37 ESCAPES; LiaTwx2.v contains :18 ESCAPES; AndN.v :4 PLAIN, :4 PLAIN, :4 PLAIN, :5 PLAIN, :132 PLAIN; YA09.v :20 PLAIN, :20 PLAIN, :24 ESCAPES, :268 ESCAPES, :271 ESCAP
 INPUT wt $TR (a directory; 19 FILE arguments, each read relative to it)
 INPUT file target $TLIB/B/YB01.v sha256=6fdf86aa459ae2e15ad7a3fb9fe685398b9033902b67fbc1289be770cff7b843 blob=a376229964c881d8c9be76c3e963fa1628d67f9c (393530 bytes)
 read proofs/reac-repacer/fuzz_uci/lib/B/YB01.v: 2 reported
@@ -1369,7 +1369,7 @@ read proofs/reac-repacer/fuzz_uci/lib/B/YF0m.v: 2 reported
 SUMMARY: 19 files read of 19 given; ESCAPES 0; PLAIN 34; UNMEASURED 0; HINTS 0 (report only)
 ```
 
-## FINAL: Required modules present in the merged tree (09ea58a92a88 + the 19 files)
+## FINAL: Required modules present in the merged tree (+ the 19 files)
 
 ```
 YB01.v: 5 unit modules Required, 0 missing in the trunk: -
@@ -1397,12 +1397,12 @@ UNION 0 missing modules:
 ## FINAL: the layer is built in the image-B core: core head, merge, build record, shared MANIFEST.md (core_check.py)
 
 ```
-ls-remote <branch> = f47e2a8927b9d2cb9a2eb868cebcc195abe79bfd (want f47e2a8927b9...): True
-layer 89a444c41f23 is an ancestor of core head f47e2a8927b9: True
-merge commit(s) bringing 89a444c41f23 in: ["7614ed99fc1f 0b57b40b465e 89a444c41f23 proofs: reac-repacer fuzz_uci: merge the image-B start-up layer's YA0e / YA09 routing (89a444c41f23)"]
-files the core head changes after merge 7614ed99fc1f outside provenance/: 0 []
-core build record (core-B/GATES.md section 0 at f47e2a8927b9): - `cb build` of commit 7614ed99fc1: rc 0, 0 failed (75 compiled, 1978 from the cache); pins of all four images PINNED
-provenance/evidence/MANIFEST.md at f47e2a8927b9 vs the generator copy at that head (startup-B/scripts/mk_top_manifest.py; mk_top_manifest: 5 slice(s), 100 files): BYTE-EQUAL
+ls-remote <branch> = (want...): True
+layer is an ancestor of core head: True
+merge commit(s) bringing in: [" proofs: reac-repacer fuzz_uci: merge the image-B start-up layer's YA0e / YA09 routing"]
+files the core head changes after merge outside provenance/: 0 []
+core build record (core-B/GATES.md section 0): - `cb build`: rc 0, 0 failed (75 compiled, 1978 from the cache); pins of all four images PINNED
+provenance/evidence/MANIFEST.md vs the generator copy at that head (startup-B/scripts/mk_top_manifest.py; mk_top_manifest: 5 slice(s), 100 files): BYTE-EQUAL
 the same vs this lane's current mk_top_manifest.py (mk_top_manifest: 5 slice(s), 101 files): differs
   lines only the current generator writes: ['Files directly under provenance/evidence/ (in no slice): `mkmanifest.py`', '| `mkmanifest.py` | `2e6b0a7efca1d946c0b6a32f28779fc333cedcc961786a08390fd0dc4fac09be` |'] (loose top-level files: ['mkmanifest.py'])
 core_check: PASS
@@ -1411,10 +1411,10 @@ core_check: PASS
 ## Earlier: full run on the 19 files before the Require-map changes (G0-G12)
 
 ```
-RESULT G1 kimg acfd CONTROL cgif YB01/YB03 rc=0
-25e3d17bdb50:proofs/cgif/cgif_file_fuzzer/lib/YB01.v  overlapping write bytes 0  contradicting bytes 0
-    states: 50, aliases 0, duplicate states 0
-25e3d17bdb50:proofs/cgif/cgif_file_fuzzer/lib/YB03.v  overlapping write bytes 0  contradicting bytes 0
+RESULT G1 kimg acfd CONTROL cgif YB01/YB03 rc=0:
+proofs/cgif/cgif_file_fuzzer/lib/YB01.v  overlapping write bytes 0  contradicting bytes 0
+    states: 50, aliases 0, duplicate states 0:
+proofs/cgif/cgif_file_fuzzer/lib/YB03.v  overlapping write bytes 0  contradicting bytes 0
     states: 0, aliases 0, duplicate states 0
 RESULT G1 kimg acfd CONTROL cgif counterparts rc=0
 FILE:cgif/YB01.v  overlapping write bytes 0  contradicting bytes 0
@@ -1494,11 +1494,11 @@ FILE:gen/YE3i.v  overlapping write bytes 0  contradicting bytes 0
     states: 0, aliases 0, duplicate states 0
 FILE:gen/YF0m.v  overlapping write bytes 0  contradicting bytes 0
     states: 0, aliases 0, duplicate states 0
-RESULT G1b kimg 5db3 CONTROL rc=0
-25e3d17bdb50:proofs/cgif/cgif_file_fuzzer/lib/YB01.v  overlapping write bytes 0  contradicting bytes 0
+RESULT G1b kimg 5db3 CONTROL rc=0:
+proofs/cgif/cgif_file_fuzzer/lib/YB01.v  overlapping write bytes 0  contradicting bytes 0
     states: 50, aliases 0, duplicate states 0
-    KImg ranges: 140, findings 0
-25e3d17bdb50:proofs/cgif/cgif_file_fuzzer/lib/YB03.v  overlapping write bytes 0  contradicting bytes 0
+    KImg ranges: 140, findings 0:
+proofs/cgif/cgif_file_fuzzer/lib/YB03.v  overlapping write bytes 0  contradicting bytes 0
     states: 0, aliases 0, duplicate states 0
     KImg ranges: 67, findings 0
 RESULT G1b kimg 5db3 uciB rc=0
@@ -2107,11 +2107,11 @@ RESULT G11b XW2 uciB rc=0
   logs/run_restB.gen2.log:65:control YD1k BYTE-EQUAL rc=0
   logs/run_restB.gen2.log:75:control BYTE-EQUAL to cgif's YE3i.v rc=0
   logs/run_restB.gen2.log:79:IMG_RO [0x10000, 0x2ebf0) = RO PT_LOAD file range [0x10000, 0x2ebf0); 13 chunks; recomputed region minus owned: EQUAL
-  logs/run_restB.gen2.log:83:nsB YB12.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YB12.v at 4f87de75d67 (2 modules)
-  logs/run_restB.gen2.log:86:nsB YD2i.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD2i.v at 4f87de75d67 (29 modules)
-  logs/run_restB.gen2.log:89:nsB YD2j.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD2j.v at 4f87de75d67 (3 modules)
-  logs/run_restB.gen2.log:92:nsB YD1k.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD1k.v at 4f87de75d67 (55 modules)
-  logs/run_restB.gen2.log:95:nsB YE3i.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YE3i.v at 4f87de75d67 (22 modules)
+  logs/run_restB.gen2.log:83:nsB YB12.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YB12.v (2 modules)
+  logs/run_restB.gen2.log:86:nsB YD2i.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD2i.v (29 modules)
+  logs/run_restB.gen2.log:89:nsB YD2j.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD2j.v (3 modules)
+  logs/run_restB.gen2.log:92:nsB YD1k.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YD1k.v (55 modules)
+  logs/run_restB.gen2.log:95:nsB YE3i.v: Require (dir, module) set EQUAL to fuzz_grant B lib/B/YE3i.v (22 modules)
   logs/af0m/run_af0mB.gen2.log:4:CONTROL cgif B (--names none): BYTE-EQUAL
   logs/af0m/run_af0mB.gen2.log:6:CONTROL cgif B (cgif nm, TFIB_TR0 / TFIB_HASH derived): BYTE-EQUAL
   logs/af0m/run_af0mB.gen2.log:31:redzone-tail self-check: PASS (1 read-only tails, 24 bytes, each covered at its full descriptor length: (0x20ca8, 0x18))

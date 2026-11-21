@@ -10,7 +10,7 @@
    a1 at the branch 0x81630 is n / 4 * 3 + 3 (no wrap: n < 2^64); under held <= n / 4 * 3 + 3 the branch to the abort path
    is not taken, and the function returns at 0x8163c with memory changed only in its 16-byte stack window.
    The decode table is lib/B/FSW_check_bounded_alloc_tbl.v.
-   Ported from: lib/A/FSH_check_bounded_alloc.v (a working branch 3694074f8f1), the same walk over lib/B's walk
+   Ported from: lib/A/FSH_check_bounded_alloc.v (a working branch), the same walk over lib/B's walk
    kit lib/B/FSW_K.v (same lemma names) and lib/B's image files (YB1v, YB1w, FSH_Base, FSH_Rt, FSH_Fn_checks). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

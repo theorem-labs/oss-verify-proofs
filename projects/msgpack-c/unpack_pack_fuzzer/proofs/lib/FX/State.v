@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mfacts gains mf_reader, the model's channel reader set, which write and writev now read). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -225,7 +226,10 @@ Definition ops_apart (OPS : optable) (E : env) (os : list opinst) (R : IMap.t re
 
 Record mfacts (model : Model) : Prop := MF {
   mf_halted : m_halted model = None;
-  mf_lazy : m_vm_lazy model = []
+  mf_lazy : m_vm_lazy model = [];
+  (* LPS 08b1429: write/writev read the far-end reader ([ReadWrite.write_spec]); seeded once
+     at launch from [in_channel_reader] and written by no step. *)
+  mf_reader : m_channel_reader model = true
 }.
 
 Lemma mfacts_acc : forall mo acc, mfacts mo -> materialize_model_accesses mo acc = Some mo.

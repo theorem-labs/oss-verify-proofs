@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvM.v at b929052adf57; the same model for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvM.v; the same model for
    image B (fuzz_rate.asan-ubsan): only the comments change, to image B's addresses and registers; every
    statement and proof is the image-A file's (no term reads an image). *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256

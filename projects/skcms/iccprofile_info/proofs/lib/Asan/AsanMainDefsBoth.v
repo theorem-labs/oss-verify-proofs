@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the check forms take the launch's CONFIG_RSEQ layout (rz) and run under that layout's table (INFO_BOTH_at rz). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -69,13 +70,15 @@ Definition class_le (C C' : class) : bool :=
 
 (* [comment removed for export] *)
 Section Forms.
+  (* LPS 727298f3: the launch's CONFIG_RSEQ layout, read by the table every check is run under. *)
+  Variable rz : Z.
   Variable HS_asan : nat -> option acs.
   Variables KCm BFUELm FUELm : nat.
   Variable ITm : itab.
 
   (* [comment removed for export] *)
   #[local] Notation CHK C HS cs p :=
-    (APF.check ASEGS ITm INFO_BOTH NX0 AsanInit.LIMIT (XNm ASEGS INFO_BOTH NX0 RPN.RP_BOTH (iotab_of C)) (XEm ASEGS INFO_BOTH NX0) (XBm ASEGS NX0 (iotab_of C))
+    (APF.check ASEGS ITm (INFO_BOTH_at rz) NX0 AsanInit.LIMIT (XNm ASEGS (INFO_BOTH_at rz) NX0 RPN.RP_BOTH (iotab_of C)) (XEm ASEGS (INFO_BOTH_at rz) NX0) (XBm ASEGS (INFO_BOTH_at rz) NX0 (iotab_of C))
            HS KCm BFUELm FUELm None cs p).
 
   (* [comment removed for export] *)

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_segX_crt1_glue: the facts segment crt1 of image B's LLVMFuzzerTestOneInput needs between
    its runs, its calls and its cut points (lib/B/Prog/LLVMFuzzerTestOneInput_segs.v llvm_b_st_5cc / llvm_b_st_6f0):
    - c1g_evtF_grows / c1g_mem_grows_restrict / c1g_eqv_mkst: a footprint run only grows memory, and the shape of its
-     last state (a working branch 02bbf1e30df lib/B/Prog/crtB_glue.v:146-178, by path);
+     last state (a working branch lib/B/Prog/crtB_glue.v:146-178, by path);
    - c1g_frame: where the fake frame lies (lib/Reusable/YCbq.v:450 frames_bounds at this frame's class);
    - c1g_mode: the mode's two geometry fields are visible, their shadow says addressable, the mode is 4-aligned
      application memory (for a table: the read-only view at its DEC_RO_RD field words, the record's zero shadow at its
@@ -238,7 +239,7 @@ Proof.
   rewrite Nat2Z.inj_sub_max. rewrite Z2Nat.id by lia. lia.
 Qed.
 
-(* exit_defs.v:54-73 ex_perm_twice (commit 44e7264cb0a), copied: no block occurs twice in a list the live blocks
+(* exit_defs.v:54-73 ex_perm_twice, copied: no block occurs twice in a list the live blocks
    are a permutation of. *)
 Lemma c1g_perm_twice : forall ly S W mem md l1 l2 x,
   AR segs B ly S W mem md -> Permutation (ablocks B ly S) (l1 ++ l2) -> In x l1 -> In x l2 -> False.

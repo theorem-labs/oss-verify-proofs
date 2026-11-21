@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Bs0Gc.
@@ -59,6 +60,9 @@ Section Loop.
   Hypothesis Fhi : (f + 232 <= 0x189be8)%Z.
   Hypothesis FD : (0 < fd < 2147483648)%Z.
   Hypothesis Hfd : fd_lookup (m_fds mo0) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
+  (* 75d69e00: the far end has a reader ([ReadWrite.writev_spec], Linux v6.18.46
+     fs/pipe.c:460-465); free, not derivable from [Hfd]. *)
+  Hypothesis Hrdr : m_channel_reader mo0 = true.
   Hypothesis Hret : ret_ok ret.
   Hypothesis HKnil : K [].
   Hypothesis SOK1 : store_ok RSEGS mem1 (Z_to_bv 64 (su - 112)) 112%nat = true.
@@ -96,6 +100,9 @@ Section Loop.
 
   Lemma LZ_fd : forall msF mo, LZ msF mo -> fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
   Proof. intros msF mo (_ & SB & _). rewrite (same_but_materialized_fds _ _ SB). exact Hfd. Qed.
+
+  Lemma LZ_rdr : forall msF mo, LZ msF mo -> m_channel_reader mo = true.
+  Proof. intros msF mo (_ & SB & _). rewrite (same_but_materialized_reader _ _ SB). exact Hrdr. Qed.
 
   Lemma LZ_next : forall msF mo msF' mo', LZ msF mo ->
     lzok RSEGS L S Zr (mkCfg msF' mo') -> same_but_materialized mo mo' -> hid_same L S msF msF' -> LZ msF' mo'.
@@ -217,7 +224,7 @@ Section Loop.
     eapply (rz_writev1_wall_lazy RSEGS L S Zr msFa regs1 (0x16cee0 : word) m' moa W_16b538 fd
               (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b + Z.of_nat k))
               (Z_to_bv 64 (Z.of_nat (length bs) - Z.of_nat k)) (skipn k bs) K);
-      [ exact F_16b538 | exact E_16b538 | exact (proj1 LZa) | subst m'; exact RSa | exact (LZ_fd _ _ LZa) | exact FD
+      [ exact F_16b538 | exact E_16b538 | exact (proj1 LZa) | subst m'; exact RSa | exact (LZ_fd _ _ LZa) | (eapply LZ_rdr; eassumption) | exact FD
       | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | exact HKnil | ].
     - subst m'. rdn_solve.
     - subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -324,7 +331,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 104)) (Z_to_bv 64 (bv_unsigned b0 + Z.of_nat k))
                 (Z_to_bv 64 (Z.of_nat (length bs0) - Z.of_nat k))
                 b1 (Z_to_bv 64 (Z.of_nat (length bs1))) (skipn k bs0) bs1 K);
-        [ exact F_16b538 | exact E_16b538 | exact (proj1 LZa) | subst m'; exact RSa | exact (LZ_fd _ _ LZa) | exact FD
+        [ exact F_16b538 | exact E_16b538 | exact (proj1 LZa) | subst m'; exact RSa | exact (LZ_fd _ _ LZa) | (eapply LZ_rdr; eassumption) | exact FD
         | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.
       + subst m'. u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. rdn_solve.
@@ -417,7 +424,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b1 + Z.of_nat (k - length bs0)))
                 (Z_to_bv 64 (Z.of_nat (length bs1) - Z.of_nat (k - length bs0)))
                 (skipn (k - length bs0) bs1) K);
-        [ exact F_16b538 | exact E_16b538 | exact (proj1 LZa) | subst m'; exact RSa | exact (LZ_fd _ _ LZa) | exact FD
+        [ exact F_16b538 | exact E_16b538 | exact (proj1 LZa) | subst m'; exact RSa | exact (LZ_fd _ _ LZa) | (eapply LZ_rdr; eassumption) | exact FD
         | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.
       + subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -519,6 +526,8 @@ Theorem as_stdio_write `{fx : DFP} :
   ssp_cells mem can ->
   (0 < fd < 2147483648)%Z ->
   fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (* 75d69e00: free reader bit, as in [Drv.S1StdioWrite.ref_stdio_write] *)
+  m_channel_reader mo = true ->
   lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst regs (0x16cdd0 : word) mem (seg_rom RSEGS) ->
   (0 <= wb <= wp)%Z -> (wp <= 0x800000000000)%Z ->
   (wp - wb = Z.of_nat (length pending))%Z ->
@@ -546,7 +555,7 @@ Theorem as_stdio_write `{fx : DFP} :
            (t_emit (map (WriteEv (Z_to_bv 64 fd)) (pending ++ extra)) K).
 Proof.
   intros regs mem L S Zr msF mo su f wb wp fd s l bufp bufsz can ret pending extra K
-         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd OK RS WBP WPhi
+         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hrdr OK RS WBP WPhi
          LENP LENE M30 DISJP DISJE SNW RDP RDE Hret HKnil HK.
   assert (LZ0 : LZ L S Zr msF mo msF mo).
   { split; [exact OK|]. split; [apply same_but_materialized_refl | apply hid_same_refl]. }
@@ -604,11 +613,11 @@ Proof.
   pose proof (loop1 su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 L S Zr msF mo K
-                SUlo SUhi Flo Fhi FD Hfd Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
+                SUlo SUhi Flo Fhi FD Hfd Hrdr Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
   pose proof (loop2 su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 L S Zr msF mo K
-                SUlo SUhi Flo Fhi FD Hfd Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
+                SUlo SUhi Flo Fhi FD Hfd Hrdr Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
   pose proof (LM_refl su mem1) as LM1.
   destruct (Z.eq_dec wb wp) as [EQ|NEQ].
   -
@@ -646,7 +655,7 @@ Proof.
     +
       eapply (rz_writev1_wall_lazy RSEGS L S Zr msFa regs1 (0x16ce58 : word) mem1 moa W_16b4b0 fd
                 (Z_to_bv 64 (su - 88)) s l (x0 :: extra') K);
-        [ exact F_16b4b0 | exact E_16b4b0 | exact OKa | exact RSa | exact (LZ_fd fd L S Zr msF mo Hfd _ _ LZa) | exact FD
+        [ exact F_16b4b0 | exact E_16b4b0 | exact OKa | exact RSa | exact (LZ_fd fd L S Zr msF mo Hfd _ _ LZa) | (eapply LZ_rdr; eassumption) | exact FD
         | exact R17 | exact R10 | exact R11 | exact R12 | exact M88 | | | | | | | exact HKnil | ].
       * u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. exact M80.
       * unfold word_to_nat. rewrite LENE, Nat2Z.id. exact Be.
@@ -700,7 +709,7 @@ Proof.
     { unfold RI. repeat split; assumption. }
     eapply (rz_writev2_wall_lazy RSEGS L S Zr msFa regs1 (0x16ce58 : word) mem1 moa W_16b4b0 fd
               (Z_to_bv 64 (su - 104)) (Z_to_bv 64 wb) (Z_to_bv 64 (wp - wb)) s l pending extra K);
-      [ exact F_16b4b0 | exact E_16b4b0 | exact OKa | exact RSa | exact (LZ_fd fd L S Zr msF mo Hfd _ _ LZa) | exact FD
+      [ exact F_16b4b0 | exact E_16b4b0 | exact OKa | exact RSa | exact (LZ_fd fd L S Zr msF mo Hfd _ _ LZa) | (eapply LZ_rdr; eassumption) | exact FD
       | exact R17 | exact R10 | exact R11 | exact R12 | exact M104 | | | | | | | | | | | exact HKnil | ].
     + u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. exact M96.
     + u_norm. replace (su - 104 + 16)%Z with (su - 88)%Z by lia. exact M88.

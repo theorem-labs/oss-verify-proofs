@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the start-up sections take the input's kernel build, exec file name and SIGPIPE disposition and the launch's mmap-base and launch facts, the start-up invariant and its hidden ranges take the new AsanInit arguments, and the start-up checks, their plans and their hand-off states are the ones computed at the run's CONFIG_RSEQ flag. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -23,10 +24,10 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm Bothny9 As
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanlzb.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanlzb Bothy0u Bothmmq.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Bothjqf.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Starazj Bothjqf.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require BothRegen Bothjqf.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Both6eh.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Both6eh Starr0h Stargqr Bothg0u Both56i.
-Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.PropExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.ShapeAlg OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.SpinAlg OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm.AgentLib OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanAcct OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanoq0 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.AxSyetn OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm.AxSyqqh OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothny9 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb.Asankdu OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothy0u OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothmmq OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothjqf.Star1i1 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Starazj OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothjqf OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Both6eh.Starfcw OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Both6eh OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Starr0h OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Stargqr OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothg0u OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Both56i.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Both6eh BothRegen2.
+Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.BothRegen OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.BothRegen2 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.PropExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.ShapeAlg OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.SpinAlg OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm.AgentLib OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanAcct OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanoq0 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.AxSyetn OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm.AxSyqqh OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothny9 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb.Asankdu OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothy0u OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothmmq OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothjqf.Star1i1 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothjqf OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Both6eh.Starfcw OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Both6eh.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AX2. Import AX2S. Import APC. Import AP. Import APS.
@@ -61,13 +62,9 @@ Proof. reflexivity. Qed.
 Lemma NX2b_ge : (NX0 <= NX2b)%nat.
 Proof. unfold NX0, NX2b. lia. Qed.
 
-(* [comment removed for export] *)
-Lemma pc_HS_both_0 : pc HS_both_0 = 0x87618. Proof. reflexivity. Qed.
-Lemma pc_HS_both_1 : pc HS_both_1 = 0x87618. Proof. reflexivity. Qed.
-Lemma pc_HS_both2_1 : pc HS_both2_1 = MAIN_PC_BOTH. Proof. reflexivity. Qed.
-Lemma pc_HS_both2_2 : pc HS_both2_2 = MAIN_PC_BOTH. Proof. reflexivity. Qed.
-Lemma pc_HS_both2b_1 : pc HS_both2b_1 = MAIN_PC_BOTH. Proof. reflexivity. Qed.
-Lemma pc_HS_both2b_2 : pc HS_both2b_2 = MAIN_PC_BOTH. Proof. reflexivity. Qed.
+(* LPS 727298f3: the hand-off states' pcs are [BothRegen.pc_HS_both_0r]/[pc_HS_both_1r] (0x87618)
+   and [BothRegen2.pc_HS_both2_1r] .. [pc_HS_both2b_2r] ([MAIN_PC2b], 0x867f8, which is
+   [MAIN_PC_BOTH]), at the run's CONFIG_RSEQ flag. *)
 
 Section Main.
   (* [comment removed for export] *)
@@ -81,6 +78,10 @@ Section Main.
   Variable groups : list word.
   Variable net : NetQueue.
   Variable urandom : InputStream.   (* [comment removed for export] *)
+  (* LPS 727298f3: [AsanInit.inp]'s three new fields *)
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable sigdfl : bool.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk BSEGS brk0.
   Hypothesis Hva : valid_argv argv.
@@ -88,28 +89,39 @@ Section Main.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Hypothesis Huid : valid_id uid.
   Hypothesis Hhw : valid_hwcap hw.
+  (* LPS 727298f3: valid_entry's mmap-base and launch conjuncts and valid_input's
+     [valid_launch], which [Bothmmq.both_startup] reads *)
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Hlaunch : valid_launch (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw)
+                      (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl).
 
-  #[local] Notation SINV := (SINV0 BPH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 BPH sp rdraw argv envp uid hw).
-  #[local] Notation E0a := (E0 BPH sp rdraw brk0 argv envp uid hw).
+  #[local] Notation SINV := (SINV0 BOTH BPH sp rdraw brk0 mbase argv envp uid gid hw kb execfn).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kb execfn).
+  #[local] Notation E0a := (E0 sp rdraw brk0 argv envp uid gid hw kb execfn).
+  (* the run's CONFIG_RSEQ flag as the plan's 0 or 1 *)
+  #[local] Notation RZ := (rseq_z (kb_rseq kb)).
   Context {BL : AsanInit.BootLim}.   (* [comment removed for export] *)
   #[local] Notation LIM := (@AsanInit.blim BL).
   (* [comment removed for export] *)
-  Hypothesis CERT0 : check BSEGS IT0b BOTH NX0 LIM (XNb2 NX0) XE0 XB0 HS_both KC0b BFUELb FUELb None both_init startup_plan_both = COk startup_shape_both.
-  Hypothesis CERT2 : check BSEGS IT2b BOTH NX2b LIM (XNb2 NX2b) XE0 XB0 HS_both2 KC2b BFUEL2b FUEL2b None HS_both_0 startup_plan_both2 = COk startup_shape_both2.
-  Hypothesis CERT2B : check BSEGS IT2b BOTH NX2b LIM (XNb2 NX2b) XE0 XB0 HS_both2b KC2b BFUEL2b FUEL2b None HS_both_1 startup_plan_both2b = COk startup_shape_both2.
+  (* LPS 727298f3: the three checks at the run's flag [RZ], over the plans and hand-off states
+     [BothRegen]/[BothRegen2] compute at it: [startup_cert_both], [startup_cert_both2] and
+     [startup_cert_both2b] at [RZ]. *)
+  Hypothesis CERT0 : check BSEGS IT0b BOTH NX0 LIM RZ (XNb2 NX0) XE0 XB0 (HS_both_r RZ) KC0b BFUELb FUELb None (both_init RZ) (startup_plan_both_r RZ) = COk startup_shape_both.
+  Hypothesis CERT2 : check BSEGS IT2b BOTH NX2b LIM RZ (XNb2 NX2b) XE0 XB0 (HS_both2_r RZ) KC2b BFUEL2b FUEL2b None (HS_both_0r RZ) (startup_plan_both2_r RZ) = COk startup_shape_both2.
+  Hypothesis CERT2B : check BSEGS IT2b BOTH NX2b LIM RZ (XNb2 NX2b) XE0 XB0 (HS_both2b_r RZ) KC2b BFUEL2b FUEL2b None (HS_both_1r RZ) (startup_plan_both2b_r RZ) = COk startup_shape_both2.
 
   (* [comment removed for export] *)
   Variable MAIN : TSet.
   Hypothesis MAIN_nil : MAIN [].
   Hypothesis MAIN1_sound : forall E R FULL model,
-    cs_ok BSEGS BOTH LIM SINV argH fs E HS_both2_1 R FULL model -> srealizes BSEGS (cfg_of BSEGS R MAIN_PC_BOTH FULL model) MAIN.
+    cs_ok BSEGS BOTH LIM SINV argH fs E (HS_both2_1r RZ) R FULL model -> srealizes BSEGS (cfg_of BSEGS R MAIN_PC_BOTH FULL model) MAIN.
   Hypothesis MAIN2_sound : forall E R FULL model,
-    cs_ok BSEGS BOTH LIM SINV argH fs E HS_both2_2 R FULL model -> srealizes BSEGS (cfg_of BSEGS R MAIN_PC_BOTH FULL model) MAIN.
+    cs_ok BSEGS BOTH LIM SINV argH fs E (HS_both2_2r RZ) R FULL model -> srealizes BSEGS (cfg_of BSEGS R MAIN_PC_BOTH FULL model) MAIN.
   Hypothesis MAIN3_sound : forall E R FULL model,
-    cs_ok BSEGS BOTH LIM SINV argH fs E HS_both2b_1 R FULL model -> srealizes BSEGS (cfg_of BSEGS R MAIN_PC_BOTH FULL model) MAIN.
+    cs_ok BSEGS BOTH LIM SINV argH fs E (HS_both2b_1r RZ) R FULL model -> srealizes BSEGS (cfg_of BSEGS R MAIN_PC_BOTH FULL model) MAIN.
   Hypothesis MAIN4_sound : forall E R FULL model,
-    cs_ok BSEGS BOTH LIM SINV argH fs E HS_both2b_2 R FULL model -> srealizes BSEGS (cfg_of BSEGS R MAIN_PC_BOTH FULL model) MAIN.
+    cs_ok BSEGS BOTH LIM SINV argH fs E (HS_both2b_2r RZ) R FULL model -> srealizes BSEGS (cfg_of BSEGS R MAIN_PC_BOTH FULL model) MAIN.
 
   (* [comment removed for export] *)
   Definition MAINH (h : nat) (E : env) (fs' : Fs.Fs) : TSet := MAIN.
@@ -124,57 +136,57 @@ Section Main.
   (* [comment removed for export] *)
   Lemma mainh_some_inj : forall (A : Type) (x y : A), Some x = Some y -> x = y.
   Proof. intros A x y H. exact (f_equal (fun o : option A => match o with Some v => v | None => x end) H). Qed.
-  Lemma MAINH_sound2 : holes_stmt BSEGS BOTH LIM HS_both2 SINV argH MAINH fs.
+  Lemma MAINH_sound2 : holes_stmt BSEGS BOTH LIM (HS_both2_r RZ) SINV argH MAINH fs.
   Proof.
     intros h ch Hh E R FULL model HC.
-    destruct h as [|[|[|h]]]; cbn [HS_both2] in Hh; try discriminate Hh; apply mainh_some_inj in Hh; subst ch.
-    - rewrite pc_HS_both2_1. exact (MAIN1_sound E R FULL model HC).
-    - rewrite pc_HS_both2_2. exact (MAIN2_sound E R FULL model HC).
+    destruct (HS_both2_r_cases RZ h ch (rseq_z_range _) Hh) as [[-> ->] | [-> ->]].
+    - rewrite (pc_HS_both2_1r RZ (rseq_z_range _)). exact (MAIN1_sound E R FULL model HC).
+    - rewrite (pc_HS_both2_2r RZ (rseq_z_range _)). exact (MAIN2_sound E R FULL model HC).
   Qed.
-  Lemma MAINH_sound2b : holes_stmt BSEGS BOTH LIM HS_both2b SINV argH MAINH fs.
+  Lemma MAINH_sound2b : holes_stmt BSEGS BOTH LIM (HS_both2b_r RZ) SINV argH MAINH fs.
   Proof.
     intros h ch Hh E R FULL model HC.
-    destruct h as [|[|[|h]]]; cbn [HS_both2b] in Hh; try discriminate Hh; apply mainh_some_inj in Hh; subst ch.
-    - rewrite pc_HS_both2b_1. exact (MAIN3_sound E R FULL model HC).
-    - rewrite pc_HS_both2b_2. exact (MAIN4_sound E R FULL model HC).
+    destruct (HS_both2b_r_cases RZ h ch (rseq_z_range _) Hh) as [[-> ->] | [-> ->]].
+    - rewrite (pc_HS_both2b_1r RZ (rseq_z_range _)). exact (MAIN3_sound E R FULL model HC).
+    - rewrite (pc_HS_both2b_2r RZ (rseq_z_range _)). exact (MAIN4_sound E R FULL model HC).
   Qed.
 
   Lemma sd_shape2 : forall E fs', t_eq (sd MAINH t_nil E fs' startup_shape_both2) MAIN.
   Proof. intros E fs'. cbn [sd startup_shape_both2 MAINH]. destruct (Z.leb _ _); apply t_eq_refl. Qed.
 
   Theorem seg2_sound : forall E R FULL model,
-    cs_ok BSEGS BOTH LIM SINV argH fs E HS_both_0 R FULL model ->
+    cs_ok BSEGS BOTH LIM SINV argH fs E (HS_both_0r RZ) R FULL model ->
     srealizes BSEGS (cfg_of BSEGS R 0x87618 FULL model) MAIN.
   Proof.
     intros E R FULL model HC.
     eapply srz_conseq; [| apply sd_shape2].
-    rewrite <- pc_HS_both_0.
-    exact (both_check_sound sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit NX2b NX2b_ge IT2b IT2b_ok HS_both2
-             MAINH (MAINH_agree NX2b) MAINH_nil MAINH_sound2 KC2b BFUEL2b FUEL2b startup_plan_both2 HS_both_0 startup_shape_both2 CERT2
+    rewrite <- (pc_HS_both_0r RZ (rseq_z_range _)).
+    exact (both_check_sound sp rdraw brk0 mbase argv envp fs uid gid hw kb execfn Hsp Hva Hve Hfit NX2b NX2b_ge Hlaunch Hlau IT2b IT2b_ok (HS_both2_r RZ)
+             MAINH (MAINH_agree NX2b) MAINH_nil MAINH_sound2 KC2b BFUEL2b FUEL2b (startup_plan_both2_r RZ) (HS_both_0r RZ) startup_shape_both2 CERT2
              E R FULL model HC).
   Qed.
 
   Theorem seg2b_sound : forall E R FULL model,
-    cs_ok BSEGS BOTH LIM SINV argH fs E HS_both_1 R FULL model ->
+    cs_ok BSEGS BOTH LIM SINV argH fs E (HS_both_1r RZ) R FULL model ->
     srealizes BSEGS (cfg_of BSEGS R 0x87618 FULL model) MAIN.
   Proof.
     intros E R FULL model HC.
     eapply srz_conseq; [| apply sd_shape2].
-    rewrite <- pc_HS_both_1.
-    exact (both_check_sound sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit NX2b NX2b_ge IT2b IT2b_ok HS_both2b
-             MAINH (MAINH_agree NX2b) MAINH_nil MAINH_sound2b KC2b BFUEL2b FUEL2b startup_plan_both2b HS_both_1 startup_shape_both2 CERT2B
+    rewrite <- (pc_HS_both_1r RZ (rseq_z_range _)).
+    exact (both_check_sound sp rdraw brk0 mbase argv envp fs uid gid hw kb execfn Hsp Hva Hve Hfit NX2b NX2b_ge Hlaunch Hlau IT2b IT2b_ok (HS_both2b_r RZ)
+             MAINH (MAINH_agree NX2b) MAINH_nil MAINH_sound2b KC2b BFUEL2b FUEL2b (startup_plan_both2b_r RZ) (HS_both_1r RZ) startup_shape_both2 CERT2B
              E R FULL model HC).
   Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  Lemma MAINH_sound1 : holes_stmt BSEGS BOTH LIM HS_both SINV argH MAINH fs.
+  Lemma MAINH_sound1 : holes_stmt BSEGS BOTH LIM (HS_both_r RZ) SINV argH MAINH fs.
   Proof.
     intros h ch Hh E R FULL model HC.
-    destruct h as [|[|h]]; cbn [HS_both] in Hh; try discriminate Hh; apply mainh_some_inj in Hh; subst ch.
-    - rewrite pc_HS_both_0. exact (seg2_sound E R FULL model HC).
-    - rewrite pc_HS_both_1. exact (seg2b_sound E R FULL model HC).
+    destruct (HS_both_r_cases RZ h ch (rseq_z_range _) Hh) as [[-> ->] | [-> ->]].
+    - rewrite (pc_HS_both_0r RZ (rseq_z_range _)). exact (seg2_sound E R FULL model HC).
+    - rewrite (pc_HS_both_1r RZ (rseq_z_range _)). exact (seg2b_sound E R FULL model HC).
   Qed.
 
   (* [comment removed for export] *)
@@ -182,13 +194,15 @@ Section Main.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Theorem both_startup_main : forall apc : N, Z.of_N apc = a_entry BOTH ->
-    srealizes BSEGS (init_config BSEGS apc BPH sp brk0 mbase rdraw LIM (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom))
+    srealizes BSEGS (init_config BSEGS apc BPH sp brk0 mbase rdraw LIM
+                       (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl))
               MAIN.
   Proof.
     intros apc Hapc.
     eapply srz_conseq.
-    - exact (both_startup sp rdraw brk0 mbase argv envp fs stdin uid gid nofile sigmask hw groups net urandom Hsp Hbrk Hva Hve Hfit Huid Hhw
-               IT0b IT0b_ok HS_both MAINH (MAINH_agree NX0) MAINH_nil MAINH_sound1 KC0b BFUELb FUELb startup_plan_both startup_shape_both
+    - exact (both_startup sp rdraw brk0 mbase argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl
+               Hsp Hbrk Hva Hve Hfit Huid Hhw Hmb Hlaunch Hlau
+               IT0b IT0b_ok (HS_both_r RZ) MAINH (MAINH_agree NX0) MAINH_nil MAINH_sound1 KC0b BFUELb FUELb (startup_plan_both_r RZ) startup_shape_both
                CERT0 apc Hapc).
     - apply (sd_const_holes MAIN t_nil E0a fs startup_shape_both MAIN_nil startup_shape_both_only_holes).
   Qed.

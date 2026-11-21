@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: GIo's last conjunct and GIo_ceil_lo state CEILZ <= usp0 R - 8388608 directly, since rc_lo is now 6144512 bytes below sp, in both copies. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -292,7 +293,7 @@ Section Rep.
     /\ ps_tls s = utp R - 200 /\ tls_block_ok (utp R - 200)
     /\ blocks_ok (utp R) (CL ++ FB)
     /\ 0x7fff80000000 <= usp0 R <= 2^47
-    /\ CEILZ <= rc_lo R.                      (* [comment removed for export] *)
+    /\ CEILZ <= usp0 R - 8388608.             (* [comment removed for export] *)
 
   Lemma GI_open : forall R s CL m, GI K R s CL m <-> exists FB, GIo R s CL FB m.
   Proof using Type. pin_using tt. intros. reflexivity. Qed.
@@ -328,7 +329,7 @@ Section Rep.
   Proof using Type. pin_using tt. intros R s CL FB m (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & W & C). unfold rc_lo in C. exact (conj (proj1 W) C). Qed.
   Lemma GIo_sp47 : forall R s CL FB m, GIo R s CL FB m -> usp0 R <= 2^47.
   Proof using Type. pin_using tt. intros R s CL FB m (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & W & _). exact (proj2 W). Qed.
-  Lemma GIo_ceil_lo : forall R s CL FB m, GIo R s CL FB m -> CEILZ <= rc_lo R.
+  Lemma GIo_ceil_lo : forall R s CL FB m, GIo R s CL FB m -> CEILZ <= usp0 R - 8388608.
   Proof using Type. pin_using tt. intros R s CL FB m (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & C). exact C. Qed.
 
   Lemma GIo_pcap_tls : forall R s CL FB m, GIo R s CL FB m -> PCAP_TLS R m.
@@ -1177,7 +1178,7 @@ Section Rep.
     /\ ps_tls s = utp R - 200 /\ tls_block_ok_u (utp R - 200)
     /\ blocks_ok (utp R) (CL ++ FB)
     /\ 0x7fff80000000 <= usp0 R <= 2^47
-    /\ CEILZ <= rc_lo R.                      (* [comment removed for export] *)
+    /\ CEILZ <= usp0 R - 8388608.             (* [comment removed for export] *)
 
   Lemma GI_open : forall R s CL m, GI K R s CL m <-> exists FB, GIo R s CL FB m.
   Proof using Type. pin_using tt. intros. reflexivity. Qed.
@@ -1213,7 +1214,7 @@ Section Rep.
   Proof using Type. pin_using tt. intros R s CL FB m (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & W & C). unfold rc_lo in C. exact (conj (proj1 W) C). Qed.
   Lemma GIo_sp47 : forall R s CL FB m, GIo R s CL FB m -> usp0 R <= 2^47.
   Proof using Type. pin_using tt. intros R s CL FB m (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & W & _). exact (proj2 W). Qed.
-  Lemma GIo_ceil_lo : forall R s CL FB m, GIo R s CL FB m -> CEILZ <= rc_lo R.
+  Lemma GIo_ceil_lo : forall R s CL FB m, GIo R s CL FB m -> CEILZ <= usp0 R - 8388608.
   Proof using Type. pin_using tt. intros R s CL FB m (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & C). exact C. Qed.
 
   Lemma GIo_pcap_tls : forall R s CL FB m, GIo R s CL FB m -> PCAP_TLS R m.

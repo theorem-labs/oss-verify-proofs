@@ -6,12 +6,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match_lib.v, with its module paths and module names changed; 717 of its 758 lines of code are new or changed and 110 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F31.v, with its module names and numbers changed; 139 of its 189 lines of code are new or changed and 708 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F33.v, with its module paths and module names changed; 30 of its 70 lines of code are new or changed and 149 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F33.v 392fed239604 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F33.v 392fed239604 (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives F33.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of F33.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only.
    DEVIATION from the spec's "plain ExecF.rng lo len": f33_evt_F's footprint premise is `acc_in RNG (wa c, 8%nat)`,
@@ -34,7 +35,7 @@
    f33_evt_of_F re-derives Seg/F33.v's Exec.evt statement from f33_evt_F at RNG_all (ExecF.evtF_evt, the access
    premise by RNG_all).  v1.9.0 (libreac v1.9.0, 2026-10-28): the run is the v1.8 run at +0xac (a Theorem Labs lane's
    S_F33 (v190-segment-table.md (a working note, not in this delivery)): 0x8285c..0x82868, 4 instructions, IDENTICAL), walked by b8refit (18 pc
-   literals, no refusal).  Seg/F33.v is the v1.9 halts file of a working branch (6479ee8c006) and keeps its
+   literals, no refusal).  Seg/F33.v is the v1.9 halts file of a working branch and keeps its
    own f33_evt; SegCF/F33.v (not in this delivery) checks in the kernel that f33_evt_of_F has exactly f33_evt's type, so this file states
    the same run as Seg/F33.v.
 

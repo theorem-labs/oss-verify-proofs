@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rauxv_ok_magree destructures rauxv_ok's new witnesses and bounds the launch auxv's length, as cjson/cjson_read_fuzzer's U/RF_alloc_meta.v does). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -55,11 +56,11 @@ Local Ltac2 Set LiaOrc.tbl := fun () => "0010?L59315154296.2600000bS3hRP1B2av2x3
 #[using="Type"] Lemma rauxv_ok_magree C m m' B : ltac2:(CDefT.buildp (gd_tbl_HP_RF_alloc_meta ()) "P,(>.VhRP,O3.O1.)P,(2.O4.O3.O2.)P,Pa,$3.P,A1.O4.R1.(4.(6.R2.O1.)(:.(4.(5.$?.R2.)(6.R2.(7.$?.+8.)))))(>.VhRP,O2.O1.)")
 (* [comment removed for export] *).
 Proof. rceilb.
-  (intros dd_H; ddestruct dd_H as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & AC & AL & RN & H); intros AG HC).
-  dexists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  (intros dd_H; ddestruct dd_H as (av & la & ph & ent & uid & gid & hw & xfn & rnd & AC & AL & RN & H); intros AG HC).
+  dexists av, la, ph, ent, uid, gid, hw, xfn, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rrw_cells_magree; [exact AC| exact AG|]. cbn. intros a Ha X. destruct (HC a X) as [_ Y]. apply Y. exact Ha.
   - eapply rbytes_at_magree; [exact AL| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
-    unfold rauxv_list in Ha. rewrite u64s_length, map_length in Ha. cbn in Ha. lia.
+    rewrite u64s_length in Ha. pose proof (length_rauxv_list_le la ph ent uid gid hw (wz rnd) xfn). lia.
   - eapply rbytes_at_magree; [exact RN| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. rewrite length_le8 in Ha. lia.
 Qed.
 Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)

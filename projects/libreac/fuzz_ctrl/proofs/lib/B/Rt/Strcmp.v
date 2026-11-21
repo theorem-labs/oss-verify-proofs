@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/A/Rt/Strcmp.v (a working branch 97c611eec86) by port_core.py, with its module paths changed, names GrantSyms -> CtrlTSyms, grant_strcmp_icpt -> ctrl_strcmp_icpt, grant_strcmp_tramp -> ctrl_strcmp_tramp and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/A/Rt/Strcmp.v (a working branch) by port_core.py, with its module paths changed, names GrantSyms -> CtrlTSyms, grant_strcmp_icpt -> ctrl_strcmp_icpt, grant_strcmp_tramp -> ctrl_strcmp_tramp and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: the image-B twin of this branch's lib/A/Rt/Strcmp.v, made from it by moving every address to libreac/fuzz_ctrl's asan-ubsan build (v1.9.0) by symbol (both images' nm; every function compared with elfdis.py --diff, level 3 "identical except PC-relative fields"), and by taking the core modules from lib/Reusable's Y twins. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10, for libreac/fuzz_grant's ASan build (image A): the shared-core contract of the
    ASan strcmp interceptor, Reusable/AStrcmpDef.v's astrcmp_realizes, for ___interceptor_strcmp (0x43054) and for the
    one-instruction trampoline __interceptor_trampoline_strcmp = __wrap_strcmp (0x42aa0, `j 0x43054`). The walk is the

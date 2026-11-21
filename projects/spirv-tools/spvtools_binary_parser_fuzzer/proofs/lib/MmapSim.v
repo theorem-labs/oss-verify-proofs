@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap decline premise place_declined_b). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -9,6 +10,8 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import RelSpec SimInv ExitSim PropExec CatSim CatExec SeqExec StreamSim AllocSim.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
+From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Mm Require Mmap.
 #[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -50,18 +53,12 @@ End FX1.
 Definition zfill (a n : word) (m : word -> option byte) : word -> option byte :=
   zmem m a n.
 
+(* At the revision the exact arm rebuilds BOTH ledgers through
+   [Mmap.mmap_fixed_destroyed_next] (a [maps_subtract] of the request),
+   where it used to remove the whole [vm_maps] entry based at [addr];
+   the model's own [Common/MmapSim.munmap_model] is this term. *)
 Definition munmap_model (addr n : word) (m : Model) : Model :=
-  with_mmap_destroyed addr n
-    (mkVmMapsFull (vm_reserved (m_vmmaps m))
-               (map_remove (vm_maps (m_vmmaps m)) addr)
-               (maps_subtract (vm_noaccess (m_vmmaps m))
-                  (bv_unsigned addr)
-                  (bv_unsigned addr + bv_unsigned n))
-               (vm_start_brk (m_vmmaps m))
-               (vm_brk (m_vmmaps m))
-               (vm_limit (m_vmmaps m))
-               (vm_mmap_base (m_vmmaps m))
-               (vm_init_sp (m_vmmaps m))) m.
+  with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m.
 
 Definition mmap_model (a n : word) (m : Model) : Model :=
   with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
@@ -76,8 +73,14 @@ Definition mmap_model (a n : word) (m : Model) : Model :=
 Definition page_round_up (len : word) : word :=
   Z_to_bv 64 (page_round_up_Z (bv_unsigned len)).
 
+(* At the revision the first conjunct is the spec's placement rule
+   ([Mmap.linux_place], decided by [Checks.Placement.linux_place_is]), as in
+   the model's own [Common/MmapSim.grant_ok]; the other four follow from it
+   ([Placement.linux_place_is_admissible]) and are kept for the consumers that
+   destruct them. *)
 Definition grant_ok (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-  (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
   && (vm_backing_used m + n <=? vm_limit (m_vmmaps m))%Z.
@@ -150,8 +153,9 @@ Lemma munmap_outcome_si : forall segs ms x8 model o,
   bv_unsigned x8 = 215%Z ->
   munmap_args_ok ms model ->
   syscall_spec (sys_input segs ms x8) model o <->
-  o = Ok (munmap_eff ms)
-         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) [].
+  (exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) model [])
+  \/ o = Ok (munmap_eff ms)
+           (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) [].
 Proof.
   intros segs ms x8 model o Hno (Hal & Hlen & Hnw & Hhas).
   rewrite (syscall_spec_215 _ model o) by (rewrite in_sysno_sys_input; exact Hno).
@@ -167,29 +171,41 @@ Proof. left. reflexivity. Qed.
 Lemma mmap_outcome_si : forall segs ms x8 model o,
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  (* 727298f3 (#144, #146): [mmap_args_ok] does not pin register 0, and
+     [Mmap.mmap_spec] declines a hinted call [Mmap.place_declined_b] fires
+     on before the [alt].  [theories/Common/README.md] says the same of its
+     own statements: "Well-formed arguments alone do not establish this
+     condition". *)
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   syscall_spec (sys_input segs ms x8) model o <->
   (exists e, In e mmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) model [])
   \/ (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true
        /\ o = Ok (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])
                  (mmap_model a (page_round_up (ms_gpr ms 1)) model) []).
 Proof.
-  intros segs ms x8 model o Hno Ha.
+  intros segs ms x8 model o Hno Ha Hdecl.
   destruct (mmap_args_ok_gates ms Ha) as (_ & _ & Hl & Hmb).
   destruct Ha as (_ & _ & Hflags & _ & _).
   rewrite (syscall_spec_222 _ model o) by (rewrite in_sysno_sys_input; exact Hno).
   rewrite in_arg0_sys_input, in_arg1_sys_input, in_arg2_sys_input,
           in_arg3_sys_input, in_arg4_sys_input, in_arg5_sys_input.
-  rewrite (mmap_rw_outcome _ _ _ _ _ _ _ model o Hl Hmb). unfold mmap_err_out.
+  rewrite (mmap_rw_outcome _ _ _ _ _ _ _ model o Hl Hmb Hdecl). unfold mmap_err_out.
   rewrite Hflags.
   assert (Hnr : mmap_noreserve_b (Z_to_bv 64 34) = false) by (vm_compute; reflexivity).
   unfold mmap_noreserve_backed_ok, with_mmap_backing. rewrite Hnr.
   unfold grant_ok, mmap_model, page_round_up.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Mm.Mmap.mmap_grant_len_ok _ Hl)
+    as [Hn0 Hnal].
   split; (intros [H | (a & Hg & ->)]; [left; exact H | right; exists a; split; [|reflexivity]]).
-  - destruct Hg as (H1 & H2 & H3 & H4 & H5).
-    rewrite (proj2 (Z.eqb_eq _ _) H1), (proj2 (Z.ltb_lt _ _) H2), (proj2 (Z.leb_le _ _) H3), H4, H5.
+  - destruct Hg as (Hpl & H5).
+    pose proof (proj2 (linux_place_is_iff _ _ _ _ _ Hn0 Hnal) Hpl) as Hpi.
+    destruct (linux_place_is_admissible _ _ _ _ _ Hn0 Hnal Hpi) as (H1 & H2 & H3 & H4).
+    rewrite Hpi, (proj2 (Z.eqb_eq _ _) H1), (proj2 (Z.ltb_lt _ _) H2),
+      (proj2 (Z.leb_le _ _) H3), H4, H5.
     reflexivity.
-  - rewrite !andb_true_iff in Hg. destruct Hg as [[[[H1 H2] H3] H4] H5].
-    apply Z.eqb_eq in H1. apply Z.ltb_lt in H2. apply Z.leb_le in H3. auto 10.
+  - rewrite !andb_true_iff in Hg. destruct Hg as [[[[[Hp _] _] _] _] H5].
+    split; [exact (proj1 (linux_place_is_iff _ _ _ _ _ Hn0 Hnal) Hp) | exact H5].
 Qed.
 
 Section FX2. Context {fx : FPState}.
@@ -278,6 +294,15 @@ Inductive tmw : machine_state -> Model -> list (list byte) -> word
     ms_svc_pending ms = Some x8 ->
     bv_unsigned x8 = 222%Z ->
     mmap_args_ok ms ->
+    (* 727298f3 (#144): the decline belongs on THIS CONSTRUCTOR, which is where
+       the model puts it (theories/Common/MmapSim.v:1345-1357), immediately
+       after [mmap_args_ok].  Without it the mmap arm asserts a grant outcome
+       for a hint the revision DECLINES: [mmap_args_ok] pins registers 1-5 and
+       says nothing about register 0, so nothing else here excludes the
+       declined band.  [tmw_mmap] has no appliers in this unit, so the
+       strengthening moves no call site. *)
+    place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+      (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
     (forall e, In e mmap_errnos ->
        twm (advance_past_svc (set_gpr0 ms (errno_ret e))) model bf cf) ->
     (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_boxreg/lib/A/Rt/MemchrDef.v (origin/ossv/recipes 88154566652a; cgif_file_fuzzer lib/YG0d.v's amemchr0_realizes restated for any byte c in a1, any n below 2^32 and a found or not-found result, as libreac/fuzz_disco's proved general memchr contract states it) for reac-repacer/fuzz_uci, with its module paths changed and its comment on the exit form, which states boxreg's runtime options, left out. Image-generic: segs, B, pc, lo and hi are parameters, and no boxreg image value occurs in this file; fuzz_uci's image A instance is the memchr trampoline 0x4107c (lib/A/Prog/UciPAddr.v) with musl memchr's constant window [0x10350, 0x10370). *)
+(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_boxreg/lib/A/Rt/MemchrDef.v (cgif_file_fuzzer lib/YG0d.v's amemchr0_realizes restated for any byte c in a1, any n below 2^32 and a found or not-found result, as libreac/fuzz_disco's proved general memchr contract states it) for reac-repacer/fuzz_uci, with its module paths changed and its comment on the exit form, which states boxreg's runtime options, left out. Image-generic: segs, B, pc, lo and hi are parameters, and no boxreg image value occurs in this file; fuzz_uci's image A instance is the memchr trampoline 0x4107c (lib/A/Prog/UciPAddr.v) with musl memchr's constant window [0x10350, 0x10370). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

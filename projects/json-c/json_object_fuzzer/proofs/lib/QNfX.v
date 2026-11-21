@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the ser_specA_al proofs name it and pass it to dbl_armsA; the stack_malloc_full call discharges it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -34,7 +35,7 @@ Hypothesis OBL_REALLOC_NF : realloc_nf_stmt HIx.
 
 Lemma ser_dblA_16 : ser_specA_al HIx 16 ASER_DBL (Sdouble false).
 Proof.
-unfold ser_specA_al, ser_specA. intros until errv. intros D32 HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+unfold ser_specA_al, ser_specA. intros until errv. intros D32 HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 destruct JN as (bits & EREST & SPEC & NODE). pose proof NODE as NODE0. stash NODE0. unfold jhdr_cells in NODE. cbn [app] in NODE.
 subst a0 a1 a2 a3 tp REST.
 cbn [app jtx] in JTX. injection JTX as <- _.
@@ -77,6 +78,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - D32; Z.div_mod_to_equations; lia.
 1: lia.
@@ -172,7 +174,7 @@ fold_mkR. subst sh.
 evt_done5.
 unstash NODE0.
 eapply (dbl_armsA HIx OBL_REALLOC_NF ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B pb lo bpos cap T (bv_unsigned sp + -144) 16 Fr
-ltac:(lia) ltac:(lia) ltac:(clear - D32; Z.div_mod_to_equations; lia) LO ltac:(unfold ADBL_STACK; lia) HT CAP TXT NEED K p rc pb0 fl bits INp0 NODE0 SPEC)
+ltac:(lia) ltac:(lia) ltac:(clear - D32; Z.div_mod_to_equations; lia) LO HBT ltac:(unfold ADBL_STACK; lia) HT CAP TXT NEED K p rc pb0 fl bits INp0 NODE0 SPEC)
 with (bufb := firstn 128 (skipn 8 (skipn 8 (skipn 8 (skipn 8 jff))))); [ | apply fsaved_refl | exact FRM ].
 lazymatch type of LOC with rw_cells _ _ _ ?locc => lazymatch type of FF1 with rw_cells _ _ _ [_; _; _; CB 8 ?j8; CB 128 ?bufb; CB 88 ?jr] => lazymatch type of FSH1 with rw_cells _ _ _ ?shc =>
 lazymatch shc with context [CB 8 ?t8] => exists locc, j8, jr, t8 end end end end.
@@ -264,7 +266,7 @@ Hypothesis OBL_REALLOC_NF : realloc_nf_stmt HIx.
 
 Lemma ser_dblA_16 : ser_specA_al HIx 16 ASER_DBL (Sdouble false).
 Proof.
-unfold ser_specA_al, ser_specA. intros until errv. intros D32 HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+unfold ser_specA_al, ser_specA. intros until errv. intros D32 HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 destruct JN as (bits & EREST & SPEC & NODE). pose proof NODE as NODE0. stash NODE0. unfold jhdr_cells in NODE. cbn [app] in NODE.
 subst a0 a1 a2 a3 tp REST.
 cbn [app jtx] in JTX. injection JTX as <- _.
@@ -307,6 +309,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - D32; Z.div_mod_to_equations; lia.
 1: lia.
@@ -405,7 +408,7 @@ fold_mkR. subst sh.
 evt_done5.
 unstash NODE0.
 eapply (dbl_armsA HIx OBL_REALLOC_NF ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B pb lo bpos cap T (bv_unsigned sp + -144) 16 Fr
-ltac:(lia) ltac:(lia) ltac:(clear - D32; Z.div_mod_to_equations; lia) LO ltac:(unfold ADBL_STACK; lia) HT CAP TXT NEED K p rc pb0 fl bits INp0 NODE0 SPEC)
+ltac:(lia) ltac:(lia) ltac:(clear - D32; Z.div_mod_to_equations; lia) LO HBT ltac:(unfold ADBL_STACK; lia) HT CAP TXT NEED K p rc pb0 fl bits INp0 NODE0 SPEC)
 with (bufb := firstn 128 (skipn 8 (skipn 8 (skipn 8 (skipn 8 jff))))); [ | apply fsaved_refl | exact FRM ].
 lazymatch type of LOC with rw_cells _ _ _ ?locc => lazymatch type of FF1 with rw_cells _ _ _ [_; _; _; CB 8 ?j8; CB 128 ?bufb; CB 88 ?jr] => lazymatch type of FSH1 with rw_cells _ _ _ ?shc =>
 lazymatch shc with context [CB 8 ?t8] => exists locc, j8, jr, t8 end end end end.

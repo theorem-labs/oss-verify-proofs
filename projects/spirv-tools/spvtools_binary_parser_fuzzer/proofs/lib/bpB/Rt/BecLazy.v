@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap decline premise place_declined_b). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -87,8 +88,12 @@ End Unfill.
 Definition ECALLW : bv 32 := Z_to_bv 32 0x73.
 Lemma is_ecall_ECALLW : is_ecall ECALLW = true. Proof. reflexivity. Qed.
 
+(* This tree's [sysret] ALREADY clears [ms_resv] (bpB/HF/BazyNodes.v:270-275,
+   "at 08b1429 [Run.advance_past_svc] clears the reservation"); this lemma and
+   the POST-syscall literals below were the part of that port left behind.
+   The PRE-syscall [MSsvc ... rv ...] keeps a generic reservation. *)
 Lemma sysret_MSsvc : forall R F pc x8 fc rv m ro r M,
-  sysret (MSsvc R F pc x8 fc rv m ro) r M = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc rv M ro.
+  sysret (MSsvc R F pc x8 fc rv m ro) r M = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None M ro.
 Proof. reflexivity. Qed.
 
 Section CjNodes.
@@ -121,10 +126,15 @@ Section CjNodes.
     let h := m_vmmaps mo in
     x11 <> Z_to_bv 64 0 ->
     x12 = Z_to_bv 64 (kprot na) -> x13 = Z_to_bv 64 (kflags nr) -> x14 = Z_to_bv 64 (-1) -> x15 = Z_to_bv 64 0 ->
+    (* 727298f3 (#144, #146): the hint is [x10] and this section does not
+       pin it; the walk that calls this does. *)
+    place_declined_b (m_kernel mo) (m_vmmaps mo) x10
+      (page_round_up_Z (bv_unsigned x11)) = false ->
     entries_nowrap (vm_maps h) ->
     (na = false -> nr = false -> eager_used mo + pages_total S * page_size + nZ <= vm_limit h) ->
     (exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g /\ bv_unsigned g + nZ <= alloc_top h
-                      /\ region_free (vm_reserved h ++ vm_maps h) g n = true) ->
+                      /\ region_free (vm_reserved h ++ vm_maps h) g n = true
+                      /\ (bv_unsigned g + nZ <= mmap_top h \/ task_unmapped_base <= bv_unsigned g)) ->
     (nr = true -> forall a : word, region_free (vm_reserved h) a n = true -> bv_unsigned a + nZ <= alloc_top h -> lazy_range_okb asegs (a, n) = true) ->
     (forall (a : word) (msF' : machine_state),
        bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a -> bv_unsigned a + nZ <= alloc_top h ->
@@ -132,20 +142,21 @@ Section CjNodes.
        let mo' := grant_model (Z_to_bv 64 (kflags nr)) a n na mo in
        lzok asegs ((if nr then [(a, n)] else []) ++ L) S ((if nr && negb na then [(a, n)] else []) ++ Zr) (mkCfg msF' mo') ->
        restrict ((if nr then [(a, n)] else []) ++ L) S msF'
-         = MS (Ra a) F (Z_to_bv 64 (pc + 4)) fc rv (if na || nr then unfill a n m else zfill a n m) (seg_rom asegs) ->
+         = MS (Ra a) F (Z_to_bv 64 (pc + 4)) fc None (if na || nr then unfill a n m else zfill a n m) (seg_rom asegs) ->
        hid_same L S msF msF' ->
        eager_used mo' <= eager_used mo + (if na || nr then 0 else nZ) ->
        sreach asegs Q (mkCfg msF' mo')) ->
     sreach asegs Q (mkCfg msF mo).
   Proof.
-    intros na nr msF mo Q OK VIS H17. cbv zeta. intros LEN H12 H13 H14 H15 NW BUD GAP ROK K.
+    intros na nr msF mo Q OK VIS H17. cbv zeta. intros LEN H12 H13 H14 H15 DECL NW BUD GAP ROK K.
     eapply (sreach_mmap_kernel_lazy asegs na nr L S Zr msF _ mo x17 Q OK VIS eq_refl); [ rewrite H17; reflexivity | ..];
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 2) with x12;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 3) with x13;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 4) with x14;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 5) with x15;
-      [ exact LEN | exact H12 | exact H13 | exact H14 | exact H15 | exact NW | exact BUD | exact GAP | exact ROK | ].
+      [ exact LEN | exact H12 | exact H13 | exact H14 | exact H15 | exact DECL | exact NW | exact BUD | exact GAP | exact ROK | ].
     intros a msF'.
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11.
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10.
@@ -177,7 +188,7 @@ Section CjNodes.
        let L' := (if nr then [(addr, n)] else []) ++ maps_subtract L (bv_unsigned addr) (bv_unsigned addr + nZ) in
        lzok asegs L' S Zr (mkCfg msF' mo') ->
        restrict L' S msF'
-         = MS (Ra addr) F (Z_to_bv 64 (pc + 4)) fc rv
+         = MS (Ra addr) F (Z_to_bv 64 (pc + 4)) fc None
               (if nr then (fun x => if zin_rangeb (bv_unsigned x) (addr, n) && in_rangesb x S then Some (Z_to_bv 8 0) else m x)
                else zfill addr n m) (seg_rom asegs) ->
        hid_same L' S msF msF' ->
@@ -219,7 +230,7 @@ Section CjNodes.
        let mo' := munmap_model a n mo in
        lzok asegs (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S Zr (mkCfg msF' mo') ->
        restrict (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S msF'
-         = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc rv (unfill a n m) (seg_rom asegs) ->
+         = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc None (unfill a n m) (seg_rom asegs) ->
        hid_same L S msF msF' ->
        (forall x, hiddenb (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S x = hiddenb L S x) ->
        eager_used mo' + rem (a, n) (cuts mo) <= eager_used mo ->

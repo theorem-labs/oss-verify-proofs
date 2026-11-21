@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap-grant case names one more premise, the grant's placement, and passes it to GRANT). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -145,11 +146,12 @@ Section W2.
       cbn beta. intros ms5 mo5 PO HK5 _. ddestruct PO as (r' & F' & mm' & ->).
       apply spinningJ_at; [cbn; tauto| exact (ki_halted KL0 mo5 HK5)].
     - (* [comment removed for export] *)
-      intros a AAL A0 ACE RF.
+      (* one more name: [AO_grant]'s placement, which [GRANT] now asks for *)
+      intros a AAL A0 APL ACE RF.
       rewrite nret_MSsvc, mkR_set_a0, apply_mem_zeros.
       change (Z_to_bv 64 A_MMAP_ECALL + Z_to_bv 64 4)%bv with (Z_to_bv 64 0x7acec).
       pose proof (bv_unsigned_in_range 64 a) as AR. unfold bv_modulus in AR. change (2 ^ Z.of_N 64) with (2^64) in AR.
-      ddestruct (GRANT mo3 a eq_refl HK3 AAL A0 ACE RF) as (HK4 & CR4 & UA & PB).
+      ddestruct (GRANT mo3 a eq_refl HK3 AAL A0 ACE RF APL) as (HK4 & CR4 & UA & PB).
       pose proof (J_anon_grant mm mo3 0x22 a 65536 HJ3 ltac:(clear; lia) ltac:(clear - ACE AC; lia) RF) as HJ4.
       pose proof (APART mo3 a (Z_to_bv 64 65536) HK3 RF) as AP.
       replace (bv_unsigned (Z_to_bv 64 65536)) with 65536 in AP by (symmetry; apply unsigned_lit; lia).

@@ -1,5 +1,5 @@
 (* C3, the conditions a Theorem Labs lane set (00:22Z) for option (a) (tr_peak everywhere), which W8 has landed: the kit's
-   gesture_end / gestures_end rooms ge_room / gse_room (lib/A/W_contract.v:1525, :1586) are the peak forms this file
+   gesture_end / gestures_end rooms ge_room / gse_room (lib/A/W_contract.v:1526, :1587) are the peak forms this file
    first stated, and the lemmas below are stated over them.
    (1) the composition, proved: a caller's peak premise gives each callee's peak premise at the callee's start state
        (tr_peak_callee, with address independence of the callee traces' sizes, so the callee premise can name its
@@ -9,7 +9,7 @@
        the SUM forms are NOT implied, proved on concrete traces (catch_abstract: 3 requests, peak 60 / sum 70;
        catch_gse: 8 held keys of 14 bytes from g_capout 0, peak 331 / sum 530, against the kit's former sum-form rooms,
        kept here as the local ge_room_sum / gse_room_sum_form);
-   (2) free(NULL) (W_journal.v:820-840 afree_null_cf_rule: the blocks are kept up to Permutation):
+   (2) free(NULL) (W_journal.v:821-841 afree_null_cf_rule: the blocks are kept up to Permutation):
        tr_peak_after_free_null, and tr_peak_free0 for a trace that records it as RFree 0. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -168,11 +168,11 @@ Lemma tr_peak_free0 : forall {P : Type} x (r : list (RelayRunT.rev P)), tr_peak 
 Proof. intros P x r. rewrite tr_peak_free. pose proof (tr_peak_nonneg r). lia. Qed.
 
 (* ================================================================== the peak forms of the callee rooms *)
-(* send_line (sl_spec's room, W_contract.v:903-904 / :913 in sum form) *)
+(* send_line (sl_spec's room, W_contract.v:904-905 / :914 in sum form) *)
 Definition sl_room_p (MMAX bb : Z) (c : ctl) (mx no cap len : Z) : Prop :=
   sl_maxr c mx no cap len < MMAX /\
   bb + tr_peak (send_line_b_c.send_line_tr (sl_live c len) mx no cap len 0 RelayRunF.adr0) <= LIVE_MAX.
-(* list_push (lp_spec's room, W_contract.v:390 in its own form; lp_spec keeps its request bound lp_vbytes < MMAX as a
+(* list_push (lp_spec's room, W_contract.v:391 in its own form; lp_spec keeps its request bound lp_vbytes < MMAX as a
    separate premise, so this room form carries none, unlike sl_room_p / ge_room) *)
 Definition lp_room_p (bb : Z) (l : hlist) (n : Z) : Prop :=
   bb + tr_peak (ListTr.list_push_tra RelayRunF.adr0 (hl_n l) (hl_cap l) n) <= LIVE_MAX.
@@ -185,7 +185,7 @@ Fixpoint gse_tr (c : ctl) (mx no cap : Z) (xs : list (list byte)) : list (RelayR
       gse_tr (ge_ctl c (Z.of_nat (length x))) mx (ge_no c no (Z.of_nat (length x)))
         (ge_cap c mx no cap (Z.of_nat (length x))) xs'
   end.
-(* one peak over the whole key run gives gse_room (W_contract.v:1586), key by key *)
+(* one peak over the whole key run gives gse_room (W_contract.v:1587), key by key *)
 Lemma gse_room_p_of_peak : forall MMAX xs bb c mx no cap,
   tr_max (gse_tr c mx no cap xs) < MMAX -> bb + tr_peak (gse_tr c mx no cap xs) <= LIVE_MAX ->
   gse_room MMAX bb c mx no cap xs.
@@ -195,7 +195,7 @@ Proof.
   rewrite tr_max_app', tr_max_cons' in HM. rewrite tr_peak_app, tr_peak_free in HP.
   split; [split; lia|]. apply IH; lia.
 Qed.
-(* each send of gesture_end, from ge_room (W_contract.v:1525) at its start (gesture_end_tr = two send_line runs) *)
+(* each send of gesture_end, from ge_room (W_contract.v:1526) at its start (gesture_end_tr = two send_line runs) *)
 Lemma ge_room_p_sends : forall MMAX bb c mx no cap XL,
   ge_room MMAX bb c mx no cap XL ->
   bb + tr_peak (send_line_b_c.send_line_tr (sl_live c XL) mx no cap XL 0 RelayRunF.adr0) <= LIVE_MAX.
@@ -266,7 +266,7 @@ Lemma catch_abstract :
 Proof. cbv zeta. replace (tr_peak _) with 60 by (vm_compute; reflexivity).
   replace (tr_alloc _) with 70 by (vm_compute; reflexivity). lia. Qed.
 
-(* the kit's former SUM-form rooms of gesture_end / gestures_end, renamed: bb9dae5d905 lib/A/W_contract.v:1498-1499
+(* the kit's former SUM-form rooms of gesture_end / gestures_end, renamed: lib/A/W_contract.v:1499-1500
    ge_room and :1557-1563 gse_room (MMAX was that Section's Variable).  Kept only to record C3's finding *)
 Definition ge_room_sum (MMAX bb : Z) (c : ctl) (mx no cap XL : Z) : Prop :=
   tr_max (ge_tr c mx no cap XL) < MMAX /\ bb + tr_alloc (ge_tr c mx no cap XL) <= LIVE_MAX.

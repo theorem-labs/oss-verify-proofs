@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: hex addresses and numbers for the binaries of libtasn1/asn1_get_length_der_fuzzer, and module names. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the change of the same file of cgif/cgif_rgb_fuzzer with its addresses relocated to this unit's binaries and one copied comment reworded, and the start-up proof stated over the run with the launch premises, the CONFIG_RSEQ-indexed states and the vDSO draw of the initial model; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Vdso Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YK11 YK0i YK0j YK14 YK1a YK1b YK15 YK0o YQ0k.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YQ0j YQ0b YQ03 YQ0i YQ0h YQ09 YQ04 YQ0a YQ05 YL02 YO3u.
@@ -38,49 +39,107 @@ zmod_elim r3 (2^2).
 rewrite Z.mod_small by lia. lia.
 Qed.
 Definition CANARY_ATOM : nat := 9%nat.
-Definition xw_main (sp : word) (argv envp : list (list byte)) (tid : word) (rnd : EntryDraw) (n : nat) : word :=
+(* lpsrev #38: YQ0a's layout layer re-based — z_argv/z_strs take the
+   execfn string [xf] and are measured from [ed_top rnd], not from [sp]. Donor for the
+   consumer form, statement and proof: this tree's own YH05.v:36-43 (green at 75d69e00 —
+   this file imports it, so it compiled before this file failed). *)
+Definition xw_main (sp top : word) (argv envp : list (list byte)) (xf : list byte) (tid : word) (rnd : EntryDraw) (n : nat) : word :=
 match n with
-| 7%nat => Z_to_bv 64 (z_argv (bv_unsigned sp) argv envp 0 + Z.of_nat (progname_off (nth 0 argv [])))
+| 7%nat => Z_to_bv 64 (z_argv (bv_unsigned top) argv envp xf 0 + Z.of_nat (progname_off (nth 0 argv [])))
 | 8%nat => tid
 | 9%nat => canary_word (rand_bytes rnd)
 | _ => Z_to_bv 64 0
 end.
 Definition xd_main (rnd : EntryDraw) (d : nat) : list byte :=
 if Nat.eqb d RAND_DATOM then rand_bytes rnd else [].
-Definition xd_st (uid hw : word) (rnd : EntryDraw) (d : nat) : list byte :=
-if Nat.eqb d UID_DATOM then uid_bytes uid
-else if Nat.eqb d HWCAP_DATOM then hwcap_bytes hw
-else if Nat.eqb d RAND_DATOM then rand_bytes rnd else [].
-Definition E_main (sp : word) (argv envp : list (list byte)) (tid : word) (rnd : EntryDraw) : env :=
-E0 sp argv envp (xw_main sp argv envp tid rnd) (xd_main rnd).
-Definition E_st (sp : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (tid : word) : env :=
-E0 sp argv envp (xw_main sp argv envp tid rnd) (xd_st uid hw rnd).
-Lemma E_st_main_agree : forall sp argv envp uid hw rnd tid,
-env_agree_pd (fun _ => true) (not_in [UID_DATOM; HWCAP_DATOM]) (E_st sp argv envp uid hw rnd tid) (E_main sp argv envp tid rnd).
+(* The ported [src2_init_st_ok] (YH05.v) demands TWELVE datom values of its
+   [xd]: UID, HWCAP and RAND as before, and the five families this revision
+   added to the auxv.
+
+   The five missing families all come off the RUN, which is what makes this a
+   threading and not a pin: GID from [in_gid inp], SYSI and MSS from
+   [launch_auxv inp sp mbase], XFN from [ed_top rnd] and [in_execfn inp], and the
+   eight cache words from [la_cache (launch_auxv inp sp mbase)].  Nothing here
+   reads [kb_rseq] or any other free kernel field.
+
+   The cache words are ONE indexed branch, not eight: [CW_DATOM i = (11 + i)%nat]
+   (YQ0a.v:244) over a closed eight-element [cache_list] (:246-247), so the
+   range test [11 <= d < 19] recovers [i = d - 11].  The numbering is disjoint
+   by construction - UID 4, HWCAP 6, RAND 7, GID 8, SYSI 9, XFN 10, CW 11..18,
+   MSS 19 - so the chain of tests below cannot shadow a later case.
+
+   Donor: YQ0a.v:705-723, which takes exactly these twelve as hypotheses on an
+   abstract [xd] and proves [ed_uid]/[ed_gid]/… by [exact].  This definition is
+   the witness that discharges them. *)
+Definition xd_run (inp : ProcInput) (sp : word) (mbase : word) (rnd : EntryDraw) (d : nat) : list byte :=
+if Nat.eqb d UID_DATOM then uid_bytes (in_uid inp)
+else if Nat.eqb d HWCAP_DATOM then hwcap_bytes (in_hwcap inp)
+else if Nat.eqb d RAND_DATOM then rand_bytes rnd
+else if Nat.eqb d GID_DATOM then word_le8 (in_gid inp)
+else if Nat.eqb d SYSI_DATOM then word_le8 (la_sysinfo_ehdr (launch_auxv inp sp mbase))
+else if Nat.eqb d XFN_DATOM then word_le8 (at_execfn_ptr (ed_top rnd) (in_execfn inp))
+else if Nat.eqb d MSS_DATOM then word_le8 (la_minsigstksz (launch_auxv inp sp mbase))
+else if ((11 <=? d)%nat && (d <? 19)%nat)%bool
+then word_le8 (nth (d - 11) (cache_list (la_cache (launch_auxv inp sp mbase))) (Z_to_bv 64 0))
+else [].
+Lemma xd_run_cw : forall inp sp mbase rnd i, (i < 8)%nat ->
+xd_run inp sp mbase rnd (CW_DATOM i)
+= word_le8 (nth i (cache_list (la_cache (launch_auxv inp sp mbase))) (Z_to_bv 64 0)).
+Proof.
+intros inp sp mbase rnd i Hi. unfold xd_run, CW_DATOM.
+do 8 (destruct i as [|i]; [reflexivity|]). cbn in Hi. lia.
+Qed.
+(* The datoms the start-up environment answers and the main environment does
+   not: every launch value of the auxv but AT_RANDOM's bytes.  [keep_main]
+   drops the chunks that read them, so [ss_main] needs none of them. *)
+Definition START_DATOMS : list nat :=
+[UID_DATOM; HWCAP_DATOM; GID_DATOM; SYSI_DATOM; XFN_DATOM; MSS_DATOM] ++ map CW_DATOM (seq 0 8).
+(* Both environments take the RUN [inp] and read its CONFIG_RSEQ flag
+   [kb_rseq (in_kernel inp)] inside, so a case split on that flag reaches the
+   symbolic states, which need it concrete to compute, and leaves these two
+   environments - and every [ews*]/[ewm*] rewrite stated over them - alone. *)
+Definition E_main (sp : word) (inp : ProcInput) (argv envp : list (list byte)) (xf : list byte)
+(tid : word) (rnd : EntryDraw) : env :=
+E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) argv envp xf
+(xw_main sp (ed_top rnd) argv envp xf tid rnd) (xd_main rnd).
+Definition E_st (sp : word) (inp : ProcInput) (mbase : word) (tid : word) (rnd : EntryDraw) : env :=
+E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp) (in_execfn inp)
+(xw_main sp (ed_top rnd) (in_argv inp) (in_envp inp) (in_execfn inp) tid rnd) (xd_run inp sp mbase rnd).
+Lemma E_st_main_agree : forall sp inp mbase tid rnd,
+env_agree_pd (fun _ => true) (not_in START_DATOMS)
+(E_st sp inp mbase tid rnd) (E_main sp inp (in_argv inp) (in_envp inp) (in_execfn inp) tid rnd).
 Proof.
 intros. split; [intros; reflexivity|].
-intros d Hd. unfold not_in in Hd. cbn [existsb] in Hd. rewrite orb_false_r in Hd.
-apply negb_true_iff in Hd. apply orb_false_iff in Hd as [Hd1 Hd2].
-unfold E_st, E_main, E0, xd_st, xd_main; cbn [ed]. rewrite Hd1, Hd2.
-destruct d as [|[|d]]; reflexivity.
+(* [vm_compute] runs only on the closed membership test [Hd]: on the goal it
+   would normalise the launch's auxv values ([launch_auxv inp sp mbase], open in
+   [inp]) in full.  The goal is closed by lazy conversion instead. *)
+intros d Hd. unfold E_st, E_main, E0; cbn [ed].
+do 20 (destruct d as [|d]; [vm_compute in Hd; first [discriminate | reflexivity] |]).
+cbn [xd_run xd_main Nat.eqb Nat.leb Nat.ltb andb]. reflexivity.
 Qed.
 Definition alias_memset : sv * sv :=
 (SAlu ALU_AND (SAluw ALU_SUB (SLit 0) (SOff 0 (-368))) (SLit 3), SLit 0).
 Definition alias_envp : sv * sv :=
 (SAlu ALU_ADD (SOff 0 16) (SAlu ALU_SLL (SOff 3 0) (SLit 3)), SOff 4 0).
-Definition ss_start (two : bool) : sstate :=
-add_alias (add_alias (src2_ss0 two)
+(* src2_ss0 gained the rseq flag (YH05.v:23: the start-up layout depends on kb_rseq,
+   27 or 29 auxv pairs), so every symbolic start state is now indexed by [rs] too. *)
+Definition ss_start (two rs : bool) : sstate :=
+add_alias (add_alias (src2_ss0 two rs)
 (fst alias_memset) (snd alias_memset))
 (fst alias_envp) (snd alias_envp).
-Definition envp_words (sp : word) (argv envp : list (list byte)) : list word :=
-fst (string_addrs (cat_env_base sp argv envp) envp) ++ [Z_to_bv 64 0].
-Definition envp_block (sp : word) (argv envp : list (list byte)) : list byte :=
-flat_map word_le8 (envp_words sp argv envp).
-Definition runs_main (two : bool) (sp : word) (argv envp : list (list byte)) (rnd : EntryDraw) : list (Z * list byte) :=
-(z_envp (bv_unsigned sp) argv, envp_block sp argv envp)
-:: (z_argv (bv_unsigned sp) argv envp 0, nth 0 argv [] ++ [NUL])
-:: (if two then [(z_argv (bv_unsigned sp) argv envp 1, nth 1 argv [] ++ [NUL])] else [])
-++ [(z_strs (bv_unsigned sp) argv envp, stack_tail argv envp rnd)].
+Definition envp_words (top : word) (argv envp : list (list byte)) (xf : list byte) : list word :=
+fst (string_addrs (cat_env_base top argv envp xf) envp) ++ [Z_to_bv 64 0].
+Definition envp_block (top : word) (argv envp : list (list byte)) (xf : list byte) : list byte :=
+flat_map word_le8 (envp_words top argv envp xf).
+Definition runs_main (two : bool) (sp top : word) (argv envp : list (list byte)) (xf : list byte) (rnd : EntryDraw) : list (Z * list byte) :=
+(z_envp (bv_unsigned sp) argv, envp_block top argv envp xf)
+:: (z_argv (bv_unsigned top) argv envp xf 0, nth 0 argv [] ++ [NUL])
+:: (if two then [(z_argv (bv_unsigned top) argv envp xf 1, nth 1 argv [] ++ [NUL])] else [])
+(* stack_tail is now (av ev xf) and NO LONGER ENDS IN rand_bytes: YQ0a.v:384-385 is
+   flatten_strings av ++ flatten_strings ev ++ xf ++ [NUL] ++ repeat 0 8. The random
+   block moved INTO the head (z_rand = zsp + block_head_size rs av ev - 16), so the
+   image order changed and this entry is strings-to-top, not strings-then-random. *)
+++ [(z_strs (bv_unsigned top) argv envp xf, stack_tail argv envp xf)].
 Definition opt_mem (o : option smem) : smem := match o with Some rs => rs | None => [] end.
 Definition run_ (ss : sstate) : sstate := fst (sym_runN src2segs src2tbl FUEL ss).
 Definition runto_ (pc : Z) (ss : sstate) : sstate := fst (sym_run_toN src2segs src2tbl FUEL pc ss).
@@ -89,21 +148,32 @@ match c_val c with CZero n => 4096 <=? n | _ => false end.
 Definition upd_envp : list (reg * sv) := [(10%bv : reg, SLit 0); (9%bv : reg, SOff 5 0)].
 Definition upd_progname : list (reg * sv) := [(11%bv : reg, SOff 2 0); (12%bv : reg, SLit 47); (13%bv : reg, SLit 0)].
 Definition tid_fact : afact := mkAF 1 4194303 0.
+(* Atom 7 is the progname pointer, a pointer INTO the strings block, which the
+   revision anchors at the top of the entry stack: [YQ0a.z_argv_fits] bounds it
+   by [SP_HI - 9] and no better, so the pointer-block fact [ptr_fact 0]
+   ([SP_HI - 16]) is false for it.  This is its strings-window fact. *)
+Definition str_fact : afact := mkAF SP_LO (SP_HI - 9) 0.
 Definition GUARD : Z := 0x4d438.
 Definition guard_data_chunk : chunk := mkChunk GUARD (CData RAND_DATOM 0 8).
 Definition canary_chunk : chunk := mkChunk GUARD (CVal 8 (SOff CANARY_ATOM 0)).
 Definition is_canary_val (cv : cval) : bool :=
 match cv with CVal 8 (SOff n 0) => Nat.eqb n CANARY_ATOM | _ => false end.
 Definition keep_main (c : chunk) : bool :=
-cval_atoms_pd (fun _ => true) (not_in [UID_DATOM; HWCAP_DATOM]) (c_val c)
+cval_atoms_pd (fun _ => true) (not_in START_DATOMS) (c_val c)
 && negb ((GUARD <=? c_off c) && (c_off c <? GUARD + 8) && negb (is_canary_val (c_val c))).
-Definition main_state (two : bool) : sstate :=
-let s1 := run_ (ss_start two) in
+(* #38: [src2_ss0] gained the CONFIG_RSEQ flag (YH05.v:23 - 27 or 29 auxv
+   pairs) and [ss_start] at :75 was widened to pass it, but THIS consumer was
+   not, which is the `ss_start two has type bool -> sstate` error.  Threading
+   it, never pinning: [ss_start two false] would compile instantly and would
+   narrow the unit to the rseq-off case, which is a statement change by the
+   back door - the unit's published statement quantifies over [kb_rseq]. *)
+Definition main_state (two rs : bool) : sstate :=
+let s1 := run_ (ss_start two rs) in
 let s2 := set_regs_pc s1 upd_envp 0x12ba4 in
 let s3 := runto_ 0x12c44 s2 in
 let s4 := add_atom (mkSS 0x12c68 (sr_sets (ss_regs s3) upd_progname)
 (opt_mem (store_region (ss_mem s3) None 0x4d448 8 (CVal 8 (SOff 7 0))))
-None (ss_facts s3)) 7 (ptr_fact 0) in
+None (ss_facts s3)) 7 str_fact in
 let s5 := run_ s4 in
 let s6 := resume s5 (SOff 8 0) (ss_mem s5)
 (mkFacts ((8%nat, tid_fact) :: f_atoms (ss_facts s5))
@@ -116,15 +186,23 @@ let s11 := runto_ 0x125b4 s10 in
 let s12 := prune (mkSS (ss_pc s11) (ss_regs s11) (clean_head keep_zero (ss_mem s11)) (ss_resv s11) (ss_facts s11))
 [] [0%nat] in
 mkSS (ss_pc s12) (ss_regs s12) (clean_all keep_main (ss_mem s12)) (ss_resv s12) (ss_facts s12).
-Definition ss_main_t : sstate := Eval vm_compute in (main_state true).
-Definition ss_main_f : sstate := Eval vm_compute in (main_state false).
-Definition ss_main (two : bool) : sstate := if two then ss_main_t else ss_main_f.
-Section e.
-Variable sp : word.
-Variable argv envp : list (list byte).
-Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv argv.
-Hypothesis Hve : valid_envp envp.
+(* #38, Main's CHAIN-DUP ruling: the reduced chain is instantiated at both
+   CONFIG_RSEQ values and selected by the run's own flag.  The [two] dimension
+   is pre-existing and orthogonal, so this is the approved rseq DOUBLING of an
+   already-doubled chain, not a new four-way cost.  MEASURED before writing:
+   the whole [ss_main] cone is 90 `Eval vm_compute` lines over 10 files
+   (control: 2,464 tree-wide over 289), so the doubling is ~90 lines - the same
+   order as the [mem_am0] fixture chain, and an order of magnitude below the
+   cgif_file twin's.  [ss_main_t]/[ss_main_f] are DELETED rather than kept as
+   rseq-pinned aliases (rule 12f), so every consumer that has not been threaded
+   fails at compile time instead of silently compiling the rseq-on case. *)
+Definition ss_main_tt : sstate := Eval vm_compute in (main_state true true).
+Definition ss_main_tf : sstate := Eval vm_compute in (main_state true false).
+Definition ss_main_ft : sstate := Eval vm_compute in (main_state false true).
+Definition ss_main_ff : sstate := Eval vm_compute in (main_state false false).
+Definition ss_main (two rs : bool) : sstate :=
+if two then (if rs then ss_main_tt else ss_main_tf)
+else (if rs then ss_main_ft else ss_main_ff).
 Lemma bytes_at_app : forall m a l1 l2,
 YQ04.bytes_at m a l1 -> YQ04.bytes_at m (a + Z.of_nat (length l1)) l2 ->
 YQ04.bytes_at m a (l1 ++ l2).
@@ -136,39 +214,10 @@ destruct (Nat.lt_ge_cases j (length l1)) as [Hl|Hg].
 replace (a + Z.of_nat j) with (a + Z.of_nat (length l1) + Z.of_nat (j - length l1)) by lia.
 apply H2. lia.
 Qed.
-Lemma length_envp_words : length (envp_words sp argv envp) = (length envp + 1)%nat.
-Proof. unfold envp_words. rewrite length_app, length_string_addrs_fst. reflexivity. Qed.
-Lemma length_envp_block : length (envp_block sp argv envp) = (8 * length envp + 8)%nat.
-Proof. unfold envp_block. rewrite length_flat_map_le8, length_envp_words. lia. Qed.
-Lemma runs_main_init : forall (two : bool) pc uid hw rnd,
-(if two then (2 <= length argv)%nat else True) ->
-runs_at (bv_unsigned sp) (ms_mem (init_machine_state src2segs pc Plain_phdrs sp rnd argv envp uid hw))
-(runs_main two sp argv envp rnd).
-Proof.
-intros two pc uid hw rnd Htwo. rewrite init_mkst. cbn [ms_mem mkst].
-pose proof (layout_facts sp argv envp Hsp Hva Hve) as L.
-pose proof (proj1 Hva) as HA. pose proof (proj1 Hve) as HE.
-unfold runs_main. cbn [app]. apply Forall_cons; [|apply Forall_cons; [| apply Forall_app; split]].
-- cbn [fst snd]. rewrite length_envp_block.
-split; [lia|]. split; [lia|]. unfold envp_block, envp_words. rewrite flat_map_app. apply bytes_at_app.
-+ apply (m0_envp_ptrs Plain_phdrs sp argv envp Hsp Hva Hve).
-+ rewrite length_flat_map_le8, length_string_addrs_fst. cbn [flat_map]. rewrite app_nil_r.
-replace (z_envp (bv_unsigned sp) argv + Z.of_nat (8 * length envp))
-with (z_auxv (bv_unsigned sp) argv envp - 8) by lia.
-apply (m0_envp_null Plain_phdrs sp argv envp Hsp Hva Hve).
-- cbn [fst snd]. pose proof (z_argv_bounds sp argv envp 0 ltac:(lia)) as B.
-rewrite length_app. cbn [length].
-split; [lia|]. split; [lia|]. apply (m0_argv_str Plain_phdrs sp argv envp Hsp Hva Hve uid hw rnd 0). lia.
-- destruct two; [|constructor]. apply Forall_cons; [|constructor]. cbn [fst snd].
-pose proof (z_argv_bounds sp argv envp 1 ltac:(lia)) as B.
-rewrite length_app. cbn [length].
-split; [lia|]. split; [lia|]. apply (m0_argv_str Plain_phdrs sp argv envp Hsp Hva Hve uid hw rnd 1). lia.
-- apply Forall_cons; [|constructor]. cbn [fst snd].
-pose proof (stack_tail_end sp argv envp rnd) as B.
-pose proof (z_rand_end sp argv envp Hsp Hva Hve) as B'.
-split; [lia|]. split; [lia|]. apply (m0_tail Plain_phdrs sp argv envp Hsp Hva Hve).
-Qed.
-End e.
+Lemma length_envp_words : forall top argv envp xf, length (envp_words top argv envp xf) = (length envp + 1)%nat.
+Proof. intros. unfold envp_words. rewrite length_app, length_string_addrs_fst. reflexivity. Qed.
+Lemma length_envp_block : forall top argv envp xf, length (envp_block top argv envp xf) = (8 * length envp + 8)%nat.
+Proof. intros. unfold envp_block. rewrite length_flat_map_le8, length_envp_words. lia. Qed.
 Lemma after_slash_le : forall s i acc, (acc <= i)%nat -> (after_slash s i acc <= i + length s)%nat.
 Proof.
 induction s as [|b s IH]; intros i acc H; cbn [after_slash length]; [lia|].
@@ -187,104 +236,146 @@ rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2^64).
 pose proof (u64_range a). rewrite Z.mod_small by lia. lia.
 Qed.
 Section f.
-Variable sp : word.
-Variable argv envp : list (list byte).
+(* The start-up proof reasons about one RUN [inp] at the entry [mkEntry sp brk
+   mbase rnd] the launch admits ([Hlau]).  The names below are NOTATIONS for
+   the run's projections, not [Let]s, so every lemma of [YQ0a] stated over
+   [in_argv inp], [ed_top rnd], ... matches them syntactically.  [rs] is the
+   run's CONFIG_RSEQ flag, never a literal: the proof splits on it only where a
+   symbolic state has to compute. *)
+Variable inp : ProcInput.
+Variables mbase sp brk : word.
+Variable rnd : EntryDraw.
+Local Notation argv := (in_argv inp) (only parsing).
+Local Notation envp := (in_envp inp) (only parsing).
+Local Notation xf := (in_execfn inp) (only parsing).
+Local Notation rs := (kb_rseq (in_kernel inp)) (only parsing).
+Local Notation top := (ed_top rnd) (only parsing).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfits : entry_stack_fits sp argv envp.
-Variable uid hw : word.
-Variable rnd : EntryDraw.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Lemma runs_main_init : forall (two : bool) pc,
+(if two then (2 <= length argv)%nat else True) ->
+runs_at (bv_unsigned sp) (ms_mem (init_machine_state src2segs pc Plain_phdrs sp mbase rnd inp))
+(runs_main two sp top argv envp xf rnd).
+Proof.
+intros two pc Htwo. rewrite init_mkst. cbn [ms_mem mkst].
+pose proof (layout_facts inp mbase sp brk rnd Hsp Hlau) as L. unfold SP_LO, SP_HI in L.
+pose proof (proj1 Hva) as HA. pose proof (proj1 Hve) as HE.
+unfold runs_main. cbn [app]. apply Forall_cons; [|apply Forall_cons; [| apply Forall_app; split]].
+- cbn [fst snd]. rewrite length_envp_block.
+split; [lia|]. split; [lia|]. unfold envp_block, envp_words. rewrite flat_map_app. apply bytes_at_app.
++ unfold cat_env_base, cat_string_base. apply (m0_envp_ptrs Plain_phdrs inp pc mbase sp brk rnd Hsp Hlau).
++ rewrite length_flat_map_le8, length_string_addrs_fst. cbn [flat_map]. rewrite app_nil_r.
+replace (z_envp (bv_unsigned sp) argv + Z.of_nat (8 * length envp))
+with (z_auxv (bv_unsigned sp) argv envp - 8) by lia.
+apply (m0_envp_null Plain_phdrs inp pc mbase sp brk rnd Hsp Hlau).
+- cbn [fst snd]. pose proof (z_argv_bounds inp rnd 0 ltac:(lia)) as B.
+pose proof (z_argv_fits inp mbase sp brk rnd Hsp Hlau 0 ltac:(lia)) as F. unfold SP_HI in F.
+rewrite length_app. cbn [length].
+split; [lia|]. split; [lia|]. apply (m0_argv_str Plain_phdrs inp pc mbase sp brk rnd Hsp Hlau 0). lia.
+- destruct two; [|constructor]. apply Forall_cons; [|constructor]. cbn [fst snd].
+pose proof (z_argv_bounds inp rnd 1 ltac:(lia)) as B.
+pose proof (z_argv_fits inp mbase sp brk rnd Hsp Hlau 1 ltac:(lia)) as F. unfold SP_HI in F.
+rewrite length_app. cbn [length].
+split; [lia|]. split; [lia|]. apply (m0_argv_str Plain_phdrs inp pc mbase sp brk rnd Hsp Hlau 1). lia.
+- apply Forall_cons; [|constructor]. cbn [fst snd].
+pose proof (stack_tail_end inp rnd) as B.
+split; [lia|]. split; [lia|]. apply (m0_tail Plain_phdrs inp pc mbase sp brk rnd Hsp Hlau).
+Qed.
+Let E_stR (t : word) : env := E_st sp inp mbase t rnd.
 Lemma alias_memset_ok : forall t,
-sv_denot (E_st sp argv envp uid hw rnd t) (fst alias_memset) = sv_denot (E_st sp argv envp uid hw rnd t) (snd alias_memset).
+sv_denot (E_stR t) (fst alias_memset) = sv_denot (E_stR t) (snd alias_memset).
 Proof.
 intros t. cbn [fst snd alias_memset sv_denot].
 rewrite zalu32_sound, zalu64_sound. f_equal. apply negw_and3_zero.
-unfold E_st. rewrite (ew0 sp argv envp). exact (proj2 (proj2 Hsp)).
+unfold E_stR, E_st. rewrite (ew0 inp sp rnd). exact (proj2 (proj2 Hsp)).
 Qed.
 Lemma alias_envp_ok : forall t,
-sv_denot (E_st sp argv envp uid hw rnd t) (fst alias_envp) = sv_denot (E_st sp argv envp uid hw rnd t) (snd alias_envp).
+sv_denot (E_stR t) (fst alias_envp) = sv_denot (E_stR t) (snd alias_envp).
 Proof.
-intros t. cbn [fst snd alias_envp sv_denot]. unfold E_st.
-rewrite !zalu64_sound. rewrite (ew0 sp argv envp), (ew3 sp argv envp Hva), (ew4 sp argv envp Hsp Hva Hve).
-pose proof (layout_facts sp argv envp Hsp Hva Hve) as L. pose proof (proj1 Hva) as HA.
-unfold SP_LO, SP_HI in L.
+intros t. cbn [fst snd alias_envp sv_denot]. unfold E_stR, E_st.
+rewrite !zalu64_sound. rewrite (ew0 inp sp rnd), (ew3 inp sp rnd Hva), (ew4 inp mbase sp brk rnd Hsp Hlau).
+pose proof (layout_facts inp mbase sp brk rnd Hsp Hlau) as L. pose proof (proj1 Hva) as HA.
+unfold z_xfn in L. unfold SP_LO, SP_HI in L.
 apply Z_to_bv64_eq_mod. unfold zalu64, zcanon, M64. cbn [zalu_raw].
 change (Z.land (3 mod 2 ^ 64) 63) with 3. rewrite Z.shiftl_mul_pow2 by lia. change (2^3) with 8.
 rewrite !Z.add_0_r. rewrite !(Z.mod_small _ (2^64)) by lia. lia.
 Qed.
-Lemma ewm1 : forall t, bv_unsigned (ew (E_main sp argv envp t rnd) 1) = z_argv (bv_unsigned sp) argv envp 0.
+Lemma ewm1 : forall t, bv_unsigned (ew (E_main sp inp argv envp xf t rnd) 1) = z_argv (bv_unsigned top) argv envp xf 0.
 Proof.
-intros t. pose proof (layout_facts sp argv envp Hsp Hva Hve) as L.
-unfold E_main. rewrite (ew1 sp argv envp Hsp Hva Hve). lia.
+intros t. pose proof (layout_facts inp mbase sp brk rnd Hsp Hlau) as L.
+unfold E_main. rewrite (ew1 inp mbase sp brk rnd Hsp Hlau). lia.
 Qed.
-Lemma ewm2 : forall t, bv_unsigned (ew (E_main sp argv envp t rnd) 2)
-= z_argv (bv_unsigned sp) argv envp 0 + Z.of_nat (length (nth 0 argv [])) + 1.
+Lemma ewm2 : forall t, bv_unsigned (ew (E_main sp inp argv envp xf t rnd) 2)
+= z_argv (bv_unsigned top) argv envp xf 0 + Z.of_nat (length (nth 0 argv [])) + 1.
 Proof.
-intros t. pose proof (layout_facts sp argv envp Hsp Hva Hve) as L.
-unfold E_main. rewrite (ew2 sp argv envp Hsp Hva Hve). lia.
+intros t. pose proof (layout_facts inp mbase sp brk rnd Hsp Hlau) as L.
+unfold E_main. rewrite (ew2 inp mbase sp brk rnd Hsp Hva Hlau). lia.
 Qed.
-Lemma ewm4 : forall t, bv_unsigned (ew (E_main sp argv envp t rnd) 4) = z_envp (bv_unsigned sp) argv.
-Proof. intros t. exact (ew4 sp argv envp Hsp Hva Hve _ _). Qed.
-Lemma ewm5 : forall t, bv_unsigned (ew (E_main sp argv envp t rnd) 5) = z_auxv (bv_unsigned sp) argv envp.
-Proof. intros t. exact (ew5 sp argv envp Hsp Hva Hve _ _). Qed.
-Lemma ewm7 : forall t, bv_unsigned (ew (E_main sp argv envp t rnd) 7)
-= z_argv (bv_unsigned sp) argv envp 0 + Z.of_nat (progname_off (nth 0 argv [])).
+Lemma ewm4 : forall t, bv_unsigned (ew (E_main sp inp argv envp xf t rnd) 4) = z_envp (bv_unsigned sp) argv.
+Proof. intros t. exact (ew4 inp mbase sp brk rnd Hsp Hlau _ _). Qed.
+Lemma ewm5 : forall t, bv_unsigned (ew (E_main sp inp argv envp xf t rnd) 5) = z_auxv (bv_unsigned sp) argv envp.
+Proof. intros t. exact (ew5 inp mbase sp brk rnd Hsp Hlau _ _). Qed.
+Lemma ewm7 : forall t, bv_unsigned (ew (E_main sp inp argv envp xf t rnd) 7)
+= z_argv (bv_unsigned top) argv envp xf 0 + Z.of_nat (progname_off (nth 0 argv [])).
 Proof.
 intros t. cbn [ew E_main E0 xw_main].
-pose proof (layout_facts sp argv envp Hsp Hva Hve) as L. pose proof (proj1 Hva) as HA.
-pose proof (z_argv_bounds sp argv envp 0 ltac:(lia)) as B. pose proof (progname_off_le (nth 0 argv [])).
-unfold SP_LO, SP_HI in L. apply u_Z2bv; lia.
+pose proof (layout_facts inp mbase sp brk rnd Hsp Hlau) as L. pose proof (proj1 Hva) as HA.
+pose proof (z_argv_bounds inp rnd 0 ltac:(lia)) as B.
+pose proof (z_argv_fits inp mbase sp brk rnd Hsp Hlau 0 ltac:(lia)) as F.
+pose proof (progname_off_le (nth 0 argv [])).
+unfold SP_LO, SP_HI in L, F. apply u_Z2bv; lia.
 Qed.
-
-
-
-Lemma ews1 : forall t, bv_unsigned (ew (E_st sp argv envp uid hw rnd t) 1) = z_argv (bv_unsigned sp) argv envp 0.
+Lemma ews1 : forall t, bv_unsigned (ew (E_stR t) 1) = z_argv (bv_unsigned top) argv envp xf 0.
 Proof. exact ewm1. Qed.
-Lemma ews2 : forall t, bv_unsigned (ew (E_st sp argv envp uid hw rnd t) 2)
-= z_argv (bv_unsigned sp) argv envp 0 + Z.of_nat (length (nth 0 argv [])) + 1.
+Lemma ews2 : forall t, bv_unsigned (ew (E_stR t) 2)
+= z_argv (bv_unsigned top) argv envp xf 0 + Z.of_nat (length (nth 0 argv [])) + 1.
 Proof. exact ewm2. Qed.
-Lemma ews4 : forall t, bv_unsigned (ew (E_st sp argv envp uid hw rnd t) 4) = z_envp (bv_unsigned sp) argv.
+Lemma ews4 : forall t, bv_unsigned (ew (E_stR t) 4) = z_envp (bv_unsigned sp) argv.
 Proof. exact ewm4. Qed.
-Lemma ews5 : forall t, bv_unsigned (ew (E_st sp argv envp uid hw rnd t) 5) = z_auxv (bv_unsigned sp) argv envp.
+Lemma ews5 : forall t, bv_unsigned (ew (E_stR t) 5) = z_auxv (bv_unsigned sp) argv envp.
 Proof. exact ewm5. Qed.
-Lemma ews7 : forall t, bv_unsigned (ew (E_st sp argv envp uid hw rnd t) 7)
-= z_argv (bv_unsigned sp) argv envp 0 + Z.of_nat (progname_off (nth 0 argv [])).
+Lemma ews7 : forall t, bv_unsigned (ew (E_stR t) 7)
+= z_argv (bv_unsigned top) argv envp xf 0 + Z.of_nat (progname_off (nth 0 argv [])).
 Proof. exact ewm7. Qed.
-Lemma ews8 : forall t, ew (E_st sp argv envp uid hw rnd t) 8 = t.
+Lemma ews8 : forall t, ew (E_stR t) 8 = t.
 Proof. intros t. reflexivity. Qed.
 Lemma envp_block_reads : forall m t,
-YQ04.bytes_at m (z_envp (bv_unsigned sp) argv) (envp_block sp argv envp) ->
+YQ04.bytes_at m (z_envp (bv_unsigned sp) argv) (envp_block top argv envp xf) ->
 (forall i, (i < length envp)%nat -> exists bs,
-rdn src2segs m (Z_to_bv 64 (bv_unsigned (ew (E_st sp argv envp uid hw rnd t) 4) + 8 * Z.of_nat i)) 8 = Some bs
+rdn src2segs m (Z_to_bv 64 (bv_unsigned (ew (E_stR t) 4) + 8 * Z.of_nat i)) 8 = Some bs
 /\ bytes_le_to_Z bs <> 0)
-/\ (exists bs, rdn src2segs m (Z_to_bv 64 (bv_unsigned (ew (E_st sp argv envp uid hw rnd t) 4)
+/\ (exists bs, rdn src2segs m (Z_to_bv 64 (bv_unsigned (ew (E_stR t) 4)
 + 8 * Z.of_nat (length envp))) 8 = Some bs
 /\ bytes_le_to_Z bs = 0)
-/\ bv_unsigned (ew (E_st sp argv envp uid hw rnd t) 4) + 8 * Z.of_nat (length envp) + 8 < 2^64.
+/\ bv_unsigned (ew (E_stR t) 4) + 8 * Z.of_nat (length envp) + 8 < 2^64.
 Proof.
 intros m t HB. rewrite ews4.
-pose proof (layout_facts sp argv envp Hsp Hva Hve) as L. pose proof (proj1 Hve) as HE.
-unfold SP_LO, SP_HI in L.
+pose proof (layout_facts inp mbase sp brk rnd Hsp Hlau) as L. pose proof (proj1 Hve) as HE.
+unfold z_xfn in L. unfold SP_LO, SP_HI in L.
 assert (HW : forall k, (k < length envp + 1)%nat ->
 rdn src2segs m (Z_to_bv 64 (z_envp (bv_unsigned sp) argv + 8 * Z.of_nat k)) 8
-= Some (word_le8 (nth k (envp_words sp argv envp) (Z_to_bv 64 0)))).
+= Some (word_le8 (nth k (envp_words top argv envp xf) (Z_to_bv 64 0)))).
 { intros k Hk. apply (bytes_at_rdn src2segs m _ (word_le8 _)).
-apply (bytes_at_le8_nth m _ (envp_words sp argv envp) k HB). rewrite length_envp_words. exact Hk. }
+apply (bytes_at_le8_nth m _ (envp_words top argv envp xf) k HB). rewrite length_envp_words. exact Hk. }
 split; [|split; [|lia]].
 - intros i Hi. eexists. split; [apply HW; lia|].
 unfold envp_words. rewrite app_nth1 by (rewrite length_string_addrs_fst; exact Hi).
-rewrite (u_envp_ptr sp argv envp Hsp Hva Hve i Hi).
+unfold cat_env_base, cat_string_base.
+rewrite (u_envp_ptr inp mbase sp brk rnd Hsp Hlau i Hi).
 rewrite n_to_le_8_spec, bytes_le_to_Z_8.
-pose proof (z_envs_bounds sp argv envp i Hi). rewrite u_Z2bv by lia. lia.
+pose proof (z_envs_bounds inp rnd i Hi). pose proof (z_envs_fits inp mbase sp brk rnd Hsp Hlau i Hi) as F.
+unfold SP_HI in F. rewrite u_Z2bv by lia. lia.
 - eexists. split; [apply HW; lia|].
 unfold envp_words. rewrite app_nth2 by (rewrite length_string_addrs_fst; lia).
 rewrite length_string_addrs_fst, Nat.sub_diag. reflexivity.
 Qed.
 Lemma argv0_reads : forall m t,
-YQ04.bytes_at m (z_argv (bv_unsigned sp) argv envp 0) (nth 0 argv [] ++ [NUL]) ->
+YQ04.bytes_at m (z_argv (bv_unsigned top) argv envp xf 0) (nth 0 argv [] ++ [NUL]) ->
 forall j, (j <= length (nth 0 argv []))%nat ->
-rdn src2segs m (Z_to_bv 64 (bv_unsigned (ew (E_st sp argv envp uid hw rnd t) 1) + Z.of_nat j)) 1
+rdn src2segs m (Z_to_bv 64 (bv_unsigned (ew (E_stR t) 1) + Z.of_nat j)) 1
 = Some [nth j (nth 0 argv [] ++ [NUL]) NUL].
 Proof.
 intros m t HB j Hj. rewrite ews1. apply (proj2 (rdn_mbytes src2segs m 1 _ [_])).
@@ -332,24 +423,33 @@ Lemma src2_start_gen : forall (two : bool) model T,
 (if two then (2 <= length argv)%nat else True) ->
 m_halted model = None -> m_vm_lazy model = [] -> m_tid model = None ->
 (forall ms tid, 0 < bv_unsigned tid < 4194304 ->
-st_ok src2segs (E_main sp argv envp tid rnd) (ss_main two) ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main two sp argv envp rnd) ->
+st_ok src2segs (E_main sp inp argv envp xf tid rnd) (ss_main two rs) ms ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main two sp top argv envp xf rnd) ->
 realizes src2segs (mkCfg ms (with_tid tid model)) T) ->
-realizes src2segs (mkCfg (init_machine_state src2segs Plain_init_pc Plain_phdrs sp rnd argv envp uid hw) model) T.
+realizes src2segs (mkCfg (init_machine_state src2segs Plain_init_pc Plain_phdrs sp mbase rnd inp) model) T.
 Proof.
 intros two model T Htwo Hh Hlz Htid K.
-pose proof (layout_facts sp argv envp Hsp Hva Hve) as L. unfold SP_LO, SP_HI in L.
+pose proof (layout_facts inp mbase sp brk rnd Hsp Hlau) as L. unfold z_xfn in L. unfold SP_LO, SP_HI in L.
 pose proof (proj1 Hva) as HA. pose proof (proj1 Hve) as HE.
-pose proof (src2_init_st_ok sp argv envp uid hw rnd (xw_main sp argv envp (Z_to_bv 64 0) rnd) (xd_st uid hw rnd) two
-Hsp Hva Hve Hfits eq_refl eq_refl eq_refl Htwo) as HS.
-change (st_ok src2segs (E_st sp argv envp uid hw rnd (Z_to_bv 64 0)) (src2_ss0 two)
-(init_machine_state src2segs Plain_init_pc Plain_phdrs sp rnd argv envp uid hw)) in HS.
+(* the ported lemma takes the RUN and twelve datom premises.  [xd_run] is the
+   witness for all twelve - seven by [reflexivity], the eight cache words by
+   [xd_run_cw] - so nothing here is pinned and nothing is restated. *)
+pose proof (src2_init_st_ok inp mbase sp brk rnd (xw_main sp top argv envp xf (Z_to_bv 64 0) rnd) (xd_run inp sp mbase rnd) two
+Hsp Hva Hve Hvl Hlau eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl
+(fun i Hi => xd_run_cw inp sp mbase rnd i Hi) Htwo) as HS.
+change (st_ok src2segs (E_stR (Z_to_bv 64 0)) (src2_ss0 two rs)
+(init_machine_state src2segs Plain_init_pc Plain_phdrs sp mbase rnd inp)) in HS.
 apply (st_ok_add_alias src2segs _ _ _ (fst alias_memset) (snd alias_memset)) in HS; [|apply alias_memset_ok].
 apply (st_ok_add_alias src2segs _ _ _ (fst alias_envp) (snd alias_envp)) in HS; [|apply alias_envp_ok].
-change (st_ok src2segs (E_st sp argv envp uid hw rnd (Z_to_bv 64 0)) (ss_start two)
-(init_machine_state src2segs Plain_init_pc Plain_phdrs sp rnd argv envp uid hw)) in HS.
-pose proof (runs_main_init sp argv envp Hsp Hva Hve two Plain_init_pc uid hw rnd Htwo) as HR.
-destruct two.
+change (st_ok src2segs (E_stR (Z_to_bv 64 0)) (ss_start two rs)
+(init_machine_state src2segs Plain_init_pc Plain_phdrs sp mbase rnd inp)) in HS.
+pose proof (runs_main_init two Plain_init_pc Htwo) as HR.
+(* [E_st] and [E_main] read the run's CONFIG_RSEQ flag inside, so this split
+   reaches [ss_start], [ss_main] and [L] - the places that need it concrete -
+   and leaves the environments, and the [ews*] rewrites over them, alone.
+   [HS] and [K] are reverted first: [destruct] on a term abstracts it in the
+   goal only, and a state left with the flag opaque cannot compute. *)
+revert HS K. destruct two; destruct (kb_rseq (in_kernel inp)); intros HS K.
 all: sym_run_with src2tbl_ok HS.
 all: idtac "PHASE B".
 all: reg_of HS (9%bv:reg) H9.
@@ -369,10 +469,11 @@ all: idtac "PHASE C".
 all: sym_run_to_with src2tbl_ok HS 0x12c44; clear regs1.
 all: idtac "PHASE D".
 all: reg_of HS (8%bv:reg) H8; reg_of HS (10%bv:reg) H10.
-all: pose proof (z_argv_bounds sp argv envp 0 ltac:(lia)) as B0.
+all: pose proof (z_argv_bounds inp rnd 0 ltac:(lia)) as B0.
+all: pose proof (z_argv_fits inp mbase sp brk rnd Hsp Hlau 0 ltac:(lia)) as F0; unfold SP_HI in F0.
 all: lazymatch goal with |- realizes _ (mkCfg ?ms _) _ =>
 destruct (src2_progname_scan (nth 0 argv []) _ (ms_mem ms) (seg_rom src2segs) (ms_regs ms)
-(argv_no_nul argv Hva 0 ltac:(lia))
+(argv_no_nul inp Hva 0 ltac:(lia))
 ltac:(rewrite ews1; lia)
 ltac:(left; rewrite ews1; unfold PROGNAME; lia)
 H8 H10
@@ -412,13 +513,14 @@ apply (runs_at_wbytes_below (bv_unsigned sp) m _ (Z_to_bv 64 PROGNAME) bs) in HR
 unfold PROGNAME; lia ] ]
 end end end.
 all: clear H8 H10 R11 R12 R13 Rfr.
-all: sym_add_fact HS 7%nat (ptr_fact 0);
-[ unfold ptr_fact, SP_LO, SP_HI, K_stack; cbn [af_lo af_hi af_al2]; rewrite ews7;
-pose proof (progname_off_le (nth 0 argv [])); pose proof (rand_off_bound argv envp Hva Hve);
-pose proof (block_fits sp argv envp Hfits) as HBF; unfold SP_HI in HBF;
+(* atom 7, the progname pointer, takes the strings-window fact [str_fact]:
+   it lies inside argv[0], so below [SP_HI - 9] by [z_argv_fits] *)
+all: sym_add_fact HS 7%nat str_fact;
+[ unfold str_fact, SP_LO, SP_HI, K_stack; cbn [af_lo af_hi af_al2]; rewrite ews7;
+pose proof (progname_off_le (nth 0 argv []));
 change (2^0) with 1; rewrite Z.mod_1_r; lia
 | ].
-all: clear B0.
+all: clear B0 F0.
 all: idtac "PHASE E".
 all: sym_run_with src2tbl_ok HS; clear regs2.
 all: idtac "PHASE F".
@@ -427,9 +529,9 @@ sym_ecall_open HS; cbn [ms_mem pend_at] in HR;
 lazymatch goal with Hregs : regs_ok _ _ ?regs, Hmem : mem_ok _ _ ?mem _, HG : facts_ok _ _ |- _ =>
 eapply rz_set_tid_first; [exact Hh | exact Hlz | rewrite (Hregs 17%bv); reflexivity | exact Htid | ];
 intros tid Htid8; rewrite PID_MAX_ENVELOPE_val in Htid8;
-assert (HA8 : env_agree 8%nat E (E_st sp argv envp uid hw rnd tid))
+assert (HA8 : env_agree 8%nat E (E_stR tid))
 by (split; [intros n Hn; do 8 (destruct n as [|n]; [reflexivity|]); lia | reflexivity]);
-pose proof (st_ok_resume_mem src2segs 8%nat E (E_st sp argv envp uid hw rnd tid) ss regs mem (SOff 8 0) tid (ss_mem ss)
+pose proof (st_ok_resume_mem src2segs 8%nat E (E_stR tid) ss regs mem (SOff 8 0) tid (ss_mem ss)
 (mkFacts ((8%nat, tid_fact) :: f_atoms (ss_facts ss)) (f_conds (ss_facts ss)) (f_alias (ss_facts ss)))
 Hregs HA8 ltac:(vm_compute; reflexivity)
 ltac:(cbn [sv_denot]; rewrite Z.add_0_r; apply Z_to_bv_bv_unsigned)
@@ -468,25 +570,25 @@ apply (st_ok_clean_head src2segs E ss ms keep_zero) in HS;
 apply (st_ok_prune src2segs E _ ms [] [0%nat]) in HS end.
 all: lazymatch type of HS with st_ok _ ?E ?ss ?ms =>
 apply (st_ok_clean_all src2segs E ss ms keep_main) in HS;
-apply (st_ok_agree_pd src2segs (fun _ => true) (not_in [UID_DATOM; HWCAP_DATOM]) _ (E_main sp argv envp tid rnd)) in HS;
+apply (st_ok_agree_pd src2segs (fun _ => true) (not_in START_DATOMS) _ (E_main sp inp argv envp xf tid rnd)) in HS;
 [ | apply E_st_main_agree | vm_compute; reflexivity ] end.
 all: sym_norm HS.
-- change (st_ok src2segs (E_main sp argv envp tid rnd) (ss_main true) ms) in HS. exact (K ms tid Htid8 HS HR).
-- change (st_ok src2segs (E_main sp argv envp tid rnd) (ss_main false) ms) in HS. exact (K ms tid Htid8 HS HR).
+all: exact (K ms tid Htid8 HS HR).
 Qed.
 End f.
 Theorem src2_start : forall (two : bool) sp brk mbase rnd lim inp T,
-valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
-entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_launch inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 (if two then (2 <= length (in_argv inp))%nat else True) ->
 (forall ms tid, 0 < bv_unsigned tid < 4194304 ->
-st_ok src2segs (E_main sp (in_argv inp) (in_envp inp) tid rnd) (ss_main two) ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main two sp (in_argv inp) (in_envp inp) rnd) ->
-realizes src2segs (mkCfg ms (with_tid tid (init_model (segments_reserved src2segs) brk mbase sp lim inp))) T) ->
+st_ok src2segs (E_main sp inp (in_argv inp) (in_envp inp) (in_execfn inp) tid rnd) (ss_main two (kb_rseq (in_kernel inp))) ms ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main two sp (ed_top rnd) (in_argv inp) (in_envp inp) (in_execfn inp) rnd) ->
+realizes src2segs (mkCfg ms (with_tid tid (with_vdso (vdso_run_init (ed_vdso rnd))
+(init_model (segments_reserved src2segs) brk mbase sp lim inp)))) T) ->
 realizes src2segs (init_config src2segs Plain_init_pc Plain_phdrs sp brk mbase rnd lim inp) T.
 Proof.
-intros two sp brk mbase rnd lim inp T Hsp Hva Hve Hfits Htwo K.
+intros two sp brk mbase rnd lim inp T Hsp Hva Hve Hvl Hlau Htwo K.
 unfold init_config.
-apply (src2_start_gen sp (in_argv inp) (in_envp inp) Hsp Hva Hve Hfits (in_uid inp) (in_hwcap inp) rnd two);
+apply (src2_start_gen inp mbase sp brk rnd Hsp Hva Hve Hvl Hlau two);
 [exact Htwo | reflexivity | reflexivity | reflexivity | exact K].
 Qed.

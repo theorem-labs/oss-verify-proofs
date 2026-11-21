@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN08.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode (the ledger's counting fields in the forced mode only; munmap's errno arm a real outcome in the may-fail mode)). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -23,7 +24,6 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 Section e. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Definition REGS_F : list sv := Eval vm_compute in ss_regs (SSF K1 R0).
 Lemma SSF_regs k r : ss_regs (SSF k r) = REGS_F /\ ss_pc (SSF k r) = FREE_RET /\ ss_resv (SSF k r) = None.
 Proof. destruct k, r; vm_compute; repeat split; reflexivity. Qed.

@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfGvsn.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfGvsn.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* musl vsnprintf 0x921f4 (fm.asan) in the donor's proof form, from the contracts of __wrap_memset and
    __interceptor_vfprintf: entry at sp0 + 0x160 (s = D, n = N, fmt, ap = P), frame 0x130 with the stack protector,
    memset (sp, 0, 0xe8) through __wrap_memset 0x51ac0 (ra 0x92258), the FILE fields, the cookie {D, N - 1}, *D = 0,

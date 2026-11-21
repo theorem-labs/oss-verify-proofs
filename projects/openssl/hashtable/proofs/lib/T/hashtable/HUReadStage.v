@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window facts are the launch's 1500 pages, not 8 MiB; the ledger premise is [res_vm] and a stage keeps [vm_reserved]). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -79,7 +80,7 @@ Definition sr_FULL (j : Z) : list expr := sr_LOOP (bx (off_of j)) (cap_of j) (ca
 (* [comment removed for export] *)
 Definition kn_static (j : Z) : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144000)) 6144000;
    KRange (EVar 1) 0x7fff80000000 0x800000400000;
    KAlign (EVar 2) 4096; KRange (EVar 2) 0x1000 (CEIL - 8192);
    KDisj (LA 0x10000) 0x344000 (SA (EVar 2) 0) 8192;     (* [comment removed for export] *)
@@ -159,7 +160,7 @@ Definition kn_FULL (j : Z) : list kentry := kn_static j ++ kn_ctx j ++ kn_meta j
 (* [comment removed for export] *)
 Definition kn_G0 : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144000)) 6144000;
    KRange (EVar 1) 0x7fff80000000 0x800000400000;
    KAlign (EVar 2) 4096; KRange (EVar 2) 0x1000 (CEIL - 8192);
    KDisj (LA 0x10000) 0x344000 (SA (EVar 2) 0) 8192;
@@ -296,7 +297,7 @@ Definition store_pres_ok (kn : list kentry) (b : expr) (k w : Z) : bool :=
   match b with
   | ELit 0 => Z.leb 0 w && (inb 0x31ef09 0x32ef09 k w || inb 0x331a44 0x331a48 k w || inb 0x351dfc 0x351e18 k w
               || inb 0x351fa0 0x351fa8 k w || inb 0x352120 0x352128 k w || inb 0x352180 0x352181 k w)
-  | EVar 0 => Z.leb (-8388608) k && Z.leb (k + w) (-128) && Z.leb 0 w
+  | EVar 0 => Z.leb (-6144000) k && Z.leb (k + w) (-128) && Z.leb 0 w
   | _ => match base_range kn b with
          | Some (lo, hi) =>
              (Z.leb 0x354000 (lo + k) || (Z.leb 0 (lo + k) && ranges_apart kn (ELit 0) 0x10000 0x344000 b k w))
@@ -396,7 +397,7 @@ Qed.
 
 (* [comment removed for export] *)
 Definition vm_stage (VM : VmMaps) (sp0 mb bw B : word) (nb : Z) : Prop :=
-  vm_reserved VM = segments_reserved RSEGS
+  res_vm VM
   /\ (LIM <= vm_limit VM)%Z             (* [comment removed for export] *)
   /\ vm_init_sp VM = sp0                (* [comment removed for export] *)
   /\ exists rest,
@@ -419,12 +420,12 @@ Lemma vm_exact_grow : forall (V V' : VmMaps) (sp0 mb bw B B' : word) (nb nb' : Z
   (0 < nb < 2 ^ 62)%Z -> (0 < nb' < 2 ^ 62)%Z ->
   vm_maps V' = map_remove ((B', Z_to_bv 64 nb') :: vm_maps V) B ->
   vm_noaccess V' = maps_subtract (vm_noaccess V) (bv_unsigned B) (bv_unsigned B + bv_unsigned (Z_to_bv 64 nb)) ->
-  vm_start_brk V' = vm_start_brk V -> vm_brk V' = vm_brk V ->
+  vm_start_brk V' = vm_start_brk V -> vm_brk V' = vm_brk V -> vm_reserved V' = vm_reserved V ->
   (bv_unsigned B' mod 4096 = 0)%Z -> (0 < bv_unsigned B')%Z -> (bv_unsigned B' + nb' <= bv_unsigned sp0 - 8388608)%Z ->
-  region_free (segments_reserved RSEGS ++ vm_maps V) B' (Z_to_bv 64 nb') = true ->
+  region_free (vm_reserved V ++ vm_maps V) B' (Z_to_bv 64 nb') = true ->
   vm_exact V' sp0 mb bw B' nb'.
 Proof.
-  intros V V' sp0 mb bw B B' nb nb' (Xm & Xn & Xs & Xb & Xbw & Xr & Xal & Xpos & Xtop & Xrf & Xdj & Xbrk) Hnb Hnb' Em En Es Eb GA GP GC GF.
+  intros V V' sp0 mb bw B B' nb nb' (Xm & Xn & Xs & Xb & Xbw & Xr & Xal & Xpos & Xtop & Xrf & Xdj & Xbrk) Hnb Hnb' Em En Es Eb Er GA GP GC GF.
   assert (Un : bv_unsigned (Z_to_bv 64 nb) = nb) by (apply LedgerCfg.u64_lit; lia).
   assert (Un' : bv_unsigned (Z_to_bv 64 nb') = nb') by (apply LedgerCfg.u64_lit; lia).
   assert (U8 : bv_unsigned (Z_to_bv 64 8192) = 8192%Z) by (apply LedgerCfg.u64_lit; lia).
@@ -441,7 +442,7 @@ Proof.
   split. { rewrite Un. apply LedgerCfg.maps_subtract_id; [lia|]. constructor; [|constructor].
            unfold LedgerCfg.e_sz, LedgerCfg.e_hi, LedgerCfg.e_lo, LedgerCfg.e_sz. cbn [fst snd]. rewrite U4. lia. }
   split; [exact Xs|]. split; [exact Xb|]. split; [exact Xbw|]. split; [exact Xr|].
-  split; [exact GA|]. split; [exact GP|]. split; [exact GC|]. split; [exact GF1|]. split; [lia | exact Xbrk].
+  split; [exact GA|]. split; [exact GP|]. split; [exact GC|]. split; [rewrite Er; exact GF1|]. split; [lia | exact Xbrk].
 Qed.
 
 (* [comment removed for export] *)

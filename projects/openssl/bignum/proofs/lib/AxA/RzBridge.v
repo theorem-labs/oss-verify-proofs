@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's segment list and the vDSO). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
@@ -11,6 +12,7 @@ From OSSVerify.Proofs.openssl.bignum.lib.AS Require ShapeAlg ShapeHalts.
 From OSSVerify.Proofs.openssl.bignum.lib.A Require SrzEqv.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon Require ShapeAlg.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon Require ShapeAlgCfg.
+From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Cfg Require RomStable.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 
@@ -23,8 +25,8 @@ Variable segs : list Segment.
 
 Theorem realizes_cfg_of_realizes : forall c (T : D.TSet), D.realizes segs c T -> KC.realizes_cfg segs ncfg c T.
 Proof.
-  intros c T H. induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
-  - exact (KC.rzc_node segs ncfg c I evs nx T i0 Hnode IH).
+  intros c T H. induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
+  - exact (KC.rzc_node segs ncfg c I evs nx T i0 Hnode Hrob IH).
   - exact (KC.rzc_halt segs ncfg c Hh).
   - exact (KC.rzc_conseq segs ncfg c T T' IH Heq).
 Qed.
@@ -35,16 +37,21 @@ Proof. intros c1 c2 T H He. apply realizes_cfg_of_realizes. exact (SrzEqv.realiz
 
 End Bridge.
 
+(* LPS 08b1429: [run_scfg] reads the binary against the run's segment list; a walk over the
+   binary's own segments lifts to it ([RomStable.run_init]) when the binary carries no vDSO
+   segment of its own, which every caller's concrete image discharges by computation. *)
 Theorem T_canon_cfg (tsegs : list Segment) (tpc : N) (tph : PhdrInfo) (lim : Z) (en : ExecEntry) (inp : ProcInput) (T : K.TSet) :
+  vdso_image tsegs = None ->
   KC.realizes_cfg tsegs ncfg
     (init_config tsegs tpc tph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) T ->
   trace_equiv (bh_traces (Run.run_scfg ncfg (mkImage tsegs tpc tph) lim en inp)) T
   /\ ~ bh_errors (Run.run_scfg ncfg (mkImage tsegs tpc tph) lim en inp).
 Proof.
-  intros Hr. destruct en as [sp brk mb rnd]. cbn [Run.run_scfg bh_traces bh_errors en_sp en_brk en_mmap_base en_draw] in *.
+  intros Hvi Hr. destruct en as [sp brk mb rnd]. cbn [Run.run_scfg bh_traces bh_errors en_sp en_brk en_mmap_base en_draw] in *.
+  pose proof (RomStable.run_init ncfg tsegs inp sp mb tpc tph brk rnd lim T Hvi Hr) as Hr'.
   split.
-  - intros tr. exact (KC.realizes_cfg_obs_iff tsegs ncfg _ _ Hr tr).
-  - exact (KC.realizes_cfg_no_error tsegs ncfg _ _ Hr).
+  - intros tr. exact (KC.realizes_cfg_obs_iff _ ncfg _ _ Hr' tr).
+  - exact (KC.realizes_cfg_no_error _ ncfg _ _ Hr').
 Qed.
 
 Section Halts.
@@ -59,7 +66,7 @@ Theorem realizes_cfg_must_exit : forall (S : list word) c (T : K.TSet),
   must_exit_in_at_cfg cfg segs S c.
 Proof.
   intros S c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c S0 HS Hinv Hfalse | c T T' H IH Heq]; intros pre HT Hnh.
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c S0 HS Hinv Hfalse | c T T' H IH Heq]; intros pre HT Hnh.
   - destruct Hnode as [Hcomp Hsound].
     apply must_exit_in_at_cfg_running; [exact Hnh | | |].
     + exists (evs i0), (SNext (nx i0)). apply Hcomp.
@@ -99,4 +106,18 @@ Proof.
   - apply forced_only_cfg_least.
   - apply ShapeHalts.decided_from_classic.
   - apply (realizes_cfg_must_exit segs ncfg S c T Hr []); [| exact Hnh]. intros tr Htr. cbn [app]. exact (HT tr Htr).
+Qed.
+
+(* LPS 08b1429: the run's own start.  [must_exit_in_scfg] reads the binary against the run's
+   segment list; a walk over the binary's own segments lifts to it ([RomStable.run_init]). *)
+Corollary realizes_cfg_must_exit_forced_only_init : forall segs (S : list word) pc ph (sp brk mb : word) rnd lim inp
+    (T : K.TSet),
+  vdso_image segs = None ->
+  KC.realizes_cfg segs ncfg (init_config segs pc ph sp brk mb rnd lim inp) T -> ShapeHalts.shape_exits_in S T ->
+  m_halted (cfg_model (init_config (run_segments segs inp sp mb) pc ph sp brk mb rnd lim inp)) = None ->
+  must_exit_in_at_cfg forced_only_cfg (run_segments segs inp sp mb) S
+    (init_config (run_segments segs inp sp mb) pc ph sp brk mb rnd lim inp).
+Proof.
+  intros segs S pc ph sp brk mb rnd lim inp T Hvi Hr HT Hnh.
+  exact (realizes_cfg_must_exit_forced_only _ S _ T (RomStable.run_init ncfg segs inp sp mb pc ph brk rnd lim T Hvi Hr) HT Hnh).
 Qed.

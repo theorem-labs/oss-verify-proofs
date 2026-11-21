@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/HaltsKitB.v, with its module paths changed; the walk lemma and the halting corollary take srealizes (YK18.v) where cgif's take realizes, because fuzz_knock's realizes (YK15.v) has a cut at a budget refusal. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/HaltsKitB.v at origin/ossv/recipes 4b6f0df50aa7 (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/libdiginet/fuzz_codec/proofs/lib/Reusable/HaltsKitB.v at commit 874e3397a35, its definitions ev_ok, trace_ok and shape_ok, its lemmas trace_ok_app, trace_ok_prefix and trace_ok_writes, and its walk lemma srealizes_must_exit_in, restated for libpcap/fuzz_pcap's SpinAlg.srealizes and ShapeAlg.CFG; its other lemmas and its halting corollary are left out, and the lemmas shape_ok_branch, nstep_trace_ok, texit_trace_ok, plain_traces_ok, must_exit_forced_of_srz and plain_entry are new. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/HaltsKitB.v (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/libdiginet/fuzz_codec/proofs/lib/Reusable/HaltsKitB.v at commit theorem-labs/oss-verify-proofs@f92feaf8b7e6, its definitions ev_ok, trace_ok and shape_ok, its lemmas trace_ok_app, trace_ok_prefix and trace_ok_writes, and its walk lemma srealizes_must_exit_in, restated for libpcap/fuzz_pcap's SpinAlg.srealizes and ShapeAlg.CFG; its other lemmas and its halting corollary are left out, and the lemmas shape_ok_branch, nstep_trace_ok, texit_trace_ok, plain_traces_ok, must_exit_forced_of_srz and plain_entry are new. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the srealizes induction names the new Hrob premise, and must_exit_forced_of_srz takes vdso_image segs = None and lifts the walk to run_segments with RomStable.srun_init; internal commit ids in comments replaced by public commits or removed. *)
 (** Halting of a sanitizer build from the srealizes fact of its equivalence
     proof.
 
@@ -22,6 +23,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From OSSVerify.libpcap.fuzz_pcap Require Images.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AllocSim2__Common SpinAlg.
+From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require RomStable.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Lib Require Import ITree Nodes ImgSrc3.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2 Require Import TopLevel.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Equiv Require HaltsAdq HaltsFinal.
@@ -87,7 +89,7 @@ Theorem srealizes_must_exit_in : forall c T,
   forall S, m_halted (cfg_model c) = None -> shape_ok S T ->
   must_exit_in_at_cfg SA.CFG segs S c.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
     intros S Hnone Hx.
   - destruct Hnode as [Hsound Hinv].
     apply must_exit_in_at_cfg_running.
@@ -162,14 +164,18 @@ Qed.
 (** ** The assembly: srealizes at the large budget, then the forced-only
     configuration *)
 
+(* LPS 727298f3: the run reads [Run.run_segments segs inp sp mbase]; a walk over the binary's own
+   segments lifts to it ([RomStable.srun_init]) when the binary carries no vDSO image. *)
 Theorem must_exit_forced_of_srz : forall segs pc ph lim en inp T,
+  vdso_image segs = None ->
   SpinAlg.srealizes segs (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) T ->
   shape_ok codes02 T ->
   must_exit_in_scfg forced_only_cfg codes02 (mkImage segs pc ph) lim en inp.
 Proof.
-  intros segs pc ph lim [sp brk mb rnd] inp T Hsrz Hok. cbn [must_exit_in_scfg en_sp en_brk en_mmap_base en_draw] in *.
-  apply (HaltsAdq.must_exit_in_at_cfg_down forced_only_cfg SA.CFG segs codes02 _ (forced_only_cfg_least SA.CFG)).
-  apply (srealizes_must_exit_in segs _ T Hsrz codes02); [reflexivity | exact Hok].
+  intros segs pc ph lim [sp brk mb rnd] inp T Hvi Hsrz Hok. cbn [must_exit_in_scfg en_sp en_brk en_mmap_base en_draw] in *.
+  pose proof (RomStable.srun_init segs inp sp mb pc ph brk rnd lim T Hvi Hsrz) as Hsrz'.
+  apply (HaltsAdq.must_exit_in_at_cfg_down forced_only_cfg SA.CFG (run_segments segs inp sp mb) codes02 _ (forced_only_cfg_least SA.CFG)).
+  apply (srealizes_must_exit_in (run_segments segs inp sp mb) _ T Hsrz' codes02); [reflexivity | exact Hok].
 Qed.
 
 (** Some entry of the plain build is valid on every valid input. *)

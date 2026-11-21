@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -12,6 +13,8 @@ From OSSVerify.Proofs.boost_beast.http_request.lib Require Import PropExec HeapC
 From OSSVerify.Proofs.boost_beast.http_request.lib.Bo Require Import BSegs AsShadow AsConst AsIface AsIface5 AsIface6 AsIface7 AsIface8 AsTRList AsStack0 AsDriverLaws AsPrintfFirst AF_atexit AXFuzz_stmt AsDrvDefs AsMainPre AsInstance FakeStackRep.
 From OSSVerify.Proofs.boost_beast.http_request.lib Require Import
   AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanInit BothImages BothPlanImages BoStartupHSF BoMainState BoMainFacts BoMainLazy BoMainCells BoMainIface BoMainIfaceConst BoMainIfacePre BoMainIfacePre2 BoMainIfaceArgs BoMainIfaceDepot BoMainIfaceFS BoMainIfaceAlloc.
+From OSSVerify.boost_beast.http_request.images Require AsanUbsan.
+From OSSVerify.Proofs.boost_beast.http_request.lib Require Import AsanInitL.
 From OSSVerify.Proofs.boost_beast.http_request.lib.Bo Require Import AsMainSyms.
 Import ListNotations. Import AX2. Import AP. Import APS.
 Open Scope Z_scope.
@@ -37,8 +40,8 @@ Record mctx : Type := MCTX {
   k_Vfit : entry_stack_fits k_sp0 (in_argv k_inp) (in_envp k_inp);
   k_Hh : HSF_both k_h = Some k_ch;
   k_HC : cs_ok BSEGS2 BOTH_H AsanInit.LIMIT
-           (SINV0 BPH2 k_sp0 k_rdraw k_brk0 (in_argv k_inp) (in_envp k_inp) (in_uid k_inp) (in_hwcap k_inp))
-           (argH0 BPH2 k_sp0 k_rdraw (in_argv k_inp) (in_envp k_inp) (in_uid k_inp) (in_hwcap k_inp)) (in_fs k_inp) k_E k_ch k_R k_FULL k_model }.
+           (SINV0L BPH2 OSSVerify.boost_beast.http_request.images.AsanUbsan.M.init_pc k_sp0 k_rdraw k_brk0 k_inp)
+           (argH0 k_sp0 k_rdraw k_inp) (in_fs k_inp) k_E k_ch k_R k_FULL k_model }.
 
 (* [comment removed for export] *)
 Definition KX (k : mctx) : pm_syms := Xof (hole_granted (k_h k)) (k_E k).

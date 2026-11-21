@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif0cgif.v (a working branch 84ee52cd012, file sha256 7fa49e0df3d0) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif0cgif.v (a working branch, file sha256 7fa49e0df3d0) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* The cgif_file instance of the Deallocate interface's image class ImgBaseDG.DImg: the constant cells' zone and the
    instance object's range (AGif0cgif.CZONE / inst_ok), the depot's and the internal allocator's zones and the internal
    allocator's initialized cells (DGgi.DZONE / IZONE / IAL_POST), the application zones (AF0x.zone3) and the entry

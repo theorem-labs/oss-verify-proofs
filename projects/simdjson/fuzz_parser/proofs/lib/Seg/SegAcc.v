@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the load case split covers a read that misses memory but meets the vvar region. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -70,7 +71,8 @@ Lemma simple_accs : forall t m r, eff_simple t -> interp_eff_accesses segs t m =
 Proof.
   intros t m r H E. destruct t as [c|c|c|c|c|c|n a k|n a v k]; cbn [eff_simple eff_accs] in *; cbn [interp_eff_accesses] in E; try discriminate.
   - injection E as <-. reflexivity.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r'| |] eqn:E'; try discriminate.
     injection E as <-. cbn. rewrite (nomem_accs _ _ _ (H _) E'). reflexivity.
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].

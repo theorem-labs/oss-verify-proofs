@@ -1,7 +1,7 @@
 (* Pure facts for the ASan walk of name_ok on image A (lib/A/Prog/name_ok.v): the byte test of SegModel.name_ok,
    the bit mask 2^50 + 2^13 + 3 that the loop shifts by (c - 45) after the unsigned guard (c - 45) <= 50, and the
    string's bytes one at a time. No image, no machine. Adapted from the plain walk's name_ok_facts.v
-   (the plain / UBSan walk commit 866dd430ece6). *)
+   (the plain / UBSan walk). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Spec Require Import SegModel.
 Import ListNotations.

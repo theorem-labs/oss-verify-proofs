@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_rgb_fuzzer/lib/ReallocP.v at 82e315ce20c (cold/c-asan-realloc-primary; no cgif_file_fuzzer copy there; the C5 trace premise), with its module paths changed by its own module map (YN05 -> YM05, YG0h -> YG0f, YA0l -> YA0n). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_rgb_fuzzer/lib/ReallocP.v (cold/c-asan-realloc-primary; no cgif_file_fuzzer copy there; the C5 trace premise), with its module paths changed by its own module map (YN05 -> YM05, YG0h -> YG0f, YA0l -> YA0n). *)
 (* The realloc statements over section variables, for any harness whose model is the YG00 form.
 
    [arealloc_realizes_allP] is the realloc contract for 1 <= n < nmax and a live old block;

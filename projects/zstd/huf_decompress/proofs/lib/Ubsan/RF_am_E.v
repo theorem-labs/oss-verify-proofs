@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (3 recorded proofs replaced by written proofs (ru64s_read, rrw_cells_app_split, rrw_cells_app_join); ram_entry re-proved for the CONFIG_RSEQ auxv; the malloc context address of this binary). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -43,18 +44,39 @@ Lemma ru64s_read : forall m A ws (i : Z) w a,
   bytes_at usegs m A (u64s ws) -> nth_error ws (Z.to_nat i) = Some w -> 0 <= i -> a = wa (A + 8 * i) ->
   ov_read_bytes usegs m a 8 = Some (le8 w).
 Proof.
-ltac2:(KReplay.run1 (kr_t_RF_am_E ()) ["CANSEC1"] "p'0h01nh11lh21Hh34__x1h44__x2h54posth61xi001xh75Hlen0h84Hlu0h97__arithh:4__ffh;8__varmaph<5__with=4cstrh>5cstr0h?2H1h@3prehA2z1hB4__p1hC1ahD1yhE1AhF1EhG2EuhH2H2hI2HbhJ2HihK4HlenhL3HluhM2HnhN5cstr1hO1ehP1ihQ1mhR1ohS1whT2wshU1zhV2z2p&0p;1p;4p;3p;2p;<p;6p;7p;8p;Bg002Rj1UTg0037j1~Tg003Uj1uTg004]j1hTg005?j1oTg00l3j11Tg00VSk40RTg006?R0j14Tg00ldk30ATg00mBj2<Tg0094j33j1yTg007?k103Tg00mdR1j25Tg00=3j1KTg00nAj1=Tg00o1k40TTg00>gj3>Tg00ohj30Tg005_j22Tg00O7R2j2ZTg010Ej2VTg008TR3j16Tg010\k102Tg00Z4l<nTg009Nk20WTg00:1k30VTg00:Nj4cTg00;5j1XTg00;Zj2kTg00GQj2`Tg00<<R4j2ATg00<WR5j2BTg008:j2aTg00=Rj2bTg00>;j2^Tg011:j2[Tg011fk10QTg012Dk20PTg012ek30OTg006_j1zTg00?Gk20NTg00?ek10MTg00@Ck40ITg00@ak10HTg00A?k10GTg00\Qk60FTg00BMj2xTg00Ajj2vTg00]Yk70ETg00C0k10DTg013Nj3tTg00DXk20@Tg00E:j2gTg00ETk20?Tg00F@k30>Tg00F_k40=Tg0141j4YTg014\j3CTg015:j39Tg015Yj2TTg0160k20<Tg000ij67Tg016Nk20;Tg016kj2sTg017Kj1rTg0180k10:Tg018gR6j2DTg019Ak409Tg019ak408Tg01:@k207Tg01:^k206Tg01;:k40BTg01;Yk40CTg01<7j2@Tg00QbR7j2PTg00CRj3iTg01<Nj3pTg01<mk805Tg000Mk604Tg01=jk10JTg01>Yk40KTg00Y2k20LTg00YOl<{Tg01?^lB|Tg00ZYk301Tg00[Bj4}Tg00[mk70STg00]5k700Tg00^=k80UTg00b>R8f0R9'Bp=If1R:/P9$0Jp=Fg00`5R;f2R<P:P9H0Kp=Jg00`jR=?3:9p=Gf4R>f3R?A0<:933p=:1V:993=<p=m1A:9,A<p=QA3?<:/A9p=M%=:=0<9p=N12<:=3=9p=S12?<1V:953=p=HA0<:990>?p=qg00b\R@?3:9p=820L89p=L1g@9p=?P@P=P@P@P0P>P3P?g00c:P<P:P9M<{p=lP=P=P=P@P@P@g01@DP3P3P3P1g01@df5R1P>P?P<P:P9MB|p=eP=P@P@P@P3P3P1P>P?P<P:P9M<{p>0XP=P@P9P3P:P<P?P>P1f6R0f7RAf8RBM<np=dA3@98p=_B01@:9p=RP@P:g01AGP9C}p=]P:g00dNRCg00dmRDPDg00eMREP9g00emK0Sp=EP<PCPDPDPEP:P9K00p=wP@P:g00fMP9C}p=WP?PCPDPDPEP<P:P9L0Up=\1<<:=3?9p=;P=P>P?P<P:P9E7p=OP=P@P6P3P5g01AnP1P>P?P<P:P9M<np=jP=P=P=P@P@P@g01BPP3P3P3P7g01C0P1P>P?P<P:P9MB|p=fg00h;R7#UR3#U#UR5#U#U#U#~#uR6%~5#uRF#h[%o6RGP;P1P>%1?H0R%h6%4?:0A6>1<6<33%I>&035R5/51,FA936?P61550,FB%oFRH#hRIf:RJg00iLRK#K#KRL#KRM#KRN#K#K#K#KRO7J9%=0,<H33XC6PA%40P1P<H0TPGf9RPA>6A9906:126:RQ%4BRR'GPH%1PRSPF%1:RT%=ARU%19RV50FD:12FTRW?mOR3QCMX5G,ZGX@G,ZGP2PGPGPJA>6B9906:%4PRR,GQPH%1JPFPTANFBVD:AmWOR3QCMX5G,ZGX@Gf;RR155B,FJ;JO1<HU53IP9PGf<RUA>6J9906:%4RRX,GQPH%1URQPFPTANFJVD:AmWOX3QCMX5G,ZGP2PGPGf=R2A>6R9906<%4URX9S6<PH%12RWPF%1<RJ%=RRY=0FVD:PFPJPOPXCH3QCMX5Gf?RXf>RJ155U'F;JO1<HY53IP9PGPXA>629906>%4JRY9S6>PH%1XRUPF%1>RZANF2VD:PFPZPOPYCH3QCMP4PGf@RYP6P1A>6J:D:%4XR29S61PH%1YRVPF%11R1ANFJTD:PFP1POP2CH3QfCR2fBRT155Y'F;JO%=X,<H53IP9PGPTP6PAA>6Y?D:%4TRY9S6BPH%12RXPF%1BRBfAR[=NFZD:PFPBPOPYCH3QP4%42RY9S6PPHfDRP#1RZPFPSPF%=TP1DqPFPSPOPYCHCMfGRYfFR1155P'F;JO%=2,<H53IP9fER\#49S6RPH%1YPFPQPF%=\PBDqPFPQPO%41CHCMP4PHfHR4#1PFPWANF1SD:PFPWPO%4YCHfKRWfJRS1554'F;JO%=Y,<H53IP9PH%1SPFPU%1R9NF4D:PFPVPO%4SCH%4WRS,VORV#6R4155WRR'8RY%LWRQ,55RB/8RP@P@%y@R]P9X6@R^P]18:9$02XD@X6@P4PBP^P^%69R4#?X6=PVPBPOP5%?5R_PSPQP^%L9X6@RQPWPW%?WDlR`EeJ0XPRPR%?RM<n%1[,2FR[/GV%6[RR/8BRB%y=RaP]%6:/841G:920W:940VXD=X6=R4P[PR%?RPVPQPWO1RV,55POP5P_PSPVP`EeM9dP9CcPB126TRBfLR`#4RV'G%6BRS%L`RR'8R[PaP]P4PBPS%?SPVPQP`O1RSP^PQP`P`%?`DlRBM9dP0CcP[12FXRX#X%6X#I126PRP#X%6P#IfORP,k81`8P%LPR[/8P'A1BP8%_['A'afPR[#LRbP@p-0Rcg00h`Rd1b@KRe1b@MRM1b@L'R,Reg00ikRL'^'[1b@N&0Q7-0P@>0O@MRN'R,Re/^L,[e1ReN/^L,[e1ReM/^L,[e%zdRe5>d5>d5>d3>%odRdP@20N@<P:&0M@RLH0IRM&0H@RN&0G@RfPfPCPDPDPEPfPCPDPDPEP>J0F1x@7R71x@3R3'],Ef5wf1v@8RC,W3,Ef1]7C,Ef5wfK0E&0DDRDPf1WC3,EfRCPD1v@5Rg=t@7RhAt@g3Ri'],EfC\C\20@fEREP9P<g00jWRjg00k7Rk'g20?9<=3jkdB0>@8:H0=Rkb:b;b<X3@X4@WB189:,A<1B:8%_9'A'a%I<155<Rj155?'8[[^3@^4@^BcP9fRRc,`8PcP:P<fMRlO5b9bAb?b>b=b7b8CYPYP@1VOVRY#6Rm1FP9=J[O%=`Rn,<HRo53IXU@PI%1lRp9CFY99FO,<HA3I9oXRIPH%1TRT%=WRq%1JRJ50FRr50FRsPIPH%4lRt,VORu=CF999FOPoC;X1HPHACFYTRv12FTRw,TY=CFr50FPIPHA9FO9PoC;X1HRxPH%zFRyPIPH1TuXA0FnURz5CF90F999FOPoC;X1HPYPIPH1Tu9=CFz90Fy99FOPoC;X0=P=PKPIPHACF9z90Fy99FOPoC;X0=PHPrPIPHA0Fy999FOPoC;X1HPHPrPxPHA9FOqRx12FqRz,TO=9FJ50FPIPHP9PoC;X1HR{PHPqPIPH12Fn,TO=9FU90F9PoC;X1HPOPIPH1TO9=9FU90FnPoC;X0=P=PKPIPHA9F9U90FnPoC;X0=PHPyPIPHA0Fn9PoC;X1HPHPqP{1<Hq,gIA0Fqy20<FqE7A9FKJ20;FJE71sOO%rOE7Pz&0:WRWDOPxPFPOPqPO1D9OX0=1DOO1B55RxPOP5P_POP5P_Ej1GwY%6wRI155RR{'8RoPaP]P4PwPI%?IRnPY155SPOP5P_PVPSPBEeM9dP:CcRSPo1262R2/Gt%62R|%Ll'8R}PaP]P4P2P|%?|PtPQPlO1P^PQPlPl%?lDlM9dPACcRAP}12FZRZ#XRl%6Z#IRZ126\R\#XRQ%6\#IR\1k8[R^1`8[18b['A1B[8%_b'A'aRbfQR[#LRtP@PePdPLPN1Wgg,EfPEPkb:b;b<PxP9b9bAb?b>b=b7b8CYPzPWDOH09E7A9FOrPFPOPqPJH08E7A0Fyr207FrE7ACFKr206FrE71sYY%rYE7PwP:DOPvPFPYPT1DwY1BI{PwPIPnPYP{POP5P_PVPRPBEeRBEjPSPoPAP}PlPZPQP\P^PbPtP@PePdPMPNPf1]7i,EfPD1W7i,EfC\PEPkb:b;b<X3@X4@155:Ri,891B:j[^3@^4@P9P:fIRj#1,2F#6P0O3b9bAb?b>b=b7b8CYH0BE7ACFYsPFPYPTPrH0CE7PpP<E7fNR0/Fm=JPOP;PPP0PpPYPOPjPHPs1@uORu12F9'DX1H12FrRH,@w1Du9X0=12FJRj,@z1@X9,DuX0=PO12FURU,@9,@X,DuX0=PY1@OU,@9,DuX0=1@YOR=1@OjRu,@YRU'D1P{5RX%6jR0,P5RP,P{R;'BP=PXPYP{PBPOP5P_EfPUP;PYP{PBPuPPPOP5P_PjP0%?0EfEfEjPSPoPAP}PlPZPQP\%Xw%II1k8[1`8[18t['A1B[8%_t'A'a%LcP@PePdPMPNPfPCPDAi@hgAi@g39i@h'W,EfC\PEPkb:b;b<X3@X4@%I:1Pi51P5<,Pi'B[^3@^4@P9%11,2F#6P:P?O3b9bVbHbNb>b=b7b8CYPwP:DOPzPWDOPHApFqJDO12FsApFTrDOPpP<E7L05E7155`P9J04b2WLWGP:P9O2n2001000000121000000W2WKP:P9O2n2001000000121000000W2WFP:P9O2n2001000000121000000W2X5GP:P9O2n2001000000121100000W2X@GP:P9O2n2001000000121100000bOP>P9E7W2WJWMWIXC6XS6XP@WTXE@WQo"). Qed.
+  intros m A ws i w a Hb Hn Hi ->.
+  destruct (u64s_split _ _ _ Hn) as (pre & post & E & Hlen & Eu & Hlu).
+  replace (8 * i)%Z with (Z.of_nat (8 * Z.to_nat i))%Z by lia.
+  rewrite (bytes_at_ov_read usegs m A (u64s ws) (8 * Z.to_nat i) 8 Hb).
+  2:{ rewrite Eu, !length_app, length_le8, Hlu. lia. }
+  rewrite Eu, skipn_app, skipn_all2, Hlu, Nat.sub_diag by lia. rewrite skipn_O, app_nil_l.
+  rewrite firstn_app, firstn_all2 by (rewrite length_le8; lia).
+  rewrite length_le8, Nat.sub_diag, firstn_O, app_nil_r. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 Lemma rrw_cells_app_split : forall m A cs1 cs2,
   rw_cells usegs m A (cs1 ++ cs2) -> rw_cells usegs m A cs1 /\ rw_cells usegs m (A + Z.of_nat (cells_size cs1)) cs2.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RF_am_E ()) ["CANSEC1"] "h01Hh14__x1h24__x2h31ah41mh51Bh61nh71xh82B2h91Wh:2WFh;7__arithh<4__ffh=8__varmaph>5__with?4__x3h@1bhA3bs1hB3bs2hC4cstrhD4segshE1AhF3WF1hG3WF2hH2_HhI3cs1hJ3cs2hK5cstr0hL1lhM1yp;1p;6p;4p;2p;3p;5p;8p;<p;9p;7p;Bg002Rj1>Tg0037j1QTg003Uj1NTg004]j1WTg005?j1BTg01CSj13Tg01DLj6YTg01EUj4ETg01FLj12Tg01GCj14Tg00<<R0j2:Tg01H=j2cTg00ohj3CTg01I8j2_Tg000Mj6ITg00VSj49Tg005_j2<Tg01J6j5[Tg008TR1j17Tg00QbR2j20Tg01Joj2ZTg00Thj4GTg01<7j2MTg01L0j2XTg00;5j1FTg00<WR3j28Tg006_j1VTg00?Gj2LTg00?ej1UTg00@Cj4KTg00@aj1TTg00A?j1RTg00Ajj2STg00BMj2DTg00C0j1rTg00CRj3ATg00^=j8qTg00DXj2pTg00E:j2PTg00ETj2oTg0094j3nTg00F@j3jTg00F_j4iTg010\j1hTg01Lmj4bTg00Z4l<eTg0048j1^Tg0141j4fTg01MPl9gTg00WHj4]Tg01NSj4kTg00[Bj4lTg00[mj7\Tg01?^lBOTg00YOl<mTg00aIR4f1R5f0R63Cp=6g00`5R7f2R8P5P6C]p=;%76,05p=5%36#7p=@P7P8P5P6Ckp=?P7P8P5P6C9p=1g00b\R9P5g00fMP6Clp=JP5g00dNR:g00dmR;P;g00eMR<P6g00emF\p=H1P96p==g00`jR=P=P=P9P9P9g01BPP1P1P1P2g01C0f5R>f4R?f3R@P8P5P6MBOp=aP=P9P9P9P1P1P>P?P@P8P5P6M<mp=`P9P9P9P9P9P9P2P6P5P8P2P@P?P>f6R2f7R1f8RAf9RBMBOp=dg00h;RC#>RD#>#>RE#>#>#>#Q#N%QE#NRE#W[RF%B4R41656RG9;@8A;?@8%38,5@=;?5P7P?P@P8P5P6EYP0P7P?P@1685RHCE%@H9??@%3@,5?=;>8P6P7P2P>16?@CEP016>?RI#2%4I9112162>#@9?A1%31,5A=;B2[P61612#2f:RI16A1#471Bf;RJ16BA#@7?IP0%2G%28RG%25RB':[RK%26,:B%2HRH[%2@/:G\H1c56P5n2001000000120000000X@4X34PK^@4^34P6PJPIP@O3%2JRJ%2I':P0f<RI#2PJf?RJf>RKf=#3'5;;IP6%2KRI%BERHf@RG/6J#4fCRBfBRL;16XLHP1%4G%4J5CER11_GJEIfARG=1L1g01OE#BR1P0P?P@P8ACE56C9P>P?P@P8C9P>P?1<E8,5@P5C9':[RJP?P@P8P5C9P?P@1<E5,58P6C9':P>P?P@ACE85C9RM[P2P>P?P@C9P2P>1<E@,5?P8C9':\MP?P@P8P5P6D[P5n2001000000120000000XBHXAHX39X4FWDPJ^BH^AH^39^4F^D1P6P7fDR1PB%4LRL%4GRGP5O6A11BL1<EL,5B=11G':P0fER0%4BRG7111<EG,51=10LfFRL%31,50;;BP6fGRB%40R071LfHR1%4LRL,<E,5B;10P=%4BR0,<EfJREfIRG%76RF'0;10X6=P6%3BRH1ZBAEI%7HRJ,01=1GLP7PE%31RL#7R?,0GRMPBCEA?EMJ%2BA1EM0PAP6CGP=161B#3fKRA??EFX6=PK1MLHRH1X1BEI%7H9?EGP7PAPE%3GRG/MLR7#7RH%7GR1,0ERBP?P6%FGg00b>RK/81g00h`RM#VR0%BMRMP91L98RJP5%U9CK%T9R>%R9R2P:P;P;P<1S9K1D9DRD'J,H2%r;1D9CR;AA9;DR:'J,H2Gq1p2<R<P6P8g00jWRNg00k7RO'P1o68=nNOdAj9K5CiROb<b=b>X19X2918K51058RN,85[^19^29P6%@ARAfLRPP5O3b;bC10B?RB10EHRQ'8101?RR,0ERS,8BP9P9P3P6X79RTP31856#hXM9X79PBPB%=BPQPSPTPTPTP9P9g01PD1056Cb#=X49X69PEPE%=EPHPRPTPT%=FX7=P7PRPGP1%=1PLP?%=?EaE`M:dM<e%FL18K?%3ERE#F%7E,8KP0PMP9PJP51L9@CKP>%^C,D9RC9A9:AA9DC9A9;'J,H2P<POb<b=b>X19X29X?91065/08106N'8^19^29^?9P6PA%@PfMO3b;bKbCCfM9gb9CGb8W8WHP5P6O2n2001000000121000000b5b0b5XGIWFP5P6O2n2001000000121000000b:b0W9W5W:P5P6O2n2001000000121000000W0P5P6O2n2001000000121000000CGW0XJ4WIXE9W4o"). Qed.
+  intros m A cs1 cs2 H. split; [eapply rw_cells_prefix; exact H|].
+  destruct H as [[WF B] W].
+  apply cells_wf_app in WF. destruct WF as [WF1 WF2].
+  rewrite cells_bytes_app in B. apply bytes_at_app in B. destruct B as [_ B2]. rewrite cells_bytes_length in B2 by exact WF1.
+  split; [split; [exact WF2 | exact B2] |].
+  rewrite cells_size_app in W. eapply wr_at_sub; [exact W | lia | lia].
+Qed.
 
 Lemma rrw_cells_app_join : forall m A cs1 cs2,
   rw_cells usegs m A cs1 -> rw_cells usegs m (A + Z.of_nat (cells_size cs1)) cs2 -> rw_cells usegs m A (cs1 ++ cs2).
 Proof.
-ltac2:(KReplay.run1 (kr_t_RF_am_E ()) ["CANSEC1"] "h01Hh14__x1h21ih34__x2h44__x3h57__arithh64__ffh78__varmaph85__with94cstrh:5cstr0h;4__p1h<1ah=1mh>1xh?3Hi0h@1nhA1bhB3bs1hC3bs2hD4segshE1yhF1AhG2B1hH2B2hI2H0hJ2H1hK2H2hL2H3hM2H4hN2HihO2W1hP2W2hQ3WF1hR3WF2hS2X1hT2X2hU3cs1hV3cs2hW1lhX1ohY1zp&0p;1p;4p;2p;3p;5p;6p;<p;7p;8p;Bg002Rj1HTg0037j1nTg003Uj1^Tg004]j1qTg005?j1STg01EUj4LTg01CSj11Tg01FLj14Tg01GCj1CTg00QbR0j20Tg00<<R1j25Tg01H=k204Tg00Thj4KTg00ohj3NTg00VSj4ATg005_j2VTg01J6j5yTg008TR2j12Tg01Joj2wTg000ij6WTg01I8j2uTg01<7j2=Tg007?j1lTg007]j2pTg00C0j1\Tg00<WR3j2@Tg00;5j1GTg006_j1oTg00?Gj2TTg00@ak10>Tg00A?k10=Tg00Ajj2mTg00BMj2[Tg00DXk20<Tg00E:j2RTg00ETk209Tg0094j3FTg00F@k308Tg00F_k406Tg010\j1iTg01Lmk405Tg00Z4l<gTg00@Cj4fTg0048k102Tg00D5k301Tg0141k400Tg01Phj2~Tg00GQR4j29Tg008:R5j2zTg01QMj3dTg01R3j6bTg00:Nj4_Tg00?ej1xTg01R\j3`Tg00[Bj4ZTg01S?j2OTg000Mj6{Tg01L0j2|Tg00WHj4}Tg01NSj4kTg01=jj1eTg01S\j3]Tg01TYj1hTg00[mj7tTg00^=j8sTg01?^lBjTg00YOm<07Tg00CRj3rTg00\Qk60:Tg00]5k70;Tg00`5R6f2R7f1R8f0R9C}p=DP6P7P8%29Ckp=E%29,08p=;g00aIR:?N89p=BP6P7P8P9CAp=?%19#2p=7P6P7P8P9Ckp=Qg00b>R;/@9p=31078/@9p=:1989,57p=6f4R<f3R=1078#e5]6;F9#hp=<g00b\R>P8g00fMP9CZp=MP8g00dNR?g00dmR@P@g00eMRAP9g00emFtp=>P=P?P@P@PAP7P8P9Gsp=I1R>9p=8g00`jRBPBPBP>P>P>g01BPP2P2P2P0g01C0f5RCP<P=P7P8P9MBjp=YPBP>P>P>P2P2PCP<P=P7P8P9N<07p=XP>P>P>P>P>P>P0P9P8P7P0P=P<PCf6R0f7R2f8RDf9REMBjp>03Ar>89p=JP>P>P4P2P4P0PCP<P=P7P8P9M<gp=cP8P?P@P@PAP9J0:p=aP7P?P@P@PAP8P9K0;p=PP>P8g00cgP9CZp=U%e89]67=F=9#hp=vg00h;R?#HR4#H#HRF#H#H#HRG#nRH#^%nF#^RF#qRI[RJ%S:R:AD=78P1P6P<P=P7CL%179E<=%1=,;<=DC71B<=9D0C[P9P6P0PCP<CLP1%4C%CC9?20%109ED2%12,;D=DE0f:RK1BD27DE[[P9%42%CD9?KEf;R2%1E7EKf<RL%7KRM,02;DEP1P6f=RN%12,;LROPKCLAQNOMf>RO1BL27DNP9P6f?RM%1N,;OPLCLP1%4Nf@RK%7ORO,0M%CN3?fARP%1M,;K;QOfBRO1BKM7DP[P9%4MfCRM%7PRP,0O%CK3?fDRQ%1ORR,;M;QPP6fERPPQ1BMORSCL%1SRT9EPQ%4S%CSRS9?PQP11B89#4%47%48RU'5RV[%49,5U1B78#4[RU1B=7#4\V20489P9n2001000000120000000XA:X<:PU^A:^<:P9PQPM%4Q%4MPLP=CKO3b0%SFRU%CMRV%CO5NFfFRW??P9XWUg01OE#SRXP1P<P=P7ANF89CAPCP<P=P7CAPCP<1VF7,;=P8CA'5RY[P<P=P7P8CAP<P=1VF8,;7P9CA'5PCP<P=ANF78CA[RZP0PCP<ANF=7CA\YP<P=P7P8P9DyP9n2001000000120000000XCUXBUX<>X=JWDPZ^CU^BU^<>^=J^DXP9P6PWPP%CQR6PVA?WP61VF6RX,;P=?WVP2PB%1QR2fGRV%29RJ,0W;?6X@BP7PX1wQLEWCKO6b0PS1uMOEWCKPB%1MRS/=RAQWPJX@BP1%3Q%2S%l4RR%lG'pRG5:Q%39RQ%22769PIPVPWP8%\FRFD<[^2>'51=2S9EWPPE%3W%7W=:VG%1VRV#2RW96Q9PIfJRPfIRSP8PFD<[^2>'5P1fHR2?:WG%12R2#296Q9PIfKRWPPP8PFD<[^2>1=2V9EPSP9%7S=:PG%1WRW#2RS96Q9R2PIfNRVfMRLP8PFD<[^2>P1fLRX/0SRS#3%7P=:SGPIfORS%7LRP,0VR6P8PFD<\2^2>'5%1X/=W9EVLPD%36%7VRV,0S?:PGA6Q9VPIfRRPfQR6fPRL#1RW#2RX'0P8PFD<[^2>'5P1%1SRS#2R1,0L?:VGA6Q91PIfSR1%16,;PRVP8PFD<[^2>1=WS9EP6P9A:VXG%1PRP#2RV96Q9PIfVRXfUR6fTRS#1RW#2RL'0P8PFD<[^2>%3S%11R1/=PR2#2RU,0SRZ/@GRY1=W1#296Q9R[PIfWR\PXP8PFD<[^2>R]'5%GPR^%3VR_%GWRW%3LRLg00h`R`#oRa%S`R`1T>8&0>>Rb&0=>Rc1m>;Rd1[>?Re'M,>cRf%\@R@PfCI20<cARAP9P7g00jWRgg00k7Rh'R20997=FghdB08>;8H06R;b6b7b8X1>%38\Q^1>P9P\PKO2b5b:b9PYP]PY%21RY/0VR],0SRK/@GP>P>P3P9X>>RhP31@89#iXE>X>>PZPKPhPhPhP>P>g01PD1089H05#8X=>X@>PSPS%8SPUP]PhPh%8JX>BRBP2P]P1PY%8YPPPV%8VEYEXN:03PGPG%8GM<gP^P_PWPLPaP`P>1T>7RLP81T>=CfRWPbPc1[>4R4,JeR_&02?,[>R?'J1m>R>01>HRH'M,>cP@1J4?RR,Je/MH,>cCIPAP;b6b7b8X1>X3>X4>1098RH?:7G107==:8G[^1>^3>^4>P9%76R6%7XRXP\P<O4b5b:b9H001~8619861@68'zP5197X1@X7PIfYRXfXR5P=PFD<P9%1\R\#2R6,9=PNP<%3<RN%15R5/=\RG#2R^,9<RV'5%25RP/06RY96N<R1PNPVPNPhPYO1RV,9<p-0R]/RNAF]NNe9dNNPh1989#iXE>X>>RNP<P<%8<P^PVPhPhPBPGPYP5PP%8PRYP\P6%86EYEXGcEbP=C_R\P1%G5RG%3PRVfZR^#1R2#GRJ%22#3R2PaP`P>PLP8%x>CfPbPc1ac<9PcfP@Pc1Ue4,>cRLP@APcfLCICIPAP;b6b7b8X1>X3>X;]15Q71987%37?67=[[^1>^3>^;]P9f\RQ#7RLf[#1Rf#2RU'0,9DPLPDP=P<O5b5b:b9b?O2W0P9O11@6=P\P1PGPVPJP2PaP`PWPbP>A`>?4,J_g01AG1Je?CZ,>cPAP;b6b7b8X1>X3>X4>1O78,0H10975F>^1>^3>^4>P9PDPLf]RDO3b5b:b9b?10XP1O<P'010X<5F>P>%1XRX#2RH,0^1OCHR_'0PIPQP9PFCvXY>P0P_%3CR_1=X5R0#2RF,9CRQ'510HPRI96_CR2P_PQP_PhPIO1RQ,9C1R]_AF]__e9d__PhPNPCPC%8CPFPQPhPhPBP0PIPXPH%8HP5PPPYEYEXGcEbP<C_P2%GX%3H%Gf%3UPaP`PWPbPc1acC1UeR,>c5PcP@Pc1M4e,>cP@A`>e4R4,Md,>c1U4?,>c5PcCICIPAP;b6b7b8X1>X3>X4>X;]108796=91@781O7=R7#3?67<[[^1>^3>^4>^;]P9%3EPL%7DPEP=PCO6b5b:b9b?O210^CP9E{bMW0P9O1n200100000021100011000bXXN[X2>CKCKWTWLP8P9O2n2001000000121000000W0WKP8P9O2n2001000000121000000WSWJP8P9O2n2001000000121000000W0WIP8P9O2n2001000000121000000PT1|MOEWCKWPWHWRP8P9O2n2001000000121000000W0P8P9O2n2001000000121000000W0WOWGWQP8P9O2n2001000000121000000W0P8P9O2n2001000000121000000W0XV:WUXF>W=o"). Qed.
+  intros m A cs1 cs2 [[WF1 B1] W1] [[WF2 B2] W2]. split; [split|].
+  - apply cells_wf_app. split; assumption.
+  - rewrite cells_bytes_app. apply bytes_at_app. split; [exact B1|]. rewrite cells_bytes_length by exact WF1. exact B2.
+  - rewrite cells_size_app. destruct W1 as (H0 & H1 & X1). destruct W2 as (H2 & H3 & X2). split; [lia|]. split; [lia|].
+    intros i Hi. destruct (Z.lt_ge_cases i (Z.of_nat (cells_size cs1))).
+    + apply X1. lia.
+    + replace (A + i) with (A + Z.of_nat (cells_size cs1) + (i - Z.of_nat (cells_size cs1))) by lia. apply X2. lia.
+Qed.
 
 Definition ram_entry_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
     (lo : Z) (st : mstate) (m : word -> option byte) : machine_state -> Prop :=
@@ -68,115 +90,193 @@ Definition ram_entry_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : w
     /\ rmrep (am_init_st st) m'.
 
 Lemma ram_entry : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) F fc
-    (m : word -> option byte) (lo : Z) (st : mstate),
-  rmrep st m -> mem_inv usegs m -> rauxv_ok m (bv_unsigned sp) ->
-  stk usegs m lo (bv_unsigned sp) -> ATOP <= lo -> lo <= bv_unsigned sp - 64 ->
-  (c_init_done (ctx st) = 0 \/ c_init_done (ctx st) = 1) -> s_secret st = 0 -> 0 <= c_secret (ctx st) < 2^64 ->
-  evt usegs (ram_entry_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc lo st m)
-      (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
-          F (Z_to_bv 64 0x22328) fc None m (seg_rom usegs)).
+(m : word -> option byte) (lo : Z) (st : mstate),
+rmrep st m -> mem_inv usegs m -> rauxv_ok m (bv_unsigned sp) ->
+stk usegs m lo (bv_unsigned sp) -> ATOP <= lo -> lo <= bv_unsigned sp - 64 ->
+(c_init_done (ctx st) = 0 \/ c_init_done (ctx st) = 1) -> s_secret st = 0 -> 0 <= c_secret (ctx st) < 2^64 ->
+evt usegs (ram_entry_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc lo st m)
+(MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x22328) fc None m (seg_rom usegs)).
 Proof.
-  intros until st. intros MR MI AUX ST LO LOLE INIT SEC0 SECR.
-  pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
-  pose proof MR as (WF & (C1 & _) & (_ & _ & PGS & G4 & G5) & _). unfold rctx_head_cells, rsecw in C1.
-  unfold RCTX, RGOT_SSP, RSSP_GUARD, RPAGE_SIZE in *. atop_facts. unfold wz in G4.
-  pose proof (munch_refl [(bv_unsigned sp - 64, bv_unsigned sp); (RCTX, RCTX + 16)]%Z m) as MU.
-  pose proof (wmono_refl usegs m) as WM. unfold RCTX in MU.
-  pose proof (munch_refl [(bv_unsigned sp - 64, bv_unsigned sp)]%Z m) as MUh.
-  destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AVC & AVL & RND & AB & BAV & AVH & BR & RH & X3 & X4 & X5 & X16 & X6 & X11 & X12 & X23 & XR).
-  pose proof sec_range as SECR'.
-  unfold RAUXV_CELL in AVC.
-  st1. carve_frame 64%nat ST. st1. st1. st1. st1. st1. st1.
-  st1. st1. st1. st1. st1. st1.
-  st1. rewrite sx32_wz by lia. st1. st1.
-  st1.
-  lazymatch goal with H : rw_cells usegs _ (bv_unsigned sp + -64) (CB 8 ?j :: _) |- _ => set (junk8 := j) in H; clearbody junk8 end.
-  destruct INIT as [I0|I1].
-  2:{
-      rewrite I1. change (negb (bv_eqb (wz 1) (Z_to_bv 64 0))) with true. cbv iota.
-      st1. st1. st1. change (bv_ltu (Z_to_bv 64 4096) (wz 4096)) with false. cbv iota. st1.
-      apply evt_done. unfold ram_entry_post, RCTX, RSSP_GUARD, RMLOCK. do 20 eexists. split; [reflexivity|].
-      split; [exact MU|]. split; [exact WM|]. split; [assumption|]. split; [exact FR|]. split; [exact ST|].
-      unfold am_init_st. rewrite I1. cbn [Z.eqb Pos.eqb].
-      eapply rmrep_transport_high; [exact MR| exact MUh| exact WM|]. intros l h [E|[]]; inversion E; subst; atop_facts; lia. }
-  rewrite I0. change (negb (bv_eqb (wz 0) (Z_to_bv 64 0))) with false. cbv iota.
-  st1. st1. st1. st1. st1. st1. st1. st1. st1.
-  Ltac skip_iter i key HB :=
-    let RD := fresh "RD" in
-    st1;
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-      pose proof (ru64s_read mX _ _ i (wz key) (wa (_ + 8 * i)) HB eq_refl ltac:(lia) eq_refl) as RD end;
-    st1; try clear RD;
-    st1; change (bv_eqb (wz key) (Z_to_bv 64 25)) with false; cbv iota;
-    st1; change (negb (bv_eqb (wz key) (Z_to_bv 64 0))) with true; cbv iota;
-    st1.
-  skip_iter 0 3 AVL.
-  skip_iter 2 4 AVL. skip_iter 4 5 AVL. skip_iter 6 16 AVL.  skip_iter 8 6 AVL.
-  skip_iter 10 11 AVL. skip_iter 12 12 AVL. skip_iter 14 23 AVL.
-  st1.
-  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-    pose proof (ru64s_read mX _ _ 16 (wz 25) (wa (_ + 8 * 16)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
-  st1. try clear RD.
-  st1. change (bv_eqb (wz 25) (Z_to_bv 64 25)) with true. cbv iota.
-  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-    pose proof (ru64s_read mX _ _ 17 (wz rnd) (wa (_ + 8 * 17)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
-  st1. try clear RD. st1. st1. st1.
-  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-    lazymatch type of FR with rw_cells _ _ _ (?c1 :: ?rest) =>
-      destruct (rrw_cells_app_split mX _ [c1] rest FR) as [FRm FRc];
-      cbn [cells_size csize Nat.add] in FRc;
-      replace (bv_unsigned sp + -64 + Z.of_nat 8) with (bv_unsigned sp + -56) in FRc by lia;
-      apply (rw_cells_merge usegs mX _ [] [c1] []) in FRm; cbn [cells_size csize Nat.add cells_bytes cbytes app] in FRm;
-      rewrite app_nil_r in FRm; clear FR
-    end end.
-  st1.
-  call rmemcpy_callZ3.
-  1:{ exact RND. } 1:{ reflexivity. } 1:{ exact FRm. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. }
-  1:{ lazymatch goal with H : mem_inv usegs ?mX |- mem_inv usegs ?mX => exact H end. }
-  lazymatch goal with H : rw_cells usegs ?mX (bv_unsigned sp + -64) [CB _ (le8 (wz SECRET))] |- _ => rename H into DST end.
-  st1. st1.
-  st1.
-  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-    pose proof (ru64s_read mX _ _ 18 (wz 0) (wa (_ + 8 * 18)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
-  st1. try clear RD.
-  st1. change (bv_eqb (wz 0) (Z_to_bv 64 25)) with false. cbv iota.
-  st1. change (negb (bv_eqb (wz 0) (Z_to_bv 64 0))) with false. cbv iota.
-  lazymatch type of DST with rw_cells _ ?mX _ _ =>
-    assert (DST8 : rw_cells usegs mX (bv_unsigned sp + -64) [C8 (wz SECRET)])
-      by (destruct DST as [[_ B] W]; cbn [cells_bytes cbytes app] in B; rewrite app_nil_r in B;
-          split; [split; [cbn; tauto| cbn [cells_bytes cbytes app]; rewrite app_nil_r; exact B]| exact W]);
-    clear DST end.
-  st1.
-  st1.
-  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-    assert (MRX : rmrep st mX) by (eapply rmrep_transport_high; [exact MR| exact MUh| exact WM|]; intros l h [E|[]]; inversion E; subst; atop_facts; lia);
-    pose proof (munch_refl [(RCTX, RCTX + 16)]%Z mX) as MUc; pose proof (wmono_refl usegs mX) as WMc end.
-  clear MUh. unfold RCTX in MUc.
-  st1. st1.
-  set (stI := upd_ctx (fun c => set_init_done 1 (set_secret 0 c)) st).
-  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) => assert (MRI : rmrep stI mX) end.
-  { eapply (rmrep_ctx_frameW st stI _ _ _ MRX MUc WMc); try reflexivity.
-    - intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
-    - left. unfold rctx_head_cells, rsecw, RCTX. cbn [ctx stI upd_ctx s_ctx set_init_done set_secret c_secret c_init_done c_mmap_counter c_free_meta_head c_avail_meta
-            c_avail_meta_count c_avail_meta_area_count c_meta_alloc_shift c_meta_area_head c_meta_area_tail c_avail_meta_areas].
-      change (pw stI ?q) with (pw st q). unfold wz at 2. rewrite Z.mul_1_r.
-      lazymatch goal with H : rw_cells usegs ?mX 375720 _ |- _ => exact H end.
-    - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
-    - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
-    - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
-    - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
-    - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia. }
-  clear MUc WMc MRX.
-  st1. st1. st1. change (bv_ltu (Z_to_bv 64 4096) (wz 4096)) with false. cbv iota. st1.
-  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-    lazymatch goal with Hm : rw_cells usegs mX (bv_unsigned sp + -64) ?csm, Hc : rw_cells usegs mX (bv_unsigned sp + -56) ?csc |- _ =>
-      pose proof (rrw_cells_app_join mX _ csm csc Hm ltac:(cbn [cells_size csize Nat.add]; replace (bv_unsigned sp + -64 + Z.of_nat 8) with (bv_unsigned sp + -56) by lia; exact Hc)) as J2;
-      cbn [app] in J2; clear Hm Hc;
-      lazymatch type of J2 with rw_cells _ _ _ (?c1 :: ?rest) =>
-        apply (rw_cells_merge usegs mX _ [] [c1] rest) in J2; cbn [cells_size csize Nat.add cells_bytes cbytes app] in J2; rewrite app_nil_r in J2 end
-    end end.
-  apply evt_done. unfold ram_entry_post, RCTX, RSSP_GUARD, RMLOCK. do 20 eexists. split; [reflexivity|].
-  split; [exact MU|]. split; [exact WM|]. split; [assumption|]. split; [exact J2|]. split; [exact ST|].
-  unfold am_init_st. rewrite I0, SEC0. cbn [Z.eqb]. exact MRI.
+intros until st. intros MR MI AUX ST LO LOLE INIT SEC0 SECR.
+pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
+pose proof MR as (WF & (C1 & _) & (_ & _ & PGS & G4 & G5) & _). unfold rctx_head_cells, rsecw in C1.
+unfold RCTX, RGOT_SSP, RSSP_GUARD, RPAGE_SIZE in *. atop_facts. unfold wz in G4.
+pose proof (munch_refl [(bv_unsigned sp - 64, bv_unsigned sp); (RCTX, RCTX + 16)]%Z m) as MU.
+pose proof (wmono_refl usegs m) as WM. unfold RCTX in MU.
+pose proof (munch_refl [(bv_unsigned sp - 64, bv_unsigned sp)]%Z m) as MUh.
+destruct AUX as (av & rnd & la & ent & uid & gid & hw & efn & AVC & AVL & RND & AB & BAV & AVH & BR & RH & XR).
+unfold rauxv_list, auxv_entries in AVL.
+unfold AT_SYSINFO_EHDR, AT_L1I_CACHESIZE, AT_L1I_CACHEGEOMETRY, AT_L1D_CACHESIZE, AT_L1D_CACHEGEOMETRY,
+AT_L2_CACHESIZE, AT_L2_CACHEGEOMETRY, AT_L3_CACHESIZE, AT_L3_CACHEGEOMETRY, AT_MINSIGSTKSZ,
+AT_HWCAP, AT_PAGESZ, AT_CLKTCK, AT_PHDR, AT_PHENT, AT_PHNUM, AT_BASE, AT_FLAGS, AT_ENTRY,
+AT_UID, AT_EUID, AT_GID, AT_EGID, AT_SECURE, AT_RANDOM, AT_EXECFN,
+AT_RSEQ_FEATURE_SIZE, AT_RSEQ_ALIGN, AT_NULL in AVL.
+assert (AC : (27 <= auxv_count (la_rseq la))%nat) by (destruct (la_rseq la); cbv; lia).
+pose proof sec_range as SECR'.
+unfold RAUXV_CELL in AVC.
+st1. carve_frame 64%nat ST. st1. st1. st1. st1. st1. st1.
+st1. st1. st1. st1. st1. st1.
+st1. rewrite sx32_wz by lia. st1. st1.
+st1.
+lazymatch goal with H : rw_cells usegs _ (bv_unsigned sp + -64) (CB 8 ?j :: _) |- _ => set (junk8 := j) in H; clearbody junk8 end.
+destruct INIT as [I0|I1].
+2:{
+rewrite I1. change (negb (bv_eqb (wz 1) (Z_to_bv 64 0))) with true. cbv iota.
+st1. st1. st1. change (bv_ltu (Z_to_bv 64 4096) (wz 4096)) with false. cbv iota. st1.
+apply evt_done. unfold ram_entry_post, RCTX, RSSP_GUARD, RMLOCK. do 20 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [assumption|]. split; [exact FR|]. split; [exact ST|].
+unfold am_init_st. rewrite I1. cbn [Z.eqb Pos.eqb].
+eapply rmrep_transport_high; [exact MR| exact MUh| exact WM|]. intros l h [E|[]]; inversion E; subst; atop_facts; lia. }
+rewrite I0. change (negb (bv_eqb (wz 0) (Z_to_bv 64 0))) with false. cbv iota.
+st1. st1. st1. st1. st1. st1. st1. st1. st1.
+Ltac skip_iter i key HB :=
+let RD := fresh "RD" in
+st1;
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+pose proof (ru64s_read mX _ _ i (wz key) (wa (_ + 8 * i)) HB eq_refl ltac:(lia) eq_refl) as RD end;
+st1; try clear RD;
+st1; change (bv_eqb (wz key) (Z_to_bv 64 25)) with false; cbv iota;
+st1; change (negb (bv_eqb (wz key) (Z_to_bv 64 0))) with true; cbv iota;
+st1.
+  (* Both kernels: CONFIG_RSEQ adds two pairs after AT_EXECFN. *)
+  destruct (la_rseq la) eqn:HRS; try rewrite HRS in AVL; cbv zeta in AVL; cbn [app flat_map fst snd] in AVL.
+all: skip_iter 0 33 AVL; skip_iter 2 40 AVL; skip_iter 4 41 AVL; skip_iter 6 42 AVL; skip_iter 8 43 AVL.
+all: skip_iter 10 44 AVL; skip_iter 12 45 AVL; skip_iter 14 46 AVL; skip_iter 16 47 AVL; skip_iter 18 51 AVL.
+all: skip_iter 20 16 AVL; skip_iter 22 6 AVL; skip_iter 24 17 AVL; skip_iter 26 3 AVL; skip_iter 28 4 AVL.
+all: skip_iter 30 5 AVL; skip_iter 32 7 AVL; skip_iter 34 8 AVL; skip_iter 36 9 AVL; skip_iter 38 11 AVL.
+all: skip_iter 40 12 AVL; skip_iter 42 13 AVL; skip_iter 44 14 AVL; skip_iter 46 23 AVL.
+- st1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+pose proof (ru64s_read mX _ _ 48 (wz 25) (wa (_ + 8 * 48)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+st1. try clear RD.
+st1. change (bv_eqb (wz 25) (Z_to_bv 64 25)) with true. cbv iota.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+pose proof (ru64s_read mX _ _ 49 (wz rnd) (wa (_ + 8 * 49)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+st1. try clear RD. st1. st1. st1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+lazymatch type of FR with rw_cells _ _ _ (?c1 :: ?rest) =>
+destruct (rrw_cells_app_split mX _ [c1] rest FR) as [FRm FRc];
+cbn [cells_size csize Nat.add] in FRc;
+replace (bv_unsigned sp + -64 + Z.of_nat 8) with (bv_unsigned sp + -56) in FRc by lia;
+apply (rw_cells_merge usegs mX _ [] [c1] []) in FRm; cbn [cells_size csize Nat.add cells_bytes cbytes app] in FRm;
+rewrite app_nil_r in FRm; clear FR
+end end.
+st1.
+call rmemcpy_callZ3.
+1:{ exact RND. } 1:{ reflexivity. } 1:{ exact FRm. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. }
+1:{ lazymatch goal with H : mem_inv usegs ?mX |- mem_inv usegs ?mX => exact H end. }
+lazymatch goal with H : rw_cells usegs ?mX (bv_unsigned sp + -64) [CB _ (le8 (wz SECRET))] |- _ => rename H into DST end.
+st1. st1.
+skip_iter 50 31 AVL. skip_iter 52 27 AVL. skip_iter 54 28 AVL.
+st1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+pose proof (ru64s_read mX _ _ 56 (wz 0) (wa (_ + 8 * 56)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+st1. try clear RD.
+st1. change (bv_eqb (wz 0) (Z_to_bv 64 25)) with false. cbv iota.
+st1. change (negb (bv_eqb (wz 0) (Z_to_bv 64 0))) with false. cbv iota.
+lazymatch type of DST with rw_cells _ ?mX _ _ =>
+assert (DST8 : rw_cells usegs mX (bv_unsigned sp + -64) [C8 (wz SECRET)])
+by (destruct DST as [[_ B] W]; cbn [cells_bytes cbytes app] in B; rewrite app_nil_r in B;
+split; [split; [cbn; tauto| cbn [cells_bytes cbytes app]; rewrite app_nil_r; exact B]| exact W]);
+clear DST end.
+st1.
+st1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+assert (MRX : rmrep st mX) by (eapply rmrep_transport_high; [exact MR| exact MUh| exact WM|]; intros l h [E|[]]; inversion E; subst; atop_facts; lia);
+pose proof (munch_refl [(RCTX, RCTX + 16)]%Z mX) as MUc; pose proof (wmono_refl usegs mX) as WMc end.
+clear MUh. unfold RCTX in MUc.
+st1. st1.
+set (stI := upd_ctx (fun c => set_init_done 1 (set_secret 0 c)) st).
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) => assert (MRI : rmrep stI mX) end.
+{ eapply (rmrep_ctx_frameW st stI _ _ _ MRX MUc WMc); try reflexivity.
+- intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+- left. unfold rctx_head_cells, rsecw, RCTX. cbn [ctx stI upd_ctx s_ctx set_init_done set_secret c_secret c_init_done c_mmap_counter c_free_meta_head c_avail_meta
+c_avail_meta_count c_avail_meta_area_count c_meta_alloc_shift c_meta_area_head c_meta_area_tail c_avail_meta_areas].
+change (pw stI ?q) with (pw st q). unfold wz at 2. rewrite Z.mul_1_r.
+        lazymatch goal with H : rw_cells usegs ?mX 375720 _ |- _ => exact H end.
+- right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+- right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+- right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+- right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+- right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia. }
+clear MUc WMc MRX.
+st1. st1. st1. change (bv_ltu (Z_to_bv 64 4096) (wz 4096)) with false. cbv iota. st1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+lazymatch goal with Hm : rw_cells usegs mX (bv_unsigned sp + -64) ?csm, Hc : rw_cells usegs mX (bv_unsigned sp + -56) ?csc |- _ =>
+pose proof (rrw_cells_app_join mX _ csm csc Hm ltac:(cbn [cells_size csize Nat.add]; replace (bv_unsigned sp + -64 + Z.of_nat 8) with (bv_unsigned sp + -56) by lia; exact Hc)) as J2;
+cbn [app] in J2; clear Hm Hc;
+lazymatch type of J2 with rw_cells _ _ _ (?c1 :: ?rest) =>
+apply (rw_cells_merge usegs mX _ [] [c1] rest) in J2; cbn [cells_size csize Nat.add cells_bytes cbytes app] in J2; rewrite app_nil_r in J2 end
+end end.
+apply evt_done. unfold ram_entry_post, RCTX, RSSP_GUARD, RMLOCK. do 20 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [assumption|]. split; [exact J2|]. split; [exact ST|].
+unfold am_init_st. rewrite I0, SEC0. cbn [Z.eqb]. exact MRI.
+- st1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+pose proof (ru64s_read mX _ _ 48 (wz 25) (wa (_ + 8 * 48)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+st1. try clear RD.
+st1. change (bv_eqb (wz 25) (Z_to_bv 64 25)) with true. cbv iota.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+pose proof (ru64s_read mX _ _ 49 (wz rnd) (wa (_ + 8 * 49)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+st1. try clear RD. st1. st1. st1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+lazymatch type of FR with rw_cells _ _ _ (?c1 :: ?rest) =>
+destruct (rrw_cells_app_split mX _ [c1] rest FR) as [FRm FRc];
+cbn [cells_size csize Nat.add] in FRc;
+replace (bv_unsigned sp + -64 + Z.of_nat 8) with (bv_unsigned sp + -56) in FRc by lia;
+apply (rw_cells_merge usegs mX _ [] [c1] []) in FRm; cbn [cells_size csize Nat.add cells_bytes cbytes app] in FRm;
+rewrite app_nil_r in FRm; clear FR
+end end.
+st1.
+call rmemcpy_callZ3.
+1:{ exact RND. } 1:{ reflexivity. } 1:{ exact FRm. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. }
+1:{ lazymatch goal with H : mem_inv usegs ?mX |- mem_inv usegs ?mX => exact H end. }
+lazymatch goal with H : rw_cells usegs ?mX (bv_unsigned sp + -64) [CB _ (le8 (wz SECRET))] |- _ => rename H into DST end.
+st1. st1.
+skip_iter 50 31 AVL.
+st1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+pose proof (ru64s_read mX _ _ 52 (wz 0) (wa (_ + 8 * 52)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+st1. try clear RD.
+st1. change (bv_eqb (wz 0) (Z_to_bv 64 25)) with false. cbv iota.
+st1. change (negb (bv_eqb (wz 0) (Z_to_bv 64 0))) with false. cbv iota.
+lazymatch type of DST with rw_cells _ ?mX _ _ =>
+assert (DST8 : rw_cells usegs mX (bv_unsigned sp + -64) [C8 (wz SECRET)])
+by (destruct DST as [[_ B] W]; cbn [cells_bytes cbytes app] in B; rewrite app_nil_r in B;
+split; [split; [cbn; tauto| cbn [cells_bytes cbytes app]; rewrite app_nil_r; exact B]| exact W]);
+clear DST end.
+st1.
+st1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+assert (MRX : rmrep st mX) by (eapply rmrep_transport_high; [exact MR| exact MUh| exact WM|]; intros l h [E|[]]; inversion E; subst; atop_facts; lia);
+pose proof (munch_refl [(RCTX, RCTX + 16)]%Z mX) as MUc; pose proof (wmono_refl usegs mX) as WMc end.
+clear MUh. unfold RCTX in MUc.
+st1. st1.
+set (stI := upd_ctx (fun c => set_init_done 1 (set_secret 0 c)) st).
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) => assert (MRI : rmrep stI mX) end.
+{ eapply (rmrep_ctx_frameW st stI _ _ _ MRX MUc WMc); try reflexivity.
+- intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+- left. unfold rctx_head_cells, rsecw, RCTX. cbn [ctx stI upd_ctx s_ctx set_init_done set_secret c_secret c_init_done c_mmap_counter c_free_meta_head c_avail_meta
+c_avail_meta_count c_avail_meta_area_count c_meta_alloc_shift c_meta_area_head c_meta_area_tail c_avail_meta_areas].
+change (pw stI ?q) with (pw st q). unfold wz at 2. rewrite Z.mul_1_r.
+lazymatch goal with H : rw_cells usegs ?mX 375720 _ |- _ => exact H end.
+- right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+- right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+- right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+- right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+- right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia. }
+clear MUc WMc MRX.
+st1. st1. st1. change (bv_ltu (Z_to_bv 64 4096) (wz 4096)) with false. cbv iota. st1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+lazymatch goal with Hm : rw_cells usegs mX (bv_unsigned sp + -64) ?csm, Hc : rw_cells usegs mX (bv_unsigned sp + -56) ?csc |- _ =>
+pose proof (rrw_cells_app_join mX _ csm csc Hm ltac:(cbn [cells_size csize Nat.add]; replace (bv_unsigned sp + -64 + Z.of_nat 8) with (bv_unsigned sp + -56) by lia; exact Hc)) as J2;
+cbn [app] in J2; clear Hm Hc;
+lazymatch type of J2 with rw_cells _ _ _ (?c1 :: ?rest) =>
+apply (rw_cells_merge usegs mX _ [] [c1] rest) in J2; cbn [cells_size csize Nat.add cells_bytes cbytes app] in J2; rewrite app_nil_r in J2 end
+end end.
+apply evt_done. unfold ram_entry_post, RCTX, RSSP_GUARD, RMLOCK. do 20 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [assumption|]. split; [exact J2|]. split; [exact ST|].
+unfold am_init_st. rewrite I0, SEC0. cbn [Z.eqb]. exact MRI.
 Qed.
 End CANSEC1.

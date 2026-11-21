@@ -2,9 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: new file for libreac/fuzz_scene (asan-ubsan), made after a Theorem Labs lane's closing
-   file proofs/libreac/fuzz_grant/lib/A/Prog/GrantClose.v:160-175 (a working branch af735a950e2: grant_AMEMSET,
+   file proofs/libreac/fuzz_grant/lib/A/Prog/GrantClose.v:160-175 (a working branch: grant_AMEMSET,
    grant_AMEMCPY, grant_ABCMP). The closing instances of three premise rows of scene's entry statement
-   lib/AU/P_LLVMFuzzerTestOneInput.v (a working branch f6ab6e97937), Section h:
+   lib/AU/P_LLVMFuzzerTestOneInput.v (a working branch), Section h:
      :278  Hypothesis AMEMSET : aintrin_realizes SEGS B OSet (SIGMA SS___asan_memset).
      :279  Hypothesis AMEMCPY : aintrin_realizes SEGS B OCpy (SIGMA SS___asan_memcpy).
      :280  Hypothesis ABCMP : abcmp_realizes SEGS B (SIGMA SS___interceptor_trampoline_bcmp).
@@ -14,17 +14,18 @@
      AU/YE2r.v:568 asan_memset_realizes (literal pc 0x53e8c), AU/YE2q.v:145 asan_memcpy_realizes (0x539f0),
      AU/YE2s.v:711 bcmp_icpt_contract (0x44338); each is `forall B, AR_laws tfibsegs B -> TfibSyms B -> ...`.
    The bridges, each closed:
-   - SIGMA: PI_scene's pa_sigma is scene_sigma (lib/AU/Prog/SceneImg.v:61), which maps the three symbols to
+   - SIGMA: PI_scene's pa_sigma is scene_sigma (lib/AU/Prog/SceneImg.v:62), which maps the three symbols to
      0x53e8c, 0x539f0 and 0x44338 (lib/AU/Prog/SceneAddr.v:23, :26, :27). scene_sigma_memset / _memcpy / _bcmp prove
      it by `vm_compute; reflexivity` against PI_scene (the script of lib/AU/ScenePalfSm8.v). The values are the
      .symtab addresses of __asan_memset, __asan_memcpy and __interceptor_trampoline_bcmp in the unstripped
      fuzz_scene.asan-ubsan pin (sha256 ef0b41158fe08b45b5a8a0e514f8ebc31f2960d2b90acc03576a682fae2baf33).
    - SEGS: PI_scene's pa_segs is scene_segs (SceneImg.v:57) = AsanUbsan.M.loaded_segments
-     (lib/AU/Prog/SceneCode.v:18), which is tfibsegs (lib/AU/YB1v.v:12); the two are equal by conversion (`change`).
+     (lib/AU/Prog/SceneCode.v:19), which is tfibsegs (lib/AU/YB1v.v:12); the two are equal by conversion (`change`).
    - AR_laws tfibsegs B: AR_laws_ok (lib/Reusable/YG0q.v:803), for every B, as Section h says (:230-232).
-   - TfibSyms B (lib/AU/YF0m.v:906): Section h carries no row that gives it, so it is a NAMED hypothesis of each
+   - TfibSyms B (lib/AU/YF0m.v:907): Section h carries no row that gives it, so it is a NAMED hypothesis of each
      lemma, HB. The glue's B is YD2l.TfibB and its HB is YD2l.TfibB_syms (lib/AU/G_Close.v:206-207), so the glue
      closes each row as `exact (SceneIntrin.scene_AMEMSET B HB)`, and likewise for the other two. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YK11 YM05 YG0q.

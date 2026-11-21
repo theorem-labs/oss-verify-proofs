@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value's NUMBER SEGMENT: the generic, journal-free engine helpers of lib/B/Prog/ex_ws_x.v (its Section h lemmas
    exw_st_ok_full / exw_region_nth / exw_field / exw_kept / exw_garr8_kept / exw_val_kept / exw_ra_kept, exw_denot_shx,
    exw_nth_skipn, exw_awr_cons, exw_agree2, exw_skipn_S and the Ltacs exw_awr / exw_ew / exw_after_run / exw_run /
    exw_run_to / exw_branch / exw_kept_of), RESTATED under the SAME names so the number segment's sub-pieces do not
    Require ex_ws_x: on the old-pin kit (rebind base) ex_ws_x waits for ExWsOldpin's rebind, and these helpers name no
-   callee text. Copied verbatim from ex_ws_x.v (cold/h-rw-pre-7-b-ex_ws 923049cc881) lines 106-179 and 191-285; only
+   callee text. Copied verbatim from ex_ws_x.v lines 107-180 and 191-285; only
    exw_mask_U (ex_ws's own whitespace mask) is left out, and EXW_TBL is the whole-range table B_prog_tbl.
    Numerals: those of the copied lines (ex_ws_x.v's header classifies them: 8, 3, 2 ^ 63, 2 ^ 60, 2 ^ 64, 2 ^ 32, 63, 64
    LENGTH / DERIVED widths and bounds). No ADDRESS. Proves no function (kind: segment lemma). *)

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainC.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail; file sha256 e00664a4181f) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): DoRecycle's call premise DMwalkIF.dr_pre_r (the interface at
-   dc3949af11c) at Recycle's call site 0x33afc, from the state DMdeq.ATDR (DMdeq.v:193-207) leaves and the
-   instance's re-quarantine field DMiface.di_requar_r (DMiface.v:218-225).  It also discharges the three
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainC.v (drain recycle tail; file sha256 e00664a4181f) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): DoRecycle's call premise DMwalkIF.dr_pre_r (the interface)
+   at Recycle's call site 0x33afc, from the state DMdeq.ATDR (DMdeq.v:194-208) leaves and the
+   instance's re-quarantine field DMiface.di_requar_r (DMiface.v:219-226).  It also discharges the three
    conjuncts the interface gained for H2 (layout_ok, img_cover and the stack outside the owned set), which is
    what that head change promised: they cost the instance nothing because the drain has them at Drain's entry
    (DMiface.qview's qv_ly / qv_img) and through di_requar_r's owned shrink.
@@ -38,7 +39,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* Recycle's return address after the call of DoRecycle (DMdeq.ATDR, DMdeq.v:197). *)
+(* Recycle's return address after the call of DoRecycle (DMdeq.ATDR, DMdeq.v:198). *)
 Lemma ret_ok_3326c : YK0s.ret_ok (w64 0x33b00).
 Proof. vm_compute. reflexivity. Qed.
 

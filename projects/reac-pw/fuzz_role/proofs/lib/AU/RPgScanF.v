@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanF.v at 225c20863791 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanF.v for image B
    (fuzz_role.asan-ubsan): the cut file is lib/AU/RPgSeg.v instead of lib/A/RPgSeg.v; every statement and proof is
    otherwise image A's. *)
 (* reac-pw/fuzz_role, the image-B walk of LLVMFuzzerTestOneInput: THE MODEL FACTS the checking segment's scan

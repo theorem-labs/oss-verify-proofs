@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfFw0.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfFw0.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* The symbolic entry state of musl __fwritex (fm 0x8ed08) on the snprintf FILE, called from printf_core's out():
    frame base (atom 2) = sp0, musl vfprintf's entry sp; __fwritex entered with sp = sp0 + OSP_FW, a0 = src (atom 10),
    a1 = l (atom 11), a2 = f = sp0 + FO. Extra atoms: 33 = b (bytes in the internal buffer), 34 = the cookie's s,

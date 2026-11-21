@@ -57,7 +57,7 @@ Definition name_field_contract : Prop :=
 (* Footprint form (image B; the twin the fuzz_ctrl ASan port's kit bridge evtF_to_SRr lifts): the same run as an
    ExecF.evtF under a footprint RNG (RNG binds first). The premises of name_field_contract, unchanged and in order,
    then the footprint premises of the run and of its one callee __asan_memset, whose footprint form is a Theorem Labs lane's
-   asan_memset_contract_F (lib/B/Prog/asan_memset_cF.v, from a working branch 9869f1d1f86):
+   asan_memset_contract_F (lib/B/Prog/asan_memset_cF.v, from a working branch):
    - RngBytes.rng_bytes RNG: that callee form carries it (the footprint is decided byte by byte);
    - the image [IMG_LO, IMG_HI) of lib/B/Prog/ImgBounds.v: the GOT cell and the cell of the shadow offset (the
      function's two loads of the shadow base), and __asan_memset's reads of the image and of the runtime words

@@ -44,7 +44,7 @@
    - no side-stack frame: EV_m_refuse = 0, post tail sa_kept and sa_noalloc.
    - sa_kept over the ranges of m_refuse_W: its own stores are n_kept and refused (sw 0x87884, 0x878a8); the
      released snprintf post keeps every byte outside [d, d + sn_len (n - 1) T) and its K-byte scratch window
-     (fuzz_command lib/A/Rt/RtPFCmd.v:341-342 and RtPFShared.v:187-188 at 501c0d516c69), with d = kept[n_kept]
+     (fuzz_command lib/A/Rt/RtPFCmd.v:342-343 and RtPFShared.v:188-189), with d = kept[n_kept]
      and sn_len (n - 1) T <= n = 112; no set_shadow entry, no side-stack frame. The K window lies in
      [sp - STK_m_refuse, sp) when STK_m_refuse >= 48 + K.
    Call sites (segA/evidence/callsites.asan.tsv lines 96, 99, 101, 105, 117, 119, 120, 123, 15, 16): m_file
@@ -59,9 +59,9 @@
    IMAGE-INDEPENDENT: no image module is Required; A_m_refuse, STK_m_refuse, RLO, RHI, lit, gotw and guard are
    parameters.
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626), row 4):
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md, row 4):
      RtPFSeg.seg_asnprintf_realizes (img_lo img_hi cr pc gotw guard) over the extended piece grammar (row 4,
-     commit 755e9278f8ff, RtPFSeg.v:228), at the snprintf trampoline (image A 0x43a64,
+      RtPFSeg.v:228), at the snprintf trampoline (image A 0x43a64,
      interceptor 0x49054), for both formats.
    They are NOT premises of this contract: the statement does not mention them. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Prog/m_refuse_c.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)

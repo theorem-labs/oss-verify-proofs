@@ -4,16 +4,17 @@
    (fuzz_reply.asan-ubsan), its second half: top_p2, the walk from the mid cut PD (0x82e6c, after entry i's drain
    step) through snprintf (0x82eb8) and strlen (0x82ec0) to RGI i 0 r (0x82f08) or RGE i (0x830c4), over the
    lemma-track statements of lib/B/W_rig_top_defs.v as premises.  Ported from k3's image-A top_p2
-   (a working branch 80fffa8e840, lib/A/W_rig_top.v:880-1289) to image B's code
+   (a working branch 80fffa8e840, lib/A/W_rig_top.v:881-1290) to image B's code
    (fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) 86246-86284, lib/B/W_listing.v slots 754-792): the g_src reload at 0x82e6c and its
    checks (the pointer-overflow trap 0x82e80 by W_traps.v trap_ptr_bltu; the others decided by the seat's facts,
    W_traps.v SEAT RECIPE R1 / R2), the store of i at 80(sp), F's shadow bytes 4 .. 9, the call arguments from the
    loop's frame slots, and the shadow check of s->nheld (0x82ed8-0x82ee4, fast path) by a shadow entry.
-   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v top_p2, commit f4cd818e98d): over
+   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v top_p2): over
    ARx at W_relay_instance_gone_cx.v's generic Section.  The fake frame is only 32-aligned in a generic state
    (alx_frames), so F's shadow address is 4-aligned: tp2_facts2 seats atom 20 at alignment 2 and tp2_seat2 reads
    `sh mod 4 = 0` (Hsh4).
    Proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -244,7 +245,7 @@ Hypothesis PSTG : forall a,
 ~ Exists (in_zr a) PST.
 
 (* ======================================================================================================
-   Helpers (k3's image-A top_p2 helpers, lib/A/W_rig_top.v:416-878, renamed tp2_ and relocated to image B).
+   Helpers (k3's image-A top_p2 helpers, lib/A/W_rig_top.v:417-879, renamed tp2_ and relocated to image B).
    ====================================================================================================== *)
 (* an image byte (seg_rom) is visible in every state: mbyte falls back to seg_rom where the memory has none *)
 Lemma tp2_aview_rom : forall H (mem : word -> option byte) a,

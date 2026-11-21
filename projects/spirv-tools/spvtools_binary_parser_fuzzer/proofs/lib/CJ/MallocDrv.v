@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger holds the launch's vDSO pair: its counts and the kernel partition at main; the auxv mallocng reads is the launch's, 27 or 29 pairs by CONFIG_RSEQ). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -61,9 +62,9 @@ Qed.
 Lemma a_invX_frame A M M' mo mo' : a_invX A M mo ->
   (forall a : word, a_owned A (bv_unsigned a) -> M' a = M a) ->
   (forall a : word, M a <> None -> M' a <> None) ->
-  m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> a_invX A M' mo'.
+  m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> m_kernel mo' = m_kernel mo -> a_invX A M' mo'.
 Proof.
-  intros (HH & HL & HK) OW DEF EV EL. split; [| split; [rewrite EL; exact HL| rewrite EV; exact HK]].
+  intros (HH & HL & HK) OW DEF EV EL EK. split; [| split; [rewrite EL; exact HL| rewrite EV, EK; exact HK]].
   apply (RHEAP_frame_pw _ _ (got_clear M) (got_clear M') HH).
   - intros a Ha. unfold got_clear. destruct (in_gotb (wa a)); [reflexivity|]. apply OW.
     unfold wa. rewrite unsigned_lit; [exact Ha|]. destruct Ha as [ST|(_ & R & _)]; [pose proof (mng_static_img a ST); unfold RRW_LO, RIMG_HI in *; lia| pose proof ac_bounds_lit as ?ACBL; lia].
@@ -73,7 +74,7 @@ Qed.
 
 Theorem a_inv0_frame_proof : a_inv0_frame_stmt.
 Proof.
-  intros A M M' mo mo' (AX & E1 & E2 & E3) OW DEF EV EL. split; [| auto]. eapply a_invX_frame; eauto.
+  intros A M M' mo mo' (AX & E1 & E2 & E3) OW DEF EV EL EK. split; [| auto]. eapply a_invX_frame; eauto.
 Qed.
 
 Theorem mi_free_T_proof : mi_free_T_stmt.
@@ -170,13 +171,15 @@ Qed.
 
 Lemma rauxv_full_of_mng_auxv (m : LibIface.mem) sp : mng_auxv m sp -> rauxv_full m sp rr_secret.
 Proof.
-  intros (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AVC & AVL & RND & CE & SAV & AVH & SR & RH & XS).
+  intros (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AVC & (rs & g & AVL) & RND & CE & SAV & AVH & SR & RH & XS).
   pose proof XS as XS'. rewrite !Forall_cons_iff in XS'. destruct XS' as (X3 & X4 & X5 & X16 & X6 & X11 & X12 & X23 & XR & _).
   exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd.
   split; [| split; [| split; [| pose proof ac_bounds_lit as ?ACBL; repeat split; lia]]].
   - split; [split; [cbn; exact (conj I I)|]| apply wr_at_auxv_cell].
     cbn [cells_bytes cbytes app]. rewrite app_nil_r. apply dcell_bytes_at; [exact AVC| unfold RAUXV_CELL; lia| unfold RAUXV_CELL; lia].
-  - unfold auxv_list. apply (auxv_bytes m av (auxv_words x3 x4 x5 x16 x6 x11 x12 x23 rnd)); [exact AVL| pose proof ac_bounds_lit as ?ACBL; lia| cbn [auxv_words length]; lia].
+  - exists rs, g. unfold rauxv_list.
+    apply (auxv_bytes m av (auxv_words x3 x4 x5 x16 x6 x11 x12 x23 rnd rs g));
+      [exact AVL| pose proof ac_bounds_lit as ?ACBL; lia| destruct rs; cbn [auxv_words length app]; lia].
 
   - apply dcell_bytes_at; [exact RND| pose proof ac_bounds_lit as ?ACBL; lia| lia].
 Qed.
@@ -195,8 +198,10 @@ Proof.
 Qed.
 
 Definition PL0 : Z -> Z := fun c => if c =? 63 then LIB_BIGCAP / BIGUNIT + 1 else lib_caps c.
-Definition NR0 : Z := 4.
-Definition RBY0 : Z := Gap.zsum (fun e => bv_unsigned (snd e)) (segments_reserved SEGS).
+(* 08b1429: the reserved ledger also holds the vDSO/vvar pair, two entries of
+   at most [State.vdso_len_bounds]'s 20 pages, so both ledger numbers grow *)
+Definition NR0 : Z := 6.
+Definition RBY0 : Z := Gap.zsum (fun e => bv_unsigned (snd e)) (segments_reserved SEGS) + 20 * 4096.
 Lemma RBY0_small : 0 <= RBY0 <= 2 ^ 21. Proof. unfold RBY0. vm_compute. split; discriminate. Qed.
 Definition ETOT0 : Z := NE PL0 + Z.of_nat (MALLOC_DEPTH + 0).
 
@@ -218,7 +223,7 @@ Proof.
   { destruct Hn' as [_ Hn']. eapply Z.le_trans; [exact Hn'|].
     change 276824064 with (mmap_len (LENMAX (2 ^ 28) 15)). apply mmap_len_mono.
     unfold LENMAX, LRW, MNG_NMAX, LIB_NMAX in *. lia. }
-  assert (STEP : (RBY0 + 2 ^ 34) / n' + (2 * (4 + (128978 + 528)) + 1) <= 93822836363264 / n').
+  assert (STEP : (RBY0 + 2 ^ 34) / n' + (2 * (6 + (128978 + 528)) + 1) <= 93822836363264 / n').
   { rewrite <- Z.div_add by lia. apply Z.div_le_mono; [lia|]. nia. }
   assert (MONO : 93822836363264 / n' <= (alloc_ceiling - bottomup_floor) / n').
   { apply Z.div_le_mono; [lia| exact CEIL_FLOOR]. }
@@ -239,7 +244,22 @@ Definition A0 : mstateA := MKA (ps_init (reservedZ rsegs)) [] lib_caps LIB_BIGCA
 Lemma RSV_main mo : mng_main_model mo -> RSV NR0 RBY0 (m_vmmaps mo) /\ LBUDGET <= vm_limit (m_vmmaps mo).
 Proof.
   intros MM. unfold RSV. rewrite (mo_resv mo MM). split; [| unfold LBUDGET; exact (mo_lim mo MM)].
-  split; [vm_compute; discriminate| unfold RBY0; lia].
+  (* the pair is at most two entries, of [vdso_vvar_pages] and [vdso_text_pages]
+     pages ([State.vdso_len_bounds]) *)
+  pose proof (vdso_text_pages_pos (m_kernel mo)) as VP. pose proof (vdso_text_pages_le (m_kernel mo)) as VQ.
+  assert (HV : zlen (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) <= 2
+               /\ Gap.zsum (fun e => bv_unsigned (snd e)) (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) <= 20 * 4096).
+  { unfold vdso_reserved. cbv zeta.
+    destruct (Z.ltb (vdso_top (m_vmmaps mo) - vdso_len (m_kernel mo)) page_size);
+      unfold zlen, Gap.zsum, vdso_vvar_pages, page_size; cbn [List.length Gap.zsum];
+      [split; lia|].
+    rewrite !unsigned_lit by lia. split; lia. }
+  destruct HV as [HV1 HV2].
+  assert (ZL : zlen (segments_reserved SEGS) = 4) by (vm_compute; reflexivity).
+  assert (ZS : Gap.zsum (fun e => bv_unsigned (snd e)) (segments_reserved SEGS)
+               = Gap.zsum (fun e => bv_unsigned (snd e)) (segments_reserved SEGS)) by reflexivity.
+  unfold zlen in *. rewrite length_app, Nat2Z.inj_add, Gap.zsum_app.
+  unfold NR0, RBY0. lia.
 Qed.
 
 Lemma KL_main mo : mng_main_model mo -> mstd' mo -> KInv.KL (led_init (reservedZ rsegs)) 0 mo.
@@ -250,8 +270,6 @@ Proof.
   - split; assumption.
   - exact Hh.
   - rewrite (mo_maps mo MM). split; [intros e []| apply pwdisj_nil].
-  - rewrite (mo_resv mo MM). reflexivity.
-  - rewrite (mo_resv mo MM). intros e Hin. pose proof (reserved_top_ge' _ _ Hin) as G. change SEGS with rsegs in RT. unfold ehi. change Plain.M.loaded_segments with rsegs in Blo. lia.
   - change SEGS with rsegs in RT. change Plain.M.loaded_segments with rsegs in Blo. rewrite RT in Blo. rewrite (mo_brk mo MM).
     unfold PGSZ, page_size in *. lia.
   - intros b l [].
@@ -259,14 +277,19 @@ Proof.
   - apply List.NoDup_nil.
   - intros b l H. discriminate H.
   - cbn. split; [exact (mo_brk mo MM)| reflexivity].
+  (* 08b1429: the reserved ledger is the image part followed by the vDSO pair
+     ([KInv.kresv]), and at main there are no mappings, so [kapart] is vacuous *)
+  - unfold KInv.kresv. cbn [ld_resv led_init].
+    rewrite (mo_resv mo MM), map_app. reflexivity.
+  - intros e r He. rewrite (mo_maps mo MM) in He. destruct He.
 Qed.
 
-Lemma kpart_main mo : mng_main_model mo -> kpart (ps_init (reservedZ rsegs)) [] PL0 NR0 RBY0 (m_vmmaps mo).
+Lemma kpart_main mo : mng_main_model mo -> kpart (ps_init (reservedZ rsegs)) [] PL0 NR0 RBY0 (m_kernel mo) (m_vmmaps mo).
 Proof.
   intros MM. destruct (RSV_main mo MM) as [RS LIM]. split; [| split; [exact LIM| exact RS]].
-  intros mo' EV SM'.
+  intros mo' EV EK SM'.
   assert (MM' : mng_main_model mo').
-  { destruct SM' as (Hh & Hl & Hm & Hc). destruct MM; constructor; rewrite ?EV; auto. }
+  { destruct SM' as (Hh & Hl & Hm & Hc). destruct MM; constructor; rewrite ?EV, ?EK; auto. }
   pose proof (KL_main mo' MM' SM') as HK.
   split.
   - split; [| split; [apply List.NoDup_nil| exact I]]. exists (led_init (reservedZ rsegs)). split; [apply creach_init|]. split; [exact HK|]. intros c [].

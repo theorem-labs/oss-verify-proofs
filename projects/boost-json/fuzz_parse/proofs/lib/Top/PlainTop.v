@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch's channel reader, the run's segment list (run_segments), the launch input as a ProcInput. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -125,41 +126,47 @@ Section WithTR.
              (@EhGlue.EHG.EHS HCEIL HSEC) (@EhGlue.EHG.EHSTK HCEIL HSEC)).
   Qed.
 
+  (* LPS 727298f3 port: the walk is over the run's segment list ([Run.run_segments], which
+     [MustExit.must_exit_in_scfg] reads), and the reference top takes the launch facts
+     [valid_launch], [entry_launch_ok_va] and the channel reader, which [Run.valid_input] and
+     [Run.valid_entry] give. *)
   Theorem plain_realizes_spec_lim :
     forall (sp brk mbase : word) (rnd : EntryDraw) (lim : Z) (inp : ProcInput),
       valid_sp sp -> valid_brk RSEGS brk -> 2 ^ 34 <= lim ->
       entry_stack_fits sp (in_argv inp) (in_envp inp) ->
       valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
-      realizes RSEGS (init_config RSEGS Plain.M.init_pc RPH sp brk mbase rnd lim inp)
-               (spec (in_argv inp) (in_fs inp)).
+      valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> in_channel_reader inp = true ->
+      realizes (run_segments RSEGS inp sp mbase)
+        (init_config (run_segments RSEGS inp sp mbase) Plain.M.init_pc RPH sp brk mbase rnd lim inp)
+        (spec (in_argv inp) (in_fs inp)).
   Proof.
-    intros sp brk mbase rnd lim inp Hsp Hbrk Hlim Hfit Hva Hve Hfs.
+    intros sp brk mbase rnd lim inp Hsp Hbrk Hlim Hfit Hva Hve Hfs Hvl Hlau Hrdr.
     pose (HCEIL := heap_ceil_of_sp sp Hsp).
-    pose (HSEC := heap_secret_of_draw rnd (canary_w rnd)).
+    pose (HSEC := heap_secret_of_draw rnd (canary_w rnd) (kb_rseq (in_kernel inp))).
     exact (@ref_realizes_spec_at HCEIL HSEC (@MallocSR.HS HCEIL HSEC) (@MallocMF.HMF HCEIL HSEC)
              (@HeapGlue.heap_sr_hyps_closed HCEIL HSEC) (@HeapGlue.heap_extra_HS HCEIL HSEC)
-             (@HeapGlue.heap_extraM_HMF HCEIL HSEC)
+             (@HeapGlue.heap_extraM_HMF HCEIL HSEC) (@HeapGlue.handover_HS_HMF HCEIL HSEC)
              (@HeapGlue.RINIT_HS HCEIL HSEC) (@HeapGlue.AUXINIT_HS HCEIL HSEC) (@HeapGlue.KINIT_HS HCEIL HSEC)
              (TR HCEIL HSEC)
-             sp brk mbase rnd lim inp eq_refl (conj eq_refl eq_refl) Hsp Hbrk Hlim Hfit Hva Hve Hfs).
+             sp brk mbase rnd lim inp eq_refl (conj eq_refl eq_refl) eq_refl Hsp Hbrk Hlim Hfit Hva Hve Hfs Hvl Hlau Hrdr).
   Qed.
 
-  (* [comment removed for export] *)
   Lemma plain_realizes_spec_entry :
     forall en inp lim,
       valid_entry PLAIN en inp ->
       valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> in_va_size inp = Sv48 ->
+      valid_launch inp -> in_channel_reader inp = true ->
       2 ^ 34 <= lim ->
       match en with mkEntry sp brk mbase rnd =>
-        realizes RSEGS (init_config RSEGS Plain.M.init_pc RPH sp brk mbase rnd lim inp)
-                 (spec (in_argv inp) (in_fs inp)) end.
+        realizes (run_segments RSEGS inp sp mbase)
+          (init_config (run_segments RSEGS inp sp mbase) Plain.M.init_pc RPH sp brk mbase rnd lim inp)
+          (spec (in_argv inp) (in_fs inp)) end.
   Proof.
-    intros [sp brk mbase rnd] inp lim Hen Hva Hve Hfs Hsv Hlim.
-    rewrite (valid_entry_sv48 _ _ _ Hsv) in Hen. destruct Hen as (Hsp & Hbrk & Hmb & Hfit).
-    exact (plain_realizes_spec_lim sp brk mbase rnd lim inp Hsp Hbrk Hlim Hfit Hva Hve Hfs).
+    intros [sp brk mbase rnd] inp lim Hen Hva Hve Hfs Hsv Hvl Hrdr Hlim.
+    rewrite (valid_entry_sv48 _ _ _ Hsv) in Hen. destruct Hen as (Hsp & Hbrk & Hmb & Hfit & Hlau).
+    exact (plain_realizes_spec_lim sp brk mbase rnd lim inp Hsp Hbrk Hlim Hfit Hva Hve Hfs Hvl Hlau Hrdr).
   Qed.
 
-  (* [comment removed for export] *)
   Theorem plain_halts_lim : forall lim, 2 ^ 34 <= lim ->
     halts_allowed_T_scfg_budgets forced_only_cfg lim exit_codes_02 PLAIN.
   Proof.
@@ -167,8 +174,10 @@ Section WithTR.
     apply (halts_allowed_T_scfg_budgets_down forced_only_cfg (@the_scfg hunspell_scfg));
       [apply forced_only_cfg_least|].
     intros [sp brk mbase rnd] inp Hen Hvalid.
-    pose proof Hvalid as (Hva & Hve & Hfs & _ & _ & _ & _ & _ & _ & Hsv & _).
-    pose proof (plain_realizes_spec_entry (mkEntry sp brk mbase rnd) inp lim Hen Hva Hve Hfs Hsv Hlim) as RZ.
+    (* [Run.valid_input]'s sixteen clauses: va_size eleventh, the launch thirteenth, the
+       channel reader fourteenth *)
+    pose proof Hvalid as (Hva & Hve & Hfs & _ & _ & _ & _ & _ & _ & _ & Hsv & _ & Hvl & Hrdr & _ & _).
+    pose proof (plain_realizes_spec_entry (mkEntry sp brk mbase rnd) inp lim Hen Hva Hve Hfs Hsv Hvl Hrdr Hlim) as RZ.
     cbn [must_exit_in_scfg PLAIN].
     eapply realizes_must_exit_in; [exact RZ | left; reflexivity | apply spec_exits].
   Qed.

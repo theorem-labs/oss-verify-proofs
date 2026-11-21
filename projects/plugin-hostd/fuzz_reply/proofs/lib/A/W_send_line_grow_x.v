@@ -21,6 +21,7 @@
    range (gr_blk_req_pos_x) and the line's length is below alloc_ceiling (alx_blocks) where the AR walk read 2 ^ 32.
    The C3 peak lemma sl_tr_peak_grow (W_send_line_loop.v) is reused.
    The Section header is W_send_line_grow_cx_x.v's, verbatim. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation Setoid.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -88,12 +89,12 @@ Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, ACk0.v:45, holds [0x82844]); send_line hands the rule a cut chain (ch = []), so the trace is the
-   return address alone (W7's ccd62d4c6f6 form). *)
+   return address alone (W7's form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x110] CTX_R.   (* realloc returns to 0x82844 *)
 Hypothesis HERRNO : as_errno B = as_tp B - 164.
-(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:189's form): the loop's errno
+(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:190's form): the loop's errno
    stores need range_addressable of errno at an ARx state (W_contract_x.azs_range_addressable_x) *)
 Hypothesis HERRZ : azs B (as_errno B) 4.
 Hypothesis HERRW : forall i, 0 <= i < 4 -> writable_at SEGS (fun _ => None) (as_errno B + i).
@@ -286,7 +287,7 @@ Qed.
 (* ---- the live blocks (W_gsaddb.v gb_ablocks_nodup; W_drain_top.v dt_sep_head, dt_grow_perm), over ARx ---- *)
 (* a live block's request size is at least 1: cgif's blocks law ends with `0 <= n < MALLOC_MAX` (YG0d.v:438), which
    the generic ARx_blocks_law drops; the shadow law over an empty range gives it (the W7 lane's blk_req_pos_x proof,
-   a working branch f1f2f35d92a lib/A/W_w7_x.v, which A's top does not carry) *)
+   a working branch lib/A/W_w7_x.v, which A's top does not carry) *)
 Lemma gr_blk_req_pos_x : forall ly S Hp W mem md p n,
 ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 1 <= req_size n.
 Proof.
@@ -679,7 +680,7 @@ eapply SRr_bind.
     + reflexivity.
     + unfold raZ. rewrite Q1. rewrite unsigned_lit_small by lia. lia.
   - (* the caller-context fact: the chain is cut, so the trace is the return address alone (HCTX_slr; W7's step,
-       a working branch 7561b427559 lib/A/W_send_line_grow.v:614-618) *)
+       a working branch lib/A/W_send_line_grow.v:614-618) *)
     unfold raZ. cbn [spine map]. rewrite Q1. rewrite unsigned_lit_small by lia.
     match goal with |- In [?x] _ =>
       replace x with (BASE + AF_fr_send_line + 0x110) by (try unfold AF_fr_send_line; try unfold BASE; ring) end.
@@ -1062,7 +1063,7 @@ Hypothesis AREALLOC_R : arealloc_cf_rule_c_xR SEGS B PST ARx MT MMAX RP RO HA CT
 Let RUNG := paj_run_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let RUNTOG := paj_run_to_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let BRR := paj_branch_xR (PI := PI) (R := R).
-(* W_send_line_grow_x.v:513 sl_grow_x at R *)
+(* W_send_line_grow_x.v:514 sl_grow_x at R *)
 Theorem sl_grow_xR : sl_grow_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.
 unfold sl_grow_stmt_xR. intros regsE ly S HpE W mem md c O mx no cap out line Bl WN regsN memN mdN sent n kr HN K.
@@ -1233,7 +1234,7 @@ eapply (SRrG_bind SEGS R R_trans).
     exact (RO_ARx _ _ _ _ _ _ (proj1 HJi1)).
   - apply HA_call. apply (mok_station MT S SN (sl_cost MT c mx no cap len) spent _ MTL HMOK HMLE HmoN). clear - HCOST HCnn. lia.
   - (* the caller-context fact: the chain is cut, so the trace is the return address alone (HCTX_slr; W7's step,
-       a working branch 7561b427559 lib/A/W_send_line_grow.v:614-618) *)
+       a working branch lib/A/W_send_line_grow.v:614-618) *)
     unfold raZ. cbn [spine map]. rewrite Q1. rewrite unsigned_lit_small by lia.
     match goal with |- In [?x] _ =>
       replace x with (BASE + AF_fr_send_line + 0x110) by (try unfold AF_fr_send_line; try unfold BASE; ring) end.

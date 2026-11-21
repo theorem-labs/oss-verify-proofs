@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs: image B's twin of lib/A/ReplyKfC.v, the same text over lib/B's W_contract, ReplyCnt,
    ReplyLSCnt and cut (every definition it uses is text-identical there). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyKfCB.v, with its module paths changed; 1 of its 341 lines of code is new or changed and 2 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The secondary-request counts of the harness's growing arrays, over the plain model's request traces, at a meter
    that charges 1 for a secondary request (a malloc or realloc to at least 64,513 bytes, Psec) and 0 for everything
    else.  rule 24: no function proved (kind: segment lemma).  Image B's twin of lib/A/ReplyKfC.v: the same text over
@@ -21,12 +22,12 @@
    The meter is the Section variable MT with the two equations KF_MAL / KF_FREE.
 
    Sources:
-     lib/B/W_contract.v:946-952 tr_cost; :367-368 lp_cost; :788 sl_cap; :791-801 sl_cost_run / sl_cost;
+     lib/B/W_contract.v:947-953 tr_cost; :367-368 lp_cost; :788 sl_cap; :791-801 sl_cost_run / sl_cost;
        :1523-1525 ge_cap / ge_cost;
      lib/B/ReplyCnt.v:31 Psec; lib/B/ReplyLSCntL.v:75 is_sec_iff;
      lib/Prog/ListTr.v:50-52 list_push_tra; lib/Prog/drain_b_c.v:58 push_cap, :109-118 pushes_run;
      lib/Prog/send_line_b_c.v:27-38 sl_run, :42-47 send_line_tr / send_line_cap;
-     lib/B/W_LLVMFuzzerTestOneInput_cut.v:202 OPS_MAX, :269 CAPOUT_MAX;
+     lib/B/W_LLVMFuzzerTestOneInput_cut.v:203 OPS_MAX, :269 CAPOUT_MAX;
      lib/Reusable/YC5d.v:17-21 ameter_ops. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YC5d.

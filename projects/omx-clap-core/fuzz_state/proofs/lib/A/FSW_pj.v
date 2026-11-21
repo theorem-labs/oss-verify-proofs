@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v; 121 of its 179 lines of code are new or changed and 1315 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_ret.v; 338 of its 365 lines of code are new or changed and 152 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The struct pj kit for fs's ASan walks: the reader specs' Lib form of a struct pj field (lib/Prog/PjStruct.v pj_u64 /
    pj_u32 / pj_hdr, over Lib/Mem.v bytes_at) carried to YI04's val_mem form, and from a spec's pj_hdr to the object
    region a walk puts in FSW_K.v fsw_entryT_argsX's rs, with the atom facts for its gf. ONE copy for pj_set, grow,
@@ -27,8 +28,8 @@
    atom, extent and chunk list inside [v, v + 56); chunks from YI04 chunk_ok_val (val_mem) or fsw_pj_chunk8 /
    fsw_pj_chunk4 (pj_u64 / pj_u32); fsw_pj_parts_disjX for rs.
    PORTED, the donor bodies copied rather than imported, so that no plain-image module (Contract, Img0) enters this ASan
-   file. Donors (object ids identical on ossv/recipes 566eb6ffa5d, release/pau-projects-recipes b6a0088adcb, S0
-   71efad42f00 and kit 259ea2daea9): lib/KindBGlue.v 6cb1bd7d29, lib/Prog/pj_write.v 3ad1a23c18, lib/Prog/put_kb.v
+   file. Donors (object ids identical, S0
+   and kit): lib/KindBGlue.v 6cb1bd7d29, lib/Prog/pj_write.v 3ad1a23c18, lib/Prog/put_kb.v
    24a463fa6a. Each ported lemma names its donor line below.
    NEW TEXT: the val_mem forms of pj_u64 / pj_u32 (the measured route), the chunk / part / region / atom-fact /
    disjointness lemmas, pj_obj_region(W / R)(X), pj_in_obj, pj_fields, pj_obj_facts(X).

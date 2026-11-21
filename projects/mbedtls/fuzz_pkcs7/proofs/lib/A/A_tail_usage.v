@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main-phase stack floor STKLO and the stage floor LOdeep are sp0 - 6144512, the window the revision's launch maps; PL16 is a0p + length + 11 <= STKHI, as the revision's launch places the strings at the stack top; the tail statement's new channel-reader premise, which the revision's writev reads, is passed to usage_tailA). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -42,7 +43,7 @@ Section Tail.
   Hypothesis SPlo : 0x7fff80000000 <= bv_unsigned sp0.
   Hypothesis SPhi : bv_unsigned sp0 <= 0x800000000000.
   Hypothesis SPal : bv_unsigned sp0 mod 16 = 0.
-  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 8388608.
+  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 6144512.
   Variables (fs0 : Fs) (can : word) (tid : Z) (wp0 rp0 wp1 rp1 : word).
   Variables (TOP STKHI : Z).
   Hypothesis STKHImax : STKHI <= 2^47.
@@ -54,7 +55,7 @@ Section Tail.
   Local Ltac2 Set LiaOrc.tbl := fun () => "00]0@L1123598903.82  L11602724311.97 L11759212507.101L16352041034.83 L17745104047.89 L18707356141.99 L191187780.80   L19122796294.84 L21538903817.81 L24983406586.80 L25325058361.71 L26008783236.79 L32114292796.94 L33375739167.93 L35284942895.105L3610556270.102 L36413574617.60 L36601947693.100L37362952829.101L37638448561.80 L3788567612.96  L37960836342.88 L38081936810.104L38273664771.102L39231319166.102L39583005574.103L42435749866.102L42573235972.92 L44736016091.89 L47206185255.86 L48388952314.89 L51170975195.89 L51819007707.97 L55686439908.103L56254184707.95 L5738458375.102 L59315053158.100L61885532617.100L65459772779.98 L66247761411.102L67543774492.83 L8666413217.115 L9719102676.116 L9725394273.116 L9840393242.93  00001202802f03M04404g05K05i06M07007I07h08c09A0:20:`0;N0<j0>60>Y0?Z0@J0A]0BT0Ce0D\0Eg0FE0Fl0GV0H=0Hd0If0JQ0KU0Lj0Ml0O=0PF0QQ0Qo0Rd0S]0TW0U^S1R3sp04SPlo4SPal5STKHI7STKHI644argc3a0p3a0s3pad3PLO3PHI4ARGC2lo1LS1R3sp04SPlo5STKHI4argc3a0p3a0s3msp3pad3PLO4ARGC6HSTKHI3spw2lo1L5SPlo'S1R3sp05STKHI4argc3a0p3a0s3msp3pad3spw2lo1x2HxS3sp04SPlo5STKHI4argc3a0s3msp3pad3spw1LS1R3sp05STKHI4argc3a0s3msp3pad3spw2lo1LS1R3sp05STKHI4argc3a0p3a0s3msp3pad3spw2lo5extra3LEXS1R3sp04SPlo5STKHI4argc3a0s3pad2lo1LS3sp05STKHI4argc3a0s3pad3spw1LS1R3sp04SPhi5STKHI4argc3a0s3pad2lo1LS1R3sp05STKHI4argc3a0s3msp3pad2lo1LS3sp04SPlo4SPhi5STKHI3a0sS1R3sp05STKHI4argc3a0s3pad2lo1LS1R3sp04SPlo5STKHI4argc3a0s3msp3pad6HSTKHI3spw1L5SPlo'1x2HxS3sp05STKHI4argc3a0s3pad3spw1LS1R3sp05STKHI4argc3a0p3a0s3pad3spw2lo1L5extra3LEXS1R3sp05STKHI4argc3a0s3msp3pad3spw2lo1L1s1g2HgS3sp04SPlo5STKHI4argc3a0p3a0s3msp3PLO3PHI4ARGCS1R3sp04SPlo5STKHI7STKHI644argc3a0p3a0s3msp3pad3PLO4ARGC3spw4Uspw2lo5SPlo'7STKHIlo5extra3LEXS1R3sp04SPlo5STKHI4argc3a0p3a0s3pad3PLO4ARGC6HSTKHI3spw2lo1L5SPlo'5extra3LEXS1R3sp05STKHI4argc3a0s3msp3pad2lo1LS3sp04SPlo5STKHI4argc3a0s3msp3pad6HSTKHI3spw1L5SPlo'7STKHIhi1x2HxS1R3sp05STKHI8STKHImax4argc3a0s3msp3pad3spw2lo1LS1R3sp04SPlo5STKLO5STKHI4argc3a0s3msp3pad6HSTKHI3spw2lo1L5SPlo'4LOlo7STKHIhi1s1g2HgS1R3sp05STKHI4argc3a0p3a0s3msp3pad3PHI3spw2lo5extra3LEXS1R3sp04SPlo5STKLO5STKHI4argc3a0s3msp3pad3SH86HSTKHI3spw2lo1L5SPlo'4LOlo1s3LO82HgS1R3sp05STKHI4argc3a0p3a0s3msp3pad3PHI3spw2lo5extra3LEXS1R3sp04SPlo5STKLO5STKHI4argc3a0s3msp3pad6HSTKHI3spw2lo1L5SPlo'4LOlo1s1g2HgS3sp05STKHI4argc3a0s3pad3spw1LS1R3sp05STKHI4argc3a0s3msp3pad3spw2lo1LS1R3sp05STKHI4argc3a0s3pad6HSTKHI3spw2lo1LS1R3sp05STKHI4argc3a0s3msp3pad3spw2lo1LS1R3sp05STKHI4argc3a0s3msp3pad3spw2lo1LS1R3sp04SPlo5STKHI4argc3a0p3a0s3msp3pad3PHI3spw2lo1L5SPlo'7STKHIhiS1R3sp05STKHI4argc3a0s3msp3pad3spw2lo1L1s1gS3sp04SPlo5STKHI4argc3a0p3a0s3pad3PLO3PHI4ARGC6HSTKHI3spw5SPlo'1x2HxS1R3sp04SPlo5STKHI4argc3a0p3a0s3msp3pad3PLO3PHI4ARGC6HSTKHI3spw2lo5SPlo'7STKHIhi1x2HxS3sp04SPlo5STKHI4argc3a0p3a0s3pad3PLO4ARGC6HSTKHI3spw5SPlo'1x2Hx1CS1R3sp04SPlo5STKLO5STKHI4argc3a0s3msp3pad3SH86HSTKHI3spw2lo1L5SPlo'4LOlo1s2Hs3LO8S1R3sp04SPlo5STKLO5STKHI4argc3a0s3msp3pad3SL83SH86HSTKHI3spw1L5SPlo'4LOloS1R3sp04SPlo5STKLO5STKHI4argc3a0s3msp3pad6HSTKHI3spw2lo1L5SPlo'4LOlo1s1g2HgS3sp05STKHI4argc3a0s3pad3spw1LS1R3sp05STKHI4argc3a0p3a0s3msp3pad3spw2lo1L5extra3LEXS1R3sp05STKHI4argc3a0p3a0s3msp3pad3spw2lo1L5extra3LEX3L62S1R3sp05STKHI4argc3a0p3a0s3msp3pad3spw2lo1L5extra3LEX4L63ES1R3HIA3sp04SPlo5STKHI4argc3a0s3msp3pad1h2HS3spw2lo1L5SPlo'7STKHIhi1c1H". (* [comment removed for export] *)
   #[using="AL IMG ASB HIMGCS SPlo SPhi SPal STKLO STKHImax STKHI64 msp"] Theorem usage_tail : usage_stmtA R HIA sp0 fs0 can tid wp0 rp0 wp1 rp1 TOP STKHI argc a0p a0s.
   Proof.
-    unfold usage_stmtA. intros t0 t1 t2 a3 a4 a5 a6 a7 t3 t4 t5 t6 pad m mo h HM0 HKh HT HS MI TM ST SSH UF AV BY NZ PLO PHI FD FS PLEN ARGC.
+    unfold usage_stmtA. intros t0 t1 t2 a3 a4 a5 a6 a7 t3 t4 t5 t6 pad m mo h HM0 HKh HT HS MI TM ST SSH UF AV BY NZ PLO PHI FD RDR FS PLEN ARGC.
     assert (HSTKHI : bv_unsigned sp0 + 24 <= STKHI) by lia.
     pose proof (u64_range sp0) as SPR. pose proof (u64_range a0p) as PR.
     pose proof (art_alwf _ _ HIA) as ALWF. pose proof (hcs_ok _ _ HIA h) as CSOK. pose proof (art_lo _ _ HIA) as ALO.
@@ -82,7 +83,7 @@ Section Tail.
     assert (SPal' : (bv_unsigned spw mod 16 = 0)%Z) by (rewrite Uspw; subst msp; lia).
     assert (LOlo : (0x10007fff7fff < lo)%Z) by (subst lo; rewrite STKLO; lia).
     assert (LOhi : (lo + 16384 <= bv_unsigned spw)%Z) by (subst lo; rewrite Uspw, STKLO; subst msp; lia).
-    assert (LOdeep : (bv_unsigned spw - 8388608 <= lo)%Z) by (subst lo; rewrite Uspw, STKLO; subst msp; lia).
+    assert (LOdeep : (bv_unsigned spw - 6144512 <= lo)%Z) by (subst lo; rewrite Uspw, STKLO; subst msp; lia).
     assert (STKHIlo : (bv_unsigned spw + 144 <= STKHI)%Z) by (rewrite Uspw; subst msp; lia).
     assert (STKHIhi : (STKHI <= 0x800000000000)%Z) by lia.
     assert (SCS : crange CS lo (STKHI - lo)). { subst CS lo. rewrite <- HS. apply (hcs_stack _ _ HIA h). }
@@ -129,7 +130,7 @@ Section Tail.
     assert (Plo' : (bv_unsigned spw + 128 <= bv_unsigned a0p)%Z) by (rewrite Uspw; subst msp; lia).
     assert (Phi' : (bv_unsigned a0p + Z.of_nat (length (a0s ++ Z_to_bv 8 0 :: extra)) <= STKHI)%Z).
     { rewrite length_app. cbn [length]. rewrite LEX. subst L. lia. }
-    assert (PL16 : (bv_unsigned a0p + L + 16 <= STKHI)%Z) by (subst L; lia).
+    assert (PL16 : (bv_unsigned a0p + L + 11 <= STKHI)%Z) by (subst L; lia).
     (* [comment removed for export] *)
     assert (SHRD : forall c, CS c -> exists b, bytes_at asegs m (shadow_of AL c) [b]).
     { subst CS. intros c Hc. destruct (hm_shadow_rd _ _ HIA h [] [] m c HM0 Hc) as (b & Bb & _). exists b. exact Bb. }
@@ -170,7 +171,7 @@ Section Tail.
       pose proof (stage_B2 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD ZSH a0p a0s extra BYbuf NZ WIN8 Plo' Phi' PL16 PLEN SHRD CSTOP N5) as N4.
       pose proof (stage_B1 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD a0p a0s extra Plo' N4) as N3.
       pose proof (stage_A2 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD ZSH a0p a0s extra BYbuf NZ Plo' PL16 PLEN SHRD CSTOP N3) as N2.
-      exact (usage_tailA AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' HKh FD lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl TMw MAPD a0p a0s extra eq_refl AV0 FRA Plo' PL16 N2).
+      exact (usage_tailA AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' HKh FD RDR lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl TMw MAPD a0p a0s extra eq_refl AV0 FRA Plo' PL16 N2).
     - (* [comment removed for export] *)
       assert (L63 : L <= 73) by lia.
       pose proof (stage_D63 AL CS KI IMG ALWF CSOK ASB (HIMGCS h) Kh Km Kv spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw UFR w8 w8 w8 w8 w40 w48 w56 w64 FRW a0p a0s extra Plo' PL16 PLEN L63E) as N6.
@@ -178,14 +179,14 @@ Section Tail.
       pose proof (stage_B2 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD ZSH a0p a0s extra BYbuf NZ WIN8 Plo' Phi' PL16 PLEN SHRD CSTOP N5) as N4.
       pose proof (stage_B1 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD a0p a0s extra Plo' N4) as N3.
       pose proof (stage_A2 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD ZSH a0p a0s extra BYbuf NZ Plo' PL16 PLEN SHRD CSTOP N3) as N2.
-      exact (usage_tailA AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' HKh FD lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl TMw MAPD a0p a0s extra eq_refl AV0 FRA Plo' PL16 N2).
+      exact (usage_tailA AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' HKh FD RDR lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl TMw MAPD a0p a0s extra eq_refl AV0 FRA Plo' PL16 N2).
     - (* [comment removed for export] *)
       pose proof (stage_D64 AL CS KI IMG ALWF CSOK ASB (HIMGCS h) Kh Km Kv spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD UFR w8 w8 w8 w8 w40 w48 w56 w64 FRW ZSH a0p a0s extra BYbuf Plo' PL16 PLEN L64 SHRD CSTOP) as N6.
       pose proof (stage_C1X AL CS KI IMG CSOK ASB Kh Km Kv spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD ZSH a0p a0s extra BYbuf Plo' PL16 PLEN L64 SHRD CSTOP N6) as N5.
       pose proof (stage_B2 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD ZSH a0p a0s extra BYbuf NZ WIN8 Plo' Phi' PL16 PLEN SHRD CSTOP N5) as N4.
       pose proof (stage_B1 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD a0p a0s extra Plo' N4) as N3.
       pose proof (stage_A2 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD ZSH a0p a0s extra BYbuf NZ Plo' PL16 PLEN SHRD CSTOP N3) as N2.
-      exact (usage_tailA AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' HKh FD lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl TMw MAPD a0p a0s extra eq_refl AV0 FRA Plo' PL16 N2).
+      exact (usage_tailA AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' HKh FD RDR lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl TMw MAPD a0p a0s extra eq_refl AV0 FRA Plo' PL16 N2).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 End Tail.

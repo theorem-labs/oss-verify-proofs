@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the runtime contracts' laws over a GENERIC allocator relation (fuzz_reply.runtime_twins,
    placed by a Theorem Labs lane 2026-10-29T20:31Z). Image-free: no address, no image class, both images use it.
    - rt_laws segs B ARx: the FIVE facts the proved runtime contracts of fuzz_reply (lib/A/RT_*.v, lib/A/Rt/*.v,
@@ -10,7 +11,7 @@
        rtl_layout : ARx -> layout_ok ly      (cgif's ARm am_layout, YG0n.v:209; cf ARmcf amc_layout, YG0ncf.v:217),
        rtl_const_cells : the image's const cells hold (= YCbqG.ARx_const_cells_law's text = FCiface.fi_const's;
                          cgif's ARm am_const, YG0n.v:211; cf ARmcf amc_const, YG0ncf.v:219).
-     Measured on a working branch afcf21c8a42: the contracts read al_frame / al_stack / al_const
+     Measured on a working branch: the contracts read al_frame / al_stack / al_const
      through the laws,
      layout_ok through `am_layout .. (proj1 HAR)`, and the const cells through `rodata_ok .. (proj1 HAR)` (AE2y.v:197,
      am_const; the memchr / strnlen walks' rodata cells); nothing else of AR. rtl_layout is not a field of
@@ -117,7 +118,7 @@ Section t.
 Variable segs : list Segment.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
-(* Rt/MemchrDef.v:23 amemchr_realizes *)
+(* Rt/MemchrDef.v:24 amemchr_realizes *)
 Definition amemchr_realizes_x (pc : Z) : Prop :=
 forall ly S Hp W regs mem md x c n,
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->
@@ -134,7 +135,7 @@ ARx ly S Hp W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md
 (exists k, first_byte segs W mem x n c k /\ getr regs' 10 = (if k <? n then w64 (x + k) else w64 0)) /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - ESTACK <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
-(* Rt/MemchrDef.v:39 amemchr_realizesM (= W_drain_cx_x.v:81 amemchr_realizesM_x, verbatim) *)
+(* Rt/MemchrDef.v:40 amemchr_realizesM (= W_drain_cx_x.v:81 amemchr_realizesM_x, verbatim) *)
 Definition amemchr_realizesM_x (lo hi pc : Z) : Prop :=
 forall ly S Hp W regs mem md x c n,
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->
@@ -151,7 +152,7 @@ ARx ly S Hp W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md
 (exists k, first_byte segs W mem x n c k /\ getr regs' 10 = (if k <? n then w64 (x + k) else w64 0)) /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - ESTACK <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
-(* Rt/StrnlenDef.v:22 astrnlen_whole_realizes *)
+(* Rt/StrnlenDef.v:23 astrnlen_whole_realizes *)
 Definition astrnlen_whole_realizes_x (pc : Z) : Prop :=
 forall ly S Hp W regs mem md x n,
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->
@@ -168,7 +169,7 @@ ARx ly S Hp W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md
 (exists k, first_byte segs W mem x n 0 k /\ getr regs' 10 = w64 k) /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
-(* Rt/StrnlenDef.v:38 astrnlen_whole_realizesM *)
+(* Rt/StrnlenDef.v:39 astrnlen_whole_realizesM *)
 Definition astrnlen_whole_realizesM_x (lo hi pc : Z) : Prop :=
 forall ly S Hp W regs mem md x n,
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->

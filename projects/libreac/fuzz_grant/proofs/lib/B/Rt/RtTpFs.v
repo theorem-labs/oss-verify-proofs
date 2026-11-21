@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file for libreac/fuzz_grant image B (a Theorem Labs lane); rdword_cell_c8 adapted from proofs/cgif/cgif_file_fuzzer/lib/YG0s.v:50-55 (rdword_cell). proves no function (kind: segment lemma). *)
-(* RT_TP_FS (lib/B/Prog/GrantBContracts.v:367) asks, of every state that
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
+(* RT_TP_FS (lib/B/Prog/GrantBContracts.v:368) asks, of every state that
    satisfies AR, that the 8-byte word at the thread pointer (__asan::fake_stack_tls, PT_TLS offset 0) is the fake
    stack's base ly_F. AR already carries that word: its constant cells (ARm.am_const, Reusable/YG0n.v:211) hold for
-   every cell of as_const B ly, and image B's Tfib_const_sym (lib/B/YF0m.v:26)
+   every cell of as_const B ly, and image B's Tfib_const_sym (lib/B/YF0m.v:27)
    contains `c8 (ATp 0) (AF 0)`. So RT_TP_FS follows from AR alone, for every B whose as_const has that cell:
    `rt_tp_fs_of_const` below. Its image-B instance needs only `In (c8 (ATp 0) (AF 0)) (as_const B ly)`, which the B
-   core's TfibSyms (ts_const : as_const B ly = Tfib_const ly) gives by computation (lib/B/YF0l.v / YF0m.v; lib/B/GrantBCloseInst.v:181 grantB_TP_FS).
+   core's TfibSyms (ts_const : as_const B ly = Tfib_const ly) gives by computation (lib/B/YF0l.v / YF0m.v; lib/B/GrantBCloseInst.v:182 grantB_TP_FS).
    No at-main fact is used here: the at-main half of the same cell is part of AR's discharge at main (measured: in
    all 50 hand-off states of YB01 the word at RT_TP 0x5d8910 is the literal KWord 4096 * V424, with KRange V424
    [1531, 34359733495] and the app-band KDisj; internal notes). *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the ASan table gains the n_resx and p_resx fields, and the initial state is a function of the rseq flag. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.AS Require Import AxSymExec3 AsanPlanCore.
@@ -10,7 +11,7 @@ Open Scope Z_scope.
 Import APC.
 
 Definition ASAN_A : atable :=
-  {| img_lo := 0x10000; img_hi := 0x6c2000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x6c2000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x58618; rw_lo := 0x15d000; rw_len := 0x565000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x92364; x_imemcpy := 0x922e8; x_memset := 0x1558ac; x_memcpy := 0x1554a8; x_memiszero := 0x928b0;
      x_istrncpy := 0x92790; x_sealed := 0x11b28; x_popfree := 0x5ecc8;
@@ -22,4 +23,7 @@ Definition ASAN_A : atable :=
 Definition ASAN_A_TEXT_LO : Z := 0x58618.
 Definition ASAN_A_TEXT_N : nat := 265778.
 Definition ASAN_A_MAIN : Z := 0xaea08.
-Definition asan_a_init : acs := init_acs_of ASAN_A.
+(* init_acs_of takes the rseq flag first since the auxv reshape (APC: init_acs_of (rz : Z)
+   (A : atable)), so this is a function of rz, not a constant.  Callers pass the rz their
+   certificate quantifies over; nothing here pins it. *)
+Definition asan_a_init (rz : Z) : acs := init_acs_of rz ASAN_A.

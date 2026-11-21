@@ -1,9 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/YFf1cf.v (commit 3cae605a900a, file sha256 b2c4ef401df5) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 0 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/YFf1cf.v (file sha256 b2c4ef401df5) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 0 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10-30 (lane F1 of the generic cf instance layer; integrator
-   ReallocPrimary): copied from proofs/cgif/cgif_file_fuzzer/lib/YFf1.v at c5 30a1993588f (the allocator relation
+   ReallocPrimary): copied from proofs/cgif/cgif_file_fuzzer/lib/YFf1.v at c5 theorem-labs/oss-verify-proofs@6b32741d849a (the allocator relation
    rebuilt after Enqueue's ROOM arm) and ported from cgif's ARm to the event-free instance's ARmcf / ARcf
    (YG0ncf.v), as preset's A/AFf0cf.v ported AFf0.v.  The changes, and nothing else:
    the Context gains {ci : CfImg} {cp : CfParams}, which ARmcf needs; the Section takes the ghost set Hp and
@@ -19,6 +19,7 @@
    IMAGE-SPECIFIC (cgif_file's image, TfibSyms): each unit relocates this file to its own image (preset A' / B':
    A11; reply A / B: lane W), as A/AFf0cf.v was.
    rule 24: no function proved (kind: relational transport of the allocator relation over Enqueue's room arm). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

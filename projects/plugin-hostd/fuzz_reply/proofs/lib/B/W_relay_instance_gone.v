@@ -5,13 +5,14 @@
    lib/B/W_relay_instance_gone_cx.v composed by W_rig_all.v rig_all.  Applied: W_rig_pro.v rig_pro, W_rig_top.v
    rig_top_proof, W_rig_tail.v rig_tail, W_rig_step.v rig_step_proof / rig_outer_proof / rig_keys_proof.  No segment is open (KEY: W_rig_key.v rig_key_proof).  The Section block is
    regenerated from the cx file whenever the cx file changes.
-   ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the image-A twin is the RIG_x round, commit f4cd818e98d):
+   ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the image-A twin is the RIG_x round):
    Section c is the cx file's generic Section (its hypothesis list, verbatim): pb_relay_instance_gone_x proves
    W_contract_x.v rig_spec_x over any allocator relation ARx with its laws, the program statics PST and the room record
    RP.  The AR statement pb_relay_instance_gone is dropped (a Theorem Labs lane's ruling 10:34Z: nothing on image B uses it; the
    B top's arms take rig_spec as a hypothesis), so there is no AR re-derivation (image A's Section cAR).  Beside the
-   cx file's list, Section c takes W_rig_top_calls.v's HLITGOT (the window's 4d3f3ddb1df, verbatim), which
+   cx file's list, Section c takes W_rig_top_calls.v's HLITGOT (the window, verbatim), which
    W_rig_top.v rig_top_proof needs for the narrowed snprintf contract. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -195,12 +196,12 @@ apply (rig_all B PST ARx MT RP MMAX RG CTX_AFREE).
 - eapply W_rig_tail.rig_tail; eassumption.
 Qed.
 (* ---- route R (RULE-SHAPES.md (sha256 2e856ce788dd; internal record) sec 0): pb_relay_instance_gone_x at a world relation R, concluding a Theorem Labs lane's B
-   rig_spec_xR (W_contract_xR_relayB.v, 1d0938e98da9) exactly.  The Section's hypotheses are W_relay_instance_gone_cx.v
+   rig_spec_xR (W_contract_xR_relayB.v) exactly.  The Section's hypotheses are W_relay_instance_gone_cx.v
    Section wR's (the R laws, RO / RO_ARx, AFREE_R, DRAIN_R, GE_R), which the segment walks at R take.  The
    seven segment walks at R, each applied over this Section's hypotheses as pb_relay_instance_gone_x applies the strict
    walks: PRO W_rig_pro.v rig_pro_xR, STEP / KEYS / OUTER W_rig_step.v rig_step_proof_xR / rig_keys_proof_xR /
-   rig_outer_proof_xR, TAIL W_rig_tail.v rig_tail_xR (a Theorem Labs lane, 732f33167525), KEY W_rig_key.v rig_key_proof_xR and
-   TOP W_rig_top.v rig_top_proof_xR (S3BRigKey, e7a1e1ceb3d: KEY's files state their Proof using, so neither takes a
+   rig_outer_proof_xR, TAIL W_rig_tail.v rig_tail_xR (a Theorem Labs lane), KEY W_rig_key.v rig_key_proof_xR and
+   TOP W_rig_top.v rig_top_proof_xR (S3BRigKey: KEY's files state their Proof using, so neither takes a
    strict allocator rule).  No segment premise is left.  The composition is W_rig_all.v rig_all_xR.  Image A's twin:
    lib/A/W_relay_instance_gone.v Section wR. ---- *)
 Section wR.

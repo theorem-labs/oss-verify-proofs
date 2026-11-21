@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch is the run's whole ProcInput, with the mmap base and the image entry; argH0_high's unread Section variables are supplied from this image's tables). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
@@ -34,26 +35,50 @@ Lemma B_fetch_at : forall segs (a b : word) (w : bv 32),
 Proof. intros segs a b w H F. assert (E : a = b) by (apply bv_eq; exact H). rewrite E. exact F. Qed.
 
 Section B_XAll.
+  (* LPS 08b1429: the launch is the run's whole [ProcInput] and AsanInit's Section takes it. *)
   Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variable brk0 : word.
-  Variables argv envp : list (list byte).
-  Variables uid hw : word.
+  Variables brk0 mbase : word.
+  Variable inp : ProcInput.
   Variable fs : Fs.Fs.
+  Hypothesis IMG : img_facts B_SEGS B_T B_PH.
+  Hypothesis Hapc : Z.of_N AsanUbsan.M.init_pc = a_entry B_T.
   Hypothesis Hsp : valid_sp sp.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Hbrk : valid_brk B_SEGS brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Huid : valid_id (in_uid inp).
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hrdr : in_channel_reader inp = true.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
   Variable SINV : env -> (word -> option byte) -> Prop.
-  Hypothesis S0 : forall E M, SINV E M -> SINV0 B_PH sp rdraw brk0 argv envp uid hw E M.
-  Hypothesis SF : forall E M M', (forall a, argH0 B_PH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+  Hypothesis S0 : forall E M, SINV E M -> SINV0 B_PH AsanUbsan.M.init_pc sp rdraw brk0 mbase inp E M.
+  Hypothesis SF : forall E M M', (forall a, argH0 sp rdraw inp E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
   Hypothesis SA : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M.
 
-  #[local] Notation argH := (argH0 B_PH sp rdraw argv envp uid hw).
+  #[local] Notation argH := (argH0 sp rdraw inp).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation LIM := AsanInit.LIMIT.
-  Let AH := argH0_high B_PH sp rdraw argv envp uid hw Hsp Hva.
-  Let AA := argH0_agree B_PH sp rdraw argv envp uid hw.
+  Let AH : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ ISP <= bv_unsigned a.
+  Proof.
+    (* as A_XAll.v:63. *)
+    intros E a H.
+    eapply argH0_high;
+      (* as A_XAll.v:74-91: the probe named "(list Segment)", then "atable", then
+         "PhdrInfo" on three successive rounds - Section Init's segs, A and ph, all three
+         globals here.  The remaining Section Init variables unification cannot fix are
+         named here too rather than discovered one round at a time: apc (an N, reached
+         through entryw = Z_to_bv 64 (Z.of_N apc)) and LIM with its LIM_MIN bound
+         (AsanInit.v:94-95, discharged by AsanInit.LIMIT_ok at :30).  Hzr (:123) is not a
+         dependency of argH0_high (:810); its only use is kunk_atr at :1230. *)
+      try first [exact H | exact B_SEGS | exact B_T | exact B_PH | exact AsanUbsan.M.init_pc
+                | exact AsanInit.LIMIT | exact AsanInit.LIMIT_ok
+                | exact Hsp | exact Hva | exact Hve | exact Hlaunch | exact Hlau
+                | exact Hbrk | exact Hmb | exact IMG | exact Hapc | exact Huid | exact Hrdr];
+      first [exact H | eassumption | reflexivity].
+  Qed.
+  Let AA := argH0_agree sp rdraw inp.
 
   Theorem B_x_all_sinv : forall x, x_stmt B_SEGS B_T NX0 LIM SINV argH ISP fs x.
   Proof.
@@ -79,7 +104,7 @@ Section B_XAll.
         | exact (B_fetch_at B_SEGS _ _ _ eq_refl F_557554) | exact (B_fetch_at B_SEGS _ _ _ eq_refl F_557558) | exact (B_fetch_at B_SEGS _ _ _ eq_refl F_55755c)
         | exact (B_fetch_at B_SEGS _ _ _ eq_refl F_557560) | exact (B_fetch_at B_SEGS _ _ _ eq_refl F_557564)
         | repeat split; reflexivity | exact D_557554 | exact D_557558 | exact D_55755c | exact D_557560 | exact D_557564 | try eassumption .. ].
-    - exact (init_x_sound_layout B_SEGS B_T B_PH LIM sp rdraw argv envp fs uid hw SINV).
+    - apply init_x_sound_layout.
     - exact (APSX.node_x_sound_XIStrncpy B_SEGS B_T NX0 LIM B_t_segs_wx B_t_in_hull B_t_hull_ok SINV argH ISP
                AH NX0_spw AA SF SA fs B_istrncpy_spec).
     - exact (APSX.node_x_sound_XPopFree B_SEGS B_T NX0 LIM B_t_segs_wx B_t_in_hull B_t_hull_ok SINV argH ISP

@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of mix_call (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan, entry BASE + AF_mix_call = 0x8ad54, 480 bytes, 120 instructions): tmix_call_spec of
-   a Theorem Labs lane's lib/B/Prog/mix_call_c.v (blob ebd1fd295d8, the same on a working branch f490061c104 and 707acd856cb), proved in the A walk's
-   style (lib/A/Prog/mix_call.v, a working branch fa7944d852b): the verified symbolic executor over
+   a Theorem Labs lane's lib/B/Prog/mix_call_c.v (blob ebd1fd295d8, the same on a working branch), proved in the A walk's
+   style (lib/A/Prog/mix_call.v, a working branch): the verified symbolic executor over
    cmd_listing (paj_run_tok / paj_run_to_tok / psrr_branch_tok, lib/B/Prog/CmdPaLib.v), the inline shadow checks
    removed by the token executor with their addressability obligations, the strlen wrapper through its Theorem Labs lane
    contract taken at the current FP state, and one lemma per loop (the 4 bytes of c->fn run straight; the argument
@@ -54,12 +54,13 @@
    abstract segments (used for CmdRecCells' cmd_cf_env, the errno / trace facts of the runtime-entry call). The
    shadow-cell and GOT facts are CmdRecCells' cmd_cf_cell / cmd_cf_got (HB + VOBJS), the AR laws AR_laws_ok.
 
-   TAKEN FROM: the A walk lib/A/Prog/mix_call.v (a working branch fa7944d852b), re-walked at the B
-   addresses above; the Generation-N B walk lib/B/Prog/mix_call.v (a working branch a3f99d62c52) read as a
+   TAKEN FROM: the A walk lib/A/Prog/mix_call.v (a working branch), re-walked at the B
+   addresses above; the Generation-N B walk lib/B/Prog/mix_call.v (a working branch) read as a
    template of the B code only, not ported and not required. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/mix_call.v, with its module paths, module names and numbers changed; 698 of its 886 lines of code are new or changed and 1051 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/name_ok_s1.v, with its module paths and module names changed; 116 of its 205 lines of code are new or changed and 797 lines of the source are left out. *)
-(* The image-B port of lib/A/Prog/name_ok.v (commit ce5629fa227b), part 2: the ASan+UBSan walk
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B port of lib/A/Prog/name_ok.v, part 2: the ASan+UBSan walk
    of name_ok on fuzz_segconf image B (fuzz_segconf.asan-ubsan, entry BASE + AF_name_ok = 0x8a408): `name_ok_walk`
    proves name_ok_contract (lib/B/Prog/name_ok_c.v, image B's copy of the FINAL contract text) at image B's numbers, over
    the Pa engine of image B's listing seg_listing, from the contract of its one callee, musl's isalnum (row 9,
@@ -130,7 +131,7 @@ Let RUN := paj_run B LAWS.
 
 (* The contract of the callee: row 9, musl's isalnum at image B 0x9094c (a direct call, not intercepted; a 28-byte
    leaf that touches no stack and no memory), at the listing's call target `pa_sigma SS_isalnum`. Its text is
-   lib/B/Rt/RtSeg.v's (commit 5b814360ea8f), word for word image A's. *)
+   lib/B/Rt/RtSeg.v, word for word image A's. *)
 Hypothesis ISALNUM : forall fx0 : YK11.FPState, @RtSeg.aisalnum_realizes fx0 rc SEGS B (SIGMA SS_isalnum).
 
 (* NK_L, 0x8a474: zext.b a0,s6; jal isalnum; the answer comes back at NK_R *)

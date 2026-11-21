@@ -1,22 +1,23 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSbz_str.v, with its module paths and module names changed; 19 of its 178 lines of code are new or changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/FRbz_str.v at commit debcdf3fa6a, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
-(* Port-from: origin/cold/port-state-rt-str 3210d71ee38 proofs/omx-clap-core/fuzz_state/lib/A/FSbz_str.v.
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/FRbz_str.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Port-from: proofs/omx-clap-core/fuzz_state/lib/A/FSbz_str.v.
    Changes (R1Str, 2026-10-29): module path fuzz_state -> fuzz_reply; the user-poison half (chk_ok_of_ARU and its FSupoison import) dropped, the W_sites forms being U-free; no address numerals; renamed from FSbz_str.v. *)
-(* Port-from: origin/cold/port-fm-rtscan cedf3d02589 proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v (port-fm's RtStr).
+(* Port-from: proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v (port-fm's RtStr).
    Changes for fuzz_state (h-rw-sta-4, 2026-10-28): module path fuzz_manifest -> fuzz_state; FMbz_str -> FRbz_str;
-   imports POISON-U's FSupoison (h-state-a5, origin/cold/port-state-poison dd42160c173) for FMupoison;
+   imports POISON-U's FSupoison (h-state-a5) for FMupoison;
    FM_SHADOW_OFF keeps its name (0x7fff8000, the same in fs). *)
 (* The shadow half of the bridge between the donor's ASan state and the string walks'
-   memory vocabulary.  The walks ask for `chk_ok m p n` (lib/A/Bz/A/I_qck.v:31) - what the
+   memory vocabulary.  The walks ask for `chk_ok m p n` (lib/A/Bz/A/I_qck.v:32) - what the
    interceptors' range check reads - while the donor's call-site contracts carry
    `range_addressable` and `shadow_hull_vis` over `aview` (lib/Reusable/YG0v.v:32,
    YG0d.v:321).  This file turns the second into the first.
 
    It is stated over the reader `aview_of H mem`, which is `aview tfibsegs H mem` written
    out (YG0n.v:17), so that it does not depend on the part of the core that is still in
-   flight (YG0n -> YA0n -> YK18, which does not compile on cold/port-fm-reloc bad0693aadc
+   flight (YG0n -> YA0n -> YK18, which does not compile
    yet).  `aview_eq` closes that gap in one line as soon as it does.
 
    RtScan owns the rest of the bridge (lib/A/FMbz_bridge.v: evt/msteps -> SRr and the frame

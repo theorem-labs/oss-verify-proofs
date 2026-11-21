@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launchT argument of rz_main_drv, and the premise that the binary carries no vDSO segment). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List.
 Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
@@ -46,8 +47,8 @@ Module PlainSide.
 
   (* [comment removed for export] *)
   Definition RRZ_lim := R_realizes_cfg_lim DRV DRV_spec
-     (fun RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
-        @rz_main_drv RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_R (yfuzz_rz_R FS0) MO).
+     (fun RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
+        @rz_main_drv RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_R (yfuzz_rz_R FS0) MO).
 End PlainSide.
 
 Lemma R_realizes_16 : forall en inp,
@@ -65,6 +66,7 @@ Theorem halts_plain :
 Proof.
   apply (halts_allowed_of_realizes_ms0 acfg rsegs r_init_pc r_phdrs source_alloc_limit halts_codes
            (fun inp => spec (in_argv inp) (in_fs inp))).
+  - (* the binary carries no vDSO segment *) reflexivity.
   - exact R_realizes_16.
   - intros inp _. apply spec_exits_in.
 Qed.

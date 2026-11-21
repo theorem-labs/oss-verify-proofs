@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfRehidePost.v, with its module paths changed; 176 of its 322 lines of code are new or changed and 19 lines of the source are left out. *)
-(* CARRIED from commit fa123bc2baab5eec7dd2568431a33b03bf9325d2,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfRehidePost.v, sha256 628cbbe8b0a25731af0fde5b3edede0dd2aed9b10b09cc35dc277d4f6f6d1452 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix cgif_file_fuzzer.lib -> fuzz_reply.lib.Reusable, except ImgBaseDG / DMspec / AllocG / DeallocG and the
@@ -98,7 +99,7 @@ Proof.
   unfold sec_extents. apply in_flat_map. exists k. split; [exact Hk|]. rewrite Hb. left. rewrite Hs1. reflexivity.
 Qed.
 
-(* The same from the cf layer's invariant (wf_sec_cf + chunk_ok_cf, YG01cf.v:73-81, :110-119). *)
+(* The same from the cf layer's invariant (wf_sec_cf + chunk_ok_cf, YG01cf.v:74-82, :111-120). *)
 Lemma live_slots_placed_of_wf_cf {cp : CfParams} : forall ly S,
   wf_sec_cf S -> Forall (chunk_ok_cf S) (st_chunks S) -> live_slots_placed ly S.
 Proof.
@@ -380,7 +381,7 @@ Qed.
 End D.
 
 (* The cf free path's own posts (the twins of DeallocG.dealloc_post :103 and dealloc_post_raw :127, used through
-   dealloc_leaf_raw at YGcfMallocCompose.v:351-362). Same two changes, and the raw-memory frame keeps its released
+   dealloc_leaf_raw at YGcfMallocCompose.v:352-363). Same two changes, and the raw-memory frame keeps its released
    shape with no exception, because the RE-HIDE STEP CHANGES NO MEMORY: it rewrites the world's hidden set and
    allowance only. (The madvise before it does zero-fill the raw bytes, YA06.v:170, but on this walk those bytes are
    the dead map's shadow, which already reads 0, so the released frame still holds there.) *)

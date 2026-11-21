@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the fetch and read failure cases take the model's vDSO arms (vdso_text_at, range_meets_vvar). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -126,7 +127,7 @@ Lemma interp_full : forall t, eff_full t -> forall m,
   end.
 Proof.
   intros t H. induction H; intros m; cbn [interp_eff_accesses access_value fst]; auto.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (H0 (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k _) m) as [r| |]; cbn in *; try exact H0; exact I.
   - destruct (store_ok segs m a (width_bytes n)); [| exact I].
@@ -158,7 +159,8 @@ Proof.
   { destruct (decode_exec_accesses segs ms w) as [[x rs]| |] eqn:Hd; try discriminate. injection Hs as <-. eapply decode_exec_full; eauto. }
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)) as [w|].
   { destruct (decode_exec_accesses segs ms w) as [[x rs]| |] eqn:Hd; try discriminate. injection Hs as <-. eapply decode_exec_full; eauto. }
-  unfold fetch_failure in Hs. destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
+  unfold fetch_failure in Hs. destruct (vdso_text_at _ _); [discriminate|].
+  destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
 Qed.
 
 Lemma msteps_full : forall ms ms',

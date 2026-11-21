@@ -1,13 +1,13 @@
-(* proves function fuzz_alloc_most (reuse search: proof-index on main@8b3d60a62fb / ossv/recipes@8bece492f26 / ossv/candidates@ee89628c997 / release/pau-projects-recipes@b6a0088adcb + lemma index + live heads, and git grep of 0x85e14 / 0x862e0 on those four refs / `proof-index fuzz_alloc_most 0x85e14 0x862e0`)
+(* proves function fuzz_alloc_most (reuse search: proof-index on main / ossv/recipes / ossv/candidates / release/pau-projects-recipes + lemma index + live heads, and git grep of 0x85e14 / 0x862e0 on those four refs / `proof-index fuzz_alloc_most 0x85e14 0x862e0`)
    fuzz_preset row AL5 (rewalk preset-F the internal file FREE-PIECES-102.md Part 5; the internal file AL-ROWS.md), image A' (asan, #102 pin 1be0f53d96cb,
    unstripped twin bff8519bbe3e): the walk of fuzz_alloc_most (merged alloc.c :186-189, `g_most = n`; entry
-   A_prog_sigma AS_fuzz_alloc_most of h-verbs-1's listing pins102 d42e123915ae) against K0's text
-   tfuzz_alloc_most_specX (lib/A/PRH_FnCheck.v:776, kit of record walkkit-next decff67d721f):
+   A_prog_sigma AS_fuzz_alloc_most of h-verbs-1's listing pins102) against K0's text
+   tfuzz_alloc_most_specX (lib/A/PRH_FnCheck.v:776, kit of record walkkit-next):
    fuzz_alloc_most_holds. The conclusion is SRr (srealizes, YA0n.v).
    Listing (lib/A/Listing_prog.v, slots A_prog_slot AS_fuzz_alloc_most .. + 2):
      fuzz_alloc_most        auipc a1 ; sd a0 -> g_most ; ret                                           (3 words)
    A LEAF: no call, no frame, no instrumented access (the store goes to a static, which is PST).
-   Shape: the accessor walks' (origin/cold/h-w6rep-2-p102-allocsurf f5123281fbe2 lib/A/Prog/PwAllocSurf.v, the
+   Shape: the accessor walks' (lib/A/Prog/PwAllocSurf.v, the
    writers fuzz_alloc_peak_reset / fuzz_alloc_fail), restated for a writer that stores its argument:
    1.-2. (image-free, in lib/A/Prog/FuzzAllocMostCore.v, which both this file and the B' twin Require): fam_wr_run
       states the byte run as machine behaviour over ANY segments (no journal, no ledger); fam_most_core, parametric in

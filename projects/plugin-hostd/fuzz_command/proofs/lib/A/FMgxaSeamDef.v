@@ -6,18 +6,18 @@
    the shared snprintf contract's `sh_avfprintf_icpt_realizesU` (lib/A/FMsnprintfShared.v) with
 
    FOUR PREMISES ADDED, each a fact the released GXA statement asks for
-   (lib/CJ/RL/GXA/VfprintfCall.v:22 vfprintf_guarded_stmt) and the frozen text does not carry.  All
+   (lib/CJ/RL/GXA/VfprintfCall.v:23 vfprintf_guarded_stmt) and the frozen text does not carry.  All
    of them hold at musl vsnprintf's call site and are discharged there.
      (1) dest_nul       the destination already holds the NUL musl vsnprintf wrote (`*c.s = 0`);
                         with an empty output musl vfprintf never calls sn_write, so that byte is the
-                        only NUL the post can report  (VfprintfCall.v:31)
-     (2) frame order    sp <= fp, fp + 232 <= cp, cp + 16 <= ap  (VfprintfCall.v:40)
+                        only NUL the post can report  (VfprintfCall.v:32)
+     (2) frame order    sp <= fp, fp + 232 <= cp, cp + 16 <= ap  (VfprintfCall.v:41)
      (3) dest_off_slots the destination lies below the stack window or above the caller's slots
-                        (VfprintfCall.v:42, first disjunction)
+                        (VfprintfCall.v:43, first disjunction)
      (4) below 2^47     the FILE, the cookie and the slots lie below TASK_SIZE, where the normalized
                         store GXA runs on (FMgxaSeamNorm.v) keeps every byte
    The contract's dest_off_globals (the destination off the image range (ilo, ihi), which the caller
-   names) gives GXA's `D + dn <= 65536 \/ GLOBALS_TOP <= D` (VfprintfCall.v:42, second disjunction)
+   names) gives GXA's `D + dn <= 65536 \/ GLOBALS_TOP <= D` (VfprintfCall.v:43, second disjunction)
    when ilo <= 65536 and GLOBALS_TOP <= ihi.
    The post's FP state is existential, as the shared snprintf contract's text already states it: fa0
    is caller-saved and printf_core writes it through pop_arg for a double argument, so the released

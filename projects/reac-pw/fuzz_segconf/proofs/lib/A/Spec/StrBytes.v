@@ -1,4 +1,4 @@
-(* Ported by RtStr from cold/c-asan-rt-fmio-n affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/StrBytes.v, unchanged. *)
+(* Ported by RtStr from proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/StrBytes.v, unchanged. *)
 From Stdlib Require Import ZArith Arith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Lib Require Import PropExec MState Mem Exec Frame Step Arr.

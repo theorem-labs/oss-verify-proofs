@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -15,10 +16,13 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
 Definition fo_scfg : StepCfg := {| the_scfg := Run.forced_only_cfg |}.
 
+(* LPS 08b1429: [must_exit_with_scfg] runs the binary against [run_segments segs inp sp mbase] from
+   [init_config (run_segments ..) ..] (MustExit.v:770-776), so the premise is stated over that list. *)
 Lemma must_exit_with_fo : forall code img lim en inp,
   (match img, en with
    | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-       @must_exit_at_cfg (@the_scfg fo_scfg) segs code (init_config segs pc ph sp brk0 mbase rnd lim inp)
+       @must_exit_at_cfg (@the_scfg fo_scfg) (run_segments segs inp sp mbase) code
+         (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp)
    end) ->
   must_exit_with_scfg Run.forced_only_cfg code img lim en inp.
 Proof. intros code [segs pc ph] lim [sp brk0 mbase rnd] inp H. exact H. Qed.
@@ -78,7 +82,7 @@ Section ME.
   Qed.
 
   Lemma adv_set_ecall_of : forall R F pc fc rv m ro v,
-    advance_past_svc (set_gpr0 (ecall_of R F pc fc rv m ro) v) = MS (bvmap_set 10 v R) F (pc + Z_to_bv 64 4)%bv fc rv m ro.
+    advance_past_svc (set_gpr0 (ecall_of R F pc fc rv m ro) v) = MS (bvmap_set 10 v R) F (pc + Z_to_bv 64 4)%bv fc None m ro.
   Proof. intros. unfold set_gpr0, set_reg. assert (E : bv_eqb (10 : reg) 0 = false) by (vm_compute; reflexivity). rewrite E. reflexivity. Qed.
 
   (* [comment removed for export] *)
@@ -86,8 +90,11 @@ Section ME.
     fetch_word segs (Z_to_bv 64 pc) = Some w -> is_ecall w = true ->
     m_halted model = None -> m_vm_lazy model = [] -> m_tid model = None ->
     reg_get R 17 = Z_to_bv 64 96 -> 0 <= pc -> pc + 4 < 2^64 ->
+    (* 08b1429 ([svc-clears-resv]): [advance_past_svc] now sets [ms_resv := None],
+       so the state AFTER the ecall carries no reservation.  The premise's
+       post-state takes [None]; the conclusion's pre-state below keeps [rv]. *)
     (forall tid, 0 < bv_unsigned tid < PID_MAX_ENVELOPE ->
-       must_exit_at segs code (mkCfg (MS (bvmap_set 10 tid R) F (Z_to_bv 64 (pc + 4)) fc rv m ro) (with_tid tid model))) ->
+       must_exit_at segs code (mkCfg (MS (bvmap_set 10 tid R) F (Z_to_bv 64 (pc + 4)) fc None m ro) (with_tid tid model))) ->
     must_exit_at segs code (mkCfg (MS R F (Z_to_bv 64 pc) fc rv m ro) model).
   Proof.
     intros R F pc fc rv m ro model w HF HE Hh Hl Ht H17 P0 P4 K.

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RoleAllocClose.v at fa745625e7df, for reac-pw/fuzz_rate
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RoleAllocClose.v, for reac-pw/fuzz_rate
    image A: fuzz_rate's descriptor count; names role_* -> rate_*; module paths changed. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

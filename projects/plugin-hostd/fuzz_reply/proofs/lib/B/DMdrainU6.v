@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU6.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail; file sha256 2715ecee6cbe) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU6.v at commit 2e76ed2595c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU6.v (drain recycle tail; file sha256 2715ecee6cbe) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU6.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the instance's invariant AT THE RECYCLE CUT.  At Recycle's call
-   of DoRecycle (0x33b54) the interface field DMiface.di_requar_r (DMiface.v:201-208) turns the drain's entry
+   of DoRecycle (0x33b54) the interface field DMiface.di_requar_r (DMiface.v:202-209) turns the drain's entry
    invariant into the recycle invariant: it takes the cut's memory relation (DMdrainU4.dmem_q_recyc), the
    quarantine's cells there (DMdrainU5.cut_cells_recyc) and the temp list's cells at Recycle's sp, and returns
    ARXr at the cut state together with DRq over the temp list.  This file is the bridge that assembles those
@@ -110,7 +111,7 @@ Hypothesis HC176 : val_mem tfibsegs m' (A_QUAR + 176) 8 (la ly R).
 Hypothesis HC184 : val_mem tfibsegs m' (A_QUAR + 184) 8 (qc_bytes gk).
 Hypothesis HPN : forall i b, nth_error P i = Some b -> val_mem tfibsegs m' (addrb ly b) 8 (next_addr ly P i).
 Hypothesis HRN : forall i b, nth_error R i = Some b -> val_mem tfibsegs m' (addrb ly b) 8 (next_addr ly R i).
-(* the temp list's four header words at Recycle's sp (DMdeq.ATDR, DMdeq.v:206-207) *)
+(* the temp list's four header words at Recycle's sp (DMdeq.ATDR, DMdeq.v:207-208) *)
 Hypothesis HS0 : val_mem tfibsegs m' sp1 8 (zl P).
 Hypothesis HS8 : val_mem tfibsegs m' (sp1 + 8) 8 (fa ly P 0).
 Hypothesis HS16 : val_mem tfibsegs m' (sp1 + 16) 8 (la ly P).

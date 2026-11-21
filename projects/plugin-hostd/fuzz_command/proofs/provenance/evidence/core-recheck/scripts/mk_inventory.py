@@ -4,7 +4,7 @@ with which inputs, and the route of the re-check.
 
 Usage: mk_inventory.py OURS_LIB MERGED_LIB DONOR_LIB RUN_A1_STAGE_OUT RUN_A2_STAGE_OUT RUN1_STAGE_OUT RUN1_KEPT OUT.tsv
   OURS_LIB / MERGED_LIB: proofs/plugin-hostd/fuzz_command/lib at the checked commit and at the merged tree;
-  DONOR_LIB: proofs/cgif/cgif_file_fuzzer/lib at c8557374ad2e;
+  DONOR_LIB: proofs/cgif/cgif_file_fuzzer/lib;
   RUN_*_STAGE_OUT: the stage-out/ directories of the untagged runs (A1: 377 A/ files; A2: 14 A/ files; run 1: its
   Reusable/ part); RUN1_KEPT: run 1's kept.txt (non-A files the target already held).
 Prints the counts per set and route."""

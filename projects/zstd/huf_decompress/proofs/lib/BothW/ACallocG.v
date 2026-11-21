@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (rng_fp_leG)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -21,8 +22,7 @@ Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 
 Section CANSEC1. Context {rc : runConstT}.
 Lemma rng_fp_leG : forall RNG RNG' lo n, fp_le RNG RNG' -> rng RNG lo n -> rng RNG' lo n.
-Proof.
-ltac2:(KReplay.run1 (kr_t_ACallocG ()) ["CANSEC1"] "h01bh11jh21Hh32Hbh42Hjh52LEh62R1h72R2h82R3h93RNGh:4RNG'h;2loh<1np;2p;3p;1p;4p10000p4p7210p1000\p4p710p8g001:j29Tg0020j34Tg002cj20Tg003?j21Tg003\j12Tg004Aj16Tg004_j28Tg005<j17Tg005\R0j23Tg0067j45Tg006RR1g007KR2f3R3f2R4'9f4R5f1R6744P0g007iR7/031134g008G#2R8#6%28#2#2#2#2#6'8R8'0g008lR9f5R:/06%76,14R;f6R</1:R='0f9R>P3P4O2[[]1^02'3A4:53f0R?107:10=8f8R=/0611>=R@,0;f<RAP3P4O2[[^19^02'3P0f7R0/1</0810>6f:R</1>,0;f=RBP3P4O2[[^19^02A4>=0P?10@810A611BA,0;f@P3P4O2RA[[^19^02f;R@,0711@</08R810B6R@f>/1B,0;R;PA[[^19^02RA'3P:P8PAP6PBP3P4P5P3P4P6P?O4O3X4;X3@X19X02C5C5W8W7P6P?O2n2001000000120000000W2W6P6P?O2n2001000000121000000W2W5X<2W;X:1W9o"). Qed.
+Proof. intros RNG RNG' lo n LE (R1 & R2 & R3). split; [exact R1|]. split; [exact R2|]. intros b j Hb Hj. apply LE. apply R3; assumption. Qed.
 
 (* [comment removed for export] *)
 End CANSEC1.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.K5.AS Require Import CatSim ShapeAlg AsanAcct AsanAcctShape AsanCeil BackingAlgebra.
 From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.K5.Lib Require Import PropExec MState Mem Exec ITree Nodes RelSpec RzCPS NodesA NodesA_mm.
+From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.Common.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
@@ -101,6 +103,11 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
+(* madvise (233) reads no user memory (Sys/Mm/Madvise.v), so its check is the same for a
+   larger read-only backing ([RomBase.memfree]). *)
+Lemma memfree_233 : RomBase.memfree 233.
+Proof. RomBase.memfree_tac. Qed.
+
 Section RuleMadvise.
 Variable segs : list Segment.
 Variable segtop : Z.
@@ -144,7 +151,7 @@ Proof using Hwx Hsegs.
   { intros x Hx. unfold HID, mkH. destruct (page_of_byte_in_aligned' x addr (addr + nZ) Hlo Hhi Hx) as [P1 P2].
     rewrite (Hvis (page_base x) P1 P2). rewrite andb_false_r. cbn [orb]. apply Z.leb_gt. lia. }
   apply (ast_node_mm segs segtop A A Pm PM unit tt (fun _ => K) (fun _ => KM) ms mo (Z_to_bv 64 233)
-           (fun _ => Z_to_bv 64 0) (fun _ => [(a, n)]) (fun _ => []) (fun _ => mdl_madvise mo a n) T Hc Hsvc).
+           (fun _ => Z_to_bv 64 0) (fun _ => [(a, n)]) (fun _ => []) (fun _ => mdl_madvise mo a n) T Hc Hsvc (RomBase.sys_rob_memfree segs ms mo _ Hsvc memfree_233)).
   - vm_compute; reflexivity.
   - intros []. apply Hchar. reflexivity.
   - intros o Ho. exists tt. exact (proj1 (Hchar o) Ho).
@@ -212,7 +219,7 @@ Proof using Hwx Hsegs.
   { intros x Hx. pose proof (page_of_byte_out_aligned' x addr (addr + nZ) Hlo Hhi Hx) as Hpo.
     unfold mkH. rewrite mdl_madvise_lazy. unfold A'. rewrite (page_allowedb_cons_out addr (addr + nZ) A _ Hpo ltac:(lia)). reflexivity. }
   apply (ast_node_mm segs segtop A A' Pm PM unit tt (fun _ => K) (fun _ => KM) ms mo (Z_to_bv 64 233)
-           (fun _ => Z_to_bv 64 0) (fun _ => [(a, n)]) (fun _ => []) (fun _ => mdl_madvise mo a n) T Hc Hsvc).
+           (fun _ => Z_to_bv 64 0) (fun _ => [(a, n)]) (fun _ => []) (fun _ => mdl_madvise mo a n) T Hc Hsvc (RomBase.sys_rob_memfree segs ms mo _ Hsvc memfree_233)).
   - vm_compute; reflexivity.
   - intros []. apply Hchar. reflexivity.
   - intros o Ho. exists tt. exact (proj1 (Hchar o) Ho).

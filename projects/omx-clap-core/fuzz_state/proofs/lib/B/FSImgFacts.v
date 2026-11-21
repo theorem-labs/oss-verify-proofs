@@ -5,7 +5,7 @@
    holds at every state: the shadow cells Tfib_const_shadow, the zero-shadow ranges Tfib_zero_shadow and the absolute cells
    Tfib_const_abs of lib/B/YF0m.v (ARm's am_const and am_zshadow, Reusable/YG0n.v), and the .got canary cell
    (lib/B/YE22.v, through YD1o.got_canary_of_arodata).
-   Ported from: a working branch ca640e94dc8 proofs/omx-clap-core/fuzz_manifest/lib/A/FMInst.v
+   Ported from: a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMInst.v
    (fm_img_facts_holds and its helpers, each fmi_ name renamed fsi_) and FMInstB.v (fmib_pstat_chk and the pstat bullet of
    fm_FmB).
    Changed from fm:

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up over the run's entry stack; named per-field kernel facts in place of a whole-kernel hypothesis). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -15,7 +16,7 @@ From OSSVerify.Proofs.openssl.ct.lib.CtB Require Import RT_iface RT_rep RT_close
 From OSSVerify.Proofs.openssl.ct.lib.CtKitB Require ARun EdgesInstA.
 From OSSVerify.Proofs.openssl.ct.lib.CtRepB Require CtFuzzStmtA CtFuzzGapA.
 From OSSVerify.Proofs.openssl.ct.lib.CtAxB Require ArtB.
-From OSSVerify.Proofs.openssl.ct.lib.CtAxBdB Require BdBStartCert.
+From OSSVerify.Proofs.openssl.ct.lib.CtAxBdB Require BdBStartCert BdBStartCertNoRseq.
 From OSSVerify.Proofs.openssl.ct.lib.VCommon Require ShapeAlgCfg.
 From OSSVerify.Proofs.openssl.ct.lib.AxA Require RzBridge.
 From OSSVerify.Proofs.openssl.ct.lib.CtAxB Require StartB.
@@ -43,6 +44,10 @@ Lemma lim_source_le_target : ShippedBudgets.lim_source <= target_alloc_limit.
 Proof. unfold ShippedBudgets.lim_source, source_alloc_limit, target_alloc_limit. lia. Qed.
 
 Section OpenObligations.
+(* The two kernel fields the ASan start-up witness reads (the auxv's cache words and
+   AT_MINSIGSTKSZ) come from the model's own per-field accessors, Run.valid_input_cache_words
+   and Run.valid_input_min_sigframe_size.  rseq, aslr, guard, rnd_bits and thp are NOT read
+   as fixed values. *)
 (* [comment removed for export] *)
 Local Notation ARo SP0 PMc FD MST := (CtRepB.CtFuzzGapA.ar_of RTA rta_contracts_all SP0 PMc FD MST).
 (* [comment removed for export] *)
@@ -56,7 +61,9 @@ Lemma realizes_both_ct : forall en inp, valid_entry imgBct en inp -> valid_input
 Proof.
   intros en inp He Hi.
   exact (CtAxB.StartB.startB_realizes RTA OUT_repA ERR_repA XENVA lib_startA ArtB.fin_mainB ArtB.fin_mainB_out ArtB.bridgeB_final
-           CtAxBdB.BdBStartCert.bdb_cert_main TopCtBoth.main_both_ct en inp He Hi).
+           CtAxBdB.BdBStartCert.bdb_cert_main CtAxBdB.BdBStartCertNoRseq.bdb_cert_main_norseq
+           TopCtBoth.main_both_ct en inp He Hi
+           (valid_input_cache_words inp Hi) (valid_input_min_sigframe_size inp (in_hwcap inp) Hi)).
 Qed.
 
 (* [comment removed for export] *)
@@ -65,7 +72,9 @@ Theorem must_exit_both_ct_big : forall en inp, valid_entry imgBct en inp -> vali
 Proof.
   intros en inp He Hi. pose proof (realizes_both_ct en inp He Hi) as Hr.
   destruct en as [sp brk mb rnd]. cbn [must_exit_in_scfg en_sp en_brk en_mmap_base en_draw] in *.
-  apply (AxA.RzBridge.realizes_cfg_must_exit_forced_only _ TopHalts.codes02 _ _ Hr).
+  (* LPS 08b1429: the binary carries no vDSO segment of its own *)
+  assert (Hvi : vdso_image AsanUbsan.M.loaded_segments = None) by reflexivity.
+  apply (AxA.RzBridge.realizes_cfg_must_exit_forced_only_init _ TopHalts.codes02 _ _ _ _ _ _ _ inp _ Hvi Hr).
   - apply canonT_exits_in.
   - reflexivity.
 Qed.

@@ -1,4 +1,4 @@
-(* lib/A/Prog/TwFront.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8), re-run over the
+(* lib/A/Prog/TwFront.v (RtStr's port, unchanged), re-run over the
    local-shadow TW_ASAN / TW_STATIC / twoway contract (FMss_TwAsan.v, FMss_TwSetup_c.v, FMss_twoway_strstr_c.v);
    only the imports differ. *)
 From Stdlib Require Import ZArith NArith Arith List Lia Bool.

@@ -10,13 +10,13 @@
    The kit owner ruled that this author writes them; the other reader texts are the kit's lib/A/PRH_FnReader.v.
 
    RECORD: the walk-kit lead ruled (23:53Z, as text owner) that this file is the record, carrying the UNION of the premises two
-   drafts justify: this one and the image-B parse_value walk's (the B' walker, commit a34197aa5760,
+   drafts justify: this one and the image-B parse_value walk's (the B' walker,
    lib/A/PRH_FnPValue.v), whose additions are folded in BY NAME (prhPv_gtrace, prhPi_gtrace, prhPv_rk_ev, prhPv_rk,
    prhPv_node's conjuncts; the image-B parse_value walk's LIVE_rd was RETIRED 2026-10-30 by the kit owner's entry-sum ruling, rd_room's live
    conjunct being PRH_Base.prh_live_evs). Kept from this draft: frm_zero at entry, the (lo, hi) footprint rd_fp, the window
    fwin e, rd_ledger_move, and d as the FIRST parameter.
 
-   HISTORY: the first version (828bf5b332d) concluded in the plain post fpostF, which the S6 walk measured
+   HISTORY: the first version concluded in the plain post fpostF, which the S6 walk measured
    FALSE: ajournal_x keeps every real-stack byte above the entry sp, and the cursor q is in pj_parse's own frame (A
    0x85e60 `mv a0, sp`, B `addi a0, sp, 8` 0x86330). Both texts are in the kit's CALLER-WINDOW form (PRH_Base.v fwin /
    fpostWF): the journal runs at (STK + e) (spZ regs + e) with the caller granting e bytes above the entry sp; the
@@ -72,20 +72,20 @@
      deepest path from parse_value at d holds Nat.succ (MAXD - d) of them, and from parse_items at d (which takes no
      frame itself and calls parse_value at d + 1) MAXD - d. pj_parse's own premise (+ DOC_D) gives it at d = 0.
      The count is written Nat.succ, not S: S is the allocator state in these texts.
-   - ROOM IS AN INVARIANT (the kit owner's ruling, kit b7722372682): room_live_cf S on entry (PRH_Base's PrhRoomLive, the
+   - ROOM IS AN INVARIANT (the kit owner's ruling, kit): room_live_cf S on entry (PRH_Base's PrhRoomLive, the
      non-primary room, owned by the allocator-model owner) and room_live_cf S' in every post arm; no margin, no room_cf. The history: plain ROOM_cf
      does not give room at a second allocator call (a successful secondary realloc can raise st_sec_arr to its cap).
    - the two realloc universe premises: grow reaches fuzz_realloc.
    - maxrun tb < 2 ^ 30: plain parse_value_c.v:33.
-   NAMED GAPS: (G6) closed - ROOM_cf_k, RK_* and room_kept are the allocator-model owner's frozen YGcfRoomKeep (06d751f40e3d), which
-   the kit binds since 1cf840fa800; the PrhNames stand-in class is gone.
+   NAMED GAPS: (G6) closed - ROOM_cf_k, RK_* and room_kept are the allocator-model owner's frozen YGcfRoomKeep, which
+   the kit binds; the PrhNames stand-in class is gone.
    (G7) The node's place is prhReader_at (a live harness block, a live allocator block, a live fake frame, or the
    granted window). (G8) The failure post frees to depth MAXD - d; the Pj part instantiates pj_free's depth at MAXD.
    (FREEORD-NONE, #102) Both posts state, in each arm, pj_free's ORDER LIST of the tree left in the node (complete or
    partial) against the model's reader-side list (prhPv_frees / prhPi_frees below), so pj_parse's pj_free (out) on its
    refused path closes by citation.
    (V3, the image-B parse_value walk's) the three .rodata words literal compares must be kept_at and cstr_ok at the call (cstr_ok carries
-   YGcfStr.amem_range8 w (len + 1) since kit cc19dfc36d7; their image addresses give its low arm): an image fact the
+   YGcfStr.amem_range8 w (len + 1) since kit; their image addresses give its low arm): an image fact the
    walks carry as a named Section hypothesis. Its cstr_ok half is retired (2026-10-29): PRH_Base.cstr_ok_ro, the image
    premise decided by YGcallRoStr.ro_str_check / ro_str_check_ok (vm_compute).
 
@@ -129,10 +129,10 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* prhPv_rk_ev / prhPv_rk and the granted runs prhPv_gtrace / prhPi_gtrace are the kit's lib/A/PRH_Charge.v (ONE copy,
-   the image-B parse_value walk's bodies, shared with every reader text's room premise since kit 38953abe503); not redefined here. *)
+   the image-B parse_value walk's bodies, shared with every reader text's room premise since kit); not redefined here. *)
 
 (* pj_free's ORDER LIST of the tree a reader call leaves in its node (FREEORD-NONE, the #102 kit; the B' walker's
-   pj_parse measurement on pj_parse's refused path, commit 8a088cd72fac
+   pj_parse measurement on pj_parse's refused path,
    lib/B/Prog/pj_parse_seg_c2ref.v: no text tied the refused tree's order list to the model's HBulk). The list is the
    MODEL's own, PresetReqAt.jfv / jf_cont / jfl (PresetReqAt.v:251-294, the #102 model of record), at the grammar
    call's own fuel and outcome list: the complete tree after a value that returned, the PARTIAL tree after a refusal
@@ -144,8 +144,8 @@ Local Open Scope Z_scope.
    parse_items' takes jr_items' fuel and form (PjGrammar.v:321-322, jf_cont mirrors jr_cont). A walk that composes
    them across a nested call meets the same fuel shift as the grammar (PjGrammar.fuel_mono / jr_items_fuel); for jfv /
    jfl that shift is now PROVED and CITED, not owed: PresetFreeFo.jf_fuel_mono (:489), jfv_fuel (:528) and
-   jf_items_fuel (:531), the P8 owner's lib/Spec/PresetFreeFo.v blob 75c11ade43e4 at commit
-   28379aac52c (cb3 rc=0, Print Assumptions closed), carried by path in this batch. The note that this was OWED to the
+   jf_items_fuel (:531), the P8 owner's lib/Spec/PresetFreeFo.v blob 75c11ade43e4
+    (cb3 rc=0, Print Assumptions closed), carried by path in this batch. The note that this was OWED to the
    walk is gone with it, and the B' walker drops its three named image-B parse_items hypotheses for the same facts. *)
 Definition prhPv_frees (d : nat) (x : list Z) (ok : list bool) : list Z :=
   PresetReqAt.jfv ReaderRes.jr_strtod (Nat.succ (2 * length x)) d x ok.
@@ -284,7 +284,7 @@ Definition tparse_value_specX (d : nat) (CTX : list (list Z)) (CTX0 : list (list
   YAkMemnorm.memnorm segs mem ->
   In (raZ regs :: spine ch) CTX ->
   (* the call-graph universe closure, and the cursor chain's stop word named at this entry so the walk meets
-     parse_string's (and parse_items') call-state chain premises (the kit at 4eb03b7b7e8) *)
+     parse_string's (and parse_items') call-state chain premises (the kit) *)
   prh_univ_closure B CTX0 ->
   prh_cur_entry W mem regs q ->
   (* THE CURSOR SET CW (PRH_Base.prh_cw_entry), IN THE SLOT prh_cur_entry's sp - 8 arm VACATED when the run-word
@@ -694,7 +694,7 @@ Definition tparse_items_specX (d : nat) (CTX : list (list Z)) (CTX0 : list (list
   YAkMemnorm.memnorm segs mem ->
   In (raZ regs :: spine ch) CTX ->
   (* the call-graph universe closure, and the cursor chain's stop word named at this entry so the walk meets
-     parse_string's (and parse_items') call-state chain premises (the kit at 4eb03b7b7e8) *)
+     parse_string's (and parse_items') call-state chain premises (the kit) *)
   prh_univ_closure B CTX0 ->
   prh_cur_entry W mem regs q ->
   (* THE CURSOR SET CW (PRH_Base.prh_cw_entry); see tparse_value_specX's note *)

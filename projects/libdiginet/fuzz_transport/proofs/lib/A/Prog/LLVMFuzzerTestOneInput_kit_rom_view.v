@@ -15,7 +15,7 @@
       trans_ro_rd_bounds);
    3. a is not a byte of G_HARNESS (trans_ro_rd_bounds: a < 0xa4000; inG_G_HARNESS_hull: G_HARNESS lies at or above
       0x5df080), so memS and the entry memory show the same byte at a (W_journalG.v aview_gagree).
-   The decode walk's rom-view lemmas (origin/cold/h-dgn-d1-decode-asan 7b6185922a1, lib/A/Prog/
+   The decode walk's rom-view lemmas (lib/A/Prog/
    LLVMFuzzerTestOneInput_segs.v dec_a_rom_of_base, LLVMFuzzerTestOneInput_seg_dsetup.v ds_rom_now) are the model
    of steps 1 and 2; step 3 is the G journal's addition, as lib/A/Prog/MonNtc.v takes it over acall_kept_g. *)
 From Stdlib Require Import ZArith NArith List Lia Permutation Bool.

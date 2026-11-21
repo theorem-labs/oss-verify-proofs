@@ -70,7 +70,7 @@ Proof.
   apply (zlib_pack_walk_crealizes rc LS CS (fun j T m => T = [] /\ GI j m) (fun _ => []) HCS
     (G_local_T_mono src0segs G src0_G _ HG' (G_local_T_of_G src0segs G GI GIL))
     (fun mem Hm => conj eq_refl (GI0 mem (G_img_mono src0segs G src0_G mem HG' Hm)))
-    HX sp brk0 mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinput Hlim).
+    HX sp brk0 mbase rnd lim inp Hsp Hbrk Hmb (proj1 Hfits) (proj2 Hfits) Hinput Hlim).
   unfold rc. apply ceil_of_top_run.
   unfold rc. reflexivity.
 Qed.

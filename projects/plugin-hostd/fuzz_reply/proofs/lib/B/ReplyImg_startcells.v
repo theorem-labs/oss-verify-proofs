@@ -17,6 +17,7 @@
    both words (KWord; checked by computation below, the twins of B/ReplyImg_su_tool.v su_tool_cell_B and
    B/ReplyImg_su_printf.v), and B/YD2k.v finv_read_val turns a known word into the bytes at the hand-off memory.
    Kind: START-UP fact; rule 24: no function proved. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -24,7 +25,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.plugin_hostd.fuzz_reply.images Require Import AsanUbsan.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK11 YP09 YK00 YK04 YA0i YA0n YK0g YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import YB12 YB1h YB13 YB01.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import YB12 YB1h YB13 YB01r.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG00 YG01 YG0f YG0v YG0n YG0r YG0b.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import YF0m.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05 YD1h.
@@ -90,7 +91,7 @@ destruct (kn_read tfibsegs ch (ELit 0) (@cf_pfcb_cell CfImg_B) 8) as [e2|]; [|di
 apply andb_prop in H as [H1 H2]. apply expr_eqb_eq in H1. apply expr_eqb_eq in H2. subst e1 e2. split; reflexivity.
 Qed.
 
-Lemma su_pf_hs_all : forallb su_pf_ok HS_tfib_list = true.
+Lemma su_pf_hs_all : forallb su_pf_ok HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 
 (* The hand-off: YD2k.v's Section e, copied verbatim, with a world W whose hidden set is the hand-off's. *)
@@ -101,26 +102,35 @@ Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv (in_argv inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TSEGS TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* LPS 727298f3: the invariant abstract and the input's own fields, as A/AD2k.v's Section e. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
 Context {rc : YM05.RunCeil}.
 Variable W : world tfibsegs.
 Hypothesis HW : w_H W = YD2i.H1 sp rdraw inp ch E model.
+(* the section lemmas of ReplyImg_su_errb / AD2k at this section's arguments, whatever subset each one takes *)
+Ltac inst H := try specialize (H fx); try specialize (H sp); try specialize (H rdraw); try specialize (H brk);
+try specialize (H inp); try specialize (H Hsp); try specialize (H Hva); try specialize (H h); try specialize (H ch);
+try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC).
 
 (* ERRB: the five cells read 0 at every world above the hand-off. *)
 Lemma start_errb_B : forall B ly (W' : world tfibsegs), wle W W' ->
   Forall (cell_holds B ly (aview tfibsegs (w_H W') FULL)) errb_start_cells_B.
 Proof.
 intros B ly W' Hle.
-pose proof (ReplyImg_su_errb.errb_obj_zero_start sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC) as Z0.
+pose proof (@ReplyImg_su_errb.errb_obj_zero_start) as Z0. inst Z0.
 apply Forall_forall. intros x Hx. unfold errb_start_cells_B in Hx. apply in_map_iff in Hx as (d & <- & Hd).
 apply (ho_z8 B ly W W' FULL); [exact Hle|]. rewrite HW.
 assert (Hd' : 0 <= d <= 48) by (cbn in Hd; lia).
@@ -138,9 +148,10 @@ Lemma start_pf_cells_B : forall B ly (W' : world tfibsegs), wle W W' ->
   cell_holds B ly (aview tfibsegs (w_H W') FULL) (z8 (ANum (@cf_pfcb_cell CfImg_B)) (@cf_pfcb_val CfImg_B)).
 Proof.
 intros B ly W' Hle.
-destruct (su_pf_ok_sound ch (proj1 (forallb_forall _ _) su_pf_hs_all ch (HS_tfib_In h ch Hch))) as [R1 R2].
-pose proof (YD2k.finv_read_val sp rdraw brk inp Hsp Hva ch E R FULL model HC _ _ _ R1 ltac:(cbn; lia)) as V1.
-pose proof (YD2k.finv_read_val sp rdraw brk inp Hsp Hva ch E R FULL model HC _ _ _ R2 ltac:(cbn; lia)) as V2.
+destruct (su_pf_ok_sound ch (proj1 (forallb_forall _ _) su_pf_hs_all ch (HS_tfib_r_In _ h ch Hch))) as [R1 R2].
+pose proof (@YD2k.finv_read_val) as F. inst F.
+pose proof (F _ _ _ R1 ltac:(cbn; lia)) as V1.
+pose proof (F _ _ _ R2 ltac:(cbn; lia)) as V2.
 rewrite uE_litv in V1 by (cbn; lia). rewrite uE_litv in V2 by (cbn; lia).
 split; (apply (ho_z8 B ly W W' FULL); [exact Hle|]); rewrite HW; [exact V1 | exact V2].
 Qed.

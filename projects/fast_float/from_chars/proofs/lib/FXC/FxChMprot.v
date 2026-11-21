@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes; the vDSO run state; the launch's reservations with the vDSO pair; the model's m_kernel field; the model's brk). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool FunctionalExtensionality.
@@ -46,7 +47,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 Definition ret_post (L : sst) (v : lin) : sst :=
-  SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) v) (s_rgs L) (s_facts L) (s_next L) (s_resv L).
+  SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) v) (s_rgs L) (s_facts L) (s_next L) RNone.
 
 Section Ret.
 Variable segs : list Segment.
@@ -67,7 +68,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - rewrite (restrict_adv_eff (Hof E M model) ms (lden E v) [] [] [] (s_pc L) Hpc0). cbn [apply_zeros apply_unmaps].
     intros E'' Ha''. cbn [ret_post s_next] in Ha''. destruct (Hsd E'' Ha'') as (_ & _ & Hrv & HR & HG & HD & HF & Hfrm).
     unfold sden0, ret_post. cbn [s_pc s_regs s_rgs s_facts s_resv mks ms_pc_val ms_svc_pending ms_resv ms_regs ms_mem ms_fcsr].
-    split; [reflexivity|]. split; [reflexivity|]. split; [exact Hrv|].
+    split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [apply regs_ok_upd; [exact HR | exact (lden_agree_wf _ E E'' v Hwv Ha'')]|]. auto.
 Qed.
 End Ret.
@@ -95,7 +96,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   assert (Hx8 : ms_reg ms 17 = Z_to_bv 64 214) by exact (a7_const segs E L (restrict H ms) ms 214 Hsd eq_refl H7).
   assert (Hg0 : ms_gpr (svc_set ms) 0 = Z_to_bv 64 0) by exact (gpr_const segs E L (restrict H ms) ms 0 0 Hsd eq_refl ltac:(lia) H0).
   pose proof (den_ret segs LIMIT model0 mem0 E L M ms model (sm_brk M) Hd Hwb) as HD'. rewrite <- Hbrk in HD'.
-  eapply rzc_silent1; [|exact (Hk _ _ HD')].
+  eapply rzc_silent1; [| RomWrite.rob_tac | exact (Hk _ _ HD')].
   apply (node_brk_query segs cfg (svc_set ms) model (ms_reg ms 17) (Z_to_bv 64 0) Hh eq_refl ltac:(rewrite Hx8; reflexivity) Hg0).
   left. reflexivity.
 Qed.
@@ -138,14 +139,14 @@ Proof.
     replace (0 <? bv_unsigned b) with true by (symmetry; apply Z.ltb_lt; lia).
     replace (bv_unsigned req <? bv_unsigned b) with false by (symmetry; apply Z.ltb_ge; lia). cbn [andb].
     unfold brk_grants. rewrite Hgrow. rewrite Hun. cbn [maps_subtract_ranges fold_left app].
-    replace (req - b)%bv with (Z_to_bv 64 k); [reflexivity|].
-    apply bv_eq. rewrite bv_sub_unsigned, Hreq. unfold bv_wrap, bv_modulus. change (2 ^ Z.of_N 64) with two64.
-    rewrite fg_lit by (change (2 ^ 64) with 18446744073709551616; unfold two64 in Hw; lia).
-    replace (bv_unsigned b + k - bv_unsigned b) with k by lia. symmetry. apply Z.mod_small. unfold two64 in *; lia.
+    (* at 75d69e00 the grant is [Mmap.brk_page_range] of the page-rounded old and new breaks *)
+    rewrite Hpb, Hpr. unfold brk_page_range.
+    replace (bv_unsigned b <? bv_unsigned req) with true by (symmetry; apply Z.ltb_lt; lia).
+    rewrite Z_to_bv_bv_unsigned. replace (bv_unsigned req - bv_unsigned b) with k by lia. reflexivity.
 Qed.
 
 Definition grow_post (L : sst) (a b : lin) (o s : Z) : sst :=
-  SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) a) (RGz (laddc b o) s RZ TEmpty :: s_rgs L) (s_facts L) (s_next L) (s_resv L).
+  SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) a) (RGz (laddc b o) s RZ TEmpty :: s_rgs L) (s_facts L) (s_next L) RNone.
 Definition grow_M (M : smodel) (a : lin) (k : Z) : smodel :=
   SM ((sm_brk M, lconst k, GE) :: sm_maps M) (sm_allow M) (sm_zr M) (sm_tid M) a (sm_sbrk M) (sm_sp M) (sm_frz M) [].
 
@@ -248,7 +249,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     { unfold uE. rewrite lden_laddc, (lden_agree_wf _ E E'' _ Hwb Ha''). fold bw. rewrite Hub. apply fg64. unfold TOPW, two64 in *. lia. }
     assert (Hs64 : 0 <= s < two64) by (unfold TOPW, two64 in *; lia).
     unfold sden0, grow_post. cbn [s_pc s_regs s_rgs s_facts s_resv mks ms_pc_val ms_svc_pending ms_resv ms_regs ms_mem ms_fcsr].
-    split; [reflexivity|]. split; [reflexivity|]. split; [exact Hrv|].
+    split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [apply regs_ok_upd; [exact HR | exact (lden_agree_wf _ E E'' a Hwa Ha'')]|].
     split; [|split; [|split; [exact HF | exact Hfrm]]].
     - constructor.
@@ -364,6 +365,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - rom_tac.
   - apply own_nil. reflexivity.
   - rewrite Hblob0. apply blob_ok_nil. exact Hnm'.
+  - vdso_keep_tac; first [exact Htop' | reflexivity].
 Qed.
 End Grow.
 
@@ -440,12 +442,12 @@ Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
                 ltac:(rewrite Hbrk; change (bv_unsigned (lden E a)) with (uE E a); unfold uE in *; lia)
                 ltac:(rewrite Hbrk; unfold uE, two64 in *; lia)) as [Heff Hnext].
     pose proof (grow_den segs LIMIT model0 mem0 E L M ms model a k o s Hd Hwa Hsh Hua ltac:(unfold uE in *; lia) Hal Hk0 Hkal Ho Hs Hos Hgrow Hbud Hon Hnm') as HD'.
-    eapply rzc_silent1; [|exact (Kok _ _ HD')].
+    eapply rzc_silent1; [| RomWrite.rob_tac | exact (Kok _ _ HD')].
     pose proof (node_brk_grow segs cfg Hoff (svc_set ms) model (ms_reg ms 17) (lden E a) Hh eq_refl ltac:(rewrite Hx8; reflexivity) Hg0 Hnz Hmin Hgt Hgrow) as Hn.
     rewrite Heff, Hnext, Hbrk in Hn. exact Hn.
   - pose proof (den_ret segs LIMIT model0 mem0 E L M ms model (sm_brk M) Hd ltac:(destruct (sm_wf_parts _ M (dn_wf _ _ _ _ _ _ _ _ _ Hd)) as (_ & _ & _ & Hwb & _); exact Hwb)) as HD'.
     rewrite <- Hbrk in HD'.
-    eapply rzc_silent1; [|exact (Kfail _ _ HD')].
+    eapply rzc_silent1; [| RomWrite.rob_tac | exact (Kfail _ _ HD')].
     exact (node_brk_grow_forced_fail segs cfg (svc_set ms) model (ms_reg ms 17) (lden E a) Hh eq_refl ltac:(rewrite Hx8; reflexivity) Hg0 Hnz Hmin Hgt Hgrow).
 Qed.
 End GrowNode.
@@ -598,6 +600,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     + intros w _. reflexivity.
     + intros x Hx. exact Hx.
   - exact Hblob.
+  - vdso_keep_tac.
 Qed.
 
 (* [comment removed for export] *)
@@ -832,6 +835,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - rom_tac.
   - intros q Hq w Hw. destruct (Hown q Hq w Hw) as [Hv Hm]. split; [|exact Hm]. exact (HH' _ Hv).
   - exact (blob_ok_same E M M' model model _ eq_refl eq_refl Hblob).
+  - vdso_keep_tac.
 Qed.
 End Allow.
 End FxChAllow.
@@ -927,7 +931,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     { intros R HR'. unfold uE, rsz. unfold bases_wf in Hbw. rewrite forallb_forall in Hbw. destruct (andb_prop _ _ (Hbw R HR')) as [Hb1 Hb2].
       rewrite (lden_agree_wf _ E E'' _ Hb1 Ha''), (lden_agree_wf _ E E'' _ Hb2 Ha''). split; reflexivity. }
     unfold sden0, mprot_post, ret_post. cbn [s_pc s_regs s_rgs s_facts s_resv mks ms_pc_val ms_svc_pending ms_resv ms_regs ms_mem ms_fcsr].
-    split; [reflexivity|]. split; [reflexivity|]. split; [exact Hrv|].
+    split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [apply regs_ok_upd; [exact HR | apply lden_lconst]|].
     split; [|split; [exact HD | split; [exact HF | exact Hfrm]]].
     apply Forall_forall. intros R HR'. rewrite Forall_forall in HG. apply (rg_ok_mem_eq segs E'' (ms_mem (restrict H ms))); [exact (HG R HR')|].
@@ -1029,6 +1033,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - rom_tac.
   - apply own_nil. cbn [M' fix_M sm_own]. exact Hon.
   - rewrite Hblob0. apply blob_ok_nil. exact Hnm'.
+  - vdso_keep_tac; first [exact Htop' | reflexivity | (rewrite Hvm'; reflexivity) | (unfold alloc_top; rewrite Hvm'; reflexivity)].
 Qed.
 End MprotPost.
 
@@ -1112,6 +1117,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     + intros w _. reflexivity.
     + intros x Hx. exact (HH' x Hx).
   - exact (blob_ok_same E M M' model model _ eq_refl eq_refl Hblob).
+  - vdso_keep_tac.
 Qed.
 End Allow.
 
@@ -1221,7 +1227,8 @@ Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
     - exact (rgs_sepA_sound E (s_facts L) a n R HF0 ltac:(lia) ltac:(unfold uE in *; lia) HRw Hc w Hw Hin).
     - exact (sep_app2_sound E (s_facts L) (sm_maps M) model (sm_sp M) _ HF0 HmapsL Hpd Hgsh Hgtop Hsp (proj2 Hspok)
                j g a n R Hj (nomark_in _ g Hnm (nth_error_In _ _ Hj)) Hlo Hhi ltac:(unfold uE, two64 in *; lia) HRs HRw Hc w Hw Hin).
-    - rewrite <- Hres in Hc. exact (sep_res_sound E (sm_maps M) model _ HmapsL Hgsh Hmres j g a n R Hj (nomark_in _ g Hnm (nth_error_In _ _ Hj)) Hlo Hhi Hc w Hw Hin). }
+    - apply (sep_res_b_app _ (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))) in Hc.
+      rewrite <- Hres in Hc. exact (sep_res_sound E (sm_maps M) model _ HmapsL Hgsh Hmres j g a n R Hj (nomark_in _ g Hnm (nth_error_In _ _ Hj)) Hlo Hhi Hc w Hw Hin). }
   pose proof (mprot_den segs LIMIT model0 mem0 E L M ms model a n j g Hd Hj HgN Hlo Hhi HnZpos HnZal Hal HsepA Hbud Hon Hnm) as HD'.
   set (ms' := advance_past_svc (apply_effect (svc_set ms) (mprot_eff (lden E a) (Z_to_bv 64 n)))) in *.
   set (model' := mprotect_model_next model (lden E a) (Z_to_bv 64 n)) in *.
@@ -1248,7 +1255,7 @@ Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
     - exact Hbud.
     - intros P HP. discriminate.
     - intros P HP. discriminate. }
-  eapply rzc_silent1; [|exact (Hk _ _ HD2)].
+  eapply rzc_silent1; [| RomWrite.rob_tac | exact (Hk _ _ HD2)].
   assert (Hsvc : ms_svc_pending ms1 = Some (ms_reg ms 17)) by reflexivity.
   assert (Hno : bv_unsigned (ms_reg ms 17) = 226) by (rewrite Hx8; reflexivity).
   (* [comment removed for export] *)
@@ -1268,10 +1275,27 @@ Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
     pose proof (vm_backing_used_le _ _ Hminv' (A_wf_app _ _ Hawf' (A_wf_blobA _))) as Hv. destruct Hminv' as [_ _ _ _ N5]. lia. }
   apply (node_mprotect_expose segs cfg Hoff ms1 model (ms_reg ms 17) (lden E a) (Z_to_bv 64 n) Hh Hsvc Hno); [|exact Hbudok].
   intros o. rewrite (syscall_spec_mprotect segs ms1 (ms_reg ms 17) model o Hno). rewrite Hg0, Hg1, Hg2.
-  rewrite (mprotect_spec_expose (lden E a) (Z_to_bv 64 len) (Z_to_bv 64 3) _ model o); rewrite ?HnZ; [reflexivity | reflexivity | | | | reflexivity |].
+  rewrite (mprotect_spec_expose (lden E a) (Z_to_bv 64 len) (Z_to_bv 64 3) _ model o); rewrite ?HnZ; [reflexivity | reflexivity | | | | reflexivity | |].
   - apply Z.eqb_eq. rewrite HuA. exact Hal.
   - unfold w_is0, bv_eqb. rewrite Hlen64. apply Z.eqb_neq. change (bv_unsigned (Z_to_bv 64 0)) with 0. lia.
   - apply Z.leb_gt. rewrite Hlen64, <- Hlen, HuA. unfold two_pow_64. unfold uE in *. lia.
+  - (* LPS 08b1429: the request lies in a live mapping (Hinm), and live mappings never meet
+       vm_reserved (dn_mres), whose tail is the vDSO/vvar pair (dn_res) *)
+    apply region_free_vdso_of_uncovered.
+    + unfold vdso_top, mmap_top, page_round_down_Z, page_size.
+      pose proof (bv_unsigned_in_range 64 (vm_mmap_base (m_vmmaps model))) as R. unfold bv_modulus in R.
+      set (xm := Z.min _ _). assert (Hxm : xm <= bv_unsigned (vm_mmap_base (m_vmmaps model))) by (unfold xm; lia).
+      pose proof (Z.mul_div_le xm 4096 ltac:(lia)). lia.
+    + rewrite HnZw. lia.
+    + intros x Hx. rewrite HnZw in Hx.
+      pose proof (dn_mres _ _ _ _ _ _ _ _ _ Hd x) as Hm. rewrite (dn_res _ _ _ _ _ _ _ _ _ Hd) in Hm.
+      assert (Hcov : covered (vm_maps (m_vmmaps model)) x = true).
+      { pose proof Hinm as Hc0. unfold map_contains in Hc0. apply existsb_exists in Hc0 as [[b s] [Hin Hb]].
+        cbv zeta in Hb. cbn [fst snd] in Hb. apply andb_prop in Hb as [Hb1 Hb2]. apply Z.leb_le in Hb1, Hb2.
+        rewrite HnZw in Hb2.
+        unfold covered. apply existsb_exists. exists (b, s). split; [exact Hin|].
+        unfold in_iv, in_rng, B, S. cbn [fst snd]. apply andb_true_intro; split; [apply Z.leb_le | apply Z.ltb_lt]; lia. }
+      specialize (Hm Hcov). rewrite covered_app in Hm. apply orb_false_iff in Hm as [_ Hm]. exact Hm.
   - rewrite Hina, Hinm. reflexivity.
 Qed.
 End MprotNode.

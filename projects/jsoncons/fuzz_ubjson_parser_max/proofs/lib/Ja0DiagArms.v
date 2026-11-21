@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: renames the introduced binder p0 to auxvp in the refuse, short, overrun and read arm proofs and passes it to refuse_armA, short_armA, overrun_armA and read_armA; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DiagArms.v, lines 17-18, 23-24, 29-30, 41-42. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -13,18 +14,18 @@ Open Scope Z_scope.
 #[local] Existing Instance PropExec.fx0.
 Theorem dg_refuse_ok : forall scfg L C IL, dg_refuse_stmt scfg L C IL.
 Proof.
-intros scfg L C IL ar HI sp0 M0 [HIok _ ICok (ILY & _ & _ & _ & _ & _ & HEX & HDG & _) Hsp Hal DL _] path fs0 fdata p0 p1 can A0 _ _.
-exact (refuse_armA scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL HEX HDG M0 fdata path fs0 p0 p1 can [] A0).
+intros scfg L C IL ar HI sp0 M0 [HIok _ ICok (ILY & _ & _ & _ & _ & _ & HEX & HDG & _) Hsp Hal DL _] path fs0 fdata auxvp p1 can A0 _ _.
+exact (refuse_armA scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL HEX HDG M0 fdata path fs0 auxvp p1 can [] A0).
 Qed.
 Theorem dg_short_ok : forall scfg L C IL, dg_short_stmt scfg L C IL.
 Proof.
-intros scfg L C IL ar HI sp0 M0 [HIok _ ICok (ILY & _ & _ & _ & _ & _ & HEX & _ & _ & HDGM) Hsp Hal DL M0def] fs0 fdata p0 p1 can A0 CAP crC HCAP HLEN Hs.
-exact (short_armA scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL HEX HDGM M0 M0def fs0 fdata p0 p1 can [] A0 CAP HCAP crC Hs).
+intros scfg L C IL ar HI sp0 M0 [HIok _ ICok (ILY & _ & _ & _ & _ & _ & HEX & _ & _ & HDGM) Hsp Hal DL M0def] fs0 fdata auxvp p1 can A0 CAP crC HCAP HLEN Hs.
+exact (short_armA scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL HEX HDGM M0 M0def fs0 fdata auxvp p1 can [] A0 CAP HCAP crC Hs).
 Qed.
 Theorem dg_overrun_ok : forall scfg L C IL, dg_overrun_stmt scfg L C IL.
 Proof.
-intros scfg L C IL ar HI sp0 M0 [HIok _ ICok (ILY & _ & _ & _ & _ & _ & HEX & _ & _ & HDGM) Hsp Hal DL M0def] fs0 fdata p0 p1 can A0 CAP crC HCAP HLEN Hge Hov.
-exact (overrun_armA scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL HEX HDGM M0 M0def fs0 fdata p0 p1 can [] A0 CAP HCAP crC HLEN Hge Hov).
+intros scfg L C IL ar HI sp0 M0 [HIok _ ICok (ILY & _ & _ & _ & _ & _ & HEX & _ & _ & HDGM) Hsp Hal DL M0def] fs0 fdata auxvp p1 can A0 CAP crC HCAP HLEN Hge Hov.
+exact (overrun_armA scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL HEX HDGM M0 M0def fs0 fdata auxvp p1 can [] A0 CAP HCAP crC HLEN Hge Hov).
 Qed.
 Theorem dg_openerr_ok : forall scfg L C IL, dg_openerr_stmt scfg L C IL.
 Proof.
@@ -33,8 +34,8 @@ exact (open_armA scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL HEX HDG HDGS M0 
 Qed.
 Theorem dg_readerr_ok : forall scfg L C IL, dg_readerr_stmt scfg L C IL.
 Proof.
-intros scfg L C IL ar HI sp0 M0 [HIok _ ICok (ILY & _ & _ & _ & _ & _ & HEX & HDG & HDGS & _) Hsp Hal DL _] fs0 p0 p1 can cr0 A0 [PLO STR NONUL PLEN PDEF] SAH.
-exact (read_armA scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL HEX HDG HDGS M0 fs0 p0 p1 can [] cr0 A0 (STR_ATA ar sp0 M0 A0 p1 dot_path PLO STR NONUL PLEN PDEF SAH)).
+intros scfg L C IL ar HI sp0 M0 [HIok _ ICok (ILY & _ & _ & _ & _ & _ & HEX & HDG & HDGS & _) Hsp Hal DL _] fs0 auxvp p1 can cr0 A0 [PLO STR NONUL PLEN PDEF] SAH.
+exact (read_armA scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL HEX HDG HDGS M0 fs0 auxvp p1 can [] cr0 A0 (STR_ATA ar sp0 M0 A0 p1 dot_path PLO STR NONUL PLEN PDEF SAH)).
 Qed.
 Theorem dg_nofile_ok : forall scfg L C IL Lay LSt, dg_nofile_stmt scfg L C IL Lay LSt.
 Proof. intros scfg L C IL Lay LSt. exact (dg_nofile_of_openerr scfg L C IL Lay LSt (dg_openerr_ok scfg L C IL)). Qed.

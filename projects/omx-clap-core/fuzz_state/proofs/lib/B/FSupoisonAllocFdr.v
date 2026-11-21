@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/Reusable/YFhg.v, with its module paths changed; 377 of its 592 lines of code are new or changed and 295 lines of the source are left out. *)
 (* free's do_recycle walk (lib/A/AFes.v) for any U (lane dr): the AFhd loop records and the AFhg call bridges and facts are reused at FSupoison.unpoison UP mem0 unchanged; the run transitions (AFhg.T_E / T_O / T_R / T_Q), ITEMS, LOOP and the arm are twinned. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFdr.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: PC_DR_O, PC_DR_Q, PC_DR_R. *)
+(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFdr.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: PC_DR_O, PC_DR_Q, PC_DR_R. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia FunctionalExtensionality.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -32,7 +33,7 @@ Unset Lia Cache. Unset Nia Cache.
 Definition PC_DR_O : Z := A_DoRecycle + 0x78.
 (* the DoRecycle batch-release point (lib/B/YFhb.v:80, SS0's pc). *)
 Definition PC_DR_Q : Z := A_DoRecycle + 0xfc.
-(* the DoRecycle item loop head (lib/B/YFhc.v:79, SS0's pc). *)
+(* the DoRecycle item loop head (lib/B/YFhc.v:80, SS0's pc). *)
 Definition PC_DR_R : Z := A_DoRecycle + 0xc4.
 Module FSP := OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A.FSupoison.
 Module FAR := OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.B.FSupoisonAllocR.

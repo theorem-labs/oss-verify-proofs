@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: carry vDSO reservation inclusion through slot preconditions, results and model carriers. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -47,7 +48,12 @@ Section Spec.
       c' = mkCfg (mkst regs' (getr regs 1) M' rom) mdl' /\
       WF st' L /\ REP st' M' /\ LEDGER st' (m_vmmaps mdl') /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
-      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\ vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
+      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      (* [m_channel_reader] rides with the group above: it is a projection of [m_proc],
+         which every [with_vmmaps] on this path copies verbatim (UbMhUnmap.with_vmmaps_rdr). *)
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) /\
+      vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
       (* [comment removed for export] *)
       s_limbo st' = s_limbo st /\ s_canary st' = s_canary st /\ (s_errno st' = s_errno st \/ s_errno st' = 12) /\
       head_of (s_alist st' sc) = g /\ is_group st' g /\ g_sc st' g = sc /\
@@ -68,7 +74,10 @@ Section Spec.
       c' = mkCfg (mkst regs' (getr regs 1) M' rom) mdl' /\
       WF st' L /\ REP st' M' /\ LEDGER st' (m_vmmaps mdl') /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
-      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\ vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
+      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) /\
+      vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
       (* [comment removed for export] *)
       nojunk st' /\ s_limbo st' = s_limbo st /\ s_canary st' = s_canary st /\
       (forall x, In x (s_limbo st) -> s_meta st' x = s_meta st x) /\ (forall x, metaU st x -> metaU st' x) /\
@@ -84,6 +93,7 @@ Section Spec.
       kfam_laws RSEGS F -> (bo = true -> bi = true \/ agf st) ->
       WF st L -> REP st M -> LEDGER st (m_vmmaps mdl) -> nojunk st ->
       m_halted mdl = None -> m_vm_lazy mdl = [] -> m_vm_materialized mdl = [] ->
+      incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
       0 <= sc < 48 -> dle (dbound (16 * size_class sc)) d ->
       zlen (s_limbo st) + Z.of_nat d + 1 <= 8 ->
       0 <= req /\ req + 4 <= 16 * size_class sc ->
@@ -378,6 +388,7 @@ Section ASA.
   Hypothesis Hh : m_halted mdl = None.
   Hypothesis Hlz : m_vm_lazy mdl = [].
   Hypothesis Hmat : m_vm_materialized mdl = [].
+  Hypothesis HVDSO : incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)).
   Hypothesis Hsc : 0 <= sc < 48.
   Hypothesis Hd : dle (dbound (16 * size_class sc)) d.
   Hypothesis Hlimbo : zlen (s_limbo st) + Z.of_nat d + 1 <= 8.
@@ -433,7 +444,10 @@ Section ASA.
     p_def : defined Mc (sp - ASSTK d) sp; p_stk : stk_ok Mc;
     p_r2 : getr r 2 = Z_to_bv 64 (sp - 144); p_r8 : getr r 8 = Z_to_bv 64 sc;
     p_r20 : getr r 20 = Z_to_bv 64 A_CANARY; p_r21 : getr r 21 = Z_to_bv 64 (ctx_active sc); p_r22 : getr r 22 = Z_to_bv 64 MLOCK; p_r23 : getr r 23 = Z_to_bv 64 (MLOCK + 8 * sc);
-    p_K : keeps_but BIG regs r }.
+    p_K : keeps_but BIG regs r;
+    (* Trailing model fields preserve the positional prefix. *)
+    p_rdr : m_channel_reader mdl1 = m_channel_reader mdl;
+    p_vdso : incl (vdso_reserved (m_kernel mdl1) (vdso_top (m_vmmaps mdl1))) (vm_reserved (m_vmmaps mdl1)) }.
 
   (* [comment removed for export] *)
   Record ptE (s1 : mst) (Mc : mem) (mdl1 : Model) (r : bvmap 5 word) : Prop := PTE {
@@ -447,7 +461,9 @@ Section ASA.
     q_fr : forall a, 0 <= a < 2 ^ 64 -> Mc (Z_to_bv 64 a) <> M (Z_to_bv 64 a) ->
              (sp - ASSTK d <= a < sp) \/ (HEAPLO <= a < CEIL /\ (a < IMG_LO \/ IMG_HI <= a) /\ ~ app_of L a) \/ (CTX <= a < CTX_END) \/ (A_ERRNO <= a < A_ERRNO + 4);
     q_def : defined Mc (sp - ASSTK d) sp; q_stk : stk_ok Mc;
-    q_r2 : getr r 2 = Z_to_bv 64 (sp - 144); q_r20 : getr r 20 = Z_to_bv 64 A_CANARY; q_K : keeps_but BIG regs r }.
+    q_r2 : getr r 2 = Z_to_bv 64 (sp - 144); q_r20 : getr r 20 = Z_to_bv 64 A_CANARY; q_K : keeps_but BIG regs r;
+    q_rdr : m_channel_reader mdl1 = m_channel_reader mdl;
+    q_vdso : incl (vdso_reserved (m_kernel mdl1) (vdso_top (m_vmmaps mdl1))) (vm_reserved (m_vmmaps mdl1)) }.
 
   Lemma pt_ptE : forall s1 Mc mdl1 r, pt s1 Mc mdl1 r -> ptE s1 Mc mdl1 r.
   Proof. intros s1 Mc mdl1 r P. destruct P; constructor; assumption. Qed.
@@ -505,7 +521,9 @@ Section ASA.
     pt s1 Mc mdl1 r ->
     WF s2 L -> REP s2 Mc' -> LEDGER s2 (m_vmmaps mdl2) ->
     m_halted mdl2 = None -> m_vm_lazy mdl2 = [] -> m_vm_materialized mdl2 = [] ->
-    m_fs mdl2 = m_fs mdl1 -> m_fds mdl2 = m_fds mdl1 -> vm_limit (m_vmmaps mdl2) = vm_limit (m_vmmaps mdl1) ->
+    m_fs mdl2 = m_fs mdl1 -> m_fds mdl2 = m_fds mdl1 -> m_channel_reader mdl2 = m_channel_reader mdl1 ->
+    incl (vdso_reserved (m_kernel mdl2) (vdso_top (m_vmmaps mdl2))) (vm_reserved (m_vmmaps mdl2)) ->
+    vm_limit (m_vmmaps mdl2) = vm_limit (m_vmmaps mdl1) ->
     s_canary s2 = s_canary s1 -> (s_errno s2 = s_errno s1 \/ s_errno s2 = 12) ->
     (forall k, 0 <= k < sc -> s_alist s2 k = s_alist s1 k) -> (forall x, In x (s_limbo st) -> s_meta s2 x = s_meta s1 x) ->
     (forall x, metaU s1 x -> metaU s2 x) ->
@@ -514,7 +532,7 @@ Section ASA.
     getr r' 22 = getr r 22 -> getr r' 23 = getr r 23 -> keeps_but BIG regs r' ->
     pt s2 Mc' mdl2 r'.
   Proof.
-    intros s1 Mc mdl1 r s2 Mc' mdl2 r' P W2 R2' LG2 Hh2 Hlz2 Hmat2 Hfs2 Hfds2 Hlim2 EC EE HBl HLm HmU DF2 WW E2 E8 E20 E21 E22 E23 K'.
+    intros s1 Mc mdl1 r s2 Mc' mdl2 r' P W2 R2' LG2 Hh2 Hlz2 Hmat2 Hfs2 Hfds2 Hrdr2 HVDSO2 Hlim2 EC EE HBl HLm HmU DF2 WW E2 E8 E20 E21 E22 E23 K'.
     destruct P as [W1 RP1 LG1 Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hlim1 Hcan1 Herr1 BL1 LM1 MU1 FR1 DF1 SK1 Q2 Q8 Q20 Q21 Q22 Q23 KB].
     assert (BL2 : forall k, 0 <= k < sc -> s_alist s2 k = s_alist st k) by (intros k Hk; rewrite (HBl k Hk); exact (BL1 k Hk)).
     assert (LM2 : forall x, In x (s_limbo st) -> s_meta s2 x = s_meta st x) by (intros x Hx; rewrite (HLm x Hx); exact (LM1 x Hx)).
@@ -702,6 +720,7 @@ Section ASA.
     - intros a Ha NE. left. pose proof (M1_writes a Ha NE). pose proof stk272. lia.
     - unfold M1, as_frame. repeat apply defined_wbytes. exact DEF.
     - exact M1_stk.
+    - (* p_rdr: the model is [mdl] itself here. *) reflexivity.
   Qed.
 
 
@@ -716,7 +735,7 @@ Section ASA.
     kat RSEGS (mkCfg (mkst r (0x67b10%bv : word) Mc rom) mdl1) Q.
   Proof.
     intros s1 Mc mdl1 r g idx P EL Hhd Hg Hgsc Hidx Hsl OJ Hstr Hbig A10.
-    pose proof P as [W1 RP1 LG1 Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hlim1 Hcan1 Herr1 BL1 LM1 MU1 FR1 DF1 SK1 Q2 Q20 KB].
+    pose proof P as [W1 RP1 LG1 Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hlim1 Hcan1 Herr1 BL1 LM1 MU1 FR1 DF1 SK1 Q2 Q20 KB Hrdr1 HVDSO1].
     pose proof SK1 as (Kc & K1 & K8 & K9 & K18 & K19 & K20 & K21 & K22 & K23 & K24 & K25).
     pose proof (rc_canary s1 Mc (rp_statics s1 Mc RP1)) as CAN. rewrite Hcan1 in CAN. fold can in CAN.
     assert (Hsp' : CEIL + 144 <= sp < 2 ^ 64) by (ceil; pose proof stk272; lia).
@@ -728,7 +747,8 @@ Section ASA.
     exists s1, Mc, mdl1, r', g, idx.
     split; [reflexivity|].
     split; [exact W1|]. split; [exact RP1|]. split; [exact LG1|].
-    split; [exact Hh1|]. split; [exact Hlz1|]. split; [exact Hmat1|]. split; [exact Hfs1|]. split; [exact Hfds1|]. split; [exact Hlim1|].
+    split; [exact Hh1|]. split; [exact Hlz1|]. split; [exact Hmat1|]. split; [exact Hfs1|]. split; [exact Hfds1|].
+    split; [exact Hrdr1|]. split; [exact HVDSO1|]. split; [exact Hlim1|].
     split; [exact EL|]. split; [exact Hcan1|]. split; [exact Herr1|].
     split; [exact Hhd|]. split; [exact Hg|]. split; [exact Hgsc|]. split; [exact Hidx|]. split; [exact Hsl|]. split; [exact OJ|]. split; [exact Hstr|]. split; [exact Hbig|].
     split; [exact BL1|]. split; [exact LM1|]. split; [exact MU1|].

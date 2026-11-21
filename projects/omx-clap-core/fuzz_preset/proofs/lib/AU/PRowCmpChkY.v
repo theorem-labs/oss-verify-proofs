@@ -16,15 +16,15 @@
        of the overlay is new (prk_memnorm_keep_win);
    (5) POSTr states ARx at hps and ends with the keep (YAkMemnorm.memnorm tfibsegs mem -> YAkMemnorm.memnorm tfibsegs mem');
    (6) the theorem is mcmpy_check_srr_x.
-   The helpers prk_memnorm_keep_win / prk_rodata_ok_cc are lane RowsCpy's (Reusable/PRowKit.v, AU/PRowKitA.v), merged
-   from 532cf8bd849e.
+   The helpers prk_memnorm_keep_win / prk_rodata_ok_cc are lane RowsCpy's (Reusable/PRowKit.v, AU/PRowKitA.v), merged.
+   
    rule 24: proves no row by itself (kind: restatement over ARx + memnorm keep of preset's A/AE70.v walk, a part of
    the memcmp and bcmp rows; CONFIRM the internal file bcmpcpy-CONFIRM.md). Image B: the whole of A/AE70.v (its Section e runs too: image B has no copy) relocated to image B (fuzz_preset.asan-ubsan, pin f8f98a95) by symbol + offset with lane RowsCmp's script, the internal file relocB.py (pyelftools + capstone; never a constant delta); the module paths go to the B
    twins (A/AB1v, AE34, AF0l, AF0m, AF0x, AB1w, AE20, AE2y -> Reusable/YB1v, YE34, YF0l, YF0m, YF0x, YB1w, YE20, YE2y).
    Relocation table: the commit message.
-   #102 B' (c-libc-stdio rows102-cmp): this file is origin/cold/c-libc-stdio-rows-cmp 2d9da94a5737's
+   #102 B' (c-libc-stdio rows102-cmp): this file is a commit's
    lib/AU/PRowCmpChkY.v (blob 470126821888), relocated B (asan-ubsan f8f98a95, twin 3b5e1a09) -> B' (asan-ubsan
-   d663f82d7f48, twin c90d4fa54d43) by the frozen alreloc c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9), --build
+   d663f82d7f48, twin c90d4fa54d43) by the frozen alreloc c4338d099cfb8025, --build
    asan-ubsan --assume-source (input staged at lib/B/AU, same blob): 86 numerals moved by symbol + offset, each the
    same symbol + offset on both twins and, where the internal file b-to-bprime.tsv 5a684bb2 lists it, its value: RC_ENTRY / RC_END
    MemcmpInterceptorCommon+0xc4 / +0x114 -> 0x43c98 / 0x43ce8, the pcs MemcmpInterceptorCommon+0x104 / +0x108 ->
@@ -41,6 +41,7 @@
    (alx_const_cells) it may read asan_inited, replace_intrin_cached, asan_flags_dont_use_directly+0x48 (8 bytes),
    __asan_shadow_memory_dynamic_address, kHighMemEnd, kMidMemBeg, kMidMemEnd, real_memcpy, real_memset: on both twins the
    same symbol + offset (YImgCellsB names), and the same pinned values in the old and the #102 YE2y. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

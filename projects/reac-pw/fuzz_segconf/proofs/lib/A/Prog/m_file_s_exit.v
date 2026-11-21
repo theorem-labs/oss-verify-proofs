@@ -5,6 +5,7 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module names changed; 190 of its 221 lines of code are new or changed and 223 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A, 0x85ebc): the segment S_MF_EXIT of its walk, 57 instructions from the cut
    EXIT 0x86e70 to the `ret` 0x86f50 (the G2 walk owner's guide/MF-CUTS-A.md section 3 "Epilogue" and section 4). Lane
    the TAIL / EXIT segment lane of the G2 walk owner's G2. No call: the side-stack frame is released inline.
@@ -22,7 +23,7 @@
    journal with the frame released (stack_free_state 1 pos), the callee-saved registers back, the mconf block
    unchanged by the epilogue (mf_tx_mconf, lib/A/Prog/m_file_k.v) and so holding mf_final v, and the frame
    form sa_noalloc (the layout kept, the state the entry's up to st_fs).
-   Closed against G2 FINAL at 6f783602b5e3 (the image-A owner's contracts, round 5). *)
+   Closed against G2 FINAL (the image-A owner's contracts, round 5). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

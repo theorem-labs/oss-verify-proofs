@@ -1,6 +1,6 @@
-(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 82a1d1bf3a6 lib/A/FSH_crt_segD1_free.v)
-   Port source: a working branch 82a1d1bf3a6 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_free.v (771
-   lines, CTX-free, on S0 6e79fac25a0 + base v27), itself PORTED from a working branch d25a984c903
+(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD1_free.v)
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_free.v (771
+   lines, CTX-free, on S0 + base v27), itself PORTED from a working branch
    proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St17 :521 / St18 :535 and
    check_round_trip_sd16.v :541 (with sd17.v / sd18.v, the two fuzz_free steps), the bespoke ASan proof of this
    function on fs.asan. CHECKER VERDICT: CONFIRM (a Theorem Labs lane, role check, 2026-10-29 04:3xZ) on

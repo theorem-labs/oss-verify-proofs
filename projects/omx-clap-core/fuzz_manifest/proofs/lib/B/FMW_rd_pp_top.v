@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pp_top.v (a working branch e2e59892bef). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pp_top.v (a working branch). *)
 (* lv2_locate_manifest_readings on fm.asan-ubsan, segment PP (FMW_rd_top.v SEG_P): rd_P_holds from its pieces -- P's own
    stretch and the space body (FMW_rd_pp.v pp_p_body), the three inner loops (FMW_rd_pp_w1/_w2/_w3.v), the store of
    the name's length at the ':' and the strchr stretch at the '<' (FMW_rd_pp_st.v pp_l3e_holds, pp_st_holds), chained

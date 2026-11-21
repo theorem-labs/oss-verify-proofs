@@ -2,20 +2,21 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of check_reply_answer (plugin-hostd/fuzz_command, 0x88450, 75 instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close, a caller with calls). *)
-(* Modified by Theorem Labs, 2026-10: re-walked on fuzz_command.asan-ubsan (0x88754, 81 instructions) from lib/A/Prog/check_reply_answer.v (a working branch 7308930bf5f): module paths, the image's addresses, the three UBSan trap sites (0x887c8, 0x88804, 0x8880c) decided by the run from atom facts, the strcmp test's branch sense (bnez to the abort block), and the record facts from lib/B/Prog/CmdRecFacts.v (a working branch 713692f1e0c): the literals' shadow by cmd_aread_ok_chk over CmdChk's checkers, their tails by cmd_tail_vis_at over CmdRo's cmd_ro_ends. *)
+(* Modified by Theorem Labs, 2026-10: re-walked on fuzz_command.asan-ubsan (0x88754, 81 instructions) from lib/A/Prog/check_reply_answer.v (a working branch): module paths, the image's addresses, the three UBSan trap sites (0x887c8, 0x88804, 0x8880c) decided by the run from atom facts, the strcmp test's branch sense (bnez to the abort block), and the record facts from lib/B/Prog/CmdRecFacts.v (a working branch): the literals' shadow by cmd_aread_ok_chk over CmdChk's checkers, their tails by cmd_tail_vis_at over CmdRo's cmd_ro_ends. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/check_reply_answer.v, with its module paths and module names changed; 29 of its 64 lines of code are new or changed and 581 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_words_add on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan): the proof of
    tcheck_words_add_spec B MT (lib/B/Prog/check_words_add_c.v). The B twin of lib/A/Prog/check_words_add.v
-   (a working branch 1aea12cabb8). The walk is in check_words_add_s4.v (entry 0x88eac .. 0x88f64),
+   (a working branch). The walk is in check_words_add_s4.v (entry 0x88eac .. 0x88f64),
    check_words_add_s2.v / _s3.v (0x88f64 .. 0x88fe8, the literal and the word placement) and
    check_words_add_s2.v (0x88fe8 .. ret); the run decides the 11 UBSan trap sites not taken from atom facts
    (the statement's address ranges, its `cp mod 8 = 0` and `wp mod 8 = 0`).
 
    Section hypotheses: the two wrapper contracts the statement names (ASTRCMP, ASTRNCMP, fx-generic since
-   a working branch 713692f1e0c, applied at fx) and RULING-STMT §1's walk
+   a working branch, applied at fx) and RULING-STMT §1's walk
    hypotheses `HB : CmdBSyms B` (lib/B/YF0m.v:4875) and `IMG : cmd_img_facts SEGS B` (lib/B/Prog/CmdRecBase.v:339;
    this walk calls runtime entries). check_words_add_s1.v's record CwaFacts is built by exact from a Theorem Labs lane's shared
-   record lemmas (lib/B/Prog/CmdRecFacts.v, a working branch 6830f0bf032): cf_cell / cf_got from CmdRecCells'
+   record lemmas (lib/B/Prog/CmdRecFacts.v, a working branch): cf_cell / cf_got from CmdRecCells'
    cmd_cf_cell / cmd_cf_got (with the statement's cmd_val_objs), cf_env from cmd_cf_env, cf_grec from cmd_cf_grec,
    cf_lit from cmd_cf_lit, cf_tail from CmdRecRest's cmd_tail_vis. `AR_laws SEGS B` is the theorem AR_laws_ok
    (check_words_add_s1.v's cwa_laws), not a hypothesis. lib/B/Prog/CheckWordsAddClosed.v discharges IMG at the

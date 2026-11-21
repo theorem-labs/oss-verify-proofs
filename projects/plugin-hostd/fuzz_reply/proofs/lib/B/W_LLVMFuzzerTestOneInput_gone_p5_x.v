@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of the composition of ARM_gone's phase p5 on image B
-   (lib/B/W_LLVMFuzzerTestOneInput_gone_p5.v, a Theorem Labs lane's, fee5272ac13: the table-order loop, GT0 to GCSD, from the
+   (lib/B/W_LLVMFuzzerTestOneInput_gone_p5.v, a Theorem Labs lane: the table-order loop, GT0 to GCSD, from the
    loop's steps of parts a and b), for the conversion of ARM_gone to the cut invariants of
    lib/B/W_LLVMFuzzerTestOneInput_cut_x.v.  _gone_p5.v is not edited.
    - the steps are taken from lib/B/W_LLVMFuzzerTestOneInput_gone_p5a_x.v / _p5b_x.v at this Section's variables
      (P5OH_x, P5IH_x, P5T_x, P5OT_x, gp5_t0_x, gp5_oh_x, gp5_ih_x, gp5_it_x, gp5_ot_x, gp5_c8_x, gp5_c3_x);
    - RESTATED under their names + _x, merged per item with SmallX's image-A twin
-     lib/A/W_LLVMFuzzerTestOneInput_gone_p5_x.v (95a5de32ab2): the inner and outer loops gp5_inner_x / gp5_outer_x and
+     lib/A/W_LLVMFuzzerTestOneInput_gone_p5_x.v: the inner and outer loops gp5_inner_x / gp5_outer_x and
      the phase lemma gp5_t0_csd_x.
    Section hypotheses: as parts a and b.  Every ghost list is [] (cut_x's HP0). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -137,7 +138,7 @@ Hypothesis CSHE : GN_CSHE_x B MT PST ARx RP.
 Hypothesis RIstep : GN_RI_step B MT LSx RINV MMAX.
 (* the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c) / (d)), as _gone_p3_x.v states them: RPNP (RM is NP at the instance), the arm's
    count row LSCNT (GN_LS_cnt_x, _gone_base_x.v) and its model count rule CNTSTEP (GN_CNT_step, _gone_base.v, at
-   check_no_loss's premise peak cnl_pk, W_contract_x.v:378) *)
+   check_no_loss's premise peak cnl_pk, W_contract_x.v:379) *)
 Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
 Hypothesis RPNP : forall S k, rp_RM RP S k <-> NP S.
 Hypothesis LSCNT : GN_LS_cnt_x B LSx RINV RP gn_pk.
@@ -150,7 +151,7 @@ Hypothesis BLKN : forall ly S Hp (W : world segs) mem md p n, ARx ly S Hp W mem 
 (* the image is off PST (add_x's HPST): the journal's image clause takes it; trivial at PST = [] *)
 (* @@ UNANCHORED Hypothesis HPST *)
 Hypothesis HPST : forall a, in_img segs a -> ~ Exists (in_zr a) PST.
-(* W_frame_x.v:105's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
+(* W_frame_x.v:106's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
 (* @@ UNANCHORED Hypothesis FRMF *)
 Hypothesis FRMF : forall ly S Hp (W : world segs) mem md cid pos, ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
   ly_F ly mod 4096 = 0 /\ fs_frame_off cid pos mod 64 = 0 /\ 64 <= fs_frame_bytes cid /\ fs_frame_bytes cid mod 64 = 0.

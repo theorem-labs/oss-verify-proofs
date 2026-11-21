@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segments): changed half_ok_of_srealizes. *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -23,9 +24,12 @@ Proof.
   intro tr. rewrite (HsT tr), (HtT tr). reflexivity.
 Qed.
 
+(* LPS 727298f3: a run reads its binary's own segments followed by the vDSO pair
+   ([Run.run_segments]), so the walk's realisation and its safety are over that list,
+   as [KillFree.srealizes_error_free_unkilled] and [ShapeEF.srealizes_traces_iff] ask. *)
 Lemma half_ok_of_srealizes : forall scfg segs pc ph sp brk0 mb rnd lim inp T,
-  srealizes segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
-  Safe segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  srealizes (run_segments segs inp sp mb) scfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
+  Safe (run_segments segs inp sp mb) scfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   kill_free T ->
   half_ok scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp T.
 Proof.

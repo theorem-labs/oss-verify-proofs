@@ -5,15 +5,16 @@
    Section hypotheses AMALLOC / AFREE / AICPY, and the slots H_ALLOC_MALLOC / H_ALLOC_FREE / H_RT_MEMCPY of
    lib/A/KnockClose.v (h-small-a11's join). Each is the relocated core's theorem at TfibB: AF0w.tfib_amalloc_realizes,
    AF0q.afree_realizes_closed and AD2m.tfib_AICPY, with TfibB's TfibSyms from AD2l.TfibB_pair and its hash field, which
-   TfibB defines as tfib_dhash (AD2l.v:34). AF0w discharges the malloc proof's StackDepotPut premise itself, with git-lead's
+   TfibB defines as tfib_dhash (AD2l.v:35). AF0w discharges the malloc proof's StackDepotPut premise itself, with git-lead's
    AD3j.tfib_depot_put_any at AD3j's instantiation record kd_inst.
    rule 24: proves no function (kind: assembly). *)
-(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/KnockAllocClose.v
-   at origin/ossv/recipes 6ebe35ba632: fuzz_qdisc's start-up depot holds one trace (depot_has_trace = true), so the AF0w /
+(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/KnockAllocClose.v:
+   fuzz_qdisc's start-up depot holds one trace (depot_has_trace = true), so the AF0w /
    AF0q / AD2l it closes over are the one-trace texts of fuzz_identity's released tree (A3), whose AF0w discharges the
    malloc proof's depot premise itself with AFem.tfib_depot_ok (no AD3j / kd_inst argument); TfibSyms carries the ts_hash
    field, which AD2l.TfibB_syms proves; the slots are lib/A/QdiscClose.v's; names knock_* -> qdisc_*, module paths
    changed (h-small-a3). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (trb_srealizes_rc and trb_srealizes_top take valid_entry's launch conjunct entry_launch_ok_va, unpacked as its fifth conjunct in the equivalence proof, where each binary's walk is read against the run's segment list with the vDSO pair from the run's start through RomStable.run_init and RomStableS.srun_initE; RomStable and RomStableS imports). *)
 From Stdlib Require Import NArith ZArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -9,6 +10,7 @@ From OSSVerify.cgif.cgif_rgb_fuzzer.images Require Import Plain.
 From OSSVerify.cgif.cgif_rgb_fuzzer.images Require Import AsanUbsan.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK15 YK18 YN0a YN09 YN05 YN0b YH04 YZ02.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YP07 YP01.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import RomStable RomStableS.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
 YK11 YK0d YK0a YA0c YA0e YA01 YA02 YB11 YB1g YB01
 YG0h YG00 YG01 YG0u YG0d YG0w YG05
@@ -58,24 +60,31 @@ Let FPU : fprintf_s_site_tfa B est 0x1591f (strB "usage: "%string) (strB " INPUT
 Let EXS_A : forall fx : YK11.FPState, @exit_site_tfa fx rc B est xst := fun fx => trb_exit_site (fx:=fx) B HB LAWS.
 Lemma trb_srealizes_rc : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
-entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+(* #38: conjunct five of [valid_entry] (75d69e00 Run.v:3732-3739), THREADED
+   from the caller's own [valid_entry] - [Halts_trb.v:25] already holds it.
+   [valid_launch] is NOT threaded: conjunct 13 of [valid_input] (Run.v:4583-4596). *)
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
+valid_input inp ->
 YN05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (CLOSED inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hlau Hinp Hceil.
 change target_alloc_limit with YA02.LIMIT.
 exact (trb_srealizes B HB AMALLOC AFREE_A AICPY ARDCHK LIBCV xst XFR PF1_A PFN_A est ESTI ESTF FWS RFS FPO FPR FPU EXS_A
-sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hlau Hinp Hceil).
 Qed.
 End a.
 Theorem trb_srealizes_top : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
-entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
+valid_input inp ->
 srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (CLOSED inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hlau Hinp.
 exact (@trb_srealizes_rc (YN05.RunCeilOf (bv_unsigned sp) (valid_sp_window36 sp Hsp))
-sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp (YN05.ceil_of_top_run _)).
+sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hlau Hinp (YN05.ceil_of_top_run _)).
 Qed.
 Theorem cgif_rgb_fuzzer_both_equiv_lim : forall ls : Z, (SRC_LIM_MIN <= ls)%Z ->
 forall en_s en_t inp,
@@ -89,10 +98,14 @@ Proof.
 intros ls Hls [sp brk mb rnd] [sp' brk' mb' rnd'] inp Hens Hent Hinp.
 pose proof (valid_input_va_size _ Hinp) as Hsv48.
 rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-destruct Hens as [Hsp [Hbrk [Hmb Hfit]]]. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+destruct Hens as [Hsp [Hbrk [Hmb [Hfit Hlau]]]]. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
 eapply (shape_strong_equiv_efs_budgets ls target_alloc_limit src2segs _ _ sp brk mb rnd TSEGS _ _ sp' brk' mb' rnd' (SPEC inp) (CLOSED inp) inp).
-- apply src2_realizes; assumption.
-- apply trb_srealizes_top; assumption.
+(* each walk is over its binary's own segments; [RomStable.run_init] and [RomStableS.srun_initE]
+   read it against the run's list, the binary's segments and the vDSO pair, from the run's start *)
+- apply run_init; [first [reflexivity | unfold vdso_image, vdso_text_seg; vm_compute; reflexivity] |].
+  apply src2_realizes; assumption.
+- apply srun_initE; [first [reflexivity | unfold vdso_image, vdso_text_seg; vm_compute; reflexivity] |].
+  apply (srealizesM_E _ true). apply trb_srealizes_top; assumption.
 - apply spec_closed_eq.
 Qed.
 Theorem cgif_rgb_fuzzer_both_equiv :

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the segments' top bound). *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -40,7 +41,7 @@ Theorem base_ubsan :
     (mkImage usegs u_init_pc u_phdrs).
 Proof.
   apply (side_ok_equiv_budgets _ _ _ _ _ _ TPS TU).
-  - exact (side_ok_of_tree_ok _ _ _ _ _ _ plain_tree_ok_u).
-  - exact (side_ok_of_tree_ok _ _ _ _ _ _ ubsan_tree_ok).
+  - exact (side_ok_of_tree_ok _ _ _ _ _ _ plain_tree_ok_u ltac:(segs_top_low)).
+  - exact (side_ok_of_tree_ok _ _ _ _ _ _ ubsan_tree_ok ltac:(segs_top_low)).
   - intros enS enT inp HvS HvT Hi. unfold TPS, TU. apply equiv_PU; assumption.
 Qed.

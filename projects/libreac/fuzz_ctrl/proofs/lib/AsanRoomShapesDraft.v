@@ -114,12 +114,13 @@ Inductive star_guarded_ua (refusal : Z) (segs : list Segment) (cfg : SpuriousCfg
 
 (** ** What the statement reads of the sanitizer build, for one policy [p] *)
 
+(* LPS 08b1429: over [run_segments segs inp sp mbase], as RoomShapesDraft's canon family. *)
 (** RoomShapes' [canon_trace], cut. *)
 Definition canon_trace_unless_at (cfg : SpuriousCfg) (p : policy) (refusal : Z) (img : Image) (lim : Z)
     (en : ExecEntry) (inp : ProcInput) (tr : list event) : Prop :=
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-    exists tr' c, canon_run_ua refusal p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr' c
+    exists tr' c, canon_run_ua refusal p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr' c
                   /\ is_prefix tr tr'
   end.
 
@@ -128,8 +129,8 @@ Definition canon_cut_at (cfg : SpuriousCfg) (p : policy) (refusal : Z) (img : Im
     (en : ExecEntry) (inp : ProcInput) (tr : list event) : Prop :=
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-    exists c, canon_run_ua refusal p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c
-              /\ cut_at refusal segs c
+    exists c, canon_run_ua refusal p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c
+              /\ cut_at refusal (run_segments segs inp sp mbase) c
   end.
 
 (** RoomShapes' [guarded_reaches_error], cut: an error that a canonical
@@ -141,11 +142,11 @@ Definition guarded_reaches_error_unless_at (cfg : SpuriousCfg) (p : policy) (ref
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
     exists tr c evs,
-      ((star_guarded_ua refusal segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c
-        /\ ~ unplaced_at segs c /\ ~ budget_refused_at segs c)
-       \/ canon_run_ua refusal p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c)
-      /\ ~ cut_at refusal segs c
-      /\ sstep_cfg segs cfg c evs SError
+      ((star_guarded_ua refusal (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c
+        /\ ~ unplaced_at (run_segments segs inp sp mbase) c /\ ~ budget_refused_at (run_segments segs inp sp mbase) c)
+       \/ canon_run_ua refusal p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c)
+      /\ ~ cut_at refusal (run_segments segs inp sp mbase) c
+      /\ sstep_cfg (run_segments segs inp sp mbase) cfg c evs SError
   end.
 
 (** ** The shape *)

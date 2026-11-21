@@ -5,8 +5,9 @@
    (lib/B). The same text also appears in projects/cgif/cgif_file_fuzzer/proofs/lib/YCbo.v:420-423, 430-444, 447-448,
    453-455, 470-475, 477-486, 489-491, 502-505, 511-514, 1255-1258. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_name_seg_rel.v, with its module paths, module names and numbers changed; 929 of its 1013 lines of code are new or changed and 1840 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* has_prefixed 0x823e4..0x825ac (lv2_locate.c:55-76) in fm.asan-ubsan, walk kit (G2, image B). B twin of
-   lib/A/FMW_hp_kit.v at a working branch 433b7106168, re-derived on B's code (pin ca61e5c9eabc0050, unstripped twin
+   lib/A/FMW_hp_kit.v at a working branch, re-derived on B's code (pin ca61e5c9eabc0050, unstripped twin
    b9568e38145a): B's frame is 128 bytes (`addi sp, sp, -0x80`), the prefix pointer t + q and strlen (location) live in
    the frame at sp + 16 / sp + 8 (A keeps them in s2 / s4), s4 = ':' , s9 = -plen, s10 = -1, s11 = 1, and B adds six
    UBSan pointer-overflow guards (0x82474, 0x8247c, 0x82484, 0x824c0, 0x824f8, 0x82520, trap `unimp` 0x825a0) that

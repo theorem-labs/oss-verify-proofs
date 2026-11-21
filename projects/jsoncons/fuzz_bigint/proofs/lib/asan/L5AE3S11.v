@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv lies at least 16 bytes above the stack top (ar_sptop ar + 16 <= av), the auxv fact is the launch's vector (L5USA.auxv_okA) in place of the ten-pair auxv20A, and it is read through the visible memory (auxv_vis) and passed with the CONFIG_RSEQ flag to the leaf lemmas. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -146,7 +147,7 @@ Lemma e3_s11 :
     forall (RNDR : 0 <= rnd < 2 ^ 64),
     forall (CANR : 0 <= canary < 2 ^ 64),
     forall (HWR : 0 <= hw < 2 ^ 64),
-    forall (AVS : ar_sptop ar <= av),
+    forall (AVS : ar_sptop ar + 16 <= av),
     forall (HH : ri_inv HI ([(d1, 64); (d2, 64); (d3, 64); (d4, 64)] ++ LB1) (L5DSA.ff_e3 FF Sp F1a F3a F1b F3b F1c F1d) LKt cr A M (vml_of model)),
     forall (AM : amodel_ok A model),
     forall (HK : K []),
@@ -404,7 +405,7 @@ Lemma e3_s11 :
     forall (RP31 : regs_preserved R30 R31),
     forall (R33_10 : getr R33 (reg 10) = Z_to_bv 64 (obj - 32)),
     forall (CI33 : cinv L ar HI M8 model8 A7 LB1 ((F1b, 1, Sp - 576) :: (F3a, 3, Sp - 416) :: (F1a, 1, Sp - 64) :: FF) Sp SCR XW [(ref, 66); (u, 144); (d3, 64); (d4, 64)] M33 model33 ((F1c, 1, Sp - 1056) :: LKt) (adebit L (adebit L (adebit L cr 144) 48) 66) A31),
-    forall (AUXV : forall j : nat, (j < 20)%nat -> L5.u64_at RSEGS M33 (av + 8 * Z.of_nat j) (nth j (L5USA.auxv20A uid rnd hw) 0)),
+    forall (AUXV : L5USA.auxv_okA M33 av uid rnd hw),
     forall (FRN : forall j : nat, (j < 13)%nat -> L5.u64_at RSEGS M33 (Sp - 712 + 8 * Z.of_nat j) (nth j [F3a; nz w10; nz w9; L5DSA.RETIRE_MAGIC; F1b; S F1b; F1b + 32; Sp - 504; nz xo; F1b; Sp - 608; Sp - 512; L5DSA.DIV_RET_N] 0)),
     forall (FRQ : forall j : nat, (j < 11)%nat -> L5.u64_at RSEGS M33 (Sp - 600 + 8 * Z.of_nat j) (nth j [F1b; F3a; nz (S xo); F1a + 32; F3a + 96; F3a + 32; nz xo; S F3a; nz xs; nz xo; L5DSA.DIVEQ_RET] 0)),
     forall (FRU : forall j : nat, (j < 3)%nat -> L5.u64_at RSEGS M33 (Sp - 472 + 8 * Z.of_nat j) (nth j [Sp - 448; Sp - 96; L5DSA.UNNORM_RET] 0)),
@@ -436,8 +437,8 @@ Proof.
   { unfold numf in *. clear - NUM TLSR. lia. }
   destruct TLSI as (DJ1 & DJ2 & DJ3). destruct TLSP as (DJ4 & DJ5 & DJ6). destruct TB2 as (DJ10 & DJ11 & DJ12).
   clear NUM. rename NUM4 into NUM. clear TLSR.
-  expand_arr_at AUXV 20%nat av 0. expand_arr_at FRN 13%nat (Sp - 1216) 504.
-  pose proof (ue3r2_conc HFILL HCOPY HTLS fx33 R33 (mrestrict (ahid A31 model33) M33)
+  auxv_vis CI33 AUXV rx. expand_arr_at FRN 13%nat (Sp - 1216) 504.
+  pose proof (ue3r2_conc HFILL HCOPY HTLS rx fx33 R33 (mrestrict (ahid A31 model33) M33)
                 (fun j => match j with 2%nat => Sp - 1216 | 10%nat => obj | 32%nat => av | 33%nat => canary | 34%nat => uid | 36%nat => rnd | 39%nat => hw | 40%nat => ctx | 41%nat => th | 42%nat => blk | 43%nat => tbv | 44%nat => tev | 45%nat => F1b | 46%nat => nz xo | 47%nat => F1b + 32 | 48%nat => S F1b | 49%nat => F1b | 50%nat => L5DSA.RETIRE_MAGIC | 51%nat => nz w9 | 52%nat => nz w10 | 53%nat => F3a | _ => 0 end)) as P. cbn beta iota in P.
   feed_rng P ltac:(first [ apply nz_range | apply UR | apply BL.bvu_range | (unfold L5DSA.U; apply BL.bvu_range) | nlia | (unfold S, SB, L5DSA.RETIRE_MAGIC; unfold numg in FN; clear - FN; lia) ]).
   feed P ltac:(first [fcell CI33 | fdp CI33]).

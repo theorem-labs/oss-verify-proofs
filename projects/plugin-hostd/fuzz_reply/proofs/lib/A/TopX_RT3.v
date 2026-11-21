@@ -1,11 +1,11 @@
 (* Three more runtime contracts AT A's top_x instance
-   ARX_rt (TopX_RT.v's verbatim copy of top_x.v:125-126's ARX at integ bb9dae5d905:
+   ARX_rt (TopX_RT.v's verbatim copy of top_x.v:125-126's ARX at integ:
    fun ly S Hp W mem md => ARcf (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = []), asked by a Theorem Labs lane
    (01:50Z) for W3's walks (a Theorem Labs lane: CSE_x / CNL_x / CSHE_x need them at ARX):
      topx_ABCMP    : abcmp_realizes_x segs TfibB ARX_rt (SIGMA WS_bcmp)                        (W_list_find.v:159's ABCMP)
      topx_AMEMCHR  : RTx.amemchr_realizesM_x segs TfibB ARX_rt 0x10350 0x10370 (SIGMA WS_memchr)
-                     (= W_next_line.v:77 / W_drain_cx_x.v:162's AMEMCHR text; RTx.v:137 says verbatim, convertible)
-     topx_AMEMMOVE : amemmove_realizes_x TfibB ARX_rt (SIGMA WS_asan_memmove)                   (W_drain_cx_x.v:161's AMEMMOVE)
+                     (= W_next_line.v:78 / W_drain_cx_x.v:163's AMEMCHR text; RTx.v:138 says verbatim, convertible)
+     topx_AMEMMOVE : amemmove_realizes_x TfibB ARX_rt (SIGMA WS_asan_memmove)                   (W_drain_cx_x.v:162's AMEMMOVE)
    Each is an existing generic proof applied at ARX_rt:
      bcmp   : Rt/Bcmp.v bcmp_site_realizes_x (over AE2y.icpt_laws_x + TfibSyms);
      memchr : Rt/Memchr.v memchr_icpt_realizesM_x (over icpt_laws_x + TfibSyms; its pc 0x421b0 = W_place's WS_memchr);

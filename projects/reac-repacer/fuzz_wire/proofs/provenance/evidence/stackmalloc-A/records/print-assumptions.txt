@@ -1,6 +1,6 @@
 # Check, About and Print Assumptions of stack_malloc0_contract and stack_malloc1_contract, and of the two contracts
 # at WireB (the consumer's hypothesis type, closed by exact). The scratch file lib/A/ScratchSmA.v below was added,
-# uncommitted, to the cb clone of 8a2b472e9c3e after its fresh build, compiled by `CB_COMPILE=<it> cb build <clone> <it>`
+# uncommitted, to the cb clone after its fresh build, compiled by `CB_COMPILE=<it> cb build <clone> <it>`
 # (cb-d02a58a345b9; log build-20261031T175313Z.log, `cb: rc=0 ... 1 targets compiled`) and deleted.
 # Each of the 4 Print Assumptions lists 14 axioms, every one in toolchain/allowed-axioms.txt (checked by name).
 ## the scratch file

@@ -10,13 +10,13 @@ inputs as the re-run. This file changes no .v file and no theorem; it is provena
 ## 1. The kit, checked
 
 | what | sha256 (12) | where |
-| cmpkit (kit id = first 12 of sha256(SHA256SUMS)) | 86da41d3ef68 | hub HUB, commit 98e50c029045 (BRANCH), tools/cmpkit/86da41d3ef68/ |
+| cmpkit (kit id = first 12 of sha256(SHA256SUMS)) | 86da41d3ef68 | hub HUB, (BRANCH), tools/cmpkit/86da41d3ef68/ |
 | SHA256SUMS | 86da41d3ef68abf071a843e599786e5eb0a6ed77c4a6b6eb645e7498bffbee60 | sha256(SHA256SUMS)[:12] = 86da41d3ef68, the kit id |
 | luiscan.py | 9ae61e4a0e01 | kit member (full: 9ae61e4a0e018677862566a53e3b9a6c0f1a89c9f71a9012bf1893f8ec93edad) |
 | ambiscan.py | 9f61b4cee422 | kit member (full: 9f61b4cee42207e6ae77f33c6ca2d9a9b8f938c38cff50b8c71c057b1e955d8d) |
 | strictcmp3.py (both scans load it from the same directory) | 65688e94214a | kit member |
 
-Extracted with `git -C HUB archive 98e50c029045 tools/cmpkit/86da41d3ef68/` into one directory
+Extracted with `git -C HUB archive tools/cmpkit/86da41d3ef68/` into one directory
 holding exactly the kit's files; `sha256sum -c SHA256SUMS` = 9 x OK (out/scans-kitsha.out).
 
 ## 2. Inputs: the same images and the same 7 pairs as the re-run

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp; the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -62,10 +63,10 @@ Proof. intros A B a f s Q ms H. unfold implM, mbind, mret in *. cbn. exact H. Qe
 
 Section B.
   Context {HGW : HasGuard} {HCEIL : HasCeiling}.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
+  Variables (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
             (MPAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
+  Hypothesis CEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
   Hypothesis VARGV : valid_argv argv.
   Hypothesis VENVP : valid_envp envp.
   Hypothesis EARGV : argv = [arg0; arg1].
@@ -80,9 +81,9 @@ Section B.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
+  Notation IMGB := (rimg sp0 argv envp inp mbase rnd).
   Notation LO' := (LO sp0).
-  Notation BASE' := (BASE sp0 argv envp uid hw rnd TID).
+  Notation BASE' := (BASE sp0 argv envp inp mbase rnd TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm MPAD S7 S6 S5 S4).
   Ltac hyps := first [exact VSP | exact CEIL | exact VARGV | exact VENVP | exact EARGV | exact HT | exact MALLOC | exact FREE | exact FPR | exact EXK | exact FWR | exact TOW].
 
@@ -166,7 +167,7 @@ Section B.
 
   #[using="VSP CEIL HT FPR"] Lemma fprintf_exit : forall (d : pdiag) {R} (K : M PState R) (Q : R -> PState -> machine_state -> Prop) (s : PState) (LB : list block)
       x1 t0 t1 t2 x9 (a1v a2v : word) x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 (F : bvmap 5 word) (fc : bv 32) (mm : mem),
-    diag_args d mm a1v a2v (usp0 - 8388608) (usp0 - 128) ->
+    diag_args d mm a1v a2v (usp0 - 6144512) (usp0 - 128) ->
     BASE' mm -> RHEAP s LB mm -> ps_so s = stdout_init -> frm0 fc ->
     (forall ms', rat_exit 2 s ms' -> implM rsegs K s Q ms') ->
     implM rsegs (io_diag ioS (diag_of_pdiag d) ;;; K) s Q
@@ -178,7 +179,7 @@ Section B.
     unfold implM. iprefix. zstep. apply evt_done.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm s Q msx) end.
     eapply implM_bind.
-    { eapply (FPR d) with (lo := usp0 - 8388608) (canary := guard_word);
+    { eapply (FPR d) with (lo := usp0 - 6144512) (canary := guard_word);
         [apply stderr_wfile0_wfile; exact SE| reflexivity| rewrite unsigned_lit by lia; replace (usp0 + -128) with (usp0 - 128) by lia; exact DA
         | rewrite unsigned_lit by lia; exact ST
         | rewrite unsigned_lit by lia; unfold FPRINTF_DEPTH; lia| unfold GLOBALS_TOP; lia| rewrite unsigned_lit by lia; lia
@@ -188,12 +189,12 @@ Section B.
     ua. rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST2 by lia.
     replace (ret_pc (Z_to_bv 64 0x13cf4)) with (Z_to_bv 64 0x13cf4) by (symmetry; rpc).
     pose proof (agree_on_of_munch rsegs _ _ _ MUc WMc) as AG.
-    assert (OUT2 : forall a, (0x10000 <= a < 0x5c000 /\ ~ (0x2a988 <= a < 0x2a988 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x2a988, 0x2a988 + 232)] a0) a).
+    assert (OUT2 : forall a, (0x10000 <= a < 0x5c000 /\ ~ (0x2a988 <= a < 0x2a988 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144512, usp0 + -128); (0x2a988, 0x2a988 + 232)] a0) a).
     { intros a Ha. cbn. lia. }
     eapply implM_evt; [| intros ms'' H; apply HK; exact H].
     zstep.
     eapply (exit2_tail sp0 TID VSP CEIL HT s LB).
-    - unfold LO. replace (usp0 - 8388608) with (usp0 + -8388608) in ST2 by lia. first [exact ST2 | replace (usp0 + -8388608) with (usp0 - 8388608) in ST2 by lia; exact ST2].
+    - unfold LO. replace (usp0 - 6144512) with (usp0 + -6144512) in ST2 by lia. first [exact ST2 | replace (usp0 + -6144512) with (usp0 - 6144512) in ST2 by lia; exact ST2].
     - eapply (RSTAT_agree TID _ _ _ AG); [intros a Ha; apply OUT2; unfold rstat_addr in Ha; lia| exact RS].
     - eapply RMalloc_ifaceP.RHEAP_frame_proof; [exact HP| exact MUc| exact WMc|].
       constructor; [left; cbn [fst snd]; lia|]. constructor; [| constructor].
@@ -217,7 +218,7 @@ Section B.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm s Q msx) end.
     cbn [io_diag io_S s_diag]. change (concat pieces_oom) with s_oom.
     eapply implM_bind.
-    { eapply (FWR) with (lo := usp0 - 8388608) (canary := guard_word) (s := s_oom);
+    { eapply (FWR) with (lo := usp0 - 6144512) (canary := guard_word) (s := s_oom);
         [exact TOW| exact SE| rewrite unsigned_lit by (unfold S_OOM; lia); apply rodata_bytes; [exact MI| apply s_oom_ro| unfold S_OOM; lia| unfold S_OOM, s_oom, zlength; cbn; lia]
         | apply str_range || (unfold s_oom; apply Forall_app; split; [apply str_range| constructor; [lia| constructor]])
         | unfold s_oom, zlength; cbn; lia| reflexivity| reflexivity| reflexivity
@@ -233,11 +234,11 @@ Section B.
     ua. rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST2 by lia.
     replace (ret_pc (Z_to_bv 64 0x13d18)) with (Z_to_bv 64 0x13d18) by (symmetry; rpc).
     pose proof (agree_on_of_munch rsegs _ _ _ MUc WMc) as AG.
-    assert (OUT2 : forall a, (0x10000 <= a < 0x5c000 /\ ~ (0x2a988 <= a < 0x2a988 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x2a988, 0x2a988 + 232)] a0) a).
+    assert (OUT2 : forall a, (0x10000 <= a < 0x5c000 /\ ~ (0x2a988 <= a < 0x2a988 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144512, usp0 + -128); (0x2a988, 0x2a988 + 232)] a0) a).
     { intros a Ha. cbn. lia. }
     eapply implM_evt; [| intros ms'' H; apply HK; exact H].
     eapply (exit2_tail sp0 TID VSP CEIL HT s LB).
-    - unfold LO. replace (usp0 - 8388608) with (usp0 + -8388608) in ST2 by lia. first [exact ST2 | replace (usp0 + -8388608) with (usp0 - 8388608) in ST2 by lia; exact ST2].
+    - unfold LO. replace (usp0 - 6144512) with (usp0 + -6144512) in ST2 by lia. first [exact ST2 | replace (usp0 + -6144512) with (usp0 - 6144512) in ST2 by lia; exact ST2].
     - eapply (RSTAT_agree TID _ _ _ AG); [intros a Ha; apply OUT2; unfold rstat_addr in Ha; lia| exact RS].
     - eapply RMalloc_ifaceP.RHEAP_frame_proof; [exact HP| exact MUc| exact WMc|].
       constructor; [left; cbn [fst snd]; lia|]. constructor; [| constructor].

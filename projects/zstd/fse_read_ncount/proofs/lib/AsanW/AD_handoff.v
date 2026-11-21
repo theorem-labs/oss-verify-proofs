@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (apat_main_extract over the new main entry: its facts as MainEntry keeps them (keep_facts; rng_fs_init_stmt over APKN), the launch's stack block from InitMem (launch_facts, launch_image_length, the string area at the launch's string base through hidden_arg), the argv pointer cells from argv_cells, the stack split in the 6,144,513-byte window; Eoff1 destructs the launch input's argv, as Eoff0 does, in the form of zstd/zstd_frame_info's AD_handoff; the RNGS bullets for argv[0] and argv[1] substitute usp, argv and envp before lia). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -53,7 +54,7 @@ valid_entry (mkImage asegs a_init_pc a_phdrs) en inp -> valid_input_either inp -
 aresv_ok (LDRV V w) (resv_of V).
 Hypothesis ARESV_INIT : aresv_init_stmt.
 Definition rng_fs_init_stmt : Prop :=
-forall V w mo, Forall (pfact_ok V) asan_pure_facts -> 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->
+forall V w mo, Forall (pfact_ok V) APKN -> 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->
 rng_fs (LDRV V w) (RNG0 A0 V mo).
 Hypothesis RNGFS_INIT : rng_fs_init_stmt.
 #[using="A0I"] Lemma A0I' : forall V (p : word), bv_unsigned p mod 4096 = 0 -> aallowed (allow_of 2147450880 V asan_vis) p -> A0 V p.
@@ -65,11 +66,20 @@ exists L, apat_mainA AI rng_fs L (RNG0 A0 V mo) inp (aps_init (a_space_beg0 V) (
 Proof.
 intros en inp w V m ms mo VE VI AM HA. exists (LDRV V w).
 pose proof (AHEAP_INIT en inp w V m ms mo VE VI AM HA) as AH. pose proof (ARESV_INIT en inp w V m ms mo VE VI AM) as ARK.
-destruct en as [sp brk0 mbase rdraw]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ VI) in VE. destruct VE as (VSP & _ & _ & FITS). cbn [en_sp en_draw] in *.
+destruct en as [sp brk0 mbase rdraw]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ VI) in VE. destruct VE as (VSP & _ & _ & FITS & LAU).
 destruct VSP as (SPLO & SPHI & SP16). unfold sp_window_lo in SPLO. unfold sp_window_hi in SPHI. unfold entry_stack_fits, sp_window_hi in FITS.
 pose proof VI as (VARGV & VENVP & _).
-destruct AM as (Hms & HVR & PIN & HMF & HPF & MI & ST & HID & SH0 & AMOD). cbn [en_sp en_brk en_draw] in *.
-apply Forall_app in HMF as [HM HMW]. apply Forall_app in HPF as [HP HPW].
+pose proof (valid_input_either_launch _ VI) as VL.
+(* LPS 727298f3: the launch's stack block, its head below the strings and its top (InitMem.launch_facts) *)
+pose proof (launch_facts inp sp brk0 mbase rdraw VL LAU) as (_ & PADOK & _ & TOPHI & _ & _).
+pose proof (launch_image_length inp sp brk0 mbase a_phdrs (Z_to_bv 64 (Z.of_N a_init_pc)) rdraw VL LAU) as ILEN.
+assert (TOP8 : bv_unsigned (ed_top rdraw) mod 8 = 0).
+{ destruct LAU as ((T4K & _ & _) & _ & _). unfold page_size in T4K. Z.div_mod_to_equations. lia. }
+destruct AM as (Hms & HVR & PIN & HMF & HPF & MI & ST & HID & ARGC & SH0 & AMOD).
+destruct ARGC as (S0E & AP0 & AP1).
+cbn [en_sp en_brk en_draw en_mmap_base] in *.
+(* the recorded facts as the main entry keeps them (MainEntry.keep_facts) *)
+destruct (keep_facts _ _ _ _ _ HMF HPF) as (HM & HMW & HP).
 destruct PIN as (PV0 & PV6 & PV10 & USP & PV1 & PV2 & PV3 & PV7 & PV4 & PV5 & PV8 & PV9).
 unfold atop_of in HA.
 set (usp := bv_unsigned sp) in *.
@@ -85,7 +95,7 @@ pose proof (argc_pos := proj1 VARGV). cbv beta in argc_pos.
 assert (SPAN24 : usp + 24 <= 2^47).
 { unfold entry_stack_span in FITS. pose proof (Run.total_arg_bytes_nonneg argv). pose proof (Run.total_arg_bytes_nonneg envp). subst argv envp. lia. }
 assert (USPLO : ATOP + 8388608 <= usp) by (subst usp; lia).
-assert (GEO : ATOP <= ALO usp /\ ALO usp + 8388608 - 4096 = usp /\ KHIGH <= ALO usp) by (unfold ALO, KHIGH in *; lia).
+assert (GEO : ATOP <= ALO usp /\ ALO usp + 6144512 = usp /\ KHIGH <= ALO usp) by (unfold ALO, KHIGH in *; lia).
 destruct GEO as (G1 & G2 & G3).
 assert (SPG : usp = al_sp0 (LDRV V w)) by (unfold LDRV; rewrite LV_sp0; lia).
 assert (TOPR : usp - 160 <= al_top (LDRV V w) <= 2^47).
@@ -95,32 +105,25 @@ assert (BOT : ATOP + 4096 <= ALO usp) by (unfold ALO; lia).
 assert (M64 : 0 <= usp mod 64 < 64 /\ (usp - usp mod 64) mod 64 = 0 /\ (ALO usp - usp mod 64) mod 64 = 0).
 { unfold ALO. Z.div_mod_to_equations. lia. }
 destruct M64 as (M64a & M64b & M64c).
-assert (IMGHI : usp + Z.of_nat (length (entry_stack_image a_phdrs sp argv envp (in_uid inp) (in_hwcap inp) rdraw)) <= 2^64).
-{
-pose proof (length_entry_stack_image a_phdrs sp argv envp (in_uid inp) (in_hwcap inp) rdraw) as ILS.
-pose proof (build_stack_bytes_length a_phdrs sp argv envp (in_uid inp) (in_hwcap inp) rdraw) as BL.
-pose proof (raw_len_nonneg argv envp) as (R1 & R2 & R3 & R4).
-unfold entry_stack_span in FITS. unfold raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc in BL.
-change (Z.of_nat auxv_size) with 160 in FITS. clear - ILS BL R2 R3 R4 FITS SPHI. lia. }
-assert (SPLO' : stack_max_size <= usp) by (unfold stack_max_size; lia).
-assert (HID' : forall z, str_base sp argv envp <= z < str_base sp argv envp + Z.of_nat (length (SBLK argv envp)) ->
-m (wa z) = wrap_mem a_phdrs sp argv envp (in_uid inp) (in_hwcap inp) rdraw (wa z)).
-{ intros z Hz. apply HID. unfold hidden_arg. cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap]. right.
-rewrite SBLK_length in Hz. unfold str_base, struct_size, Lib.InitMem.argc, Lib.InitMem.envc in Hz.
-unfold Wblk. cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap]. rewrite build_stack_bytes_length.
-pose proof (raw_len_nonneg argv envp) as (_ & R2 & R3 & R4).
-unfold raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc. unfold pad_len, raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc in Hz, R4 |- *.
-subst argv envp usp. Z.div_mod_to_equations. lia. }
+assert (IMGHI : usp + Z.of_nat (length (entry_stack_image inp mbase a_phdrs (Z_to_bv 64 (Z.of_N a_init_pc)) sp rdraw)) <= 2^64)
+by (rewrite ILEN; subst usp; lia).
+(* the string area: [amain_at]'s hidden block from [STR0_of], which is the launch's string base *)
+pose proof (SBLK_length inp) as SLEN. fold argv envp in SLEN.
+assert (HID' : forall z, str_base (ed_top rdraw) argv envp (in_execfn inp) <= z
+< str_base (ed_top rdraw) argv envp (in_execfn inp) + Z.of_nat (length (SBLK inp)) ->
+m (wa z) = wrap_mem inp mbase a_phdrs (Z_to_bv 64 (Z.of_N a_init_pc)) sp rdraw (wa z)).
+{ intros z Hz. apply HID. unfold hidden_arg. cbv zeta. right. cbn [en_sp en_draw]. rewrite S0E.
+rewrite SLEN in Hz. unfold str_base, lstr in Hz. lia. }
 assert (A0S : exists s0, nth_error argv 0 = Some s0 /\ nth 0 argv [] = s0).
 { subst argv. destruct (in_argv inp) as [|a l]; [cbn in argc_pos; lia|]. exists a. split; reflexivity. }
 destruct A0S as (s0 & Hn0 & En0).
-destruct (arg_pack V sp argv envp (in_uid inp) (in_hwcap inp) rdraw m HM HP SPLO' IMGHI SP16 USPLO HAT FITS VARGV HID' 0 s0 Hn0)
+destruct (arg_pack inp mbase sp rdraw m IMGHI PADOK TOP8 HID' V HM HP TOPHI USPLO HAT 0 s0 Hn0)
 as (off0 & slack0 & RA0 & Hp0 & Ho0 & BY0 & SL0 & P024 & SC0 & LT0 & IR0 & RLO0 & RLO0' & RHI0 & END0).
 assert (Eoff0 : off0 = 0).
 { subst argv. destruct (in_argv inp) as [|a l]; [discriminate|]. cbn in Hp0. injection Hp0. lia. }
 assert (A1S : exists P1 (slack1 : list byte) (RA1 : region),
 2 <= Z.of_nat (length argv) ->
-P1 = str_base sp argv envp + Z.of_nat (length s0) + 1
+P1 = str_base (ed_top rdraw) argv envp (in_execfn inp) + Z.of_nat (length s0) + 1
 /\ bytes_at asegs m P1 (nth 1 argv [] ++ Z_to_bv 8 0 :: slack1)
 /\ (- (P1 + Z.of_nat (length (nth 1 argv [])) + 1)) mod 8 <= zlength slack1
 /\ usp + 24 <= P1
@@ -129,19 +132,21 @@ P1 = str_base sp argv envp + Z.of_nat (length s0) + 1
 /\ usp + -112 <= r_rlo RA1 /\ ATOP <= r_rlo RA1 /\ r_rhi RA1 <= 2^47
 /\ P1 + Z.of_nat (length (nth 1 argv [])) + 1 + zlength slack1 <= 2^47).
 { destruct (nth_error argv 1) as [s1|] eqn:Hn1.
-- destruct (arg_pack V sp argv envp (in_uid inp) (in_hwcap inp) rdraw m HM HP SPLO' IMGHI SP16 USPLO HAT FITS VARGV HID' 1 s1 Hn1)
+- destruct (arg_pack inp mbase sp rdraw m IMGHI PADOK TOP8 HID' V HM HP TOPHI USPLO HAT 1 s1 Hn1)
 as (off1 & slack1 & RA1 & Hp1 & Ho1 & BY1 & SL1 & P124 & SC1 & LT1 & IR1 & RLO1 & RLO1' & RHI1 & END1).
 assert (En1 : nth 1 argv [] = s1) by (apply nth_error_nth; exact Hn1).
 assert (Eoff1 : off1 = Z.of_nat (length s0) + 1).
-{ clear - Hp1 Hn0 Hn1. destruct argv as [|a [|b l]]; try discriminate. cbn in Hn0, Hp1. injection Hn0 as ->. injection Hp1. lia. }
-exists (str_base sp argv envp + off1), slack1, RA1. intros _. rewrite En1. subst off1.
+{ (* as for [Eoff0]: the list itself is destructed, so that [str_ptrs] computes in [Hp1] too *)
+clear - Hp1 Hn0 Hn1. subst argv. destruct (in_argv inp) as [|a [|b l]]; try discriminate.
+cbn in Hn0, Hp1. injection Hn0 as ->. injection Hp1. lia. }
+exists (str_base (ed_top rdraw) argv envp (in_execfn inp) + off1), slack1, RA1. intros _. rewrite En1. subst off1.
 repeat match goal with |- _ /\ _ => split end; try assumption. all: lia.
 - exists 0, [], RA0. intros H2. exfalso. apply nth_error_None in Hn1. lia. }
 destruct A1S as (P1 & slack1 & RA1 & A1F).
 unfold apat_mainA.
 exists usp, (V 44%nat), (Z_to_bv 64 (usp + 8)), (Z_to_bv 64 (Z.of_nat (length argv))), (Z_to_bv 64 AMAIN), (Z_to_bv 64 (usp + 8 * Z.of_nat (length argv) + 16)),
 (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0).
-exists (RSTK0 usp), (Z_to_bv 64 (V 45%nat)), (str_base sp argv envp), P1, slack0, slack1, RA0, RA1.
+exists (RSTK0 usp), (Z_to_bv 64 (V 45%nat)), (str_base (ed_top rdraw) argv envp (in_execfn inp)), P1, slack0, slack1, RA0, RA1.
 unfold RSTK0. cbn [r_lo r_hi r_rlo r_rhi].
 split; [lia|]. split; [lia|]. split; [lia|]. split; [exact SP16|]. split; [exact USPLO|]. split; [exact SPAN24|].
 split; [lia|]. split; [exact SPG|]. split; [exact BOT|].
@@ -153,7 +158,7 @@ exists (Z_to_bv 64 (V 1384%nat)), (Z_to_bv 64 (V 1385%nat)), (Z_to_bv 64 (V 1386
 (Z_to_bv 64 (V 1387%nat)), (Z_to_bv 64 (V 1388%nat)), (Z_to_bv 64 (V 1389%nat)), (Z_to_bv 64 (V 1390%nat)),
 (Z_to_bv 64 (V 1391%nat)), (Z_to_bv 64 (V 1392%nat)), (Z_to_bv 64 (V 1393%nat)), (Z_to_bv 64 (V 1394%nat)), m.
 split. { unfold ASTAGE2_RET, AMAIN_PC, AMAIN, ATP, MainEntry.ARA, MainEntry.AGP, MainEntry.ATP, MainEntry.AMAIN. subst argv. replace (usp + -48) with (usp - 48) by lia. reflexivity. }
-split. { destruct (stk_split _ _ (usp - 8388608) (ALO usp) usp ST ltac:(unfold ALO; lia)) as [_ ST2]. exact ST2. }
+split. { destruct (stk_split _ _ (usp - 6144513) (ALO usp) usp ST ltac:(unfold ALO; lia)) as [_ ST2]. exact ST2. }
 split; [exact MI|].
 pose proof (astat_cells V m HM) as AC. pose proof (gdescs_init V m HM) as GD.
 pose proof (astat_shG V m HM) as SHG. pose proof (astat_shD V m HM) as SHD.
@@ -172,11 +177,9 @@ split; [exact (stdout_file_init V m HM)|].
 split; [reflexivity|].
 split. { split; [exact ARK| reflexivity]. }
 split; [exact AH|].
-pose proof (argv_ptrs_init V m HM) as [AP0 AP1].
+(* the argv pointer cells, as [amain_at] states them in the launch's terms ([argv_cells]) *)
 split. { unfold AARGV. split; [| split].
-- rewrite USP3 in AP0. cbn [u64s]. rewrite app_nil_r.
-replace (str_base sp argv envp) with (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (16 * V 6%nat + 4096 * V 10%nat))) + 184); [exact AP0|].
-unfold str_base, struct_size, Lib.InitMem.argc, Lib.InitMem.envc. subst argv envp. rewrite PV1, PV2. fold usp. lia.
+- cbn [u64s]. rewrite app_nil_r. unfold str_base, lstr. exact AP0.
 - unfold astring. fold argv. rewrite En0. rewrite Eoff0, Z.add_0_r in *.
 repeat match goal with |- _ /\ _ => split end; try assumption.
 + unfold F_fmt_fp_lib.zb. rewrite (zbytes_map_unsigned' s0). exact BY0.
@@ -187,11 +190,7 @@ repeat match goal with |- _ /\ _ => split end; try assumption.
 + unfold zlength in *. rewrite length_map. exact IR0.
 + clear - RLO0. lia.
 - intros HARGC2. fold argv. destruct (A1F HARGC2) as (EP1 & BY1 & SL1 & P124 & SC1 & LT1 & IR1 & RLO1 & RLO1' & RHI1 & END1). split.
-+ rewrite USP3 in AP1. cbn [u64s]. rewrite app_nil_r.
-replace P1 with (Z.b2z ((1 mod two64) <? (V 1%nat mod two64)) * (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (V 3%nat + (16 * V 6%nat + 4096 * V 10%nat)))) + 185)); [exact AP1|].
-rewrite EP1. unfold str_base, struct_size, Lib.InitMem.argc, Lib.InitMem.envc. rewrite <- En0 in *. rewrite PV3. subst argv envp. rewrite PV1, PV2. fold usp.
-unfold two64. rewrite (Z.mod_small 1) by lia. rewrite Z.mod_small by lia.
-replace (1 <? Z.of_nat (length (in_argv inp))) with true by (symmetry; apply Z.ltb_lt; lia). cbn [Z.b2z]. lia.
++ cbn [u64s]. rewrite app_nil_r. rewrite EP1, <- En0. unfold str_base, lstr. exact (AP1 HARGC2).
 + unfold astring.
 repeat match goal with |- _ /\ _ => split end; try assumption.
 * unfold F_fmt_fp_lib.zb. rewrite (zbytes_map_unsigned' (nth 1 argv [])). exact BY1.
@@ -215,12 +214,13 @@ repeat match goal with |- _ /\ _ => split end.
 - replace (shad 0x10000) with 2147459072 by reflexivity. replace (shad 0x20dc0) with 2147467704 by reflexivity. apply RIS; lia.
 - replace (shad 0x5f5b00) with 2148232032 by reflexivity. replace (shad 0x5f5f40) with 2148232168 by reflexivity. apply RIS; lia.
 - intros b Hb. apply rng_empty. exact Hb.
-- apply RS; unfold zlength in *; rewrite ?length_map; lia.
+- (* arg_pack's facts name sp's value and the lists themselves, the goal the [set] locals: one spelling for lia *)
+apply RS; unfold zlength in *; rewrite ?length_map; subst usp argv envp; lia.
 - destruct SC0 as (_ & HL0 & _). unfold hull64, Shadow.KEND in HL0.
 apply RSS; rewrite !shad_div; unfold AsanEmbed.ASHOFF; clear - RLO0' RHI0; Z.div_mod_to_equations; lia.
 - intros HARGC2. destruct (A1F HARGC2) as (EP1 & BY1 & SL1 & P124 & SC1 & LT1 & IR1 & RLO1 & RLO1' & RHI1 & END1).
 unfold MainEntry.ACEIL in RLO1'. split.
-+ apply RS; unfold zlength in *; rewrite ?length_map; lia.
++ apply RS; unfold zlength in *; rewrite ?length_map; subst usp argv envp; lia.
 + destruct SC1 as (_ & HL1 & _). unfold hull64, Shadow.KEND in HL1.
 apply RSS; rewrite !shad_div; unfold AsanEmbed.ASHOFF; clear - RLO1' RHI1; Z.div_mod_to_equations; lia. }
 split. { pose proof (stage2_word_init V m HM) as S2W. rewrite USP3 in S2W. exact S2W. }

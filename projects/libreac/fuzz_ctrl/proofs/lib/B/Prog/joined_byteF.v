@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths changed; 166 of its 215 lines of code are new or changed and 3804 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/joined_byte.v; 58 of its 188 lines of code are new or changed and 85 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The footprint twin of joined_byte, image B (asan-ubsan v1.9.0, entry 0x836ac): joined_byte_holds_F proves
    joined_byte_contract_F (lib/B/Prog/joined_byte_c.v), the same run as an ExecF.evtF under a footprint RNG, by the
-   script of the plain proof joined_byte.v (joined_byte_holds; a working branch 3803efccea0, blob 8bf3e6b3d841)
+   script of the plain proof joined_byte.v (joined_byte_holds; a working branch, blob 8bf3e6b3d841)
    over StepF's step (route 2). Each access of the run is closed from one rng premise: the store and reload of ra
    (the frame), the two 8-byte loads of the GOT cell and the runtime cell, the 1-byte loads of nb and b, and the
    1-byte load of the shadow byte of each. The plain proof file is not on this branch, so its lemmas are restated
