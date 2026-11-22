@@ -2601,7 +2601,7 @@
 
 (package
  (name rocq-oss-verify-zlib)
- (synopsis "Theorem statements about zlib's OSS-Fuzz harnesses")
+ (synopsis "Theorem statements about zlib's fuzz targets")
  (license MIT)
  (depends rocq-oss-verify-core))
 
@@ -5635,7 +5635,7 @@
 
 (package
  (name rocq-oss-verify-zlib-proofs)
- (synopsis "Proofs of statements about zlib's OSS-Fuzz harnesses")
+ (synopsis "Proofs of statements about zlib's fuzz targets")
  (license MIT)
  (depends rocq-oss-verify-core)
  (allow_empty))
