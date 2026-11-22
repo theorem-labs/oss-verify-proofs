@@ -2,7 +2,7 @@
 opam-version: "2.0"
 name: "rocq-oss-verify-zlib"
 version: "2026.11.3"
-synopsis: "Theorem statements about zlib's OSS-Fuzz harnesses, in Rocq"
+synopsis: "Theorem statements about zlib's fuzz targets, in Rocq"
 maintainer: "oss-fuzz-theorems maintainers"
 license: "MIT"
 homepage: "https://github.com/theorem-labs/oss-verify-proofs"

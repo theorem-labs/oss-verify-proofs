@@ -3,7 +3,7 @@
 
 [zlib.net](https://www.zlib.net) · OSS-Fuzz: [projects/zlib](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/zlib)
 
-**Status: available.** 10 of OSS-Fuzz's 11 fuzz targets have statements. 40 binaries, 16 MB. 384 statements: 109 proved, 0 known false, 0 suspected false, 0 blocked by the model, 275 open.
+**Status: available.** 10 of OSS-Fuzz's 11 fuzz targets have statements. Of the fuzz targets OSS Verify builds and OSS-Fuzz does not run, statements cover 0 of 1. 40 binaries, 16 MB. 384 statements: 109 proved, 0 known false, 0 suspected false, 0 blocked by the model, 275 open.
 
 Built from zlib 1.4 (commit `99623ef7`) with 8 patches, listed under [How these binaries were built](#how-these-binaries-were-built).
 
@@ -21,7 +21,7 @@ Built from zlib 1.4 (commit `99623ef7`) with 8 patches, listed under [How these 
 | [zlib_uncompress3_fuzzer](zlib_uncompress3_fuzzer/) | uncompress2 with an output length from the first 3 bytes (clamped to 256 KiB); return code ignored. | none | 40, 22 proved |
 | [zlib_uncompress_fuzzer](zlib_uncompress_fuzzer/) | uncompress into a 256 KiB static buffer; the return code is tested but both branches return 0. | none | 40, 25 proved |
 
-Not included: **api-driver** (held from this release); **minigzip_fuzzer** (not built yet).
+Not included: **api-driver** (held from this release); **compress_roundtrip_full_fuzzer** (held from this release); **minigzip_fuzzer** (not built yet).
 
 ## What the statements say, for zlib
 - **`<build>_halts`**: on every input on which the build is never refused memory for exceeding 16 GiB (a premise: an input that needs more is not covered), and when the environment refuses nothing it is not forced to, every execution exits with any status (status 0 or 2 for checksum_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, compress_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, example_dict_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, example_flush_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, example_large_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, example_small_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, gzio_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, zlib_uncompress2_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, zlib_uncompress3_fuzzer's plain, ASan, UBSan and ASan+UBSan builds and zlib_uncompress_fuzzer's plain, ASan, UBSan and ASan+UBSan builds), without crashing, failing an assertion, hanging or tripping its sanitizer.
@@ -43,7 +43,7 @@ None known.
     ./oft fetch zlib
     ./oft verify-sha zlib
 
-By hand: download `zlib-bin.tar.zst` from release [v2026.11.3](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.11.3), unpack it into `projects/zlib/bin/`, and check each file against its SHA-256 in the harness's `harness.yaml`. Each binary is run as `<file> <input-file>` under qemu-user 10; an OSS-Fuzz testcase needs the six-byte header `00 00 00 00 00 00` in front ([docs/running.md](../../docs/running.md)).
+By hand: download `zlib-bin.tar.zst` from release [v2026.11.3](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.11.3), unpack it into `projects/zlib/bin/`, and check each file against its SHA-256 in the harness's `harness.yaml`. Each binary is run as `<file> <input-file>` under qemu-user 10; a testcase needs the six-byte header `00 00 00 00 00 00` in front ([docs/running.md](../../docs/running.md)).
 
 ## How these binaries were built
 - Library: [madler/zlib](https://github.com/madler/zlib) at `99623ef7097352da7993ba614161fd6a311e046e` (1.4), built with CMake:

@@ -68,6 +68,10 @@ harnesses:
   status: included
 - name: compress_fuzzer
   status: included
+- name: compress_roundtrip_full_fuzzer
+  status: not-included
+  origin: oss-verify
+  reason: held
 - name: example_dict_fuzzer
   status: included
 - name: example_flush_fuzzer
