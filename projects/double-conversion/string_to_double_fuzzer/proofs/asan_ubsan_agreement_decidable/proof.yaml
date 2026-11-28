@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: double-conversion/string_to_double_fuzzer/asan_ubsan_agreement_decidable
+fingerprint: dfe346ebf9c01d1885ad02eb673ac97f460358633ea53a7d4e45b4266c473add

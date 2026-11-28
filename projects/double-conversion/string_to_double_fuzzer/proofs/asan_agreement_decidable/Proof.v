@@ -1,0 +1,5 @@
+From OSSVerify.double_conversion.string_to_double_fuzzer Require Statements.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require BaseAsan.
+
+Theorem asan_agreement_decidable_holds : OSSVerify.double_conversion.string_to_double_fuzzer.Statements.asan_agreement_decidable.
+Proof. exact OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib.BaseAsan.asan_decidable. Qed.

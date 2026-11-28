@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: double-conversion/string_to_double_fuzzer/plain_halts_may_fail
+fingerprint: 2787303daa4e3dc44a4da2e77a63f7495912d1b2ce4653299e55855e339aa8c1

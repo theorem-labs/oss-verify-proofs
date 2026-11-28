@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: double-conversion/string_to_double_fuzzer/ubsan_halts
+fingerprint: 54170f11560e71e6574befa2bb68236759b4a0f4a370dae714286ca7cb1b61a8
